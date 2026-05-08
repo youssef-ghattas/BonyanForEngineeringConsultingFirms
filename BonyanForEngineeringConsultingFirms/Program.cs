@@ -1,13 +1,62 @@
-namespace BonyanForEngineeringConsultingFirms
-{
-    public class Program
+namespace BonyanForEngineeringConsultingFirms;
+using Bonyan.DAL.Context;
+using Microsoft.EntityFrameworkCore;
+using Bonyan.DAL.Models;
+using Bonyan.DAL.Repositories;
+using Bonyan.BLL.Services;
+using Task = Bonyan.DAL.Models.Task;
+public class Program
     {
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
+		// ?? Register DbContext ????????????????????????????????
+		builder.Services.AddDbContext<BonyanDbContext>(options =>
+			options.UseSqlServer(builder.Configuration
+			.GetConnectionString("BonyanConnection")));
+
+
+
+		// ?? Repositories ??????????????????????????????????????
+		builder.Services.AddScoped<IRepository<Employee>, Repository<Employee>>();
+		builder.Services.AddScoped<IRepository<UserAccount>, Repository<UserAccount>>();
+		builder.Services.AddScoped<IRepository<Project>, Repository<Project>>();
+		builder.Services.AddScoped<IRepository<EmployeeProject>, Repository<EmployeeProject>>();
+		builder.Services.AddScoped<IRepository<Task>, Repository<Task>>();
+		builder.Services.AddScoped<IRepository<Document>, Repository<Document>>();
+		builder.Services.AddScoped<IRepository<Drawing>, Repository<Drawing>>();
+		builder.Services.AddScoped<IRepository<SiteVisit>, Repository<SiteVisit>>();
+		builder.Services.AddScoped<IRepository<Invoice>, Repository<Invoice>>();
+		builder.Services.AddScoped<IRepository<Payment>, Repository<Payment>>();
+		builder.Services.AddScoped<IRepository<Material>, Repository<Material>>();
+		builder.Services.AddScoped<IRepository<MaterialInventory>, Repository<MaterialInventory>>();
+		builder.Services.AddScoped<IRepository<MaterialSupplier>, Repository<MaterialSupplier>>();
+		builder.Services.AddScoped<IRepository<MaterialTask>, Repository<MaterialTask>>();
+		builder.Services.AddScoped<IRepository<Supplier>, Repository<Supplier>>();
+		builder.Services.AddScoped<IRepository<Inventory>, Repository<Inventory>>();
+
+		// ?? Services ??????????????????????????????????????????
+		builder.Services.AddScoped<IService<Employee>, Service<Employee>>();
+		builder.Services.AddScoped<IService<UserAccount>, Service<UserAccount>>();
+		builder.Services.AddScoped<IService<Project>, Service<Project>>();
+		builder.Services.AddScoped<IService<EmployeeProject>, Service<EmployeeProject>>();
+		builder.Services.AddScoped<IService<Task>, Service<Task>>();
+		builder.Services.AddScoped<IService<Document>, Service<Document>>();
+		builder.Services.AddScoped<IService<Drawing>, Service<Drawing>>();
+		builder.Services.AddScoped<IService<SiteVisit>, Service<SiteVisit>>();
+		builder.Services.AddScoped<IService<Invoice>, Service<Invoice>>();
+		builder.Services.AddScoped<IService<Payment>, Service<Payment>>();
+		builder.Services.AddScoped<IService<Material>, Service<Material>>();
+		builder.Services.AddScoped<IService<MaterialInventory>, Service<MaterialInventory>>();
+		builder.Services.AddScoped<IService<MaterialSupplier>, Service<MaterialSupplier>>();
+		builder.Services.AddScoped<IService<MaterialTask>, Service<MaterialTask>>();
+		builder.Services.AddScoped<IService<Supplier>, Service<Supplier>>();
+		builder.Services.AddScoped<IService<Inventory>, Service<Inventory>>();
+
+
+		// Add services to the container.
+		builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
 
@@ -33,4 +82,3 @@ namespace BonyanForEngineeringConsultingFirms
             app.Run();
         }
     }
-}
