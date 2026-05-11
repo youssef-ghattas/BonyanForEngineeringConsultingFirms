@@ -1,115 +1,113 @@
 ﻿using Bonyan.DAL.Context;
+using Bonyan.DAL.Enums;
 using Bonyan.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Bonyan.DAL.Enums;
 
 namespace BonyanForEngineeringConsultingFirms.Controllers
 {
-    public class AccountController : Controller
-    {
-        private readonly BonyanDbContext _context;
+	public class AccountController : Controller
+	{
+		private readonly BonyanDbContext _context;
 
-        public AccountController(BonyanDbContext context)
-        {
-            _context = context;
-        }
+		public AccountController(BonyanDbContext context)
+		{
+			_context = context;
+		}
 
-        // ── Login GET ─────────────────────────────────
-        public IActionResult Login()
-        {
-            // if already logged in go to dashboard
-            if (HttpContext.Session.GetString("Username") != null)
-                return RedirectToAction("Index", "Home");
+		// ── Login GET ─────────────────────────────────
+		public IActionResult Login()
+		{
+			if (HttpContext.Session.GetString("Email") != null)
+				return RedirectToAction("Index", "Home");
+			return View();
+		}
 
-            return View();
-        }
+		// ── Login POST ────────────────────────────────
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public IActionResult Login(string email, string password)
+		{
+			var user = _context.UserAccounts
+				.Include(u => u.Employee)
+				.FirstOrDefault(u => u.Employee.Email == email
+								  && u.Password == password);
 
-        // ── Login POST ────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Login(string username, string password)
-        {
-            var user = _context.UserAccounts
-                .Include(u => u.Employee)
-                .FirstOrDefault(u => u.Username == username
-                                  && u.Password == password);
+			if (user == null)
+			{
+				ViewBag.Error = "البريد الإلكتروني أو كلمة المرور غير صحيحة";
+				return View();
+			}
 
-            if (user == null)
-            {
-                ViewBag.Error = "اسم المستخدم أو كلمة المرور غير صحيحة";
-                return View();
-            }
+			HttpContext.Session.SetString("Email", user.Employee.Email);
+			HttpContext.Session.SetString("Role", user.Role.ToString());
+			HttpContext.Session.SetString("FullName",
+				user.Employee.FirstName + " " + user.Employee.LastName);
+			HttpContext.Session.SetInt32("UserId", user.UserId);
 
-            // ── Save in Session ───────────────────────
-            HttpContext.Session.SetString("Username", user.Username);
-            HttpContext.Session.SetString("Role", user.Role.ToString());
-            HttpContext.Session.SetString("FullName",
-                user.Employee.FirstName + " " + user.Employee.LastName);
-            HttpContext.Session.SetInt32("UserId", user.UserId);
+			return RedirectToAction("Index", "Home");
+		}
 
-            return RedirectToAction("Index", "Home");
-        }
+		// ── Register GET ──────────────────────────────
+		public IActionResult Register()
+		{
+			return View();
+		}
 
-        // ── Logout ────────────────────────────────────
-        public IActionResult Logout()
-        {
-            HttpContext.Session.Clear();
-            return RedirectToAction("Login");
-        }
-        // ── Register GET ──────────────────────────────────
-        public IActionResult Register()
-        {
-            if (HttpContext.Session.GetString("Username") != null)
-                return RedirectToAction("Index", "Home");
+		// ── Register POST ─────────────────────────────
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public IActionResult Register(
+			string firstName, string lastName,
+			string email, string phoneNum,
+			string ssn, string password,
+			Gender gender, Specialization specialization,
+			decimal salary)
+		{
+			// Check if email already exists
+			if (_context.Employees.Any(e => e.Email == email))
+			{
+				ViewBag.Error = "البريد الإلكتروني مسجل مسبقاً";
+				return View();
+			}
 
-            return View();
-        }
+			// 1. Create Employee first
+			var employee = new Employee
+			{
+				FirstName = firstName,
+				LastName = lastName,
+				Email = email,
+				PhoneNum = phoneNum,
+				SSN = ssn,
+				Gender = gender,
+				Specialization = specialization,
+				Salary = salary,
+				HireDate = DateTime.Now
+			};
 
-        // ── Register POST ─────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Register(Employee employee, string username, string password)
-        {
-            // Check if email already exists
-            if (_context.Employees.Any(e => e.Email == employee.Email))
-            {
-                ViewBag.Error = "البريد الإلكتروني مستخدم بالفعل";
-                return View(employee);
-            }
+			_context.Employees.Add(employee);
+			_context.SaveChanges(); // Save to get EmployeeId
 
-            // Check if SSN already exists
-            if (_context.Employees.Any(e => e.SSN == employee.SSN))
-            {
-                ViewBag.Error = "رقم الهوية مستخدم بالفعل";
-                return View(employee);
-            }
+			// 2. Create UserAccount linked to Employee
+			var user = new UserAccount
+			{
+				EmployeeId = employee.EmployeeId,
+				Username = email,            // use email as username internally
+				Password = password,         // plain text for now
+				Role = UserRole.Engineer // default role
+			};
 
-            // Check if username already exists
-            if (_context.UserAccounts.Any(u => u.Username == username))
-            {
-                ViewBag.Error = "اسم المستخدم مستخدم بالفعل";
-                return View(employee);
-            }
+			_context.UserAccounts.Add(user);
+			_context.SaveChanges();
 
-            // Save Employee first
-            _context.Employees.Add(employee);
-            _context.SaveChanges();
+			return RedirectToAction("Login");
+		}
 
-            // Then create UserAccount linked to employee
-            var userAccount = new UserAccount
-            {
-                EmployeeId = employee.EmployeeId,
-                Username = username,
-                Password = password,
-                Role = Bonyan.DAL.Enums.UserRole.Engineer // default role
-            };
-
-            _context.UserAccounts.Add(userAccount);
-            _context.SaveChanges();
-
-            ViewBag.Success = "تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.";
-            return RedirectToAction("Login");
-        }
-    }
+		// ── Logout ────────────────────────────────────
+		public IActionResult Logout()
+		{
+			HttpContext.Session.Clear();
+			return RedirectToAction("Login");
+		}
+	}
 }

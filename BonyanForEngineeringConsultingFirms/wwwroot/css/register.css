@@ -1,0 +1,45 @@
+﻿/* ── Register Page Extra Styles ─────────────────── */
+.register-wrapper {
+    display: flex;
+    width: 960px;
+    min-height: 600px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+.register-right {
+    overflow-y: auto;
+    max-height: 100vh;
+    padding: 35px 40px !important;
+}
+
+    .register-right h2 {
+        margin-bottom: 5px !important;
+    }
+
+    .register-right p {
+        margin-bottom: 18px !important;
+    }
+
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 0;
+}
+
+    .form-row-2 .input-group {
+        margin-bottom: 16px;
+    }
+
+@media (max-width: 768px) {
+    .register-wrapper {
+        flex-direction: column;
+        width: 95%;
+    }
+
+    .form-row-2 {
+        grid-template-columns: 1fr;
+    }
+}
