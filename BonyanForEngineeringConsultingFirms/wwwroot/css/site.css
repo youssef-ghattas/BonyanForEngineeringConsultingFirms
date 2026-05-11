@@ -1,22 +1,478 @@
-html {
-  font-size: 14px;
+﻿/* ── Variables ────────────────────────────────────── */
+:root {
+    --primary: #1B3A6B;
+    --secondary: #C8922A;
+    --bg: #F4F6F9;
+    --sidebar: #112240;
+    --text: #2D2D2D;
+    --white: #FFFFFF;
+    --success: #28A745;
+    --danger: #DC3545;
+    --font-ar: 'Cairo', sans-serif;
+    --font-en: 'Poppins', sans-serif;
+    --sidebar-w: 260px;
+    --navbar-h: 65px;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+/* ── Reset ────────────────────────────────────────── */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-  margin-bottom: 60px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ar);
+}
+
+[lang="en"] body {
+    font-family: var(--font-en);
+}
+
+/* ── Navbar ───────────────────────────────────────── */
+.bonyan-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--navbar-h);
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.navbar-logo {
+    color: var(--white);
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .navbar-logo i {
+        color: var(--secondary);
+    }
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.navbar-user {
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+/* ── Language Button ──────────────────────────────── */
+.lang-btn {
+    background: var(--secondary);
+    color: var(--white);
+    border: none;
+    padding: 6px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.3s;
+}
+
+    .lang-btn:hover {
+        opacity: 0.85;
+    }
+
+/* ── Sidebar Toggle Button ────────────────────────── */
+.sidebar-toggle {
+    background: transparent;
+    border: none;
+    color: var(--white);
+    font-size: 1.3rem;
+    cursor: pointer;
+}
+
+/* ── Wrapper ──────────────────────────────────────── */
+.bonyan-wrapper {
+    display: flex;
+    margin-top: var(--navbar-h);
+    min-height: calc(100vh - var(--navbar-h));
+}
+
+/* ── Sidebar ──────────────────────────────────────── */
+.bonyan-sidebar {
+    width: var(--sidebar-w);
+    background: var(--sidebar);
+    min-height: 100%;
+    position: fixed;
+    top: var(--navbar-h);
+    right: 0;
+    bottom: 0;
+    transition: all 0.3s;
+    overflow-y: auto;
+    z-index: 999;
+}
+
+/* LTR sidebar on left */
+[dir="ltr"] .bonyan-sidebar {
+    right: auto;
+    left: 0;
+}
+
+.bonyan-sidebar.collapsed {
+    width: 0;
+    overflow: hidden;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 20px 0;
+}
+
+    .sidebar-menu li a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        color: #B0BEC5;
+        text-decoration: none;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        border-right: 3px solid transparent;
+    }
+
+[dir="ltr"] .sidebar-menu li a {
+    border-right: none;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-menu li a:hover,
+.sidebar-menu li a.active {
+    background: rgba(255,255,255,0.08);
+    color: var(--white);
+    border-right-color: var(--secondary);
+}
+
+[dir="ltr"] .sidebar-menu li a:hover,
+[dir="ltr"] .sidebar-menu li a.active {
+    border-left-color: var(--secondary);
+    border-right-color: transparent;
+}
+
+.sidebar-menu li a i {
+    width: 20px;
+    color: var(--secondary);
+    font-size: 1rem;
+}
+
+/* ── Main Content ─────────────────────────────────── */
+.bonyan-content {
+    margin-right: var(--sidebar-w);
+    padding: 30px;
+    width: 100%;
+    transition: all 0.3s;
+}
+
+[dir="ltr"] .bonyan-content {
+    margin-right: 0;
+    margin-left: var(--sidebar-w);
+}
+
+.bonyan-sidebar.collapsed ~ .bonyan-content {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+/* ── Cards ────────────────────────────────────────── */
+.bonyan-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.07);
+    margin-bottom: 25px;
+}
+
+.bonyan-card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--bg);
+}
+
+/* ── Stat Cards (Dashboard) ───────────────────────── */
+.stat-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.07);
+    transition: transform 0.3s;
+}
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+    }
+
+.stat-icon {
+    width: 55px;
+    height: 55px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: var(--white);
+}
+
+    .stat-icon.blue {
+        background: var(--primary);
+    }
+
+    .stat-icon.gold {
+        background: var(--secondary);
+    }
+
+    .stat-icon.green {
+        background: var(--success);
+    }
+
+    .stat-icon.red {
+        background: var(--danger);
+    }
+
+.stat-info h3 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stat-info p {
+    font-size: 0.85rem;
+    color: #888;
+    margin: 0;
+}
+
+/* ── Tables ───────────────────────────────────────── */
+.bonyan-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+    .bonyan-table thead th {
+        background: var(--primary);
+        color: var(--white);
+        padding: 12px 15px;
+        text-align: right;
+        font-weight: 600;
+    }
+
+[dir="ltr"] .bonyan-table thead th {
+    text-align: left;
+}
+
+.bonyan-table tbody tr {
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+    .bonyan-table tbody tr:hover {
+        background: #F0F4FF;
+    }
+
+.bonyan-table tbody td {
+    padding: 12px 15px;
+}
+
+/* ── Buttons ──────────────────────────────────────── */
+.btn-bonyan-primary {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.3s;
+}
+
+    .btn-bonyan-primary:hover {
+        background: #142d55;
+        color: var(--white);
+    }
+
+.btn-bonyan-secondary {
+    background: var(--secondary);
+    color: var(--white);
+    border: none;
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.3s;
+}
+
+    .btn-bonyan-secondary:hover {
+        background: #a87520;
+        color: var(--white);
+    }
+
+.btn-bonyan-danger {
+    background: var(--danger);
+    color: var(--white);
+    border: none;
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.3s;
+}
+
+    .btn-bonyan-danger:hover {
+        background: #b02a37;
+        color: var(--white);
+    }
+
+/* ── Forms ────────────────────────────────────────── */
+.bonyan-form .form-label {
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 5px;
+}
+
+.bonyan-form .form-control,
+.bonyan-form .form-select {
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.92rem;
+    transition: border 0.3s;
+}
+
+    .bonyan-form .form-control:focus,
+    .bonyan-form .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(27,58,107,0.1);
+    }
+
+/* ── Badges ───────────────────────────────────────── */
+.badge-bonyan {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #D4EDDA;
+    color: #155724;
+}
+
+.badge-warning {
+    background: #FFF3CD;
+    color: #856404;
+}
+
+.badge-danger {
+    background: #F8D7DA;
+    color: #721C24;
+}
+
+.badge-info {
+    background: #D1ECF1;
+    color: #0C5460;
+}
+
+.badge-primary {
+    background: #CCE5FF;
+    color: #004085;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 768px) {
+    .bonyan-sidebar {
+        width: 0;
+        overflow: hidden;
+    }
+
+    .bonyan-content {
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    .bonyan-sidebar.open {
+        width: var(--sidebar-w);
+    }
+    /* ── User Dropdown ────────────────────────────────── */
+    .user-info-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--white);
+        padding: 5px 10px;
+        border-radius: 8px;
+        transition: background 0.3s;
+    }
+
+        .user-info-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+    .user-details {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+    .user-name {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--white);
+    }
+
+    .user-role {
+        font-size: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .bonyan-dropdown {
+        border: none;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        border-radius: 10px;
+        min-width: 200px;
+    }
+
+        .bonyan-dropdown .dropdown-item:hover {
+            background: #F0F4FF;
+        }
+
+        .bonyan-dropdown .dropdown-item.text-danger:hover {
+            background: #FFF0F0;
+        }
 }

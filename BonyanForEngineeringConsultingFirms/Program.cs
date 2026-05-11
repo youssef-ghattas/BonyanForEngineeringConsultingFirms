@@ -1,4 +1,4 @@
-namespace BonyanForEngineeringConsultingFirms;
+﻿namespace BonyanForEngineeringConsultingFirms;
 using Bonyan.DAL.Context;
 using Microsoft.EntityFrameworkCore;
 using Bonyan.DAL.Models;
@@ -16,10 +16,16 @@ public class Program
 			options.UseSqlServer(builder.Configuration
 			.GetConnectionString("BonyanConnection")));
 
+        // ── Session ───────────────────────────────────────────
+        builder.Services.AddSession(options =>
+        {
+            options.IdleTimeout = TimeSpan.FromMinutes(30);
+            options.Cookie.HttpOnly = true;
+            options.Cookie.IsEssential = true;
+        });
 
-
-		// ?? Repositories ??????????????????????????????????????
-		builder.Services.AddScoped<IRepository<Employee>, Repository<Employee>>();
+        // ?? Repositories ??????????????????????????????????????
+        builder.Services.AddScoped<IRepository<Employee>, Repository<Employee>>();
 		builder.Services.AddScoped<IRepository<UserAccount>, Repository<UserAccount>>();
 		builder.Services.AddScoped<IRepository<Project>, Repository<Project>>();
 		builder.Services.AddScoped<IRepository<EmployeeProject>, Repository<EmployeeProject>>();
@@ -72,8 +78,8 @@ public class Program
             app.UseStaticFiles();
 
             app.UseRouting();
-
-            app.UseAuthorization();
+			app.UseSession();
+			app.UseAuthorization();
 
             app.MapControllerRoute(
                 name: "default",
