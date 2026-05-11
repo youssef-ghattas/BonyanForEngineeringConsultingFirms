@@ -2,74 +2,71 @@
 using Bonyan.DAL.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Task = Bonyan.DAL.Models.Task;
 
 namespace BonyanForEngineeringConsultingFirms.Controllers
 {
-    public class HomeController : Controller
-    {
-        private readonly BonyanDbContext _context;
+	public class HomeController : Controller
+	{
+		private readonly BonyanDbContext _context;
 
-        public HomeController(BonyanDbContext context)
-        {
-            _context = context;
-        }
+		public HomeController(BonyanDbContext context)
+		{
+			_context = context;
+		}
 
-        public IActionResult Index()
-        {
-            // ── Redirect to login if not logged in ────
-            if (HttpContext.Session.GetString("Username") == null)
-                return RedirectToAction("Login", "Account");
+		public IActionResult Index()
+		{
+			// redirect to login if not logged in
+			if (HttpContext.Session.GetString("Email") == null)
+				return RedirectToAction("Login", "Account");
 
-            // ── Stat Counts ───────────────────────────
-            ViewBag.EmployeeCount = _context.Employees.Count();
-            ViewBag.ProjectCount = _context.Projects.Count();
-            ViewBag.TaskCount = _context.Tasks.Count();
-            ViewBag.DocumentCount = _context.Documents.Count();
-            ViewBag.DrawingCount = _context.Drawings.Count();
-            ViewBag.InvoiceCount = _context.Invoices.Count();
-            ViewBag.MaterialCount = _context.Materials.Count();
-            ViewBag.SupplierCount = _context.Suppliers.Count();
+			// ── Counts ────────────────────────────────────
+			ViewBag.EmployeeCount = _context.Employees.Count();
+			ViewBag.ProjectCount = _context.Projects.Count();
+			ViewBag.TaskCount = _context.Tasks.Count();
+			ViewBag.InvoiceCount = _context.Invoices.Count();
+			ViewBag.DocumentCount = _context.Documents.Count();
+			ViewBag.MaterialCount = _context.Materials.Count();
+			ViewBag.SupplierCount = _context.Suppliers.Count();
+			ViewBag.SiteVisitCount = _context.SiteVisits.Count();
 
-            // ── Active Projects ───────────────────────
-            ViewBag.ActiveProjects = _context.Projects
-                .Where(p => p.Status == ProjectStatus.InProgress)
-                .Count();
+			// ── Project Status Breakdown ──────────────────
+			ViewBag.ProjectsInProgress = _context.Projects
+				.Count(p => p.Status == ProjectStatus.InProgress);
+			ViewBag.ProjectsCompleted = _context.Projects
+				.Count(p => p.Status == ProjectStatus.Completed);
+			ViewBag.ProjectsPlanning = _context.Projects
+				.Count(p => p.Status == ProjectStatus.Planning);
+			ViewBag.ProjectsOnHold = _context.Projects
+				.Count(p => p.Status == ProjectStatus.OnHold);
 
-            // ── Pending Tasks ─────────────────────────
-            ViewBag.PendingTasks = _context.Tasks
-                .Where(t => t.Status == TasksStatus.Pending)
-                .Count();
+			// ── Recent Data ───────────────────────────────
+			ViewBag.RecentProjects = _context.Projects
+				.OrderByDescending(p => p.StartDate)
+				.Take(5)
+				.ToList();
 
-            // ── Unpaid Invoices ───────────────────────
-            ViewBag.UnpaidInvoices = _context.Invoices
-                .Where(i => i.Invoice_Status == InvoiceStatus.Unpaid)
-                .Count();
+			ViewBag.RecentTasks = _context.Tasks
+				.OrderByDescending(t => t.CreatedAt)
+				.Take(5)
+				.ToList();
 
-            // ── Recent Projects ───────────────────────
-            ViewBag.RecentProjects = _context.Projects
-                .OrderByDescending(p => p.StartDate)
-                .Take(5)
-                .ToList();
+			ViewBag.RecentEmployees = _context.Employees
+				.OrderByDescending(e => e.HireDate)
+				.Take(5)
+				.ToList();
 
-            // ── Recent Tasks ──────────────────────────
-            ViewBag.RecentTasks = _context.Tasks
-                .Include(t => t.Project)
-                .OrderByDescending(t => t.CreatedAt)
-                .Take(5)
-                .ToList();
+			return View();
+		}
 
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new BonyanForEngineeringConsultingFirms.Models.ErrorViewModel
-            {
-                RequestId = System.Diagnostics.Activity.Current?.Id
-                            ?? HttpContext.TraceIdentifier
-            });
-        }
-    }
+		[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+		public IActionResult Error()
+		{
+			return View(new BonyanForEngineeringConsultingFirms.Models.ErrorViewModel
+			{
+				RequestId = System.Diagnostics.Activity.Current?.Id
+							?? HttpContext.TraceIdentifier
+			});
+		}
+	}
 }
