@@ -1,0 +1,189 @@
+﻿@model IEnumerable<Bonyan.DAL.Models.Employee>
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "الموظفون";
+}
+
+<link rel="stylesheet" href="~/css/employee.css" />
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-users" style="color:var(--secondary)"></i>
+            <span data-lang="employees">الموظفون</span>
+        </h2>
+        <p data-lang="employees_sub">إدارة بيانات الموظفين</p>
+    </div>
+    <a asp-action="Create" class="btn-bonyan-secondary">
+        <i class="fas fa-plus"></i>
+        <span data-lang="add_employee">إضافة موظف</span>
+    </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="filter-search">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput"
+               placeholder="بحث عن موظف..."
+               data-lang-placeholder="search_employee"
+               onkeyup="filterTable()" />
+    </div>
+    <select class="filter-select" id="genderFilter" onchange="filterTable()">
+        <option value="" data-lang="all_genders">كل الأجناس</option>
+        <option value="Male" data-lang="male">ذكر</option>
+        <option value="Female" data-lang="female">أنثى</option>
+    </select>
+    <select class="filter-select" id="specFilter" onchange="filterTable()">
+        <option value="" data-lang="all_specs">كل التخصصات</option>
+        @foreach (var s in Enum.GetValues(typeof(Specialization)))
+        {
+            <option value="@s">@s</option>
+        }
+    </select>
+</div>
+
+<!-- Table Card -->
+<div class="table-card">
+    <div class="table-card-header">
+        <h5>
+            <i class="fas fa-list"></i>
+            <span data-lang="employee_list">قائمة الموظفين</span>
+        </h5>
+        <span style="font-size:0.85rem; color:#888">
+            <span data-lang="total">الإجمالي</span>:
+            <strong>@Model.Count()</strong>
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="emp-table" id="empTable">
+            <thead>
+                <tr>
+                    <th data-lang="employee">#</th>
+                    <th data-lang="employee">الموظف</th>
+                    <th data-lang="email">البريد الإلكتروني</th>
+                    <th data-lang="phone">الهاتف</th>
+                    <th data-lang="specialization">التخصص</th>
+                    <th data-lang="gender">الجنس</th>
+                    <th data-lang="salary">الراتب</th>
+                    <th data-lang="hiredate">تاريخ التعيين</th>
+                    <th data-lang="actions">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="9">
+                            <div class="empty-state">
+                                <i class="fas fa-users-slash"></i>
+                                <p data-lang="no_employees">لا يوجد موظفون حتى الآن</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    int i = 1;
+                    foreach (var emp in Model)
+                    {
+                        string initials = emp.FirstName[0].ToString().ToUpper()
+                        + emp.LastName[0].ToString().ToUpper();
+
+                        string genderAr = emp.Gender == Gender.Male ? "ذكر" : "أنثى";
+                        string genderBadge = emp.Gender == Gender.Male
+                        ? "badge-male" : "badge-female";
+
+                        string specAr = emp.Specialization switch
+                        {
+                            Specialization.Civil => "مدني",
+                            Specialization.Mechanical => "ميكانيكا",
+                            Specialization.Electrical => "كهرباء",
+                            Specialization.Architectural => "معماري",
+                            _ => emp.Specialization.ToString()
+                        };
+
+                        <tr data-gender="@emp.Gender" data-spec="@emp.Specialization">
+                            <td>@(i++)</td>
+                            <td>
+                                <div class="emp-name-cell">
+                                    <div class="emp-avatar">@initials</div>
+                                    <div class="emp-info">
+                                        <p>@emp.FirstName @emp.LastName</p>
+                                        <span>ID: @emp.EmployeeId</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@emp.Email</td>
+                            <td>@(emp.PhoneNum ?? "—")</td>
+                            <td>
+                                <span class="badge-spec"
+                                      data-en="@emp.Specialization.ToString()"
+                                      data-ar="@specAr">
+                                    @specAr
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-gender @genderBadge"
+                                      data-en="@emp.Gender.ToString()"
+                                      data-ar="@genderAr">
+                                    @genderAr
+                                </span>
+                            </td>
+                            <td>@emp.Salary.ToString("N2") ج.م</td>
+                            <td>@emp.HireDate.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <div class="action-btns">
+                                    <a asp-action="Details"
+                                       asp-route-id="@emp.EmployeeId"
+                                       class="btn-action view"
+                                       title="تفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit"
+                                       asp-route-id="@emp.EmployeeId"
+                                       class="btn-action edit"
+                                       title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a asp-action="Delete"
+                                       asp-route-id="@emp.EmployeeId"
+                                       class="btn-action delete"
+                                       title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const gender = document.getElementById('genderFilter').value;
+            const spec   = document.getElementById('specFilter').value;
+            const rows   = document.querySelectorAll('#empTable tbody tr');
+
+            rows.forEach(row => {
+                const text      = row.innerText.toLowerCase();
+                const rowGender = row.getAttribute('data-gender') || '';
+                const rowSpec   = row.getAttribute('data-spec')   || '';
+
+                const matchSearch = text.includes(search);
+                const matchGender = gender === '' || rowGender === gender;
+                const matchSpec   = spec   === '' || rowSpec   === spec;
+
+                row.style.display = (matchSearch && matchGender && matchSpec)
+                                    ? '' : 'none';
+            });
+        }
+    </script>
+}
