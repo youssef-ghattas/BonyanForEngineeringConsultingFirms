@@ -1,0 +1,294 @@
+﻿@using Bonyan.DAL.Enums
+@using Bonyan.DAL.Models
+@using Task = Bonyan.DAL.Models.Task
+@{
+    ViewData["Title"] = "لوحة التحكم";
+}
+
+<!-- ── Page Header ──────────────────────────────────── -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-1" style="color:var(--primary); font-weight:700;">
+            <i class="fas fa-chart-line me-2" style="color:var(--secondary);"></i>
+            <span data-lang="dashboard">لوحة التحكم</span>
+        </h4>
+        <p class="text-muted mb-0" style="font-size:0.88rem;">
+            مرحباً، @(Context.Session.GetString("FullName") ?? "")
+            — @DateTime.Now.ToString("dddd، dd MMMM yyyy")
+        </p>
+    </div>
+</div>
+
+<!-- ── Row 1: Main Stat Cards ───────────────────────── -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <a asp-controller="Employee" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+                <div class="stat-info">
+                    <h3>@ViewBag.EmployeeCount</h3>
+                    <p data-lang="employees">الموظفون</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <a asp-controller="Project" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-icon gold"><i class="fas fa-project-diagram"></i></div>
+                <div class="stat-info">
+                    <h3>@ViewBag.ProjectCount</h3>
+                    <p data-lang="projects">المشاريع</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <a asp-controller="Task" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-tasks"></i></div>
+                <div class="stat-info">
+                    <h3>@ViewBag.TaskCount</h3>
+                    <p data-lang="tasks">المهام</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <a asp-controller="Invoice" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-icon red"><i class="fas fa-file-invoice-dollar"></i></div>
+                <div class="stat-info">
+                    <h3>@ViewBag.InvoiceCount</h3>
+                    <p data-lang="invoices">الفواتير</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- ── Row 2: Secondary Stat Cards ──────────────────── -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon gold"><i class="fas fa-spinner"></i></div>
+            <div class="stat-info">
+                <h3>@ViewBag.ActiveProjects</h3>
+                <p>مشاريع نشطة</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-clock"></i></div>
+            <div class="stat-info">
+                <h3>@ViewBag.PendingTasks</h3>
+                <p>مهام معلقة</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <a asp-controller="Document" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-file-alt"></i></div>
+                <div class="stat-info">
+                    <h3>@ViewBag.DocumentCount</h3>
+                    <p data-lang="documents">المستندات</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon red"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="stat-info">
+                <h3>@ViewBag.UnpaidInvoices</h3>
+                <p>فواتير غير مدفوعة</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Row 3: More Stats ─────────────────────────────── -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <a asp-controller="Drawing" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-drafting-compass"></i></div>
+                <div class="stat-info">
+                    <h3>@ViewBag.DrawingCount</h3>
+                    <p data-lang="drawings">الرسومات</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <a asp-controller="Material" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-icon gold"><i class="fas fa-boxes"></i></div>
+                <div class="stat-info">
+                    <h3>@ViewBag.MaterialCount</h3>
+                    <p data-lang="materials">المواد</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <a asp-controller="Supplier" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-truck"></i></div>
+                <div class="stat-info">
+                    <h3>@ViewBag.SupplierCount</h3>
+                    <p data-lang="suppliers">الموردون</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <a asp-controller="Inventory" asp-action="Index" class="text-decoration-none">
+            <div class="stat-card">
+                <div class="stat-icon red"><i class="fas fa-warehouse"></i></div>
+                <div class="stat-info">
+                    <h3>0</h3>
+                    <p data-lang="inventory">المخزون</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- ── Row 4: Recent Tables ──────────────────────────── -->
+<div class="row g-4">
+
+    <!-- Recent Projects -->
+    <div class="col-lg-6">
+        <div class="bonyan-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="bonyan-card-title mb-0">
+                    <i class="fas fa-project-diagram me-2" style="color:var(--secondary);"></i>
+                    أحدث المشاريع
+                </h6>
+                <a asp-controller="Project" asp-action="Index"
+                   class="btn-bonyan-secondary" style="padding:5px 14px; font-size:0.8rem;">
+                    عرض الكل
+                </a>
+            </div>
+            <table class="bonyan-table">
+                <thead>
+                    <tr>
+                        <th>اسم المشروع</th>
+                        <th>العميل</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ViewBag.RecentProjects != null)
+                    {
+                        foreach (var p in (List<Project>)ViewBag.RecentProjects)
+                        {
+                            <tr>
+                                <td>@p.ProjectName</td>
+                                <td>@(p.Client_Name ?? "—")</td>
+                                <td>
+                                    @{
+                                        var badgeClass = p.Status switch
+                                        {
+                                            ProjectStatus.InProgress => "badge-success",
+                                            ProjectStatus.Planning => "badge-info",
+                                            ProjectStatus.OnHold => "badge-warning",
+                                            ProjectStatus.Completed => "badge-primary",
+                                            _ => "badge-danger"
+                                        };
+                                        var statusText = p.Status switch
+                                        {
+                                            ProjectStatus.InProgress => "جاري",
+                                            ProjectStatus.Planning => "تخطيط",
+                                            ProjectStatus.OnHold => "متوقف",
+                                            ProjectStatus.Completed => "مكتمل",
+                                            _ => "ملغي"
+                                        };
+                                    }
+                                    <span class="badge-bonyan @badgeClass">@statusText</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    @if (ViewBag.RecentProjects == null || ((List<Project>)ViewBag.RecentProjects).Count == 0)
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-3">
+                                لا توجد مشاريع بعد
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Tasks -->
+    <div class="col-lg-6">
+        <div class="bonyan-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="bonyan-card-title mb-0">
+                    <i class="fas fa-tasks me-2" style="color:var(--secondary);"></i>
+                    أحدث المهام
+                </h6>
+                <a asp-controller="Task" asp-action="Index"
+                   class="btn-bonyan-secondary" style="padding:5px 14px; font-size:0.8rem;">
+                    عرض الكل
+                </a>
+            </div>
+            <table class="bonyan-table">
+                <thead>
+                    <tr>
+                        <th>اسم المهمة</th>
+                        <th>المشروع</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ViewBag.RecentTasks != null)
+                    {
+                        foreach (var t in (List<Task>)ViewBag.RecentTasks)
+                        {
+                            <tr>
+                                <td>@t.Task_Name</td>
+                                <td>@(t.Project?.ProjectName ?? "—")</td>
+                                <td>
+                                    @{
+                                        var tBadge = t.Status switch
+                                        {
+                                            TasksStatus.Pending => "badge-warning",
+                                            TasksStatus.InProgress => "badge-success",
+                                            TasksStatus.UnderReview => "badge-info",
+                                            TasksStatus.Completed => "badge-primary",
+                                            _ => "badge-danger"
+                                        };
+                                        var tText = t.Status switch
+                                        {
+                                            TasksStatus.Pending => "معلقة",
+                                            TasksStatus.InProgress => "جارية",
+                                            TasksStatus.UnderReview => "قيد المراجعة",
+                                            TasksStatus.Completed => "مكتملة",
+                                            _ => "ملغاة"
+                                        };
+                                    }
+                                    <span class="badge-bonyan @tBadge">@tText</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    @if (ViewBag.RecentTasks == null || ((List<Task>)ViewBag.RecentTasks).Count == 0)
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-3">
+                                لا توجد مهام بعد
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
