@@ -48,5 +48,10 @@ namespace Bonyan.BLL.Services
 			_repository.Delete(id);
 			_repository.Save();
 		}
-	}
+
+        public IQueryable<T> GetWithIncludes()
+        {
+            return _repository.GetWithIncludes();
+        }
+    }
 }

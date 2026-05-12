@@ -1,0 +1,130 @@
+﻿@model Bonyan.DAL.Models.Project
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "إضافة مشروع";
+}
+
+<link rel="stylesheet" href="~/css/project.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-plus-circle"
+               style="color:var(--secondary)"></i>
+            <span data-lang="add_project">إضافة مشروع جديد</span>
+        </h2>
+        <p data-lang="add_project_sub">أدخل بيانات المشروع الجديد</p>
+    </div>
+    <a asp-action="Index" class="btn-bonyan-primary">
+        <i class="fas fa-arrow-right"></i>
+        <span data-lang="back">رجوع</span>
+    </a>
+</div>
+
+<div class="form-card">
+    <div class="form-card-header">
+        <i class="fas fa-project-diagram"></i>
+        <h4 data-lang="project_info">بيانات المشروع</h4>
+    </div>
+
+    <div class="form-card-body">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <!-- Basic Info -->
+            <div class="form-section-title" data-lang="basic_info">
+                المعلومات الأساسية
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>
+                        <span data-lang="project_name">اسم المشروع</span>
+                        <span class="required">*</span>
+                    </label>
+                    <input asp-for="ProjectName" class="form-control"
+                           placeholder="اسم المشروع" />
+                    <span asp-validation-for="ProjectName"
+                          class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label data-lang="client">اسم العميل</label>
+                    <input asp-for="Client_Name" class="form-control"
+                           placeholder="اسم العميل" />
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label data-lang="location">الموقع</label>
+                    <input asp-for="Location" class="form-control"
+                           placeholder="موقع المشروع" />
+                </div>
+                <div class="form-group">
+                    <label>
+                        <span data-lang="status">الحالة</span>
+                        <span class="required">*</span>
+                    </label>
+                    <select asp-for="Status" class="form-select">
+                        @foreach (var s in Enum.GetValues(typeof(ProjectStatus)))
+                        {
+                            string statusAr = s.ToString() switch
+                            {
+                                "Planning" => "تخطيط",
+                                "InProgress" => "جاري التنفيذ",
+                                "Completed" => "مكتمل",
+                                "OnHold" => "موقوف",
+                                "Cancelled" => "ملغي",
+                                _ => s.ToString()
+                            };
+                            <option value="@s">@statusAr</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Status"
+                          class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Dates & Budget -->
+            <div class="form-section-title" data-lang="dates_budget">
+                التواريخ والميزانية
+            </div>
+
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label data-lang="start_date">تاريخ البدء</label>
+                    <input asp-for="StartDate" class="form-control"
+                           type="date" />
+                </div>
+                <div class="form-group">
+                    <label data-lang="end_date">تاريخ الانتهاء</label>
+                    <input asp-for="EndDate" class="form-control"
+                           type="date" />
+                </div>
+                <div class="form-group">
+                    <label data-lang="budget">الميزانية (ج.م)</label>
+                    <input asp-for="Budget" class="form-control"
+                           type="number" step="any" min="0"
+                           placeholder="0.00" />
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a asp-action="Index" class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i>
+                    <span data-lang="cancel">إلغاء</span>
+                </a>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-save"></i>
+                    <span data-lang="save">حفظ</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

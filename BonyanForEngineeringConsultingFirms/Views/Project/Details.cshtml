@@ -1,0 +1,358 @@
+﻿@model Bonyan.DAL.Models.Project
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تفاصيل المشروع";
+    var role = Context.Session.GetString("Role");
+
+    string statusAr = Model.Status switch
+    {
+        ProjectStatus.Planning => "تخطيط",
+        ProjectStatus.InProgress => "جاري التنفيذ",
+        ProjectStatus.Completed => "مكتمل",
+        ProjectStatus.OnHold => "موقوف",
+        ProjectStatus.Cancelled => "ملغي",
+        _ => Model.Status.ToString()
+    };
+
+    string badgeClass = Model.Status switch
+    {
+        ProjectStatus.Planning => "badge-planning",
+        ProjectStatus.InProgress => "badge-inprogress",
+        ProjectStatus.Completed => "badge-completed",
+        ProjectStatus.OnHold => "badge-onhold",
+        ProjectStatus.Cancelled => "badge-cancelled",
+        _ => "badge-planning"
+    };
+}
+
+<link rel="stylesheet" href="~/css/project.css" />
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-project-diagram"
+               style="color:var(--secondary)"></i>
+            <span data-lang="project_details">تفاصيل المشروع</span>
+        </h2>
+    </div>
+    <div style="display:flex; gap:10px">
+        @if (role == "Admin")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.ProjectId"
+               class="btn-bonyan-secondary">
+                <i class="fas fa-edit"></i>
+                <span data-lang="edit">تعديل</span>
+            </a>
+        }
+        <a asp-action="Index" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i>
+            <span data-lang="back">رجوع</span>
+        </a>
+    </div>
+</div>
+
+<div class="details-layout">
+
+    <!-- Left: Project Info -->
+    <div>
+        <div class="details-card" style="margin-bottom:22px">
+            <div class="details-header">
+                <div class="details-proj-icon">
+                    <i class="fas fa-hard-hat"></i>
+                </div>
+                <div class="details-header-info">
+                    <h3>@Model.ProjectName</h3>
+                    <span>
+                        <span class="badge-status @badgeClass">
+                            @statusAr
+                        </span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="details-body">
+                <div class="details-section">
+                    <div class="details-section-title"
+                         data-lang="basic_info">
+                        المعلومات الأساسية
+                    </div>
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <label data-lang="project_name">
+                                اسم المشروع
+                            </label>
+                            <p>@Model.ProjectName</p>
+                        </div>
+                        <div class="detail-item">
+                            <label data-lang="client">العميل</label>
+                            <p>@(Model.Client_Name ?? "—")</p>
+                        </div>
+                        <div class="detail-item">
+                            <label data-lang="location">الموقع</label>
+                            <p>@(Model.Location ?? "—")</p>
+                        </div>
+                        <div class="detail-item">
+                            <label data-lang="start_date">
+                                تاريخ البدء
+                            </label>
+                            <p>
+                                @(Model.StartDate.HasValue
+                                                                ? Model.StartDate.Value
+                                                                .ToString("yyyy-MM-dd")
+                                                                : "—")
+                            </p>
+                        </div>
+                        <div class="detail-item">
+                            <label data-lang="end_date">
+                                تاريخ الانتهاء
+                            </label>
+                            <p>
+                                @(Model.EndDate.HasValue
+                                                                ? Model.EndDate.Value
+                                                                .ToString("yyyy-MM-dd")
+                                                                : "—")
+                            </p>
+                        </div>
+                        <div class="detail-item">
+                            <label data-lang="budget">الميزانية</label>
+                            <p>
+                                @(Model.Budget.HasValue
+                                                                ? Model.Budget.Value.ToString("N0")
+                                                                + " ج.م"
+                                                                : "—")
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasks Section -->
+                <div class="details-section">
+                    <div class="details-section-title"
+                         data-lang="tasks">
+                        المهام
+                    </div>
+                    @if (Model.Tasks != null && Model.Tasks.Any())
+                    {
+                        <table style="width:100%;
+                                          border-collapse:collapse;
+                                          font-size:0.88rem">
+                            <thead>
+                                <tr style="background:#F8F9FC">
+                                    <th style="padding:10px;
+                                                   text-align:right;
+                                                   color:#666;
+                                                   font-size:0.78rem"
+                                        data-lang="task_name">
+                                        المهمة
+                                    </th>
+                                    <th style="padding:10px;
+                                                   text-align:right;
+                                                   color:#666;
+                                                   font-size:0.78rem"
+                                        data-lang="status">
+                                        الحالة
+                                    </th>
+                                    <th style="padding:10px;
+                                                   text-align:right;
+                                                   color:#666;
+                                                   font-size:0.78rem"
+                                        data-lang="due_date">
+                                        الموعد النهائي
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in Model.Tasks)
+                                {
+                                    string taskStatusAr = t.Status switch
+                                    {
+                                        TasksStatus.Pending => "معلق",
+                                        TasksStatus.InProgress => "جاري",
+                                        TasksStatus.UnderReview => "قيد المراجعة",
+                                        TasksStatus.Completed => "مكتمل",
+                                        TasksStatus.Cancelled => "ملغي",
+                                        _ => t.Status.ToString()
+                                    };
+                                    <tr style="border-bottom:1px solid #F4F6F9">
+                                        <td style="padding:10px">
+                                            @t.Task_Name
+                                        </td>
+                                        <td style="padding:10px">
+                                            @taskStatusAr
+                                        </td>
+                                        <td style="padding:10px">
+                                            @(t.DueDate.HasValue
+                                                                                ? t.DueDate.Value
+                                                                                .ToString("yyyy-MM-dd")
+                                                                                : "—")
+                                </td>
+                            </tr>
+                                                        }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p style="color:#aaa; font-size:0.88rem"
+                           data-lang="no_tasks">
+                            لا توجد مهام لهذا المشروع
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Assign Employees -->
+    @if (role == "Admin")
+    {
+        <div class="assign-card">
+            <div class="assign-card-header">
+                <i class="fas fa-users"></i>
+                <h5 data-lang="assign_employees">تعيين الموظفين</h5>
+            </div>
+            <div class="assign-card-body">
+
+                <!-- Assigned List -->
+                @if (Model.EmployeeProjects != null
+                            && Model.EmployeeProjects.Any())
+                {
+                    <ul class="assigned-list">
+                        @foreach (var ep in Model.EmployeeProjects)
+                        {
+                            string ini =
+                            ep.Employee.FirstName[0].ToString()
+                            .ToUpper()
+                            + ep.Employee.LastName[0].ToString()
+                            .ToUpper();
+                            <li class="assigned-item">
+                                <div class="assigned-emp">
+                                    <div class="assigned-avatar">
+                                        @ini
+                                    </div>
+                                    <div class="assigned-emp-info">
+                                        <p>
+                                            @ep.Employee.FirstName
+                                            @ep.Employee.LastName
+                                        </p>
+                                        <span>
+                                            @(ep.RoleInProject ?? "—")
+                                        </span>
+                                    </div>
+                                </div>
+                                <form asp-action="RemoveEmployee"
+                                      method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden"
+                                           name="projectId"
+                                           value="@Model.ProjectId" />
+                                    <input type="hidden"
+                                           name="employeeId"
+                                           value="@ep.EmployeeId" />
+                                    <button type="submit"
+                                            class="btn-remove"
+                                            title="إزالة">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p style="color:#aaa; font-size:0.83rem;
+                                       margin-bottom:16px"
+                       data-lang="no_assigned">
+                        لم يتم تعيين موظفين بعد
+                    </p>
+                }
+
+                <!-- Assign Form -->
+                <form asp-action="AssignEmployee" method="post"
+                      class="assign-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="projectId"
+                           value="@Model.ProjectId" />
+
+                    <div class="form-group">
+                        <label data-lang="select_employee">
+                            اختر موظف
+                        </label>
+                        <select name="employeeId" class="form-select"
+                                required>
+                            <option value="">-- اختر موظف --</option>
+                            @if (ViewBag.Employees != null)
+                            {
+                                foreach (var emp in ViewBag.Employees)
+                                {
+                                    <option value="@emp.EmployeeId">
+                                        @emp.FirstName @emp.LastName
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-lang="role_in_project">
+                            الدور في المشروع
+                        </label>
+                        <input type="text" name="roleInProject"
+                               class="form-control"
+                               placeholder="مثال: مهندس مدني" />
+                    </div>
+
+                    <button type="submit" class="btn-bonyan-secondary"
+                            style="width:100%">
+                        <i class="fas fa-user-plus"></i>
+                        <span data-lang="assign">تعيين</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Employee: just show team -->
+        <div class="assign-card">
+            <div class="assign-card-header">
+                <i class="fas fa-users"></i>
+                <h5 data-lang="project_team">فريق المشروع</h5>
+            </div>
+            <div class="assign-card-body">
+                @if (Model.EmployeeProjects != null
+                            && Model.EmployeeProjects.Any())
+                {
+                    <ul class="assigned-list">
+                        @foreach (var ep in Model.EmployeeProjects)
+                        {
+                            string ini =
+                            ep.Employee.FirstName[0].ToString()
+                            .ToUpper()
+                            + ep.Employee.LastName[0].ToString()
+                            .ToUpper();
+                            <li class="assigned-item">
+                                <div class="assigned-emp">
+                                    <div class="assigned-avatar">
+                                        @ini
+                                    </div>
+                                    <div class="assigned-emp-info">
+                                        <p>
+                                            @ep.Employee.FirstName
+                                            @ep.Employee.LastName
+                                        </p>
+                                        <span>
+                                            @(ep.RoleInProject ?? "—")
+                                        </span>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    }
+</div>

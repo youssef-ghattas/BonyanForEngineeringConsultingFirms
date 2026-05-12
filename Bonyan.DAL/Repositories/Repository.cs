@@ -58,5 +58,10 @@ namespace Bonyan.DAL.Repositories
 		{
 			_context.SaveChanges();
 		}
-	}
+
+        public IQueryable<T> GetWithIncludes()
+        {
+            return _dbSet.AsQueryable();
+        }
+    }
 }

@@ -17,7 +17,9 @@ namespace Bonyan.DAL.Repositories
 		void Update(T entity);
 		void Delete(int id);
 
-		// ── Save ─────────────────────────────────────────
-		void Save();
+        // ── Save ─────────────────────────────────────────
+
+        IQueryable<T> GetWithIncludes(); // تسمح لنا بإضافة Include قبل التنفيذ
+        void Save();
 	}
 }

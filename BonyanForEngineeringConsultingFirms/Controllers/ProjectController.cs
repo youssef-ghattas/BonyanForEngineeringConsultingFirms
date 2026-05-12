@@ -1,80 +1,113 @@
-﻿using Bonyan.BLL.Services;
+﻿using Bonyan.DAL.Context;
 using Bonyan.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace BonyanForEngineeringConsultingFirms.Controllers
+namespace Bonyan.Web.Controllers
 {
     public class ProjectController : Controller
     {
-        private readonly IService<Project> _projectService;
+        private readonly BonyanDbContext _context;
 
-        public ProjectController(IService<Project> projectService)
+        public ProjectController(BonyanDbContext context)
         {
-            _projectService = projectService;
+            _context = context;
         }
 
-        public IActionResult Index()
+        // 1. عرض قائمة المشاريع (Index)
+        public async Task<IActionResult> Index()
         {
-            var projects = _projectService.GetAll();
+            var projects = await _context.Projects.Include(p => p.EmployeeProjects).ToListAsync();
             return View(projects);
         }
 
-        public IActionResult Details(int id)
-        {
-            var project = _projectService.GetById(id);
-            if (project == null) return NotFound();
-            return View(project);
-        }
-
+        // 2. صفحة إضافة مشروع جديد (GET)
         public IActionResult Create()
         {
             return View();
         }
 
+        // 3. حفظ المشروع الجديد (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Project project)
+        public async Task<IActionResult> Create(Project project)
         {
             if (ModelState.IsValid)
             {
-                _projectService.Add(project);
+                _context.Add(project);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(project);
         }
 
-        public IActionResult Edit(int id)
+        // 4. صفحة التعديل (GET)
+        public async Task<IActionResult> Edit(int? id)
         {
-            var project = _projectService.GetById(id);
+            if (id == null) return NotFound();
+
+            var project = await _context.Projects.FindAsync(id);
             if (project == null) return NotFound();
+
             return View(project);
         }
 
+        // 5. حفظ التعديلات (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(Project project)
+        public async Task<IActionResult> Edit(int id, Project project)
         {
+            if (id != project.ProjectId) return NotFound();
+
             if (ModelState.IsValid)
             {
-                _projectService.Update(project);
+                try
+                {
+                    _context.Update(project);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ProjectExists(project.ProjectId)) return NotFound();
+                    else throw;
+                }
                 return RedirectToAction(nameof(Index));
             }
             return View(project);
         }
 
-        public IActionResult Delete(int id)
+        // 6. صفحة تأكيد الحذف (GET)
+        public async Task<IActionResult> Delete(int? id)
         {
-            var project = _projectService.GetById(id);
+            if (id == null) return NotFound();
+
+            var project = await _context.Projects
+                .FirstOrDefaultAsync(m => m.ProjectId == id);
             if (project == null) return NotFound();
+
             return View(project);
         }
 
-        [HttpPost, ActionName("Delete")]
+        // 7. تنفيذ الحذف الفعلي (POST)
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            _projectService.Delete(id);
+            var project = await _context.Projects.FindAsync(id);
+            if (project != null)
+            {
+                _context.Projects.Remove(project);
+                await _context.SaveChangesAsync();
+
+                // إرسال رسالة نجاح تظهر لمرة واحدة
+                TempData["SuccessMessage"] = "تم حذف المشروع بنجاح";
+            }
             return RedirectToAction(nameof(Index));
+        }
+
+        private bool ProjectExists(int id)
+        {
+            return _context.Projects.Any(e => e.ProjectId == id);
         }
     }
 }
