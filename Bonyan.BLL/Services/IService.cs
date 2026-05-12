@@ -16,5 +16,7 @@ namespace Bonyan.BLL.Services
 		void Add(T entity);
 		void Update(T entity);
 		void Delete(int id);
-	}
+
+        IQueryable<T> GetWithIncludes();
+    }
 }
