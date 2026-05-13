@@ -9,7 +9,6 @@ namespace Bonyan.PL.Helpers
         {
             session.SetInt32("UserId", user.UserId);
             session.SetInt32("EmployeeId", user.EmployeeId);
-            session.SetString("Username", user.Username);
             session.SetString("Role", user.Role.ToString());
         }
 

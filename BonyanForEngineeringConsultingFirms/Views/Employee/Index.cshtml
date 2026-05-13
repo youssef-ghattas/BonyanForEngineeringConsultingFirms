@@ -6,6 +6,17 @@
 
 <link rel="stylesheet" href="~/css/employee.css" />
 
+@if (TempData["Success"] != null)
+{
+    <div style="background:#EEFAF2; border:1px solid #C3EDD0;
+                    border-radius:10px; padding:12px 18px; margin-bottom:18px;
+                    color:#28A745; display:flex; align-items:center; gap:10px;
+                    font-size:0.9rem;">
+        <i class="fas fa-check-circle"></i>
+        @TempData["Success"]
+    </div>
+}
+
 <!-- Page Header -->
 <div class="page-header">
     <div class="page-header-left">

@@ -16,13 +16,13 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 		public IActionResult Index()
 		{
-			// redirect to login if not logged in
 			if (HttpContext.Session.GetString("Email") == null)
 				return RedirectToAction("Login", "Account");
 
-			// ── Counts ────────────────────────────────────
+			var role = HttpContext.Session.GetString("Role");
+
+			// ── Counts (same for everyone) ────────────────
 			ViewBag.EmployeeCount = _context.Employees.Count();
-			ViewBag.ProjectCount = _context.Projects.Count();
 			ViewBag.TaskCount = _context.Tasks.Count();
 			ViewBag.InvoiceCount = _context.Invoices.Count();
 			ViewBag.DocumentCount = _context.Documents.Count();
@@ -30,31 +30,60 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			ViewBag.SupplierCount = _context.Suppliers.Count();
 			ViewBag.SiteVisitCount = _context.SiteVisits.Count();
 
-			// ── Project Status Breakdown ──────────────────
-			ViewBag.ProjectsInProgress = _context.Projects
-				.Count(p => p.Status == ProjectStatus.InProgress);
-			ViewBag.ProjectsCompleted = _context.Projects
-				.Count(p => p.Status == ProjectStatus.Completed);
-			ViewBag.ProjectsPlanning = _context.Projects
-				.Count(p => p.Status == ProjectStatus.Planning);
-			ViewBag.ProjectsOnHold = _context.Projects
-				.Count(p => p.Status == ProjectStatus.OnHold);
+			if (role == "Admin")
+			{
+				// Admin sees ALL projects
+				ViewBag.ProjectCount = _context.Projects.Count();
 
-			// ── Recent Data ───────────────────────────────
-			ViewBag.RecentProjects = _context.Projects
-				.OrderByDescending(p => p.StartDate)
-				.Take(5)
-				.ToList();
+				ViewBag.ProjectsInProgress = _context.Projects
+					.Count(p => p.Status == ProjectStatus.InProgress);
+				ViewBag.ProjectsCompleted = _context.Projects
+					.Count(p => p.Status == ProjectStatus.Completed);
+				ViewBag.ProjectsPlanning = _context.Projects
+					.Count(p => p.Status == ProjectStatus.Planning);
+				ViewBag.ProjectsOnHold = _context.Projects
+					.Count(p => p.Status == ProjectStatus.OnHold);
+
+				ViewBag.RecentProjects = _context.Projects
+					.OrderByDescending(p => p.StartDate)
+					.Take(5).ToList();
+			}
+			else
+			{
+				// Employee sees ONLY assigned projects
+				var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+
+				var myProjects = _context.EmployeeProjects
+					.Where(ep => ep.EmployeeId == employeeId)
+					.Include(ep => ep.Project)
+					.Select(ep => ep.Project)
+					.ToList();
+
+				ViewBag.ProjectCount = myProjects.Count;
+
+				ViewBag.ProjectsInProgress = myProjects
+					.Count(p => p.Status == ProjectStatus.InProgress);
+				ViewBag.ProjectsCompleted = myProjects
+					.Count(p => p.Status == ProjectStatus.Completed);
+				ViewBag.ProjectsPlanning = myProjects
+					.Count(p => p.Status == ProjectStatus.Planning);
+				ViewBag.ProjectsOnHold = myProjects
+					.Count(p => p.Status == ProjectStatus.OnHold);
+
+				ViewBag.RecentProjects = myProjects
+					.OrderByDescending(p => p.StartDate)
+					.Take(5).ToList();
+			}
 
 			ViewBag.RecentTasks = _context.Tasks
 				.OrderByDescending(t => t.CreatedAt)
-				.Take(5)
-				.ToList();
+				.Take(5).ToList();
 
 			ViewBag.RecentEmployees = _context.Employees
 				.OrderByDescending(e => e.HireDate)
-				.Take(5)
-				.ToList();
+				.Take(5).ToList();
+
+			ViewBag.IsAdmin = role == "Admin";
 
 			return View();
 		}

@@ -22,9 +22,8 @@ namespace Bonyan.DAL.Enums
 
 	public enum UserRole
 	{
-		Admin,
-		Manager,
-		Engineer
+		Engineer,       // regular engineer
+		ProjectManager  // manages tasks inside assigned projects
 	}
 
 	public enum ProjectStatus

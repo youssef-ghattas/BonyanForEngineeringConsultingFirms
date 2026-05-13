@@ -44,8 +44,8 @@
             </p>
         </div>
 
-        <form asp-action="DeleteConfirmed" method="post"
-              style="display:flex; gap:12px; justify-content:center">
+        <<form asp-action="Delete" method="post"
+               style="display:flex; gap:12px; justify-content:center">
             @Html.AntiForgeryToken()
             <input type="hidden" name="id" value="@Model.EmployeeId" />
             <a asp-action="Index" class="btn-bonyan-primary">

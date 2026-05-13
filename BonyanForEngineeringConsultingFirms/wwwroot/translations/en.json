@@ -93,6 +93,15 @@
   "task_name": "Task",
   "due_date": "Due Date",
   "delete_project": "Delete Project",
-   "SearchProjectPlaceholder": "Search for a project..."
-  
+  "SearchProjectPlaceholder": "Search for a project...",
+  "management": "Management",
+  "operations": "Operations",
+  "finance": "Finance",
+  "inventory_section": "Inventory & Suppliers",
+  "my_projects": "My Projects",
+  "my_work": "My Work",
+  "role": "Job Role",
+  "new_password": "New Password"
+
+
 }

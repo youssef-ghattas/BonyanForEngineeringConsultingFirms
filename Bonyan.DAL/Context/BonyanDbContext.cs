@@ -11,13 +11,14 @@ namespace Bonyan.DAL.Context
 {
 	public class BonyanDbContext : DbContext
 	{
-		public BonyanDbContext(DbContextOptions<BonyanDbContext> options) : base(options)
-		{
-		}
+		public BonyanDbContext(DbContextOptions<BonyanDbContext> options)
+			: base(options) { }
 
-		// ── DbSets ──────────────────────────────────────────
+		// ── DbSets ───────────────────────────────────────
 		public DbSet<Employee> Employees { get; set; }
 		public DbSet<UserAccount> UserAccounts { get; set; }
+		public DbSet<Admin> Admins { get; set; }
+		public DbSet<AdminAccount> AdminAccounts { get; set; }
 		public DbSet<Project> Projects { get; set; }
 		public DbSet<EmployeeProject> EmployeeProjects { get; set; }
 		public DbSet<Task> Tasks { get; set; }
@@ -37,149 +38,154 @@ namespace Bonyan.DAL.Context
 		{
 			base.OnModelCreating(modelBuilder);
 
-			// ── Composite Primary Keys ───────────────────────
+			// ── Composite Keys ───────────────────────────
 			modelBuilder.Entity<EmployeeProject>()
 				.HasKey(ep => new { ep.EmployeeId, ep.ProjectId });
 
 			modelBuilder.Entity<MaterialSupplier>()
 				.HasKey(ms => new { ms.MaterialID, ms.SupplierID });
 
-			// ── MaterialInventory Unique Index ───────────────
-			modelBuilder.Entity<MaterialInventory>()
-				.HasIndex(mi => new { mi.InventoryID, mi.MaterialID })
-				.IsUnique();
+			// ── Admin → AdminAccount (one-to-one) ────────
+			modelBuilder.Entity<Admin>()
+				.HasOne(a => a.AdminAccount)
+				.WithOne(aa => aa.Admin)
+				.HasForeignKey<AdminAccount>(aa => aa.AdminId)
+				.OnDelete(DeleteBehavior.Restrict);
 
-			// ── Employee → UserAccount (one to one) ──────────
+			// ── Employee → UserAccount (one-to-one) ──────
 			modelBuilder.Entity<Employee>()
 				.HasOne(e => e.UserAccount)
 				.WithOne(u => u.Employee)
 				.HasForeignKey<UserAccount>(u => u.EmployeeId)
 				.OnDelete(DeleteBehavior.Restrict);
 
-			// ── UserAccount → Tasks ──────────────────────────
+			// ── Task → Creator ────────────────────────────
 			modelBuilder.Entity<Task>()
 				.HasOne(t => t.Creator)
 				.WithMany(u => u.CreatedTasks)
 				.HasForeignKey(t => t.CreatedBy_UserID)
 				.OnDelete(DeleteBehavior.Restrict);
 
-			// ── Project → Tasks ──────────────────────────────
+			// ── Task → Project ────────────────────────────
 			modelBuilder.Entity<Task>()
 				.HasOne(t => t.Project)
 				.WithMany(p => p.Tasks)
 				.HasForeignKey(t => t.ProjectId)
 				.OnDelete(DeleteBehavior.Restrict);
 
-			// ── Task → Documents ─────────────────────────────
-			modelBuilder.Entity<Document>()
-				.HasOne(d => d.Task)
-				.WithMany(t => t.Documents)
-				.HasForeignKey(d => d.TaskId)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── Task → Drawings ──────────────────────────────
-			modelBuilder.Entity<Drawing>()
-				.HasOne(d => d.Task)
-				.WithMany(t => t.Drawings)
-				.HasForeignKey(d => d.TaskId)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── Task → Invoices ──────────────────────────────
-			modelBuilder.Entity<Invoice>()
-				.HasOne(i => i.Task)
-				.WithMany(t => t.Invoices)
-				.HasForeignKey(i => i.TaskId)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── Invoice → Payments ───────────────────────────
-			modelBuilder.Entity<Payment>()
-				.HasOne(p => p.Invoice)
-				.WithMany(i => i.Payments)
-				.HasForeignKey(p => p.InvoiceID)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── Task → MaterialTasks ─────────────────────────
-			modelBuilder.Entity<MaterialTask>()
-				.HasOne(mt => mt.Task)
-				.WithMany(t => t.MaterialTasks)
-				.HasForeignKey(mt => mt.TaskID)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── Material → MaterialTasks ─────────────────────
-			modelBuilder.Entity<MaterialTask>()
-				.HasOne(mt => mt.Material)
-				.WithMany(m => m.MaterialTasks)
-				.HasForeignKey(mt => mt.MaterialID)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── Material → MaterialSuppliers ─────────────────
-			modelBuilder.Entity<MaterialSupplier>()
-				.HasOne(ms => ms.Material)
-				.WithMany(m => m.MaterialSuppliers)
-				.HasForeignKey(ms => ms.MaterialID)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── Supplier → MaterialSuppliers ─────────────────
-			modelBuilder.Entity<MaterialSupplier>()
-				.HasOne(ms => ms.Supplier)
-				.WithMany(s => s.SuppliedMaterials)
-				.HasForeignKey(ms => ms.SupplierID)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── Material → MaterialInventories ───────────────
-			modelBuilder.Entity<MaterialInventory>()
-				.HasOne(mi => mi.Material)
-				.WithMany(m => m.MaterialInventories)
-				.HasForeignKey(mi => mi.MaterialID)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── Inventory → MaterialInventories ──────────────
-			modelBuilder.Entity<MaterialInventory>()
-				.HasOne(mi => mi.Inventory)
-				.WithMany(i => i.MaterialInventories)
-				.HasForeignKey(mi => mi.InventoryID)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── SiteVisit → Project ───────────────────────────
-			modelBuilder.Entity<SiteVisit>()
-				.HasOne(sv => sv.Project)
-				.WithMany(p => p.SiteVisits)
-				.HasForeignKey(sv => sv.ProjId)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── SiteVisit → Employee ──────────────────────────
-			modelBuilder.Entity<SiteVisit>()
-				.HasOne(sv => sv.Employee)
-				.WithMany(e => e.SiteVisits)
-				.HasForeignKey(sv => sv.EmployeeId)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── Document → Employee ───────────────────────────
-			modelBuilder.Entity<Document>()
-				.HasOne(d => d.Employee)
-				.WithMany(e => e.UploadedDocuments)
-				.HasForeignKey(d => d.EmployeeId)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── Drawing → Employee ────────────────────────────
-			modelBuilder.Entity<Drawing>()
-				.HasOne(d => d.Employee)
-				.WithMany(e => e.UploadedDrawings)
-				.HasForeignKey(d => d.EmployeeId)
-				.OnDelete(DeleteBehavior.Restrict);
-
-			// ── EmployeeProject → Employee ────────────────────
+			// ── EmployeeProject ───────────────────────────
 			modelBuilder.Entity<EmployeeProject>()
 				.HasOne(ep => ep.Employee)
 				.WithMany(e => e.EmployeeProjects)
 				.HasForeignKey(ep => ep.EmployeeId)
 				.OnDelete(DeleteBehavior.Restrict);
 
-			// ── EmployeeProject → Project ─────────────────────
 			modelBuilder.Entity<EmployeeProject>()
 				.HasOne(ep => ep.Project)
 				.WithMany(p => p.EmployeeProjects)
 				.HasForeignKey(ep => ep.ProjectId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			modelBuilder.Entity<EmployeeProject>()
+				.HasOne(ep => ep.AssignedByAdmin)
+				.WithMany()
+				.HasForeignKey(ep => ep.AssignedByAdminId)
+				.OnDelete(DeleteBehavior.SetNull);
+
+			// ── Document ──────────────────────────────────
+			modelBuilder.Entity<Document>()
+				.HasOne(d => d.Task)
+				.WithMany(t => t.Documents)
+				.HasForeignKey(d => d.TaskId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			modelBuilder.Entity<Document>()
+				.HasOne(d => d.Employee)
+				.WithMany(e => e.UploadedDocuments)
+				.HasForeignKey(d => d.EmployeeId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// ── Drawing ───────────────────────────────────
+			modelBuilder.Entity<Drawing>()
+				.HasOne(d => d.Task)
+				.WithMany(t => t.Drawings)
+				.HasForeignKey(d => d.TaskId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			modelBuilder.Entity<Drawing>()
+				.HasOne(d => d.Employee)
+				.WithMany(e => e.UploadedDrawings)
+				.HasForeignKey(d => d.EmployeeId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// ── Invoice ───────────────────────────────────
+			modelBuilder.Entity<Invoice>()
+				.HasOne(i => i.Task)
+				.WithMany(t => t.Invoices)
+				.HasForeignKey(i => i.TaskId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// ── Payment ───────────────────────────────────
+			modelBuilder.Entity<Payment>()
+				.HasOne(p => p.Invoice)
+				.WithMany(i => i.Payments)
+				.HasForeignKey(p => p.InvoiceID)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// ── MaterialTask ──────────────────────────────
+			modelBuilder.Entity<MaterialTask>()
+				.HasOne(mt => mt.Task)
+				.WithMany(t => t.MaterialTasks)
+				.HasForeignKey(mt => mt.TaskID)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			modelBuilder.Entity<MaterialTask>()
+				.HasOne(mt => mt.Material)
+				.WithMany(m => m.MaterialTasks)
+				.HasForeignKey(mt => mt.MaterialID)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// ── MaterialSupplier ──────────────────────────
+			modelBuilder.Entity<MaterialSupplier>()
+				.HasOne(ms => ms.Material)
+				.WithMany(m => m.MaterialSuppliers)
+				.HasForeignKey(ms => ms.MaterialID)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			modelBuilder.Entity<MaterialSupplier>()
+				.HasOne(ms => ms.Supplier)
+				.WithMany(s => s.SuppliedMaterials)
+				.HasForeignKey(ms => ms.SupplierID)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// ── MaterialInventory ─────────────────────────
+			modelBuilder.Entity<MaterialInventory>()
+				.HasIndex(mi => new { mi.InventoryID, mi.MaterialID })
+				.IsUnique();
+
+			modelBuilder.Entity<MaterialInventory>()
+				.HasOne(mi => mi.Material)
+				.WithMany(m => m.MaterialInventories)
+				.HasForeignKey(mi => mi.MaterialID)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			modelBuilder.Entity<MaterialInventory>()
+				.HasOne(mi => mi.Inventory)
+				.WithMany(i => i.MaterialInventories)
+				.HasForeignKey(mi => mi.InventoryID)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// ── SiteVisit ─────────────────────────────────
+			modelBuilder.Entity<SiteVisit>()
+				.HasOne(sv => sv.Project)
+				.WithMany(p => p.SiteVisits)
+				.HasForeignKey(sv => sv.ProjId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			modelBuilder.Entity<SiteVisit>()
+				.HasOne(sv => sv.Employee)
+				.WithMany(e => e.SiteVisits)
+				.HasForeignKey(sv => sv.EmployeeId)
 				.OnDelete(DeleteBehavior.Restrict);
 		}
 	}

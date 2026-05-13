@@ -93,6 +93,14 @@
   "task_name": "المهمة",
   "due_date": "الموعد النهائي",
   "delete_project": "حذف مشروع",
-  "SearchProjectPlaceholder": "بحث عن مشروع..."
-  
+  "SearchProjectPlaceholder": "بحث عن مشروع...",
+  "management": "الإدارة",
+  "operations": "العمليات",
+  "finance": "المالية",
+  "inventory_section": "المخزون والموردون",
+  "my_projects": "مشاريعي",
+  "my_work": "عملي",
+  "role": "الدور الوظيفي",
+  "new_password": "كلمة مرور جديدة"
+
 }

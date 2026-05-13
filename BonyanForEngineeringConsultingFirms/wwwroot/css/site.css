@@ -476,3 +476,13 @@ body {
             background: #FFF0F0;
         }
 }
+/* ── Sidebar Section Title ───────────────────────── */
+.sidebar-section-title {
+    padding: 14px 20px 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    pointer-events: none;
+}

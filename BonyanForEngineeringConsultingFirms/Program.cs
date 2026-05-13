@@ -41,6 +41,8 @@ public class Program
 		builder.Services.AddScoped<IRepository<MaterialTask>, Repository<MaterialTask>>();
 		builder.Services.AddScoped<IRepository<Supplier>, Repository<Supplier>>();
 		builder.Services.AddScoped<IRepository<Inventory>, Repository<Inventory>>();
+		builder.Services.AddScoped<IRepository<Admin>, Repository<Admin>>();
+		builder.Services.AddScoped<IRepository<AdminAccount>, Repository<AdminAccount>>();
 
 		// ?? Services ??????????????????????????????????????????
 		builder.Services.AddScoped<IService<Employee>, Service<Employee>>();
@@ -59,6 +61,8 @@ public class Program
 		builder.Services.AddScoped<IService<MaterialTask>, Service<MaterialTask>>();
 		builder.Services.AddScoped<IService<Supplier>, Service<Supplier>>();
 		builder.Services.AddScoped<IService<Inventory>, Service<Inventory>>();
+		builder.Services.AddScoped<IService<Admin>, Service<Admin>>();
+		builder.Services.AddScoped<IService<AdminAccount>, Service<AdminAccount>>();
 
 
 		// Add services to the container.
