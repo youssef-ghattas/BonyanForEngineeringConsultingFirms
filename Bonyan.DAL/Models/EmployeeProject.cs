@@ -22,10 +22,16 @@ namespace Bonyan.DAL.Models
 		[StringLength(100)]
 		public string RoleInProject { get; set; }
 
+		// which admin assigned this employee to this project
+		public int? AssignedByAdminId { get; set; }
+
 		[ForeignKey("EmployeeId")]
 		public virtual Employee Employee { get; set; }
 
 		[ForeignKey("ProjectId")]
 		public virtual Project Project { get; set; }
+
+		[ForeignKey("AssignedByAdminId")]
+		public virtual Admin AssignedByAdmin { get; set; }
 	}
 }

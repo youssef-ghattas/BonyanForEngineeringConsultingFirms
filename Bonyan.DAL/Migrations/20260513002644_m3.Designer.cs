@@ -4,6 +4,7 @@ using Bonyan.DAL.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bonyan.DAL.Migrations
 {
     [DbContext(typeof(BonyanDbContext))]
-    partial class BonyanDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260513002644_m3")]
+    partial class m3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,72 +24,6 @@ namespace Bonyan.DAL.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Bonyan.DAL.Models.Admin", b =>
-                {
-                    b.Property<int>("AdminId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AdminId"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("PhoneNum")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.HasKey("AdminId");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.ToTable("Admins");
-                });
-
-            modelBuilder.Entity("Bonyan.DAL.Models.AdminAccount", b =>
-                {
-                    b.Property<int>("AdminAccountId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AdminAccountId"));
-
-                    b.Property<int>("AdminId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.HasKey("AdminAccountId");
-
-                    b.HasIndex("AdminId")
-                        .IsUnique();
-
-                    b.ToTable("AdminAccounts");
-                });
 
             modelBuilder.Entity("Bonyan.DAL.Models.Document", b =>
                 {
@@ -252,9 +189,6 @@ namespace Bonyan.DAL.Migrations
                     b.Property<int>("ProjectId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("AssignedByAdminId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("AssignmentDate")
                         .HasColumnType("datetime2");
 
@@ -264,8 +198,6 @@ namespace Bonyan.DAL.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("EmployeeId", "ProjectId");
-
-                    b.HasIndex("AssignedByAdminId");
 
                     b.HasIndex("ProjectId");
 
@@ -631,9 +563,6 @@ namespace Bonyan.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("EmployeeId")
                         .HasColumnType("int");
 
@@ -650,7 +579,7 @@ namespace Bonyan.DAL.Migrations
                     b.HasIndex("EmployeeId")
                         .IsUnique();
 
-                    b.ToTable("UserAccounts");
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("Inventory", b =>
@@ -680,17 +609,6 @@ namespace Bonyan.DAL.Migrations
                     b.HasKey("InventoryID");
 
                     b.ToTable("Inventories");
-                });
-
-            modelBuilder.Entity("Bonyan.DAL.Models.AdminAccount", b =>
-                {
-                    b.HasOne("Bonyan.DAL.Models.Admin", "Admin")
-                        .WithOne("AdminAccount")
-                        .HasForeignKey("Bonyan.DAL.Models.AdminAccount", "AdminId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Admin");
                 });
 
             modelBuilder.Entity("Bonyan.DAL.Models.Document", b =>
@@ -733,11 +651,6 @@ namespace Bonyan.DAL.Migrations
 
             modelBuilder.Entity("Bonyan.DAL.Models.EmployeeProject", b =>
                 {
-                    b.HasOne("Bonyan.DAL.Models.Admin", "AssignedByAdmin")
-                        .WithMany()
-                        .HasForeignKey("AssignedByAdminId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Bonyan.DAL.Models.Employee", "Employee")
                         .WithMany("EmployeeProjects")
                         .HasForeignKey("EmployeeId")
@@ -749,8 +662,6 @@ namespace Bonyan.DAL.Migrations
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("AssignedByAdmin");
 
                     b.Navigation("Employee");
 
@@ -883,12 +794,6 @@ namespace Bonyan.DAL.Migrations
                         .IsRequired();
 
                     b.Navigation("Employee");
-                });
-
-            modelBuilder.Entity("Bonyan.DAL.Models.Admin", b =>
-                {
-                    b.Navigation("AdminAccount")
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Bonyan.DAL.Models.Employee", b =>

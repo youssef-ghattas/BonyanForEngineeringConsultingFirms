@@ -10,8 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bonyan.DAL.Models
 {
-	[Table("User")]
-	[Index(nameof(Username), IsUnique = true)]
+	[Table("UserAccounts")]
 	[Index(nameof(EmployeeId), IsUnique = true)]
 	public class UserAccount
 	{
@@ -22,19 +21,19 @@ namespace Bonyan.DAL.Models
 		public int EmployeeId { get; set; }
 
 		[Required]
-		public UserRole Role { get; set; }
-
-		[Required]
-		[StringLength(50)]
-		public string Username { get; set; }
+		public UserRole Role { get; set; } = UserRole.Engineer;
 
 		[Required]
 		[StringLength(255)]
 		public string Password { get; set; }
 
+		[Required]
+		public DateTime CreatedAt { get; set; } = DateTime.Now;
+
 		[ForeignKey("EmployeeId")]
 		public virtual Employee Employee { get; set; }
 
-		public virtual ICollection<Task> CreatedTasks { get; set; } = new List<Task>();
+		public virtual ICollection<Bonyan.DAL.Models.Task> CreatedTasks { get; set; }
+			= new List<Bonyan.DAL.Models.Task>();
 	}
 }

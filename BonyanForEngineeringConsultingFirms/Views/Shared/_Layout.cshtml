@@ -87,72 +87,190 @@
         <!-- ── Sidebar ───────────────────────────── -->
         <aside class="bonyan-sidebar" id="sidebar">
             <ul class="sidebar-menu">
+
+                <!-- ── Everyone sees Dashboard ────────────── -->
                 <li>
                     <a asp-controller="Home" asp-action="Index">
                         <i class="fas fa-chart-line"></i>
                         <span data-lang="dashboard">لوحة التحكم</span>
                     </a>
                 </li>
-                <li>
-                    <a asp-controller="Employee" asp-action="Index">
-                        <i class="fas fa-users"></i>
-                        <span data-lang="employees">الموظفون</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Project" asp-action="Index">
-                        <i class="fas fa-project-diagram"></i>
-                        <span data-lang="projects">المشاريع</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Task" asp-action="Index">
-                        <i class="fas fa-tasks"></i>
-                        <span data-lang="tasks">المهام</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Document" asp-action="Index">
-                        <i class="fas fa-file-alt"></i>
-                        <span data-lang="documents">المستندات</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Drawing" asp-action="Index">
-                        <i class="fas fa-drafting-compass"></i>
-                        <span data-lang="drawings">الرسومات</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Invoice" asp-action="Index">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <span data-lang="invoices">الفواتير</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Material" asp-action="Index">
-                        <i class="fas fa-boxes"></i>
-                        <span data-lang="materials">المواد</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Supplier" asp-action="Index">
-                        <i class="fas fa-truck"></i>
-                        <span data-lang="suppliers">الموردون</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Inventory" asp-action="Index">
-                        <i class="fas fa-warehouse"></i>
-                        <span data-lang="inventory">المخزون</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="SiteVisit" asp-action="Index">
-                        <i class="fas fa-hard-hat"></i>
-                        <span data-lang="sitevisits">زيارات الموقع</span>
-                    </a>
-                </li>
+
+                @{
+                    var role = Context.Session.GetString("Role");
+                }
+
+                @if (role == "Admin")
+                {
+                    <!-- Admin sees everything -->
+                    <li class="sidebar-section-title">
+                        <span data-lang="management">الإدارة</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Employee" asp-action="Index">
+                            <i class="fas fa-users"></i>
+                            <span data-lang="employees">الموظفون</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Project" asp-action="Index">
+                            <i class="fas fa-project-diagram"></i>
+                            <span data-lang="projects">المشاريع</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="operations">العمليات</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Task" asp-action="Index">
+                            <i class="fas fa-tasks"></i>
+                            <span data-lang="tasks">المهام</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Document" asp-action="Index">
+                            <i class="fas fa-file-alt"></i>
+                            <span data-lang="documents">المستندات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Drawing" asp-action="Index">
+                            <i class="fas fa-drafting-compass"></i>
+                            <span data-lang="drawings">الرسومات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="SiteVisit" asp-action="Index">
+                            <i class="fas fa-hard-hat"></i>
+                            <span data-lang="sitevisits">زيارات الموقع</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="finance">المالية</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Invoice" asp-action="Index">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span data-lang="invoices">الفواتير</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="inventory_section">المخزون</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Material" asp-action="Index">
+                            <i class="fas fa-boxes"></i>
+                            <span data-lang="materials">المواد</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Supplier" asp-action="Index">
+                            <i class="fas fa-truck"></i>
+                            <span data-lang="suppliers">الموردون</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Inventory" asp-action="Index">
+                            <i class="fas fa-warehouse"></i>
+                            <span data-lang="inventory">المخزون</span>
+                        </a>
+                    </li>
+                }
+
+                @if (role == "ProjectManager")
+                {
+                    <!-- Project Manager sees his projects + task management -->
+                    <li class="sidebar-section-title">
+                        <span data-lang="my_projects">مشاريعي</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Project" asp-action="Index">
+                            <i class="fas fa-project-diagram"></i>
+                            <span data-lang="projects">المشاريع</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="operations">العمليات</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Task" asp-action="Index">
+                            <i class="fas fa-tasks"></i>
+                            <span data-lang="tasks">المهام</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Document" asp-action="Index">
+                            <i class="fas fa-file-alt"></i>
+                            <span data-lang="documents">المستندات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Drawing" asp-action="Index">
+                            <i class="fas fa-drafting-compass"></i>
+                            <span data-lang="drawings">الرسومات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="SiteVisit" asp-action="Index">
+                            <i class="fas fa-hard-hat"></i>
+                            <span data-lang="sitevisits">زيارات الموقع</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Invoice" asp-action="Index">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span data-lang="invoices">الفواتير</span>
+                        </a>
+                    </li>
+                }
+
+                @if (role == "Engineer")
+                {
+                    <!-- Engineer sees his projects + can add everything -->
+                    <li class="sidebar-section-title">
+                        <span data-lang="my_projects">مشاريعي</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Project" asp-action="Index">
+                            <i class="fas fa-project-diagram"></i>
+                            <span data-lang="projects">المشاريع</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="my_work">عملي</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Task" asp-action="Index">
+                            <i class="fas fa-tasks"></i>
+                            <span data-lang="tasks">المهام</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Document" asp-action="Index">
+                            <i class="fas fa-file-alt"></i>
+                            <span data-lang="documents">المستندات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Drawing" asp-action="Index">
+                            <i class="fas fa-drafting-compass"></i>
+                            <span data-lang="drawings">الرسومات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="SiteVisit" asp-action="Index">
+                            <i class="fas fa-hard-hat"></i>
+                            <span data-lang="sitevisits">زيارات الموقع</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Invoice" asp-action="Index">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span data-lang="invoices">الفواتير</span>
+                        </a>
+                    </li>
+                }
+
             </ul>
         </aside>
 

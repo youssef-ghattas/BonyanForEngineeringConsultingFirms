@@ -93,7 +93,7 @@
                     </div>
                 </div>
 
-                <!-- Row 3: Gender + Specialization -->
+                <!-- Row 3: Gender + Specialization + Role -->
                 <div class="form-row-2">
                     <div>
                         <label class="form-label">الجنس</label>
@@ -120,6 +120,19 @@
                                 {
                                     <option value="@s">@s</option>
                                 }
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">
+                            <span data-lang="role">الدور الوظيفي</span>
+                        </label>
+                        <div class="input-group">
+                            <i class="fas fa-briefcase input-icon"></i>
+                            <select name="role" class="form-control" required>
+                                <option value="">-- اختر الدور --</option>
+                                <option value="Engineer">مهندس</option>
+                                <option value="ProjectManager">مدير مشروع</option>
                             </select>
                         </div>
                     </div>

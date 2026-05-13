@@ -31,7 +31,7 @@
         <form asp-action="Create" method="post">
             @Html.AntiForgeryToken()
 
-            <!-- Personal Info -->
+            <!-- 1. Personal Info -->
             <div class="form-section-title" data-lang="personal_info">
                 المعلومات الشخصية
             </div>
@@ -42,8 +42,7 @@
                         <span data-lang="first_name">الاسم الأول</span>
                         <span class="required">*</span>
                     </label>
-                    <input asp-for="FirstName" class="form-control"
-                           placeholder="الاسم الأول" />
+                    <input asp-for="FirstName" class="form-control" placeholder="الاسم الأول" />
                     <span asp-validation-for="FirstName" class="text-danger"></span>
                 </div>
                 <div class="form-group">
@@ -51,8 +50,7 @@
                         <span data-lang="last_name">الاسم الأخير</span>
                         <span class="required">*</span>
                     </label>
-                    <input asp-for="LastName" class="form-control"
-                           placeholder="الاسم الأخير" />
+                    <input asp-for="LastName" class="form-control" placeholder="الاسم الأخير" />
                     <span asp-validation-for="LastName" class="text-danger"></span>
                 </div>
             </div>
@@ -63,14 +61,12 @@
                         <span data-lang="email">البريد الإلكتروني</span>
                         <span class="required">*</span>
                     </label>
-                    <input asp-for="Email" class="form-control" type="email"
-                           placeholder="example@email.com" />
+                    <input asp-for="Email" class="form-control" type="email" placeholder="example@email.com" />
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label data-lang="phone">رقم الهاتف</label>
-                    <input asp-for="PhoneNum" class="form-control"
-                           placeholder="01xxxxxxxxx" />
+                    <input asp-for="PhoneNum" class="form-control" placeholder="01xxxxxxxxx" />
                     <span asp-validation-for="PhoneNum" class="text-danger"></span>
                 </div>
             </div>
@@ -81,8 +77,7 @@
                         <span data-lang="ssn">الرقم القومي</span>
                         <span class="required">*</span>
                     </label>
-                    <input asp-for="SSN" class="form-control"
-                           placeholder="الرقم القومي" />
+                    <input asp-for="SSN" class="form-control" placeholder="الرقم القومي" />
                     <span asp-validation-for="SSN" class="text-danger"></span>
                 </div>
                 <div class="form-group">
@@ -95,9 +90,8 @@
                 </div>
             </div>
 
-            <!-- Professional Info -->
-            <div class="form-section-title" style="margin-top:10px"
-                 data-lang="professional_info">
+            <!-- 2. Professional Info -->
+            <div class="form-section-title" style="margin-top:10px" data-lang="professional_info">
                 المعلومات المهنية
             </div>
 
@@ -140,14 +134,37 @@
                     </select>
                     <span asp-validation-for="Specialization" class="text-danger"></span>
                 </div>
+                <!-- Brought over from Register: Role -->
+                <div class="form-group">
+                    <label>
+                        <span data-lang="role">الدور الوظيفي</span>
+                        <span class="required">*</span>
+                    </label>
+                    <select name="Role" class="form-select" required>
+                        <option value="">-- اختر الدور --</option>
+                        <option value="Engineer">مهندس</option>
+                        <option value="ProjectManager">مدير مشروع</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 3. Account Data (Salary & Password) -->
+            <div class="form-grid-2">
                 <div class="form-group">
                     <label>
                         <span data-lang="salary">الراتب</span>
                         <span class="required">*</span>
                     </label>
-                    <input asp-for="Salary" class="form-control" type="number"
-                           step="any" min="0" placeholder="0.00" />
+                    <input asp-for="Salary" class="form-control" type="number" step="any" min="0" placeholder="0.00" />
                     <span asp-validation-for="Salary" class="text-danger"></span>
+                </div>
+                <!-- Brought over from Register: Password -->
+                <div class="form-group">
+                    <label>
+                        <span data-lang="password">كلمة المرور</span>
+                        <span class="required">*</span>
+                    </label>
+                    <input type="password" name="Password" class="form-control" placeholder="أدخل كلمة المرور" required />
                 </div>
             </div>
 
