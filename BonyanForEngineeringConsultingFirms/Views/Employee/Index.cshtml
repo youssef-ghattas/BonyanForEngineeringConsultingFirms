@@ -26,10 +26,19 @@
         </h2>
         <p data-lang="employees_sub">إدارة بيانات الموظفين</p>
     </div>
-    <a asp-action="Create" class="btn-bonyan-secondary">
-        <i class="fas fa-plus"></i>
-        <span data-lang="add_employee">إضافة موظف</span>
-    </a>
+    <div style="display:flex; gap:10px;">
+        @if (Context.Session.GetString("Role") == "Admin")
+        {
+            <a asp-controller="Account" asp-action="AdminRegister" class="btn-bonyan-primary">
+                <i class="fas fa-user-shield"></i>
+                <span>إضافة أدمن</span>
+            </a>
+        }
+        <a asp-action="Create" class="btn-bonyan-secondary">
+            <i class="fas fa-plus"></i>
+            <span data-lang="add_employee">إضافة موظف</span>
+        </a>
+    </div>
 </div>
 
 <!-- Filter Bar -->
