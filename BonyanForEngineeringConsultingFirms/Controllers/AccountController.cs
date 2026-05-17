@@ -1,6 +1,9 @@
 ﻿using Bonyan.DAL.Context;
 using Bonyan.DAL.Enums;
 using Bonyan.DAL.Models;
+using Bonyan.PL.ViewModels;
+using BonyanForEngineeringConsultingFirms.Helpers;
+using Bonyan.PL.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,31 +13,13 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 	{
 		private readonly BonyanDbContext _context;
 
-		// ── Secret code lives here, changes every time app restarts ──
-		// In production you'd store this in a database or config
-		private static string _adminSecretCode = GenerateSecretCode();
-
-		private static string GenerateSecretCode()
-		{
-			const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-			var random = new Random();
-			return new string(Enumerable.Range(0, 8)
-				.Select(_ => chars[random.Next(chars.Length)])
-				.ToArray());
-		}
-
 		public AccountController(BonyanDbContext context)
 		{
 			_context = context;
-
-			// ── Print secret code to Output window on startup ──
-			System.Diagnostics.Debug.WriteLine("=================================");
-			System.Diagnostics.Debug.WriteLine($"ADMIN SECRET CODE: {_adminSecretCode}");
-			System.Diagnostics.Debug.WriteLine("=================================");
 		}
 
 		// ════════════════════════════════════════════════
-		//  EMPLOYEE LOGIN
+		//  LOGIN
 		// ════════════════════════════════════════════════
 
 		public IActionResult Login()
@@ -48,11 +33,13 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		[ValidateAntiForgeryToken]
 		public IActionResult Login(string email, string password)
 		{
+			var hashedPassword = PasswordHelper.HashMD5(password);
+
 			// Check employee login
 			var user = _context.UserAccounts
 				.Include(u => u.Employee)
 				.FirstOrDefault(u => u.Employee.Email == email
-								  && u.Password == password);
+								  && u.Password == hashedPassword);
 
 			if (user != null)
 			{
@@ -62,6 +49,11 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 					user.Employee.FirstName + " " + user.Employee.LastName);
 				HttpContext.Session.SetInt32("UserId", user.UserId);
 				HttpContext.Session.SetInt32("EmployeeId", user.EmployeeId);
+
+				// First login → force password change
+				if (user.IsFirstLogin)
+					return RedirectToAction("ChangePassword");
+
 				return RedirectToAction("Index", "Home");
 			}
 
@@ -69,7 +61,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			var admin = _context.AdminAccounts
 				.Include(a => a.Admin)
 				.FirstOrDefault(a => a.Admin.Email == email
-								  && a.Password == password);
+								  && a.Password == hashedPassword);
 
 			if (admin != null)
 			{
@@ -78,6 +70,11 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				HttpContext.Session.SetString("FullName",
 					admin.Admin.FirstName + " " + admin.Admin.LastName);
 				HttpContext.Session.SetInt32("AdminId", admin.AdminId);
+
+				// First login → force password change
+				if (admin.IsFirstLogin)
+					return RedirectToAction("ChangePassword");
+
 				return RedirectToAction("Index", "Home");
 			}
 
@@ -86,65 +83,74 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		}
 
 		// ════════════════════════════════════════════════
-		//  EMPLOYEE REGISTER (kept from before)
+		//  CHANGE PASSWORD (forced on first login)
 		// ════════════════════════════════════════════════
 
-		public IActionResult Register()
+		public IActionResult ChangePassword()
 		{
+			if (HttpContext.Session.GetString("Email") == null)
+				return RedirectToAction("Login");
 			return View();
 		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public IActionResult Register(
-			string firstName, string lastName,
-			string email, string phoneNum,
-			string ssn, string password,
-			Gender gender, Specialization specialization,
-			decimal salary, UserRole role)
+		public IActionResult ChangePassword(ChangePasswordViewModel model)
 		{
-			if (_context.Employees.Any(e => e.Email == email))
+			if (!ModelState.IsValid)
+				return View(model);
+
+			var email = HttpContext.Session.GetString("Email");
+			var role = HttpContext.Session.GetString("Role");
+			var hashedCurrent = PasswordHelper.HashMD5(model.CurrentPassword);
+			var hashedNew = PasswordHelper.HashMD5(model.NewPassword);
+
+			if (role == "Admin")
 			{
-				ViewBag.Error = "البريد الإلكتروني مسجل مسبقاً";
-				return View();
+				var adminAccount = _context.AdminAccounts
+					.Include(a => a.Admin)
+					.FirstOrDefault(a => a.Admin.Email == email);
+
+				if (adminAccount == null || adminAccount.Password != hashedCurrent)
+				{
+					ModelState.AddModelError("CurrentPassword", "كلمة المرور الحالية غير صحيحة");
+					return View(model);
+				}
+
+				adminAccount.Password = hashedNew;
+				adminAccount.IsFirstLogin = false;
+				_context.SaveChanges();
+			}
+			else // Employee
+			{
+				var userAccount = _context.UserAccounts
+					.Include(u => u.Employee)
+					.FirstOrDefault(u => u.Employee.Email == email);
+
+				if (userAccount == null || userAccount.Password != hashedCurrent)
+				{
+					ModelState.AddModelError("CurrentPassword", "كلمة المرور الحالية غير صحيحة");
+					return View(model);
+				}
+
+				userAccount.Password = hashedNew;
+				userAccount.IsFirstLogin = false;
+				_context.SaveChanges();
 			}
 
-			var employee = new Employee
-			{
-				FirstName = firstName,
-				LastName = lastName,
-				Email = email,
-				PhoneNum = phoneNum,
-				SSN = ssn,
-				Gender = gender,
-				Specialization = specialization,
-				Salary = salary,
-				HireDate = DateTime.Now
-			};
-
-			_context.Employees.Add(employee);
-			_context.SaveChanges();
-
-			var userAccount = new UserAccount
-			{
-				EmployeeId = employee.EmployeeId,
-				Password = password,
-				Role = role
-			};
-
-			_context.UserAccounts.Add(userAccount);
-			_context.SaveChanges();
-
-			TempData["Success"] = "تم إنشاء الحساب بنجاح، قم بتسجيل الدخول";
-			return RedirectToAction("Login");
+			TempData["Success"] = "تم تغيير كلمة المرور بنجاح";
+			return RedirectToAction("Index", "Home");
 		}
 
 		// ════════════════════════════════════════════════
-		//  ADMIN REGISTER
+		//  ADMIN REGISTER (called from Employee page button)
 		// ════════════════════════════════════════════════
 
 		public IActionResult AdminRegister()
 		{
+			// Only logged-in admins can create another admin
+			if (HttpContext.Session.GetString("Role") != "Admin")
+				return RedirectToAction("Login");
 			return View();
 		}
 
@@ -153,23 +159,17 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		public IActionResult AdminRegister(
 			string firstName, string lastName,
 			string email, string phoneNum,
-			string password, string secretCode)
+			string password)
 		{
-			// ── Check Secret Code ─────────────────────
-			if (secretCode != _adminSecretCode)
-			{
-				ViewBag.Error = "الكود السري غير صحيح";
-				return View();
-			}
+			if (HttpContext.Session.GetString("Role") != "Admin")
+				return RedirectToAction("Login");
 
-			// ── Check email not already used ──────────
 			if (_context.Admins.Any(a => a.Email == email))
 			{
 				ViewBag.Error = "البريد الإلكتروني مسجل مسبقاً";
 				return View();
 			}
 
-			// ── Create Admin ──────────────────────────
 			var admin = new Admin
 			{
 				FirstName = firstName,
@@ -185,26 +185,16 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			var adminAccount = new AdminAccount
 			{
 				AdminId = admin.AdminId,
-				Password = password,
-				CreatedAt = DateTime.Now
+				Password = PasswordHelper.HashMD5(password),
+				CreatedAt = DateTime.Now,
+				IsFirstLogin = true   // new admin must change password on first login
 			};
 
 			_context.AdminAccounts.Add(adminAccount);
 			_context.SaveChanges();
 
-			// ── Regenerate secret code after use ──────
-			_adminSecretCode = GenerateSecretCode();
-
 			TempData["Success"] = "تم إنشاء حساب الأدمن بنجاح";
-			return RedirectToAction("Login");
-		}
-
-		// ── Show current secret code (protect this in production!) ──
-		// Only call this from Visual Studio or a protected admin page
-		public IActionResult GetSecretCode()
-		{
-			// Remove this action or protect it before deploying!
-			return Content($"Current Admin Secret Code: {_adminSecretCode}");
+			return RedirectToAction("Index", "Employee");
 		}
 
 		// ════════════════════════════════════════════════

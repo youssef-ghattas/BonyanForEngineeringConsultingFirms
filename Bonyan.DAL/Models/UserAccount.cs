@@ -30,6 +30,9 @@ namespace Bonyan.DAL.Models
 		[Required]
 		public DateTime CreatedAt { get; set; } = DateTime.Now;
 
+		[Required]
+		public bool IsFirstLogin { get; set; } = true;
+
 		[ForeignKey("EmployeeId")]
 		public virtual Employee Employee { get; set; }
 

@@ -96,9 +96,10 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			var userAccount = new UserAccount
 			{
 				EmployeeId = employee.EmployeeId,
-				Password = Password,
+				Password = BonyanForEngineeringConsultingFirms.Helpers.PasswordHelper.HashMD5(Password),
 				Role = Role,
-				CreatedAt = DateTime.Now
+				CreatedAt = DateTime.Now,
+				IsFirstLogin = true
 			};
 
 			_context.UserAccounts.Add(userAccount);
@@ -179,9 +180,11 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			{
 				existing.UserAccount.Role = Role;
 
-				// only update password if admin entered a new one
 				if (!string.IsNullOrWhiteSpace(NewPassword))
-					existing.UserAccount.Password = NewPassword;
+				{
+					existing.UserAccount.Password = BonyanForEngineeringConsultingFirms.Helpers.PasswordHelper.HashMD5(NewPassword);
+					existing.UserAccount.IsFirstLogin = true; // force them to re-change on next login
+				}
 			}
 
 			_context.SaveChanges();

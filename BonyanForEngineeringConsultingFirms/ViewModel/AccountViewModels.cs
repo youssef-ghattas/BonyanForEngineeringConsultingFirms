@@ -40,4 +40,19 @@ namespace Bonyan.PL.ViewModels
         public DateTime HireDate { get; set; } = DateTime.Now;
         public decimal Salary { get; set; }
     }
+	public class ChangePasswordViewModel
+	{
+		[Required(ErrorMessage = "كلمة المرور الحالية مطلوبة")]
+		[DataType(DataType.Password)]
+		public string CurrentPassword { get; set; }
+
+		[Required(ErrorMessage = "كلمة المرور الجديدة مطلوبة")]
+		[DataType(DataType.Password)]
+		[MinLength(6, ErrorMessage = "كلمة المرور يجب أن تكون 6 أحرف على الأقل")]
+		public string NewPassword { get; set; }
+
+		[Compare("NewPassword", ErrorMessage = "كلمات المرور غير متطابقتين")]
+		[DataType(DataType.Password)]
+		public string ConfirmNewPassword { get; set; }
+	}
 }

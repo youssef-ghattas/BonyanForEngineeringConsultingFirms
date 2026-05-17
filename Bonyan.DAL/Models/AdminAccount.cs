@@ -25,6 +25,9 @@ namespace Bonyan.DAL.Models
 		[Required]
 		public DateTime CreatedAt { get; set; } = DateTime.Now;
 
+		[Required]
+		public bool IsFirstLogin { get; set; } = true;
+
 		[ForeignKey("AdminId")]
 		public virtual Admin Admin { get; set; }
 	}
