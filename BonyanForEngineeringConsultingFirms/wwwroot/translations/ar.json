@@ -101,6 +101,25 @@
   "my_projects": "مشاريعي",
   "my_work": "عملي",
   "role": "الدور الوظيفي",
-  "new_password": "كلمة مرور جديدة"
+  "new_password": "كلمة مرور جديدة",
+  "add_admin": "إضافة أدمن",
+  "create_admin": "إنشاء حساب أدمن جديد",
+  "create_admin_sub": "أدخل بيانات الأدمن الجديد",
+  "admin_info": "بيانات الأدمن",
+  "personal_info_section": "المعلومات الشخصية",
+  "account_info_section": "بيانات الحساب",
+  "create_admin_btn": "إنشاء حساب أدمن",
+  "admin_first_login_hint": "سيُطلب من الأدمن تغيير كلمة المرور عند أول تسجيل دخول",
+  "change_password": "تغيير كلمة المرور",
+  "change_password_sub": "أدخل كلمة المرور الحالية ثم اختر كلمة مرور جديدة",
+  "current_password": "كلمة المرور الحالية",
+  "new_password_label": "كلمة المرور الجديدة",
+  "confirm_new_password": "تأكيد كلمة المرور الجديدة",
+  "save_new_password": "حفظ كلمة المرور الجديدة",
+  "change_password_required": "تغيير كلمة المرور إلزامي عند أول تسجيل دخول لحماية حسابك",
+  "step_enter_current": "أدخل كلمة المرور الحالية",
+  "step_choose_new": "اختر كلمة مرور جديدة قوية",
+  "step_confirm_new": "تأكيد كلمة المرور الجديدة",
+  "md5_hint": "كلمة المرور محمية بتشفير MD5"
 
 }

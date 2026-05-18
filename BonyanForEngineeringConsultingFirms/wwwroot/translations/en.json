@@ -101,7 +101,26 @@
   "my_projects": "My Projects",
   "my_work": "My Work",
   "role": "Job Role",
-  "new_password": "New Password"
+  "new_password": "New Password",
+  "add_admin": "Add Admin",
+  "create_admin": "Create New Admin Account",
+  "create_admin_sub": "Enter the new admin's details",
+  "admin_info": "Admin Details",
+  "personal_info_section": "Personal Information",
+  "account_info_section": "Account Information",
+  "create_admin_btn": "Create Admin Account",
+  "admin_first_login_hint": "The admin will be required to change their password on first login",
+  "change_password": "Change Password",
+  "change_password_sub": "Enter your current password then choose a new one",
+  "current_password": "Current Password",
+  "new_password_label": "New Password",
+  "confirm_new_password": "Confirm New Password",
+  "save_new_password": "Save New Password",
+  "change_password_required": "Changing your password is required on first login to protect your account",
+  "step_enter_current": "Enter your current password",
+  "step_choose_new": "Choose a strong new password",
+  "step_confirm_new": "Confirm the new password",
+  "md5_hint": "Password is protected with MD5 encryption"
 
 
 }
