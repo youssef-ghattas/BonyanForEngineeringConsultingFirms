@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bonyan.DAL.Migrations
 {
     [DbContext(typeof(BonyanDbContext))]
-    [Migration("20260516230711_m6")]
-    partial class m6
+    [Migration("20260519211535_updateMigration")]
+    partial class updateMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

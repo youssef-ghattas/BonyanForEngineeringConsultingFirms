@@ -6,11 +6,28 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Bonyan.DAL.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateM1 : Migration
+    public partial class updateMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "Admins",
+                columns: table => new
+                {
+                    AdminId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    PhoneNum = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Admins", x => x.AdminId);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Employees",
                 columns: table => new
@@ -101,21 +118,44 @@ namespace Bonyan.DAL.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "User",
+                name: "AdminAccounts",
+                columns: table => new
+                {
+                    AdminAccountId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AdminId = table.Column<int>(type: "int", nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsFirstLogin = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AdminAccounts", x => x.AdminAccountId);
+                    table.ForeignKey(
+                        name: "FK_AdminAccounts_Admins_AdminId",
+                        column: x => x.AdminId,
+                        principalTable: "Admins",
+                        principalColumn: "AdminId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserAccounts",
                 columns: table => new
                 {
                     UserId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EmployeeId = table.Column<int>(type: "int", nullable: false),
                     Role = table.Column<int>(type: "int", nullable: false),
-                    Username = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Password = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false)
+                    Password = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsFirstLogin = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_User", x => x.UserId);
+                    table.PrimaryKey("PK_UserAccounts", x => x.UserId);
                     table.ForeignKey(
-                        name: "FK_User_Employees_EmployeeId",
+                        name: "FK_UserAccounts_Employees_EmployeeId",
                         column: x => x.EmployeeId,
                         principalTable: "Employees",
                         principalColumn: "EmployeeId",
@@ -158,11 +198,18 @@ namespace Bonyan.DAL.Migrations
                     EmployeeId = table.Column<int>(type: "int", nullable: false),
                     ProjectId = table.Column<int>(type: "int", nullable: false),
                     AssignmentDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    RoleInProject = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                    RoleInProject = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    AssignedByAdminId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EmployeeProjects", x => new { x.EmployeeId, x.ProjectId });
+                    table.ForeignKey(
+                        name: "FK_EmployeeProjects_Admins_AssignedByAdminId",
+                        column: x => x.AssignedByAdminId,
+                        principalTable: "Admins",
+                        principalColumn: "AdminId",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_EmployeeProjects_Employees_EmployeeId",
                         column: x => x.EmployeeId,
@@ -257,9 +304,9 @@ namespace Bonyan.DAL.Migrations
                         principalColumn: "ProjectId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Tasks_User_CreatedBy_UserID",
+                        name: "FK_Tasks_UserAccounts_CreatedBy_UserID",
                         column: x => x.CreatedBy_UserID,
-                        principalTable: "User",
+                        principalTable: "UserAccounts",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -408,6 +455,18 @@ namespace Bonyan.DAL.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_AdminAccounts_AdminId",
+                table: "AdminAccounts",
+                column: "AdminId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Admins_Email",
+                table: "Admins",
+                column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Documents_EmployeeId",
                 table: "Documents",
                 column: "EmployeeId");
@@ -426,6 +485,11 @@ namespace Bonyan.DAL.Migrations
                 name: "IX_Drawings_TaskId",
                 table: "Drawings",
                 column: "TaskId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmployeeProjects_AssignedByAdminId",
+                table: "EmployeeProjects",
+                column: "AssignedByAdminId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EmployeeProjects_ProjectId",
@@ -501,21 +565,18 @@ namespace Bonyan.DAL.Migrations
                 column: "ProjectId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_EmployeeId",
-                table: "User",
+                name: "IX_UserAccounts_EmployeeId",
+                table: "UserAccounts",
                 column: "EmployeeId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_User_Username",
-                table: "User",
-                column: "Username",
                 unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AdminAccounts");
+
             migrationBuilder.DropTable(
                 name: "Documents");
 
@@ -541,6 +602,9 @@ namespace Bonyan.DAL.Migrations
                 name: "SiteVisits");
 
             migrationBuilder.DropTable(
+                name: "Admins");
+
+            migrationBuilder.DropTable(
                 name: "Inventories");
 
             migrationBuilder.DropTable(
@@ -559,7 +623,7 @@ namespace Bonyan.DAL.Migrations
                 name: "Projects");
 
             migrationBuilder.DropTable(
-                name: "User");
+                name: "UserAccounts");
 
             migrationBuilder.DropTable(
                 name: "Employees");
