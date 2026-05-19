@@ -2,20 +2,28 @@
 using Bonyan.DAL.Enums;
 using Bonyan.DAL.Models;
 using Bonyan.PL.ViewModels;
-using BonyanForEngineeringConsultingFirms.Helpers;
 using Bonyan.PL.ViewModels;
+using BonyanForEngineeringConsultingFirms.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace BonyanForEngineeringConsultingFirms.Controllers
 {
 	public class AccountController : Controller
 	{
 		private readonly BonyanDbContext _context;
+		private readonly Services.EmailService _emailService;
+		private readonly IConfiguration _config;
 
-		public AccountController(BonyanDbContext context)
+
+		public AccountController(BonyanDbContext context,
+						 Services.EmailService emailService,
+						 IConfiguration config)
 		{
 			_context = context;
+			_emailService = emailService;
+			_config = config;
 		}
 
 		// ════════════════════════════════════════════════
@@ -205,6 +213,142 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		{
 			HttpContext.Session.Clear();
 			return RedirectToAction("Login");
+		}
+		// ════════════════════════════════════════════════
+		//  FORGOT PASSWORD — user enters their email
+		// ════════════════════════════════════════════════
+
+		public IActionResult ForgotPassword()
+		{
+			return View();
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public IActionResult ForgotPassword(Bonyan.PL.ViewModels.ForgotPasswordViewModel model)
+		{
+			if (!ModelState.IsValid)
+				return View(model);
+
+			// Check if email belongs to an employee
+			string userFullName = null;
+			string userEmail = null;
+
+			var employee = _context.Employees
+				.FirstOrDefault(e => e.Email == model.Email);
+
+			if (employee != null)
+			{
+				userFullName = employee.FirstName + " " + employee.LastName;
+				userEmail = employee.Email;
+			}
+			else
+			{
+				// Check if email belongs to an admin
+				var admin = _context.Admins
+					.FirstOrDefault(a => a.Email == model.Email);
+
+				if (admin != null)
+				{
+					userFullName = admin.FirstName + " " + admin.LastName;
+					userEmail = admin.Email;
+				}
+			}
+
+			if (userFullName == null)
+			{
+				ModelState.AddModelError("Email", "هذا البريد الإلكتروني غير مسجل في النظام");
+				return View(model);
+			}
+
+			// Send notification email to admin
+			var adminEmail = _config["EmailSettings:AdminEmail"];
+			var resetLink = Url.Action("ResetPassword", "Account",
+								new { email = userEmail },
+								Request.Scheme);
+
+			var adminBody = Services.EmailTemplates.ForgotPasswordAdminNotification(
+	userFullName, userEmail, resetLink);
+
+			_emailService.SendEmail(adminEmail, "المدير", "طلب استعادة كلمة مرور", adminBody);
+
+			TempData["Success"] = "تم إرسال طلبك إلى المدير. ستصلك كلمة المرور الجديدة على بريدك الإلكتروني قريباً.";
+			return RedirectToAction("Login");
+		}
+
+		// ════════════════════════════════════════════════
+		//  RESET PASSWORD — admin resets user's password
+		// ════════════════════════════════════════════════
+
+		public IActionResult ResetPassword(string email)
+		{
+			// Only logged-in admins can access this
+			if (HttpContext.Session.GetString("Role") != "Admin")
+				return RedirectToAction("Login");
+
+			if (string.IsNullOrEmpty(email))
+				return RedirectToAction("Index", "Employee");
+
+			var model = new Bonyan.PL.ViewModels.ResetPasswordViewModel { Email = email };
+			return View(model);
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public IActionResult ResetPassword(Bonyan.PL.ViewModels.ResetPasswordViewModel model)
+		{
+			if (HttpContext.Session.GetString("Role") != "Admin")
+				return RedirectToAction("Login");
+
+			if (!ModelState.IsValid)
+				return View(model);
+
+			var hashedNew = Helpers.PasswordHelper.HashMD5(model.NewPassword);
+			string targetName = null;
+			string targetEmail = model.Email;
+
+			// Try employee first
+			var userAccount = _context.UserAccounts
+				.Include(u => u.Employee)
+				.FirstOrDefault(u => u.Employee.Email == model.Email);
+
+			if (userAccount != null)
+			{
+				targetName = userAccount.Employee.FirstName + " " + userAccount.Employee.LastName;
+				userAccount.Password = hashedNew;
+				userAccount.IsFirstLogin = true;
+				_context.SaveChanges();
+			}
+			else
+			{
+				// Try admin
+				var adminAccount = _context.AdminAccounts
+					.Include(a => a.Admin)
+					.FirstOrDefault(a => a.Admin.Email == model.Email);
+
+				if (adminAccount != null)
+				{
+					targetName = adminAccount.Admin.FirstName + " " + adminAccount.Admin.LastName;
+					adminAccount.Password = hashedNew;
+					adminAccount.IsFirstLogin = true;
+					_context.SaveChanges();
+				}
+			}
+
+			if (targetName == null)
+			{
+				ViewBag.Error = "لم يتم العثور على المستخدم";
+				return View(model);
+			}
+
+			// Send new password to the user by email
+			var userBody = Services.EmailTemplates.NewPasswordNotification(
+	targetName, model.NewPassword);
+
+			_emailService.SendEmail(targetEmail, targetName, "كلمة المرور الجديدة - بنيان", userBody);
+
+			TempData["Success"] = $"تم إعادة تعيين كلمة مرور {targetName} وإرسالها إليه بنجاح";
+			return RedirectToAction("Index", "Employee");
 		}
 	}
 }
