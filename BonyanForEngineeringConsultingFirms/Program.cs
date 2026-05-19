@@ -64,6 +64,8 @@ public class Program
 		builder.Services.AddScoped<IService<Admin>, Service<Admin>>();
 		builder.Services.AddScoped<IService<AdminAccount>, Service<AdminAccount>>();
 
+		builder.Services.AddScoped<BonyanForEngineeringConsultingFirms.Services.EmailService>();
+
 
 		// Add services to the container.
 		builder.Services.AddControllersWithViews();

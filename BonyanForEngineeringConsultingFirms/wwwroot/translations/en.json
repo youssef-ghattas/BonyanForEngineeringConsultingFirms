@@ -120,7 +120,21 @@
   "step_enter_current": "Enter your current password",
   "step_choose_new": "Choose a strong new password",
   "step_confirm_new": "Confirm the new password",
-  "md5_hint": "Password is protected with MD5 encryption"
+  "md5_hint": "Password is protected with MD5 encryption",
+  "forgot_password": "Forgot Password?",
+  "forgot_password_sub": "Enter your registered email address",
+  "forgot_password_info": "Your new password will be sent to your email after the admin approves the request",
+  "forgot_email_label": "Email Address",
+  "forgot_submit_btn": "Send Password Reset Request",
+  "forgot_remember": "Remembered your password?",
+  "forgot_login_link": "Sign In",
+  "forgot_left_title": "Enter your email and we will send your request to the admin to reset your password",
+  "reset_password": "Reset Password",
+  "reset_password_info": "The new password will be sent to the user automatically by email, and they will be required to change it upon login",
+  "reset_new_password": "New Password",
+  "reset_confirm_password": "Confirm Password",
+  "reset_submit_btn": "Save and Send Password",
+  "reset_card_title": "Set New Password"
 
 
 }

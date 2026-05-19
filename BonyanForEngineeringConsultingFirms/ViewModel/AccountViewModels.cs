@@ -55,4 +55,25 @@ namespace Bonyan.PL.ViewModels
 		[DataType(DataType.Password)]
 		public string ConfirmNewPassword { get; set; }
 	}
+	public class ForgotPasswordViewModel
+	{
+		[Required(ErrorMessage = "البريد الإلكتروني مطلوب")]
+		[EmailAddress(ErrorMessage = "صيغة البريد الإلكتروني غير صحيحة")]
+		public string Email { get; set; }
+	}
+
+	public class ResetPasswordViewModel
+	{
+		[Required]
+		public string Email { get; set; }
+
+		[Required(ErrorMessage = "كلمة المرور الجديدة مطلوبة")]
+		[MinLength(6, ErrorMessage = "كلمة المرور يجب أن تكون 6 أحرف على الأقل")]
+		[DataType(DataType.Password)]
+		public string NewPassword { get; set; }
+
+		[Compare("NewPassword", ErrorMessage = "كلمات المرور غير متطابقتين")]
+		[DataType(DataType.Password)]
+		public string ConfirmNewPassword { get; set; }
+	}
 }
