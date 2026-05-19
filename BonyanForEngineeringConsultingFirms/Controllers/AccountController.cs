@@ -272,8 +272,8 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			_emailService.SendEmail(adminEmail, "المدير", "طلب استعادة كلمة مرور", adminBody);
 
-			TempData["Success"] = "تم إرسال طلبك إلى المدير. ستصلك كلمة المرور الجديدة على بريدك الإلكتروني قريباً.";
-			return RedirectToAction("Login");
+			ViewBag.Success = "تم إرسال طلبك إلى المدير. ستصلك كلمة المرور الجديدة على بريدك الإلكتروني قريباً.";
+			return View(model);
 		}
 
 		// ════════════════════════════════════════════════
@@ -288,6 +288,8 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			if (string.IsNullOrEmpty(email))
 				return RedirectToAction("Index", "Employee");
+
+			TempData.Remove("Success");
 
 			var model = new Bonyan.PL.ViewModels.ResetPasswordViewModel { Email = email };
 			return View(model);

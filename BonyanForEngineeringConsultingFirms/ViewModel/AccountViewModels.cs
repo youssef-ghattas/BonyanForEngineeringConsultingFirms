@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Bonyan.DAL.Models;
 using Bonyan.DAL.Enums;
+using System.Collections.Generic;
 
 
 namespace Bonyan.PL.ViewModels
@@ -40,7 +41,7 @@ namespace Bonyan.PL.ViewModels
         public DateTime HireDate { get; set; } = DateTime.Now;
         public decimal Salary { get; set; }
     }
-	public class ChangePasswordViewModel
+	public class ChangePasswordViewModel : IValidatableObject
 	{
 		[Required(ErrorMessage = "كلمة المرور الحالية مطلوبة")]
 		[DataType(DataType.Password)]
@@ -54,6 +55,18 @@ namespace Bonyan.PL.ViewModels
 		[Compare("NewPassword", ErrorMessage = "كلمات المرور غير متطابقتين")]
 		[DataType(DataType.Password)]
 		public string ConfirmNewPassword { get; set; }
+
+		public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+		{
+			if (!string.IsNullOrEmpty(CurrentPassword) &&
+				!string.IsNullOrEmpty(NewPassword) &&
+				CurrentPassword == NewPassword)
+			{
+				yield return new ValidationResult(
+					"كلمة المرور الجديدة يجب أن تكون مختلفة عن كلمة المرور الحالية",
+					new[] { nameof(NewPassword) });
+			}
+		}
 	}
 	public class ForgotPasswordViewModel
 	{
