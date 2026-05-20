@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -20,9 +16,8 @@ namespace Bonyan.DAL.Models
 		public DateTime AssignmentDate { get; set; } = DateTime.Now;
 
 		[StringLength(100)]
-		public string RoleInProject { get; set; }
+		public string? RoleInProject { get; set; }   // ← nullable now
 
-		// which admin assigned this employee to this project
 		public int? AssignedByAdminId { get; set; }
 
 		[ForeignKey("EmployeeId")]

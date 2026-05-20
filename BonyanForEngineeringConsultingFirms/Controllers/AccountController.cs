@@ -52,13 +52,12 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			if (user != null)
 			{
 				HttpContext.Session.SetString("Email", user.Employee.Email);
-				HttpContext.Session.SetString("Role", "Employee");
+				HttpContext.Session.SetString("Role", user.Role.ToString()); // ← saves "Engineer" or "ProjectManager"
 				HttpContext.Session.SetString("FullName",
 					user.Employee.FirstName + " " + user.Employee.LastName);
 				HttpContext.Session.SetInt32("UserId", user.UserId);
 				HttpContext.Session.SetInt32("EmployeeId", user.EmployeeId);
 
-				// First login → force password change
 				if (user.IsFirstLogin)
 					return RedirectToAction("ChangePassword");
 

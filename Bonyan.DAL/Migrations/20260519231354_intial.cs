@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Bonyan.DAL.Migrations
 {
     /// <inheritdoc />
-    public partial class updateMigration : Migration
+    public partial class intial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -317,7 +317,8 @@ namespace Bonyan.DAL.Migrations
                 {
                     DocId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    TaskId = table.Column<int>(type: "int", nullable: false),
+                    TaskId = table.Column<int>(type: "int", nullable: true),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
                     EmployeeId = table.Column<int>(type: "int", nullable: false),
                     DocTitle = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     FileType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
@@ -336,6 +337,12 @@ namespace Bonyan.DAL.Migrations
                         principalColumn: "EmployeeId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
+                        name: "FK_Documents_Projects_ProjectId",
+                        column: x => x.ProjectId,
+                        principalTable: "Projects",
+                        principalColumn: "ProjectId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_Documents_Tasks_TaskId",
                         column: x => x.TaskId,
                         principalTable: "Tasks",
@@ -347,26 +354,31 @@ namespace Bonyan.DAL.Migrations
                 name: "Drawings",
                 columns: table => new
                 {
-                    DrwgId = table.Column<int>(type: "int", nullable: false)
+                    DrawingId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    TaskId = table.Column<int>(type: "int", nullable: false),
+                    TaskId = table.Column<int>(type: "int", nullable: true),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
                     EmployeeId = table.Column<int>(type: "int", nullable: false),
-                    DrwgTitle = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Version = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    DrawingTitle = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     FilePath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     UploadDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Category = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Notes = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Drawings", x => x.DrwgId);
+                    table.PrimaryKey("PK_Drawings", x => x.DrawingId);
                     table.ForeignKey(
                         name: "FK_Drawings_Employees_EmployeeId",
                         column: x => x.EmployeeId,
                         principalTable: "Employees",
                         principalColumn: "EmployeeId",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Drawings_Projects_ProjectId",
+                        column: x => x.ProjectId,
+                        principalTable: "Projects",
+                        principalColumn: "ProjectId",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Drawings_Tasks_TaskId",
                         column: x => x.TaskId,
@@ -381,10 +393,11 @@ namespace Bonyan.DAL.Migrations
                 {
                     Invoice_ID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    TaskId = table.Column<int>(type: "int", nullable: false),
+                    TaskId = table.Column<int>(type: "int", nullable: true),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
                     Invoice_Date = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Due_Date = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Total_Amount = table.Column<decimal>(type: "decimal(15,2)", nullable: false),
+                    Total_Amount = table.Column<decimal>(type: "decimal(15,2)", nullable: true),
                     Invoice_Status = table.Column<int>(type: "int", nullable: false),
                     Tax = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
                     Discount = table.Column<decimal>(type: "decimal(5,2)", nullable: true)
@@ -392,6 +405,12 @@ namespace Bonyan.DAL.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Invoices", x => x.Invoice_ID);
+                    table.ForeignKey(
+                        name: "FK_Invoices_Projects_ProjectId",
+                        column: x => x.ProjectId,
+                        principalTable: "Projects",
+                        principalColumn: "ProjectId",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Invoices_Tasks_TaskId",
                         column: x => x.TaskId,
@@ -472,6 +491,11 @@ namespace Bonyan.DAL.Migrations
                 column: "EmployeeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Documents_ProjectId",
+                table: "Documents",
+                column: "ProjectId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Documents_TaskId",
                 table: "Documents",
                 column: "TaskId");
@@ -480,6 +504,11 @@ namespace Bonyan.DAL.Migrations
                 name: "IX_Drawings_EmployeeId",
                 table: "Drawings",
                 column: "EmployeeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Drawings_ProjectId",
+                table: "Drawings",
+                column: "ProjectId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Drawings_TaskId",
@@ -507,6 +536,11 @@ namespace Bonyan.DAL.Migrations
                 table: "Employees",
                 column: "SSN",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Invoices_ProjectId",
+                table: "Invoices",
+                column: "ProjectId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Invoices_TaskId",
