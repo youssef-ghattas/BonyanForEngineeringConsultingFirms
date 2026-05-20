@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bonyan.DAL.Migrations
 {
     [DbContext(typeof(BonyanDbContext))]
-    [Migration("20260519211535_updateMigration")]
-    partial class updateMigration
+    [Migration("20260519231354_intial")]
+    partial class intial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -129,7 +129,10 @@ namespace Bonyan.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TaskId")
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TaskId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("UploadDate")
@@ -139,6 +142,8 @@ namespace Bonyan.DAL.Migrations
 
                     b.HasIndex("EmployeeId");
 
+                    b.HasIndex("ProjectId");
+
                     b.HasIndex("TaskId");
 
                     b.ToTable("Documents");
@@ -146,18 +151,13 @@ namespace Bonyan.DAL.Migrations
 
             modelBuilder.Entity("Bonyan.DAL.Models.Drawing", b =>
                 {
-                    b.Property<int>("DrwgId")
+                    b.Property<int>("DrawingId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DrwgId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DrawingId"));
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("DrwgTitle")
+                    b.Property<string>("DrawingTitle")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -174,20 +174,20 @@ namespace Bonyan.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TaskId")
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TaskId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Version")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.HasKey("DrwgId");
+                    b.HasKey("DrawingId");
 
                     b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ProjectId");
 
                     b.HasIndex("TaskId");
 
@@ -298,16 +298,21 @@ namespace Bonyan.DAL.Migrations
                     b.Property<int>("Invoice_Status")
                         .HasColumnType("int");
 
-                    b.Property<int>("TaskId")
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TaskId")
                         .HasColumnType("int");
 
                     b.Property<decimal?>("Tax")
                         .HasColumnType("decimal(5, 2)");
 
-                    b.Property<decimal>("Total_Amount")
+                    b.Property<decimal?>("Total_Amount")
                         .HasColumnType("decimal(15, 2)");
 
                     b.HasKey("Invoice_ID");
+
+                    b.HasIndex("ProjectId");
 
                     b.HasIndex("TaskId");
 
@@ -710,13 +715,20 @@ namespace Bonyan.DAL.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Bonyan.DAL.Models.Project", "Project")
+                        .WithMany("Documents")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Bonyan.DAL.Models.Task", "Task")
                         .WithMany("Documents")
                         .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Employee");
+
+                    b.Navigation("Project");
 
                     b.Navigation("Task");
                 });
@@ -729,13 +741,20 @@ namespace Bonyan.DAL.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Bonyan.DAL.Models.Project", "Project")
+                        .WithMany("Drawings")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Bonyan.DAL.Models.Task", "Task")
                         .WithMany("Drawings")
                         .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Employee");
+
+                    b.Navigation("Project");
 
                     b.Navigation("Task");
                 });
@@ -768,11 +787,18 @@ namespace Bonyan.DAL.Migrations
 
             modelBuilder.Entity("Bonyan.DAL.Models.Invoice", b =>
                 {
+                    b.HasOne("Bonyan.DAL.Models.Project", "Project")
+                        .WithMany("Invoices")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Bonyan.DAL.Models.Task", "Task")
                         .WithMany("Invoices")
                         .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Project");
 
                     b.Navigation("Task");
                 });
@@ -930,7 +956,13 @@ namespace Bonyan.DAL.Migrations
 
             modelBuilder.Entity("Bonyan.DAL.Models.Project", b =>
                 {
+                    b.Navigation("Documents");
+
+                    b.Navigation("Drawings");
+
                     b.Navigation("EmployeeProjects");
+
+                    b.Navigation("Invoices");
 
                     b.Navigation("SiteVisits");
 

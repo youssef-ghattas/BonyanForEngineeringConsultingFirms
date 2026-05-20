@@ -41,5 +41,9 @@ namespace Bonyan.DAL.Models
 		public virtual ICollection<EmployeeProject> EmployeeProjects { get; set; } = new List<EmployeeProject>();
 		public virtual ICollection<Task> Tasks { get; set; } = new List<Task>();
 		public virtual ICollection<SiteVisit> SiteVisits { get; set; } = new List<SiteVisit>();
+		// Add these navigation properties to the Project class:
+		public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
+		public virtual ICollection<Drawing> Drawings { get; set; } = new List<Drawing>();
+		public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 	}
 }

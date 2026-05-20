@@ -14,8 +14,13 @@ namespace Bonyan.DAL.Models
 		[Key]
 		public int Invoice_ID { get; set; }
 
+		
+		public int? TaskId { get; set; }
+
+		// ── NEW ──────────────────────────────────────────
 		[Required]
-		public int TaskId { get; set; }
+		public int ProjectId { get; set; }   // nullable so existing rows are not broken
+											  // ─────────────────────────────────────────────────
 
 		[Required]
 		[DataType(DataType.Date)]
@@ -24,10 +29,10 @@ namespace Bonyan.DAL.Models
 		[DataType(DataType.Date)]
 		public DateTime? Due_Date { get; set; }
 
-		[Required]
+		
 		[Column(TypeName = "decimal(15, 2)")]
 		[Range(0, double.MaxValue)]
-		public decimal Total_Amount { get; set; }
+		public decimal? Total_Amount { get; set; }
 
 		[Required]
 		public InvoiceStatus Invoice_Status { get; set; } = InvoiceStatus.Unpaid;
@@ -42,6 +47,11 @@ namespace Bonyan.DAL.Models
 
 		[ForeignKey("TaskId")]
 		public virtual Task Task { get; set; }
+
+		// ── NEW ──────────────────────────────────────────
+		[ForeignKey("ProjectId")]
+		public virtual Project Project { get; set; }
+		// ─────────────────────────────────────────────────
 
 		public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 	}

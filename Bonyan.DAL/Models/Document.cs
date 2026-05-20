@@ -14,8 +14,11 @@ namespace Bonyan.DAL.Models
 		[Key]
 		public int DocId { get; set; }
 
+		// Made nullable so a doc can belong to a project directly OR via a task
+		public int? TaskId { get; set; }
+
 		[Required]
-		public int TaskId { get; set; }
+		public int ProjectId { get; set; }   // ← NEW: direct project link
 
 		[Required]
 		public int EmployeeId { get; set; }
@@ -41,6 +44,9 @@ namespace Bonyan.DAL.Models
 
 		[ForeignKey("TaskId")]
 		public virtual Task Task { get; set; }
+
+		[ForeignKey("ProjectId")]
+		public virtual Project Project { get; set; }   // ← NEW
 
 		[ForeignKey("EmployeeId")]
 		public virtual Employee Employee { get; set; }
