@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bonyan.DAL.Migrations
 {
     [DbContext(typeof(BonyanDbContext))]
-    [Migration("20260519231354_intial")]
-    partial class intial
+    [Migration("20260521171818_seconedMOZA")]
+    partial class seconedMOZA
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -157,6 +157,11 @@ namespace Bonyan.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DrawingId"));
 
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("DrawingTitle")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -182,6 +187,11 @@ namespace Bonyan.DAL.Migrations
 
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("DrawingId");
 
@@ -265,7 +275,6 @@ namespace Bonyan.DAL.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("RoleInProject")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 

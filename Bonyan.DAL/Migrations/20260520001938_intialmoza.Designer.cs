@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bonyan.DAL.Migrations
 {
     [DbContext(typeof(BonyanDbContext))]
-    [Migration("20260519233442_intial2")]
-    partial class intial2
+    [Migration("20260520001938_intialmoza")]
+    partial class intialmoza
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

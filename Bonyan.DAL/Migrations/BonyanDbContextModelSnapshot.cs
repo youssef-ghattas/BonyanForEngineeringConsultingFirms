@@ -154,6 +154,11 @@ namespace Bonyan.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DrawingId"));
 
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("DrawingTitle")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -179,6 +184,11 @@ namespace Bonyan.DAL.Migrations
 
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("DrawingId");
 
