@@ -264,3 +264,31 @@
     justify-content: flex-end;
     padding: 0 8px 8px;
 }
+/* ── Project filter bar ─────────────────── */
+.filter-bar {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    padding: 14px 20px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filter-select {
+    min-width: 220px;
+    border-radius: 7px;
+    border: 1px solid #dde3f0;
+    padding: 8px 12px;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+    .filter-select:focus {
+        border-color: var(--secondary, #8B5E3C);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(139,94,60,0.1);
+    }

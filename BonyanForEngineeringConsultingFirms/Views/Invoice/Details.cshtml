@@ -1,0 +1,164 @@
+﻿@model Bonyan.DAL.Models.Invoice
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تفاصيل الفاتورة";
+    var role = Context.Session.GetString("Role");
+
+    string statusLabel = Model.Invoice_Status switch
+    {
+        InvoiceStatus.Paid          => "مدفوعة",
+        InvoiceStatus.Unpaid        => "غير مدفوعة",
+        InvoiceStatus.PartiallyPaid => "مدفوعة جزئياً",
+        _ => Model.Invoice_Status.ToString()
+    };
+    string statusColor = Model.Invoice_Status switch
+    {
+        InvoiceStatus.Paid          => "#146c43",
+        InvoiceStatus.Unpaid        => "#842029",
+        InvoiceStatus.PartiallyPaid => "#7c4a00",
+        _ => "#666"
+    };
+    string statusBg = Model.Invoice_Status switch
+    {
+        InvoiceStatus.Paid          => "#d1e7dd",
+        InvoiceStatus.Unpaid        => "#f8d7da",
+        InvoiceStatus.PartiallyPaid => "#fff3cd",
+        _ => "#eee"
+    };
+
+    decimal net = (Model.Total_Amount ?? 0)
+                  * (1 + (Model.Tax ?? 0) / 100)
+                  * (1 - (Model.Discount ?? 0) / 100);
+}
+
+<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
+<link rel="stylesheet" href="~/css/invoice.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-file-invoice-dollar" style="color:var(--secondary)"></i>
+            فاتورة #@Model.Invoice_ID
+        </h2>
+    </div>
+    <div style="display:flex; gap:10px">
+        <a asp-controller="Project" asp-action="Details"
+           asp-route-id="@Model.ProjectId" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i> رجوع للمشروع
+        </a>
+        @if (role == "Admin")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Invoice_ID"
+               class="btn-bonyan-secondary">
+                <i class="fas fa-edit"></i> تعديل
+            </a>
+        }
+    </div>
+</div>
+
+<div class="invoice-card">
+
+    <!-- Header row -->
+    <div class="invoice-header">
+        <div>
+            <div class="invoice-num">فاتورة #@Model.Invoice_ID</div>
+            <div class="invoice-project">
+                <i class="fas fa-project-diagram"></i>
+                @(Model.Project?.ProjectName ?? "—")
+            </div>
+        </div>
+        <span class="invoice-status-badge"
+              style="background:@statusBg; color:@statusColor">
+            @statusLabel
+        </span>
+    </div>
+
+    <!-- Amounts -->
+    <div class="invoice-amounts">
+        <div class="inv-amount-row">
+            <span>المبلغ الأساسي</span>
+            <span>@((Model.Total_Amount ?? 0).ToString("N2")) ج.م</span>
+        </div>
+        <div class="inv-amount-row">
+            <span>الضريبة (@((Model.Tax ?? 0).ToString("N1"))%)</span>
+            <span>+@(((Model.Total_Amount ?? 0) * (Model.Tax ?? 0) / 100).ToString("N2")) ج.م</span>
+        </div>
+        <div class="inv-amount-row">
+            <span>الخصم (@((Model.Discount ?? 0).ToString("N1"))%)</span>
+            <span>-@(((Model.Total_Amount ?? 0) * (Model.Discount ?? 0) / 100).ToString("N2")) ج.م</span>
+        </div>
+        <div class="inv-amount-row inv-total">
+            <span>الإجمالي النهائي</span>
+            <span>@net.ToString("N2") ج.م</span>
+        </div>
+    </div>
+
+    <!-- Dates -->
+    <div class="invoice-dates">
+        <div class="inv-date-item">
+            <span class="inv-date-label"><i class="fas fa-calendar-alt"></i> تاريخ الإصدار</span>
+            <span>@Model.Invoice_Date.ToString("yyyy-MM-dd")</span>
+        </div>
+        <div class="inv-date-item">
+            <span class="inv-date-label"><i class="fas fa-calendar-check"></i> تاريخ الاستحقاق</span>
+            <span>@(Model.Due_Date.HasValue ? Model.Due_Date.Value.ToString("yyyy-MM-dd") : "—")</span>
+        </div>
+    </div>
+
+    <!-- Payments -->
+    @if (Model.Payments != null && Model.Payments.Any())
+    {
+        <div class="invoice-payments">
+            <div class="inv-section-title">
+                <i class="fas fa-money-bill-wave"></i> المدفوعات
+            </div>
+            <table class="doc-table">
+                <thead>
+                    <tr>
+                        <th>المبلغ</th>
+                        <th>طريقة الدفع</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.Payments)
+                    {
+                        <tr>
+                            <td>@p.PaymentAmount.ToString("N2") ج.م</td>
+                            <td>
+                                @(p.PaymentMethod switch {
+                                    Bonyan.DAL.Enums.PaymentMethod.Cash => "نقدي",
+                                    Bonyan.DAL.Enums.PaymentMethod.CreditCard => "بطاقة ائتمان",
+                                    Bonyan.DAL.Enums.PaymentMethod.BankTransfer => "تحويل بنكي",
+                                    _ => p.PaymentMethod.ToString()
+                                })
+                            </td>
+                            <td>
+                                @(p.Payment_Status switch {
+                                    Bonyan.DAL.Enums.PaymentStatus.Completed => "مكتمل",
+                                    Bonyan.DAL.Enums.PaymentStatus.Pending => "معلق",
+                                    Bonyan.DAL.Enums.PaymentStatus.Failed => "فشل",
+                                    _ => p.Payment_Status.ToString()
+                                })
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (role == "Admin")
+    {
+        <div style="margin-top:24px; padding-top:16px; border-top:1px solid #eee">
+            <form asp-action="Delete" asp-route-id="@Model.Invoice_ID" method="post"
+                  style="display:inline"
+                  onsubmit="return confirm('هل أنت متأكد من حذف هذه الفاتورة؟')">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-bonyan-danger">
+                    <i class="fas fa-trash"></i> حذف الفاتورة
+                </button>
+            </form>
+        </div>
+    }
+</div>

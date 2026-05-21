@@ -291,7 +291,17 @@
     <!-- ── TASKS TAB ────────────────────────────── -->
     <div id="tab-tasks" class="tab-panel">
         <div class="details-card">
-            <div class="details-section-title" data-lang="tasks">مهام المشروع</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+                <div class="details-section-title" style="margin-bottom:0" data-lang="tasks">مهام المشروع</div>
+                @if (role == "Admin")
+                {
+                    <a asp-controller="Task" asp-action="Create"
+                       asp-route-projectId="@Model.ProjectId"
+                       class="btn-bonyan-secondary" style="font-size:0.82rem; padding:7px 14px">
+                        <i class="fas fa-plus"></i> إضافة مهمة
+                    </a>
+                }
+            </div>
             @if (Model.Tasks != null && Model.Tasks.Any())
             {
                 <table style="width:100%; border-collapse:collapse; font-size:0.88rem">
@@ -300,6 +310,10 @@
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">المهمة</th>
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">الحالة</th>
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">الموعد النهائي</th>
+                            @if (role == "Admin")
+                            {
+                                <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">إجراءات</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
@@ -314,16 +328,50 @@
                                 TasksStatus.Cancelled => "ملغي",
                                 _ => t.Status.ToString()
                             };
+                            string tsBadge = t.Status switch
+                            {
+                                TasksStatus.Pending => "badge-pending",
+                                TasksStatus.InProgress => "badge-inprogress",
+                                TasksStatus.UnderReview => "badge-review",
+                                TasksStatus.Completed => "badge-completed",
+                                TasksStatus.Cancelled => "badge-cancelled",
+                                _ => ""
+                            };
                             <tr style="border-bottom:1px solid #F4F6F9">
-                                <td style="padding:10px">@t.Task_Name</td>
-                                <td style="padding:10px">@ts</td>
                                 <td style="padding:10px">
-                                    @(t.DueDate.HasValue
-                                                                ? t.DueDate.Value.ToString("yyyy-MM-dd")
-                                                                : "—")
-                        </td>
-                    </tr>
-                                        }
+                                    <a asp-controller="Task" asp-action="Details"
+                                       asp-route-id="@t.TaskId"
+                                       style="color:var(--primary); font-weight:600; text-decoration:none">
+                                        @t.Task_Name
+                                    </a>
+                                </td>
+                                <td style="padding:10px">
+                                    <span class="task-status-badge @tsBadge">@ts</span>
+                                </td>
+                                <td style="padding:10px">
+                                    @(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")
+                                </td>
+                                @if (role == "Admin")
+                                {
+                                    <td style="padding:10px">
+                                        <a asp-controller="Task" asp-action="Edit"
+                                           asp-route-id="@t.TaskId"
+                                           class="btn-action edit" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form asp-controller="Task" asp-action="Delete"
+                                              asp-route-id="@t.TaskId" method="post"
+                                              style="display:inline"
+                                              onsubmit="return confirm('هل أنت متأكد من حذف هذه المهمة؟')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-action delete" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                }
+                            </tr>
+                        }
                     </tbody>
                 </table>
             }

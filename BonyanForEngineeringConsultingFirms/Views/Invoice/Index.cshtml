@@ -1,0 +1,159 @@
+﻿@model IEnumerable<Bonyan.DAL.Models.Invoice>
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "الفواتير";
+    var role = Context.Session.GetString("Role");
+    var projects = ViewBag.Projects as List<Bonyan.DAL.Models.Project> ?? new();
+    int? selectedProjectId = ViewBag.SelectedProjectId as int?;
+}
+
+<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-file-invoice-dollar" style="color:var(--secondary)"></i>
+            الفواتير
+        </h2>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div style="background:#d1e7dd; color:#146c43; border-radius:8px;
+                    padding:12px 18px; margin-bottom:16px; font-weight:600">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (projects.Any())
+{
+    <div class="filter-bar">
+        <form method="get" asp-action="Index"
+              style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+            <label style="font-weight:600; font-size:0.88rem; color:#444">
+                <i class="fas fa-filter" style="color:var(--secondary)"></i>
+                تصفية حسب المشروع:
+            </label>
+            <select name="projectId" class="form-select filter-select"
+                    onchange="this.form.submit()">
+                <option value="">-- جميع المشاريع --</option>
+                @foreach (var p in projects)
+                {
+                    if (selectedProjectId == p.ProjectId)
+                    {
+                        <option value="@p.ProjectId" selected>@p.ProjectName</option>
+                    }
+                    else
+                    {
+                        <option value="@p.ProjectId">@p.ProjectName</option>
+                    }
+                }
+            </select>
+            @if (selectedProjectId.HasValue)
+            {
+                <a asp-action="Index" class="btn-bonyan-primary"
+                   style="font-size:0.82rem; padding:7px 12px">
+                    <i class="fas fa-times"></i> إلغاء التصفية
+                </a>
+            }
+        </form>
+    </div>
+}
+
+<div class="details-card">
+    @if (Model.Any())
+    {
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th>رقم الفاتورة</th>
+                    <th>المشروع</th>
+                    <th>الإجمالي</th>
+                    <th>الحالة</th>
+                    <th>تاريخ الإصدار</th>
+                    <th>تاريخ الاستحقاق</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var inv in Model)
+                {
+                    string statusLabel = inv.Invoice_Status switch
+                    {
+                        InvoiceStatus.Paid => "مدفوعة",
+                        InvoiceStatus.Unpaid => "غير مدفوعة",
+                        InvoiceStatus.PartiallyPaid => "مدفوعة جزئياً",
+                        _ => inv.Invoice_Status.ToString()
+                    };
+                    string statusColor = inv.Invoice_Status switch
+                    {
+                        InvoiceStatus.Paid => "#146c43",
+                        InvoiceStatus.Unpaid => "#842029",
+                        InvoiceStatus.PartiallyPaid => "#7c4a00",
+                        _ => "#666"
+                    };
+                    string statusBg = inv.Invoice_Status switch
+                    {
+                        InvoiceStatus.Paid => "#d1e7dd",
+                        InvoiceStatus.Unpaid => "#f8d7da",
+                        InvoiceStatus.PartiallyPaid => "#fff3cd",
+                        _ => "#eee"
+                    };
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@inv.Invoice_ID"
+                               style="color:var(--primary); font-weight:600; text-decoration:none">
+                                #@inv.Invoice_ID
+                            </a>
+                        </td>
+                        <td>@(inv.Project?.ProjectName ?? "—")</td>
+                        <td>
+                            @(inv.Total_Amount.HasValue
+                                                ? inv.Total_Amount.Value.ToString("N0") + " ج.م"
+                                                : "—")
+                </td>
+                <td>
+                    <span style="background:@statusBg; color:@statusColor;
+                                         padding:3px 10px; border-radius:12px;
+                                         font-size:0.75rem; font-weight:700">
+                        @statusLabel
+                    </span>
+                </td>
+                <td>@inv.Invoice_Date.ToString("yyyy-MM-dd")</td>
+                <td>@(inv.Due_Date.HasValue? inv.Due_Date.Value.ToString("yyyy-MM-dd") : "—")</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@inv.Invoice_ID"
+                       class="btn-action view" title="تفاصيل">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    @if (role == "Admin")
+                            {
+                                <a asp-action="Edit" asp-route-id="@inv.Invoice_ID"
+                                   class="btn-action edit" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form asp-action="Delete" asp-route-id="@inv.Invoice_ID"
+                                      method="post" style="display:inline"
+                                      onsubmit="return confirm('هل أنت متأكد من حذف هذه الفاتورة؟')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-action delete" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div style="text-align:center; padding:40px; color:#aaa">
+            <i class="fas fa-file-invoice-dollar"
+               style="font-size:3rem; margin-bottom:14px; display:block"></i>
+            <p>لا توجد فواتير حتى الآن</p>
+        </div>
+    }
+</div>
