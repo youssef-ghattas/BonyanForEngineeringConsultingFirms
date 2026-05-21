@@ -1,0 +1,65 @@
+﻿@model IEnumerable<Bonyan.DAL.Models.Drawing>
+@{
+    ViewData["Title"] = "صور المشاريع";
+    var role = Context.Session.GetString("Role");
+}
+
+<link rel="stylesheet" href="~/css/document.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-images" style="color:var(--secondary)"></i>
+            صور المشاريع
+        </h2>
+    </div>
+</div>
+
+<div class="details-card">
+    @if (Model.Any())
+    {
+        <div class="photo-grid">
+            @foreach (var dr in Model)
+            {
+                <div class="photo-card">
+                    <img src="@dr.FilePath"
+                         alt="@dr.DrawingTitle"
+                         onerror="this.src='/images/placeholder.png'" />
+                    <div class="photo-card-info">
+                        <p title="@dr.DrawingTitle">@dr.DrawingTitle</p>
+                        <span>@(dr.Project?.ProjectName ?? "—")</span><br />
+                        <span>@dr.UploadDate.ToString("yyyy-MM-dd")</span>
+                    </div>
+                    <div class="photo-card-actions">
+                        <a href="@dr.FilePath" target="_blank"
+                           class="btn-action view" title="عرض">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        @if (role == "Admin")
+                        {
+                            <form asp-action="Delete"
+                                  asp-route-id="@dr.DrawingId"
+                                  method="post"
+                                  style="display:inline"
+                                  onsubmit="return confirm('هل أنت متأكد من حذف هذه الصورة؟')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn-action delete" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="text-align:center; padding:40px; color:#aaa">
+            <i class="fas fa-images"
+               style="font-size:3rem; margin-bottom:14px; display:block"></i>
+            <p>لا توجد صور مرفوعة حتى الآن</p>
+        </div>
+    }
+</div>

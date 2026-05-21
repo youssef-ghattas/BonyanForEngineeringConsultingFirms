@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Bonyan.DAL.Migrations
 {
     /// <inheritdoc />
-    public partial class intial : Migration
+    public partial class intialmoza : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -198,7 +198,7 @@ namespace Bonyan.DAL.Migrations
                     EmployeeId = table.Column<int>(type: "int", nullable: false),
                     ProjectId = table.Column<int>(type: "int", nullable: false),
                     AssignmentDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    RoleInProject = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    RoleInProject = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     AssignedByAdminId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>

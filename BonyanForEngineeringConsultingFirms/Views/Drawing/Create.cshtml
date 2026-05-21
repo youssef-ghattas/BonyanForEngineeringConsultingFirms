@@ -1,0 +1,149 @@
+﻿@model Bonyan.DAL.Models.Drawing
+@{
+    ViewData["Title"] = "رفع صورة";
+    int projectId = ViewBag.ProjectId ?? 0;
+    string projectName = ViewBag.ProjectName ?? "—";
+}
+
+<link rel="stylesheet" href="~/css/document.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-camera" style="color:var(--secondary)"></i>
+            رفع صورة للمشروع
+        </h2>
+    </div>
+    <a asp-controller="Project" asp-action="Details"
+       asp-route-id="@projectId" class="btn-bonyan-primary">
+        <i class="fas fa-arrow-right"></i> رجوع للمشروع
+    </a>
+</div>
+
+<div class="upload-card">
+    <div class="upload-card-header">
+        <i class="fas fa-images"></i>
+        <h4>بيانات الصورة</h4>
+    </div>
+
+    <div class="upload-card-body">
+
+        <div class="project-badge">
+            <i class="fas fa-project-diagram"></i>
+            @projectName
+        </div>
+
+        <form asp-action="Create" method="post"
+              enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="ProjectId" value="@projectId" />
+
+            <!-- Image drop zone with live preview -->
+            <div class="form-group">
+                <label>الصورة <span style="color:red">*</span></label>
+                <div class="file-drop-zone" id="dropZone"
+                     style="min-height:160px">
+                    <div id="dropContent">
+                        <i class="fas fa-image"></i>
+                        <p>اسحب الصورة هنا أو انقر للاختيار</p>
+                        <span>JPG, PNG, GIF, WEBP, SVG</span>
+                    </div>
+                    <!-- Image preview inside zone -->
+                    <img id="imgPreview"
+                         style="display:none; max-height:180px;
+                                border-radius:8px; margin-top:10px"
+                         alt="معاينة" />
+                    <input type="file" name="uploadedFile" id="fileInput"
+                           accept="image/*"
+                           onchange="previewImage(this)" />
+                </div>
+                <span class="text-danger">
+                    @Html.ValidationMessage("uploadedFile")
+                </span>
+            </div>
+
+            <!-- Title -->
+            <div class="form-group">
+                <label>عنوان الصورة <span style="color:red">*</span></label>
+                <input asp-for="DrawingTitle" class="form-control"
+                       placeholder="وصف مختصر للصورة" required />
+                <span asp-validation-for="DrawingTitle" class="text-danger"></span>
+            </div>
+
+            <!-- Version -->
+            <div class="form-group">
+                <label>الإصدار</label>
+                <input asp-for="Version" class="form-control"
+                       placeholder="مثال: 1.0" />
+            </div>
+
+            <!-- Category -->
+            <div class="form-group">
+                <label>التصنيف</label>
+                <select asp-for="Category" class="form-select">
+                    <option value="">-- اختر التصنيف --</option>
+                    <option value="موقع">صور الموقع</option>
+                    <option value="تقدم">تقدم الأعمال</option>
+                    <option value="مشاكل">مشاكل وعيوب</option>
+                    <option value="اكتمال">صور اكتمال</option>
+                    <option value="أخرى">أخرى</option>
+                </select>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group">
+                <label>ملاحظات</label>
+                <textarea asp-for="Notes" class="form-control"
+                          rows="2"
+                          placeholder="أي ملاحظات..."></textarea>
+            </div>
+
+            <div class="upload-actions">
+                <a asp-controller="Project" asp-action="Details"
+                   asp-route-id="@projectId"
+                   class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-upload"></i> رفع الصورة
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('imgPreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('dropContent').style.display = 'none';
+                    document.getElementById('dropZone').style.borderColor =
+                        'var(--secondary)';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        const zone = document.getElementById('dropZone');
+        zone.addEventListener('dragover',  e => {
+            e.preventDefault();
+            zone.classList.add('dragover');
+        });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop',      e => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            const dt = e.dataTransfer;
+            if (dt.files.length) {
+                document.getElementById('fileInput').files = dt.files;
+                previewImage(document.getElementById('fileInput'));
+            }
+        });
+    </script>
+}

@@ -1,0 +1,150 @@
+﻿@model Bonyan.DAL.Models.Document
+@{
+    ViewData["Title"] = "رفع مستند";
+    int projectId = ViewBag.ProjectId ?? 0;
+    string projectName = ViewBag.ProjectName ?? "—";
+}
+
+<link rel="stylesheet" href="~/css/document.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-file-upload" style="color:var(--secondary)"></i>
+            رفع مستند جديد
+        </h2>
+    </div>
+    <a asp-controller="Project" asp-action="Details"
+       asp-route-id="@projectId" class="btn-bonyan-primary">
+        <i class="fas fa-arrow-right"></i> رجوع للمشروع
+    </a>
+</div>
+
+<div class="upload-card">
+    <div class="upload-card-header">
+        <i class="fas fa-file-alt"></i>
+        <h4>بيانات المستند</h4>
+    </div>
+
+    <div class="upload-card-body">
+
+        <!-- Project badge -->
+        <div class="project-badge">
+            <i class="fas fa-project-diagram"></i>
+            @projectName
+        </div>
+
+        <form asp-action="Create" method="post"
+              enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <!-- Hidden project id -->
+            <input type="hidden" asp-for="ProjectId" value="@projectId" />
+
+            <!-- File drop zone -->
+            <div class="form-group">
+                <label>الملف <span style="color:red">*</span></label>
+                <div class="file-drop-zone" id="dropZone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>اسحب الملف هنا أو انقر للاختيار</p>
+                    <span>PDF, Word, Excel, PNG, JPG — الحجم الأقصى 20MB</span>
+                    <input type="file" name="uploadedFile" id="fileInput"
+                           onchange="previewFile(this)" />
+                </div>
+                <div class="file-preview" id="filePreview">
+                    <i class="fas fa-file" id="fileIcon"></i>
+                    <span class="file-name" id="fileName"></span>
+                </div>
+                <span class="text-danger">
+                    @Html.ValidationMessage("uploadedFile")
+                </span>
+            </div>
+
+            <!-- Title -->
+            <div class="form-group">
+                <label>عنوان المستند <span style="color:red">*</span></label>
+                <input asp-for="DocTitle" class="form-control"
+                       placeholder="أدخل عنوان وصفياً للمستند" required />
+                <span asp-validation-for="DocTitle" class="text-danger"></span>
+            </div>
+
+            <!-- Category -->
+            <div class="form-group">
+                <label>التصنيف</label>
+                <select asp-for="Category" class="form-select">
+                    <option value="">-- اختر التصنيف --</option>
+                    <option value="عقود">عقود</option>
+                    <option value="تقارير">تقارير</option>
+                    <option value="مخططات">مخططات</option>
+                    <option value="ملاحظات">ملاحظات</option>
+                    <option value="أخرى">أخرى</option>
+                </select>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group">
+                <label>ملاحظات</label>
+                <textarea asp-for="Notes" class="form-control"
+                          rows="3"
+                          placeholder="أي ملاحظات إضافية..."></textarea>
+            </div>
+
+            <div class="upload-actions">
+                <a asp-controller="Project" asp-action="Details"
+                   asp-route-id="@projectId"
+                   class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-upload"></i> رفع المستند
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function previewFile(input) {
+            const preview  = document.getElementById('filePreview');
+            const fileName = document.getElementById('fileName');
+            const fileIcon = document.getElementById('fileIcon');
+
+            if (input.files && input.files[0]) {
+                const name = input.files[0].name;
+                const ext  = name.split('.').pop().toLowerCase();
+
+                const iconMap = {
+                    pdf:  'fa-file-pdf',
+                    doc:  'fa-file-word', docx: 'fa-file-word',
+                    xls:  'fa-file-excel', xlsx: 'fa-file-excel',
+                    png:  'fa-file-image', jpg: 'fa-file-image',
+                    jpeg: 'fa-file-image', gif: 'fa-file-image'
+                };
+
+                fileIcon.className = 'fas ' + (iconMap[ext] || 'fa-file');
+                fileName.textContent = name;
+                preview.style.display = 'flex';
+                document.getElementById('dropZone').style.borderColor =
+                    'var(--secondary)';
+            }
+        }
+
+        // Drag & drop highlight
+        const zone = document.getElementById('dropZone');
+        zone.addEventListener('dragover',  e => {
+            e.preventDefault();
+            zone.classList.add('dragover');
+        });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop',      e => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            const dt = e.dataTransfer;
+            if (dt.files.length) {
+                document.getElementById('fileInput').files = dt.files;
+                previewFile(document.getElementById('fileInput'));
+            }
+        });
+    </script>
+}
