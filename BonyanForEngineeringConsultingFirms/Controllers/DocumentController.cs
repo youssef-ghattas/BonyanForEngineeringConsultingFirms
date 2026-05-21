@@ -1,4 +1,5 @@
-﻿using Bonyan.DAL.Context;
+﻿// Controllers/DocumentController.cs
+using Bonyan.DAL.Context;
 using Bonyan.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,126 +11,111 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
         private readonly BonyanDbContext _context;
         private readonly IWebHostEnvironment _env;
 
-        public DocumentController(BonyanDbContext context,
-                                   IWebHostEnvironment env)
+        public DocumentController(BonyanDbContext context, IWebHostEnvironment env)
         {
             _context = context;
             _env = env;
         }
 
-        // ─────────────────────────────────────────────
-        // INDEX — list all docs (admin) or assigned (engineer)
-        // ─────────────────────────────────────────────
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? projectId)
         {
             var role = HttpContext.Session.GetString("Role");
             var employeeId = HttpContext.Session.GetInt32("EmployeeId");
 
-            List<Document> docs;
+            if (role == null) return RedirectToAction("Login", "Account");
 
+            IQueryable<Document> query = _context.Documents
+                .Include(d => d.Project)
+                .Include(d => d.Employee);
+
+            if (role != "Admin" && employeeId != null)
+            {
+                query = query.Where(d => d.Project.EmployeeProjects
+                                          .Any(ep => ep.EmployeeId == employeeId));
+            }
+
+            if (projectId.HasValue)
+                query = query.Where(d => d.ProjectId == projectId.Value);
+
+            var docs = await query.OrderByDescending(d => d.UploadDate).ToListAsync();
+
+            // Load all projects for filter dropdown
             if (role == "Admin")
             {
-                docs = await _context.Documents
-                    .Include(d => d.Project)
-                    .Include(d => d.Employee)
-                    .OrderByDescending(d => d.UploadDate)
-                    .ToListAsync();
+                ViewBag.Projects = await _context.Projects
+                    .OrderBy(p => p.ProjectName).ToListAsync();
             }
-            else
+            else if (employeeId != null)
             {
-                if (employeeId == null)
-                    return RedirectToAction("Login", "Account");
-
-                // Engineer sees only docs from projects they are assigned to
-                docs = await _context.Documents
-                    .Include(d => d.Project)
-                    .Include(d => d.Employee)
-                    .Where(d => d.Project.EmployeeProjects
-                                 .Any(ep => ep.EmployeeId == employeeId))
-                    .OrderByDescending(d => d.UploadDate)
-                    .ToListAsync();
+                ViewBag.Projects = await _context.Projects
+                    .Where(p => p.EmployeeProjects.Any(ep => ep.EmployeeId == employeeId))
+                    .OrderBy(p => p.ProjectName).ToListAsync();
             }
 
+            ViewBag.SelectedProjectId = projectId;
             return View(docs);
         }
 
-        // ─────────────────────────────────────────────
-        // CREATE (GET) — called with ?projectId=X
-        // ─────────────────────────────────────────────
         public IActionResult Create(int projectId)
         {
             var role = HttpContext.Session.GetString("Role");
             if (role == null) return RedirectToAction("Login", "Account");
 
-            // Pass projectId so the form knows which project
             ViewBag.ProjectId = projectId;
-
-            // Load project name for display
             var project = _context.Projects.Find(projectId);
             ViewBag.ProjectName = project?.ProjectName ?? "—";
 
             return View();
         }
 
-        // ─────────────────────────────────────────────
-        // CREATE (POST) — upload file + save record
-        // ─────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Document document,
-                                                 IFormFile uploadedFile)
+        public async Task<IActionResult> Create(Document document, IFormFile uploadedFile)
         {
             var role = HttpContext.Session.GetString("Role");
             var employeeId = HttpContext.Session.GetInt32("EmployeeId");
 
             if (role == null) return RedirectToAction("Login", "Account");
 
-            // Remove nav props from validation
             ModelState.Remove("Project");
             ModelState.Remove("Task");
             ModelState.Remove("Employee");
             ModelState.Remove("FilePath");
+            ModelState.Remove("FileType");
 
             if (uploadedFile == null || uploadedFile.Length == 0)
                 ModelState.AddModelError("uploadedFile", "يرجى اختيار ملف للرفع");
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                // Save file to wwwroot/uploads/documents/
-                var uploadsFolder = Path.Combine(_env.WebRootPath,
-                                                  "uploads", "documents");
-                Directory.CreateDirectory(uploadsFolder);
-
-                var uniqueName = Guid.NewGuid().ToString()
-                               + Path.GetExtension(uploadedFile!.FileName);
-                var filePath = Path.Combine(uploadsFolder, uniqueName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                    await uploadedFile.CopyToAsync(stream);
-
-                document.FilePath = "/uploads/documents/" + uniqueName;
-                document.FileType = Path.GetExtension(uploadedFile.FileName)
-                                           .TrimStart('.').ToUpper();
-                document.UploadDate = DateTime.Now;
-                document.EmployeeId = employeeId ?? 0;
-
-                _context.Documents.Add(document);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "تم رفع المستند بنجاح";
-                return RedirectToAction("Details", "Project",
-                                        new { id = document.ProjectId });
+                ViewBag.ProjectId = document.ProjectId;
+                var proj = _context.Projects.Find(document.ProjectId);
+                ViewBag.ProjectName = proj?.ProjectName ?? "—";
+                return View(document);
             }
 
-            ViewBag.ProjectId = document.ProjectId;
-            var proj = _context.Projects.Find(document.ProjectId);
-            ViewBag.ProjectName = proj?.ProjectName ?? "—";
-            return View(document);
+            // Save file
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "documents");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueName = Guid.NewGuid().ToString() + Path.GetExtension(uploadedFile!.FileName);
+            var filePath = Path.Combine(uploadsFolder, uniqueName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+                await uploadedFile.CopyToAsync(stream);
+
+            document.FilePath = "/uploads/documents/" + uniqueName;
+            document.FileType = Path.GetExtension(uploadedFile.FileName).TrimStart('.').ToUpper();
+            document.UploadDate = DateTime.Now;
+            document.EmployeeId = employeeId ?? 1; // fallback to 1 if session not set
+
+            _context.Documents.Add(document);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "تم رفع المستند بنجاح";
+            return RedirectToAction("Details", "Project", new { id = document.ProjectId });
         }
 
-        // ─────────────────────────────────────────────
-        // DELETE (POST)
-        // ─────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -140,11 +126,9 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             var doc = await _context.Documents.FindAsync(id);
             if (doc == null) return NotFound();
 
-            // Delete physical file
             if (!string.IsNullOrEmpty(doc.FilePath))
             {
-                var fullPath = Path.Combine(_env.WebRootPath,
-                                             doc.FilePath.TrimStart('/'));
+                var fullPath = Path.Combine(_env.WebRootPath, doc.FilePath.TrimStart('/'));
                 if (System.IO.File.Exists(fullPath))
                     System.IO.File.Delete(fullPath);
             }
@@ -154,8 +138,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "تم حذف المستند بنجاح";
-            return RedirectToAction("Details", "Project",
-                                    new { id = projectId });
+            return RedirectToAction("Details", "Project", new { id = projectId });
         }
     }
 }

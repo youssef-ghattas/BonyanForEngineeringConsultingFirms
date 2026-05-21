@@ -1,80 +1,147 @@
-﻿using Bonyan.BLL.Services;
+﻿using Bonyan.DAL.Context;
+using Bonyan.DAL.Enums;
 using Bonyan.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BonyanForEngineeringConsultingFirms.Controllers
 {
-	public class InvoiceController : Controller
-	{
-		private readonly IService<Invoice> _invoiceService;
+    public class InvoiceController : Controller
+    {
+        private readonly BonyanDbContext _context;
 
-		public InvoiceController(IService<Invoice> invoiceService)
-		{
-			_invoiceService = invoiceService;
-		}
+        public InvoiceController(BonyanDbContext context)
+        {
+            _context = context;
+        }
 
-		public IActionResult Index()
-		{
-			var invoices = _invoiceService.GetAll();
-			return View(invoices);
-		}
+        public async Task<IActionResult> Index(int? projectId)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+            if (role == null) return RedirectToAction("Login", "Account");
 
-		public IActionResult Details(int id)
-		{
-			var invoice = _invoiceService.GetById(id);
-			if (invoice == null) return NotFound();
-			return View(invoice);
-		}
+            IQueryable<Invoice> query = _context.Invoices
+                .Include(i => i.Project);
 
-		public IActionResult Create()
-		{
-			return View();
-		}
+            if (role != "Admin" && employeeId != null)
+                query = query.Where(i => i.Project.EmployeeProjects
+                                          .Any(ep => ep.EmployeeId == employeeId));
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public IActionResult Create(Invoice invoice)
-		{
-			if (ModelState.IsValid)
-			{
-				_invoiceService.Add(invoice);
-				return RedirectToAction(nameof(Index));
-			}
-			return View(invoice);
-		}
+            if (projectId.HasValue)
+                query = query.Where(i => i.ProjectId == projectId.Value);
 
-		public IActionResult Edit(int id)
-		{
-			var invoice = _invoiceService.GetById(id);
-			if (invoice == null) return NotFound();
-			return View(invoice);
-		}
+            var invoices = await query.OrderByDescending(i => i.Invoice_Date).ToListAsync();
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public IActionResult Edit(Invoice invoice)
-		{
-			if (ModelState.IsValid)
-			{
-				_invoiceService.Update(invoice);
-				return RedirectToAction(nameof(Index));
-			}
-			return View(invoice);
-		}
+            var projectsQuery = role == "Admin"
+                ? _context.Projects.OrderBy(p => p.ProjectName)
+                : _context.Projects
+                    .Where(p => p.EmployeeProjects.Any(ep => ep.EmployeeId == employeeId))
+                    .OrderBy(p => p.ProjectName);
 
-		public IActionResult Delete(int id)
-		{
-			var invoice = _invoiceService.GetById(id);
-			if (invoice == null) return NotFound();
-			return View(invoice);
-		}
+            ViewBag.Projects = await projectsQuery.ToListAsync();
+            ViewBag.SelectedProjectId = projectId;
+            return View(invoices);
+        }
 
-		[HttpPost, ActionName("Delete")]
-		[ValidateAntiForgeryToken]
-		public IActionResult DeleteConfirmed(int id)
-		{
-			_invoiceService.Delete(id);
-			return RedirectToAction(nameof(Index));
-		}
-	}
+        public async Task<IActionResult> Details(int id)
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.Project)
+                .Include(i => i.Payments)
+                .FirstOrDefaultAsync(i => i.Invoice_ID == id);
+            if (invoice == null) return NotFound();
+            return View(invoice);
+        }
+
+        public IActionResult Create(int projectId)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return Forbid();
+
+            ViewBag.ProjectId = projectId;
+            ViewBag.ProjectName = _context.Projects.Find(projectId)?.ProjectName ?? "—";
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Invoice invoice)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return Forbid();
+
+            ModelState.Remove("Project");
+            ModelState.Remove("Task");
+            ModelState.Remove("Payments");
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.ProjectId = invoice.ProjectId;
+                ViewBag.ProjectName = _context.Projects.Find(invoice.ProjectId)?.ProjectName ?? "—";
+                return View(invoice);
+            }
+
+            invoice.Invoice_Date = DateTime.Now;
+            _context.Invoices.Add(invoice);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "تمت إضافة الفاتورة بنجاح";
+            return RedirectToAction("Details", "Project", new { id = invoice.ProjectId });
+        }
+
+        public async Task<IActionResult> Edit(int id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return Forbid();
+
+            var invoice = await _context.Invoices.FindAsync(id);
+            if (invoice == null) return NotFound();
+
+            ViewBag.ProjectName = _context.Projects.Find(invoice.ProjectId)?.ProjectName ?? "—";
+            return View(invoice);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Invoice invoice)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return Forbid();
+
+            ModelState.Remove("Project");
+            ModelState.Remove("Task");
+            ModelState.Remove("Payments");
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.ProjectName = _context.Projects.Find(invoice.ProjectId)?.ProjectName ?? "—";
+                return View(invoice);
+            }
+
+            _context.Invoices.Update(invoice);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "تم تحديث الفاتورة بنجاح";
+            return RedirectToAction("Details", "Project", new { id = invoice.ProjectId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return Forbid();
+
+            var invoice = await _context.Invoices.FindAsync(id);
+            if (invoice == null) return NotFound();
+
+            int projectId = invoice.ProjectId;
+            _context.Invoices.Remove(invoice);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "تم حذف الفاتورة بنجاح";
+            return RedirectToAction("Details", "Project", new { id = projectId });
+        }
+    }
 }

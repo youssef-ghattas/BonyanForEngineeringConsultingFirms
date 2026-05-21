@@ -2,9 +2,11 @@
 @{
     ViewData["Title"] = "صور المشاريع";
     var role = Context.Session.GetString("Role");
+    var projects = ViewBag.Projects as List<Bonyan.DAL.Models.Project> ?? new();
+    int? selectedProjectId = ViewBag.SelectedProjectId as int?;
 }
 
-<link rel="stylesheet" href="~/css/document.css" />
+<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
 
 <div class="page-header">
     <div class="page-header-left">
@@ -14,6 +16,40 @@
         </h2>
     </div>
 </div>
+
+@if (projects.Any())
+{
+    <div class="filter-bar">
+        <form method="get" asp-action="Index" style="display:flex; align-items:center; gap:10px">
+            <label style="font-weight:600; font-size:0.88rem; color:#444">
+                <i class="fas fa-filter" style="color:var(--secondary)"></i>
+                تصفية حسب المشروع:
+            </label>
+            <select name="projectId" class="form-select filter-select"
+                    onchange="this.form.submit()">
+                <option value="">-- جميع المشاريع --</option>
+                @foreach (var p in projects)
+                {
+                    if (selectedProjectId == p.ProjectId)
+                    {
+                        <option value="@p.ProjectId" selected>@p.ProjectName</option>
+                    }
+                    else
+                    {
+                        <option value="@p.ProjectId">@p.ProjectName</option>
+                    }
+                }
+            </select>
+            @if (selectedProjectId.HasValue)
+            {
+                <a asp-action="Index" class="btn-bonyan-primary"
+                   style="font-size:0.82rem; padding:7px 12px">
+                    <i class="fas fa-times"></i> إلغاء التصفية
+                </a>
+            }
+        </form>
+    </div>
+}
 
 <div class="details-card">
     @if (Model.Any())
@@ -37,14 +73,11 @@
                         </a>
                         @if (role == "Admin")
                         {
-                            <form asp-action="Delete"
-                                  asp-route-id="@dr.DrawingId"
-                                  method="post"
-                                  style="display:inline"
+                            <form asp-action="Delete" asp-route-id="@dr.DrawingId"
+                                  method="post" style="display:inline"
                                   onsubmit="return confirm('هل أنت متأكد من حذف هذه الصورة؟')">
                                 @Html.AntiForgeryToken()
-                                <button type="submit"
-                                        class="btn-action delete" title="حذف">
+                                <button type="submit" class="btn-action delete" title="حذف">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>

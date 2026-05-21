@@ -1,0 +1,130 @@
+﻿@model IEnumerable<Bonyan.DAL.Models.Task>
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "المهام";
+    var role = Context.Session.GetString("Role");
+    int? projectId = ViewBag.ProjectId as int?;
+    string projectName = ViewBag.ProjectName as string ?? "";
+}
+
+<link rel="stylesheet" href="~/css/task.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-tasks" style="color:var(--secondary)"></i>
+            @(projectId.HasValue ? $"مهام مشروع: {projectName}" : "جميع المهام")
+        </h2>
+    </div>
+    <div style="display:flex; gap:10px">
+        @if (projectId.HasValue)
+        {
+            <a asp-controller="Project" asp-action="Details"
+               asp-route-id="@projectId" class="btn-bonyan-primary">
+                <i class="fas fa-arrow-right"></i> رجوع للمشروع
+            </a>
+        }
+        @if (role == "Admin" && projectId.HasValue)
+        {
+            <a asp-action="Create" asp-route-projectId="@projectId"
+               class="btn-bonyan-secondary">
+                <i class="fas fa-plus"></i> إضافة مهمة
+            </a>
+        }
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-success-msg">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+    </div>
+}
+
+<div class="details-card">
+    @if (Model.Any())
+    {
+        <table class="task-table">
+            <thead>
+                <tr>
+                    <th>اسم المهمة</th>
+                    @if (!projectId.HasValue)
+                    {
+                        <th>المشروع</th>
+                    }
+                    <th>الحالة</th>
+                    <th>الموعد النهائي</th>
+                    <th>تاريخ الإنشاء</th>
+                    @if (role == "Admin")
+                    {
+                        <th>إجراءات</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model)
+                {
+                    string statusLabel = t.Status switch
+                    {
+                        TasksStatus.Pending => "معلق",
+                        TasksStatus.InProgress => "جاري",
+                        TasksStatus.UnderReview => "قيد المراجعة",
+                        TasksStatus.Completed => "مكتمل",
+                        TasksStatus.Cancelled => "ملغي",
+                        _ => t.Status.ToString()
+                    };
+                    string statusClass = t.Status switch
+                    {
+                        TasksStatus.Pending => "badge-pending",
+                        TasksStatus.InProgress => "badge-inprogress",
+                        TasksStatus.UnderReview => "badge-review",
+                        TasksStatus.Completed => "badge-completed",
+                        TasksStatus.Cancelled => "badge-cancelled",
+                        _ => ""
+                    };
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@t.TaskId"
+                               style="color:var(--primary); font-weight:600; text-decoration:none">
+                                <i class="fas fa-circle-notch"
+                                   style="font-size:0.6rem; color:var(--secondary); margin-left:6px"></i>
+                                @t.Task_Name
+                            </a>
+                        </td>
+                        @if (!projectId.HasValue)
+                        {
+                            <td>@(t.Project?.ProjectName ?? "—")</td>
+                        }
+                        <td><span class="task-status-badge @statusClass">@statusLabel</span></td>
+                        <td>@(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                        <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        @if (role == "Admin")
+                        {
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@t.TaskId"
+                                   class="btn-action edit" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form asp-action="Delete" asp-route-id="@t.TaskId"
+                                      method="post" style="display:inline"
+                                      onsubmit="return confirm('هل أنت متأكد من حذف هذه المهمة؟')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-action delete" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="fas fa-tasks"></i>
+            <p>لا توجد مهام حتى الآن</p>
+        </div>
+    }
+</div>

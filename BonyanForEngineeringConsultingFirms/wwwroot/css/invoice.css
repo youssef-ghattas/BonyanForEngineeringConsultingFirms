@@ -1,0 +1,122 @@
+﻿/* ══════════════════════════════════════════════
+   invoice.css — Invoice Details page
+══════════════════════════════════════════════ */
+
+.invoice-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 30px;
+}
+
+/* ── Header ─────────────────────────────────── */
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f2f7;
+    margin-bottom: 24px;
+}
+
+.invoice-num {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary, #2C3E6B);
+}
+
+.invoice-project {
+    font-size: 0.88rem;
+    color: #666;
+    margin-top: 4px;
+}
+
+    .invoice-project i {
+        color: var(--secondary, #8B5E3C);
+        margin-left: 5px;
+    }
+
+.invoice-status-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+/* ── Amounts table ───────────────────────────── */
+.invoice-amounts {
+    background: #f8f9fc;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+}
+
+.inv-amount-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 0.9rem;
+    color: #555;
+    border-bottom: 1px dashed #e8eaf0;
+}
+
+    .inv-amount-row:last-child {
+        border-bottom: none;
+    }
+
+.inv-total {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary, #2C3E6B);
+    padding-top: 14px;
+    margin-top: 6px;
+    border-top: 2px solid #d0d5e8 !important;
+    border-bottom: none !important;
+}
+
+/* ── Dates ───────────────────────────────────── */
+.invoice-dates {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.inv-date-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.88rem;
+    color: #444;
+}
+
+.inv-date-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #888;
+}
+
+    .inv-date-label i {
+        color: var(--secondary, #8B5E3C);
+        margin-left: 4px;
+    }
+
+/* ── Payments section ───────────────────────── */
+.invoice-payments {
+    margin-top: 20px;
+}
+
+.inv-section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary, #2C3E6B);
+    margin-bottom: 12px;
+}
+
+    .inv-section-title i {
+        color: var(--secondary, #8B5E3C);
+        margin-left: 6px;
+    }

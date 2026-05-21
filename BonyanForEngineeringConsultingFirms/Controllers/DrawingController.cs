@@ -10,51 +10,42 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
         private readonly BonyanDbContext _context;
         private readonly IWebHostEnvironment _env;
 
-        public DrawingController(BonyanDbContext context,
-                                  IWebHostEnvironment env)
+        public DrawingController(BonyanDbContext context, IWebHostEnvironment env)
         {
             _context = context;
             _env = env;
         }
 
-        // ─────────────────────────────────────────────
-        // INDEX
-        // ─────────────────────────────────────────────
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? projectId)
         {
             var role = HttpContext.Session.GetString("Role");
             var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+            if (role == null) return RedirectToAction("Login", "Account");
 
-            List<Drawing> drawings;
+            IQueryable<Drawing> query = _context.Drawings
+                .Include(d => d.Project)
+                .Include(d => d.Employee);
 
-            if (role == "Admin")
-            {
-                drawings = await _context.Drawings
-                    .Include(d => d.Project)
-                    .Include(d => d.Employee)
-                    .OrderByDescending(d => d.UploadDate)
-                    .ToListAsync();
-            }
-            else
-            {
-                if (employeeId == null)
-                    return RedirectToAction("Login", "Account");
+            if (role != "Admin" && employeeId != null)
+                query = query.Where(d => d.Project.EmployeeProjects
+                                          .Any(ep => ep.EmployeeId == employeeId));
 
-                drawings = await _context.Drawings
-                    .Include(d => d.Project)
-                    .Include(d => d.Employee)
-                    .Where(d => d.Project.EmployeeProjects
-                                 .Any(ep => ep.EmployeeId == employeeId))
-                    .OrderByDescending(d => d.UploadDate)
-                    .ToListAsync();
-            }
+            if (projectId.HasValue)
+                query = query.Where(d => d.ProjectId == projectId.Value);
 
+            var drawings = await query.OrderByDescending(d => d.UploadDate).ToListAsync();
+
+            var projectsQuery = role == "Admin"
+                ? _context.Projects.OrderBy(p => p.ProjectName)
+                : _context.Projects
+                    .Where(p => p.EmployeeProjects.Any(ep => ep.EmployeeId == employeeId))
+                    .OrderBy(p => p.ProjectName);
+
+            ViewBag.Projects = await projectsQuery.ToListAsync();
+            ViewBag.SelectedProjectId = projectId;
             return View(drawings);
         }
 
-        // ─────────────────────────────────────────────
-        // CREATE (GET)
-        // ─────────────────────────────────────────────
         public IActionResult Create(int projectId)
         {
             var role = HttpContext.Session.GetString("Role");
@@ -63,21 +54,15 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             ViewBag.ProjectId = projectId;
             var project = _context.Projects.Find(projectId);
             ViewBag.ProjectName = project?.ProjectName ?? "—";
-
             return View();
         }
 
-        // ─────────────────────────────────────────────
-        // CREATE (POST)
-        // ─────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Drawing drawing,
-                                                 IFormFile uploadedFile)
+        public async Task<IActionResult> Create(Drawing drawing, IFormFile uploadedFile)
         {
             var role = HttpContext.Session.GetString("Role");
             var employeeId = HttpContext.Session.GetInt32("EmployeeId");
-
             if (role == null) return RedirectToAction("Login", "Account");
 
             ModelState.Remove("Project");
@@ -88,51 +73,40 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             if (uploadedFile == null || uploadedFile.Length == 0)
                 ModelState.AddModelError("uploadedFile", "يرجى اختيار صورة للرفع");
 
-            // Validate image types only
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png",
-                                            ".gif", ".bmp", ".webp", ".svg" };
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg" };
             if (uploadedFile != null)
             {
                 var ext = Path.GetExtension(uploadedFile.FileName).ToLower();
                 if (!allowedExtensions.Contains(ext))
-                    ModelState.AddModelError("uploadedFile",
-                        "يُسمح فقط برفع ملفات الصور (jpg, png, gif, ...)");
+                    ModelState.AddModelError("uploadedFile", "يُسمح فقط برفع ملفات الصور");
             }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var uploadsFolder = Path.Combine(_env.WebRootPath,
-                                                  "uploads", "drawings");
-                Directory.CreateDirectory(uploadsFolder);
-
-                var uniqueName = Guid.NewGuid().ToString()
-                               + Path.GetExtension(uploadedFile!.FileName);
-                var filePath = Path.Combine(uploadsFolder, uniqueName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                    await uploadedFile.CopyToAsync(stream);
-
-                drawing.FilePath = "/uploads/drawings/" + uniqueName;
-                drawing.UploadDate = DateTime.Now;
-                drawing.EmployeeId = employeeId ?? 0;
-
-                _context.Drawings.Add(drawing);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "تم رفع الصورة بنجاح";
-                return RedirectToAction("Details", "Project",
-                                        new { id = drawing.ProjectId });
+                ViewBag.ProjectId = drawing.ProjectId;
+                ViewBag.ProjectName = _context.Projects.Find(drawing.ProjectId)?.ProjectName ?? "—";
+                return View(drawing);
             }
 
-            ViewBag.ProjectId = drawing.ProjectId;
-            var proj = _context.Projects.Find(drawing.ProjectId);
-            ViewBag.ProjectName = proj?.ProjectName ?? "—";
-            return View(drawing);
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "drawings");
+            Directory.CreateDirectory(uploadsFolder);
+            var uniqueName = Guid.NewGuid() + Path.GetExtension(uploadedFile!.FileName);
+            var fullPath = Path.Combine(uploadsFolder, uniqueName);
+
+            using (var stream = new FileStream(fullPath, FileMode.Create))
+                await uploadedFile.CopyToAsync(stream);
+
+            drawing.FilePath = "/uploads/drawings/" + uniqueName;
+            drawing.UploadDate = DateTime.Now;
+            drawing.EmployeeId = employeeId ?? 1;
+
+            _context.Drawings.Add(drawing);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "تم رفع الصورة بنجاح";
+            return RedirectToAction("Details", "Project", new { id = drawing.ProjectId });
         }
 
-        // ─────────────────────────────────────────────
-        // DELETE (POST)
-        // ─────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -145,8 +119,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
             if (!string.IsNullOrEmpty(drawing.FilePath))
             {
-                var fullPath = Path.Combine(_env.WebRootPath,
-                                             drawing.FilePath.TrimStart('/'));
+                var fullPath = Path.Combine(_env.WebRootPath, drawing.FilePath.TrimStart('/'));
                 if (System.IO.File.Exists(fullPath))
                     System.IO.File.Delete(fullPath);
             }
@@ -156,8 +129,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "تم حذف الصورة بنجاح";
-            return RedirectToAction("Details", "Project",
-                                    new { id = projectId });
+            return RedirectToAction("Details", "Project", new { id = projectId });
         }
     }
 }

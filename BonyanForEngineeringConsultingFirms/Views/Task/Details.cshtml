@@ -1,0 +1,78 @@
+﻿@model Bonyan.DAL.Models.Task
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تفاصيل المهمة";
+    var role = Context.Session.GetString("Role");
+
+    string statusLabel = Model.Status switch
+    {
+        TasksStatus.Pending => "معلق",
+        TasksStatus.InProgress => "جاري",
+        TasksStatus.UnderReview => "قيد المراجعة",
+        TasksStatus.Completed => "مكتمل",
+        TasksStatus.Cancelled => "ملغي",
+        _ => Model.Status.ToString()
+    };
+    string statusClass = Model.Status switch
+    {
+        TasksStatus.Pending => "badge-pending",
+        TasksStatus.InProgress => "badge-inprogress",
+        TasksStatus.UnderReview => "badge-review",
+        TasksStatus.Completed => "badge-completed",
+        TasksStatus.Cancelled => "badge-cancelled",
+        _ => ""
+    };
+}
+
+<link rel="stylesheet" href="~/css/task.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-tasks" style="color:var(--secondary)"></i>
+            تفاصيل المهمة
+        </h2>
+    </div>
+    <div style="display:flex; gap:10px">
+        <a asp-controller="Project" asp-action="Details"
+           asp-route-id="@Model.ProjectId" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i> رجوع للمشروع
+        </a>
+        @if (role == "Admin")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.TaskId"
+               class="btn-bonyan-secondary">
+                <i class="fas fa-edit"></i> تعديل
+            </a>
+        }
+    </div>
+</div>
+
+<div class="details-card" style="max-width:640px; margin:0 auto">
+    <div class="task-detail-header">
+        <h3>@Model.Task_Name</h3>
+        <span class="task-status-badge @statusClass">@statusLabel</span>
+    </div>
+
+    <div class="task-detail-body">
+        <div class="task-detail-row">
+            <span class="task-detail-label"><i class="fas fa-project-diagram"></i> المشروع</span>
+            <span>@(Model.Project?.ProjectName ?? "—")</span>
+        </div>
+        <div class="task-detail-row">
+            <span class="task-detail-label"><i class="fas fa-calendar-alt"></i> الموعد النهائي</span>
+            <span>@(Model.DueDate.HasValue? Model.DueDate.Value.ToString("yyyy-MM-dd") : "—")</span>
+        </div>
+        <div class="task-detail-row">
+            <span class="task-detail-label"><i class="fas fa-clock"></i> تاريخ الإنشاء</span>
+            <span>@Model.CreatedAt.ToString("yyyy-MM-dd")</span>
+        </div>
+        @if (!string.IsNullOrEmpty(Model.Notes))
+        {
+            <div class="task-detail-row" style="flex-direction:column; align-items:flex-start; gap:6px">
+                <span class="task-detail-label"><i class="fas fa-sticky-note"></i> ملاحظات</span>
+                <p style="margin:0; color:#555; font-size:0.9rem; line-height:1.6">@Model.Notes</p>
+            </div>
+        }
+    </div>
+</div>
