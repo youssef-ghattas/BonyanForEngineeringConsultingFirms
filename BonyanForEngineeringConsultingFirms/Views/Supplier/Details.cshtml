@@ -1,0 +1,125 @@
+﻿@* ── SAVE AS: Views/Supplier/Details.cshtml ── *@
+@model Bonyan.DAL.Models.Supplier
+@{
+    ViewData["Title"] = "تفاصيل المورد";
+    var role = Context.Session.GetString("Role");
+}
+
+<link rel="stylesheet" href="~/css/material.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-industry" style="color:var(--secondary)"></i>
+            @Model.SupplierName
+        </h2>
+    </div>
+    <div style="display:flex; gap:10px">
+        <a asp-action="Index" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i> رجوع للموردين
+        </a>
+        @if (role == "Admin")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.SupplierID" class="btn-bonyan-secondary">
+                <i class="fas fa-edit"></i> تعديل
+            </a>
+        }
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-success-msg"><i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]</div>
+}
+
+<!-- Supplier Info Card -->
+<div class="details-card" style="margin-bottom:20px">
+    <div class="details-section-title">
+        <i class="fas fa-info-circle"></i> بيانات المورد
+    </div>
+    <div class="mat-info-grid">
+        <div class="mat-info-item">
+            <span class="mat-info-label">اسم المورد</span>
+            <span class="mat-info-value">@Model.SupplierName</span>
+        </div>
+        <div class="mat-info-item">
+            <span class="mat-info-label">شخص التواصل</span>
+            <span class="mat-info-value">@(Model.ContactPerson ?? "—")</span>
+        </div>
+        <div class="mat-info-item">
+            <span class="mat-info-label">البريد الإلكتروني</span>
+            <span class="mat-info-value">
+                <a href="mailto:@Model.Email" style="color:var(--secondary)">@(Model.Email ?? "—")</a>
+            </span>
+        </div>
+        <div class="mat-info-item">
+            <span class="mat-info-label">الهاتف</span>
+            <span class="mat-info-value">@(Model.Phone ?? "—")</span>
+        </div>
+        <div class="mat-info-item" style="grid-column:1 / -1">
+            <span class="mat-info-label">العنوان</span>
+            <span class="mat-info-value">@(Model.Address ?? "—")</span>
+        </div>
+    </div>
+</div>
+
+<!-- Supplied Materials -->
+<div class="details-card">
+    <div class="details-section-title">
+        <i class="fas fa-boxes"></i> المواد المورَّدة
+        <span class="tab-count">@Model.SuppliedMaterials.Count</span>
+    </div>
+
+    @if (Model.SuppliedMaterials != null && Model.SuppliedMaterials.Any())
+    {
+        <table class="mat-table">
+            <thead>
+                <tr>
+                    <th>اسم المادة</th>
+                    <th>وحدة القياس</th>
+                    <th>سعر التوريد</th>
+                    <th>آخر توريد</th>
+                    <th>تفاصيل</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ms in Model.SuppliedMaterials)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Material" asp-action="Details"
+                               asp-route-id="@ms.MaterialID"
+                               style="color:var(--primary); font-weight:600; text-decoration:none">
+                                @(ms.Material?.MaterialName ?? "—")
+                            </a>
+                        </td>
+                        <td>
+                            @if (ms.Material?.Unit != null)
+                            {
+                                <span class="unit-badge">@ms.Material.Unit</span>
+                            }
+                            else
+                            {
+
+                                <span>—</span>
+                            }
+                        </td>
+                        <td>@(ms.SupplyPrice.HasValue? ms.SupplyPrice.Value.ToString("N2") + " ج.م" : "—")</td>
+                        <td>@(ms.LastSupplyDate.HasValue? ms.LastSupplyDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                        <td>
+                            <a asp-controller="Material" asp-action="Details"
+                               asp-route-id="@ms.MaterialID"
+                               class="btn-action view" title="عرض المادة">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color:#aaa; font-size:0.88rem">لا توجد مواد مرتبطة بهذا المورد بعد</p>
+    }
+</div>

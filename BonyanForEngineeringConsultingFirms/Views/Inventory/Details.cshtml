@@ -1,0 +1,226 @@
+﻿@* ── SAVE AS: Views/Inventory/Details.cshtml ── *@
+@model Inventory
+@{
+    ViewData["Title"] = "تفاصيل المخزن";
+    var role = Context.Session.GetString("Role");
+    var availableMaterials = ViewBag.AvailableMaterials as List<Bonyan.DAL.Models.Material> ?? new();
+}
+
+<link rel="stylesheet" href="~/css/material.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-warehouse" style="color:var(--secondary)"></i>
+            @Model.InventoryName
+        </h2>
+        @if (!string.IsNullOrWhiteSpace(Model.Location))
+        {
+            <p style="color:#888; font-size:0.9rem; margin:4px 0 0">
+                <i class="fas fa-map-marker-alt"></i> @Model.Location
+            </p>
+        }
+    </div>
+    <div style="display:flex; gap:10px">
+        <a asp-action="Index" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i> رجوع للمخازن
+        </a>
+        @if (role == "Admin")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.InventoryID" class="btn-bonyan-secondary">
+                <i class="fas fa-edit"></i> تعديل
+            </a>
+        }
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-success-msg"><i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert-error-msg"><i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]</div>
+}
+
+<!-- Summary -->
+<div class="mat-info-grid" style="margin-bottom:20px">
+    <div class="details-card" style="text-align:center; padding:18px">
+        <div style="font-size:0.78rem; color:#888; margin-bottom:4px">عدد المواد</div>
+        <div style="font-size:1.6rem; font-weight:700; color:var(--primary)">@Model.MaterialInventories.Count</div>
+    </div>
+    <div class="details-card" style="text-align:center; padding:18px">
+        <div style="font-size:0.78rem; color:#888; margin-bottom:4px">السعة الكلية</div>
+        <div style="font-size:1.6rem; font-weight:700; color:var(--secondary)">@(Model.Capacity.HasValue? Model.Capacity.Value.ToString("N0") : "—")</div>
+    </div>
+    <div class="details-card" style="text-align:center; padding:18px">
+        <div style="font-size:0.78rem; color:#888; margin-bottom:4px">آخر تحديث</div>
+        <div style="font-size:1rem; font-weight:600; color:#444">@Model.LastUpdatedDate.ToString("yyyy-MM-dd")</div>
+    </div>
+</div>
+
+<!-- Materials in Inventory -->
+<div class="details-card" style="margin-bottom:20px">
+    <div class="details-section-title">
+        <i class="fas fa-boxes"></i> المواد في المخزن
+        <span class="tab-count">@Model.MaterialInventories.Count</span>
+    </div>
+
+    @if (Model.MaterialInventories != null && Model.MaterialInventories.Any())
+    {
+        <table class="mat-table">
+            <thead>
+                <tr>
+                    <th>المادة</th>
+                    <th>الوحدة</th>
+                    <th>الكمية المتاحة</th>
+                    <th>مكان التخزين</th>
+                    <th>آخر تحديث</th>
+                    <th>ملاحظات</th>
+                    @if (role == "Admin")
+                    {
+                        <th>إجراءات</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var mi in Model.MaterialInventories)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Material" asp-action="Details"
+                               asp-route-id="@mi.MaterialID"
+                               style="color:var(--primary); font-weight:600; text-decoration:none">
+                                @(mi.Material?.MaterialName ?? "—")
+                            </a>
+                        </td>
+                        <td>
+                            @if (mi.Material?.Unit != null)
+                            {
+                                <span class="unit-badge">@mi.Material.Unit</span>
+                            }
+                        </td>
+                        <td>
+                            <strong style="color:var(--primary)">@mi.QuantityAvailable.ToString("N2")</strong>
+                        </td>
+                        <td>@(mi.StorageLocation ?? "—")</td>
+                        <td>@mi.TransactionDate.ToString("yyyy-MM-dd")</td>
+                        <td style="font-size:0.8rem; color:#666">@(mi.Notes ?? "—")</td>
+                        @if (role == "Admin")
+                        {
+                            <td>
+                                <!-- Update stock -->
+                                <button type="button" class="btn-action edit"
+                                        onclick="openUpdateForm(@mi.InventoryID, @mi.MaterialID, @mi.QuantityAvailable.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))"
+                                        title="تحديث الكمية">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <form asp-action="RemoveMaterial" method="post" style="display:inline"
+                                      onsubmit="return confirm('إزالة هذه المادة من المخزن؟')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
+                                    <input type="hidden" name="materialInventoryId" value="@mi.InventoryID" />
+                                    <button type="submit" class="btn-action delete" title="إزالة">
+                                        <i class="fas fa-minus-circle"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color:#aaa; font-size:0.88rem; margin-bottom:16px">لا توجد مواد في هذا المخزن بعد</p>
+    }
+
+    @if (role == "Admin" && availableMaterials.Any())
+    {
+        <div class="mat-add-form" style="margin-top:20px">
+            <div class="mat-add-title"><i class="fas fa-plus-circle"></i> إضافة مادة للمخزن</div>
+            <form asp-action="AddMaterial" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label>المادة <span style="color:red">*</span></label>
+                        <select name="materialId" class="form-control" required>
+                            <option value="">-- اختر مادة --</option>
+                            @foreach (var mat in availableMaterials)
+                            {
+                                <option value="@mat.MaterialID">@mat.MaterialName (@(mat.Unit ?? "—"))</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>الكمية <span style="color:red">*</span></label>
+                        <input type="number" name="quantityAvailable" step="0.001" min="0"
+                               class="form-control" placeholder="0.000" required />
+                    </div>
+                    <div class="form-group">
+                        <label>مكان التخزين</label>
+                        <input type="text" name="storageLocation" class="form-control"
+                               placeholder="مثال: رف A-3" />
+                    </div>
+                    <div class="form-group" style="grid-column:1 / -1">
+                        <label>ملاحظات</label>
+                        <input type="text" name="notes" class="form-control" placeholder="أي ملاحظات..." />
+                    </div>
+                </div>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-plus"></i> إضافة للمخزن
+                </button>
+            </form>
+        </div>
+    }
+</div>
+
+<!-- Update Stock Modal (inline form) -->
+@if (role == "Admin")
+{
+    <div id="updateStockOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:999; align-items:center; justify-content:center">
+        <div style="background:#fff; border-radius:12px; padding:28px; max-width:420px; width:90%; direction:rtl">
+            <h4 style="margin:0 0 18px; color:var(--primary); font-size:1rem">
+                <i class="fas fa-sync-alt" style="color:var(--secondary)"></i> تحديث الكمية
+            </h4>
+            <form asp-action="UpdateStock" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
+                <input type="hidden" name="materialInventoryId" id="updateMatInvId" />
+                <div class="form-group">
+                    <label>الكمية الجديدة <span style="color:red">*</span></label>
+                    <input type="number" name="newQuantity" id="updateNewQty"
+                           step="0.001" min="0" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label>ملاحظات</label>
+                    <input type="text" name="notes" class="form-control" placeholder="سبب التعديل..." />
+                </div>
+                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px">
+                    <button type="button" onclick="closeUpdateForm()" class="btn-bonyan-primary">
+                        <i class="fas fa-times"></i> إلغاء
+                    </button>
+                    <button type="submit" class="btn-bonyan-secondary">
+                        <i class="fas fa-save"></i> حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function openUpdateForm(invId, matId, currentQty) {
+            document.getElementById('updateMatInvId').value = invId;
+            document.getElementById('updateNewQty').value = currentQty;
+            var overlay = document.getElementById('updateStockOverlay');
+            overlay.style.display = 'flex';
+        }
+        function closeUpdateForm() {
+            document.getElementById('updateStockOverlay').style.display = 'none';
+        }
+    </script>
+}

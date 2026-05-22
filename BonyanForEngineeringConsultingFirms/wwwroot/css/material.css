@@ -1,0 +1,266 @@
+﻿/* ════════════════════════════════════════════════════════════
+   material.css — مشترك للمواد / الموردين / المخزون
+   يتوافق مع نظام بنيان (--primary, --secondary CSS vars)
+════════════════════════════════════════════════════════════ */
+
+/* ── Tables ──────────────────────────────────────────────── */
+.mat-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+    .mat-table thead tr {
+        background: #F8F9FC;
+    }
+
+    .mat-table th {
+        padding: 10px 12px;
+        text-align: right;
+        color: #666;
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .mat-table tbody tr {
+        border-bottom: 1px solid #F4F6F9;
+        transition: background 0.15s;
+    }
+
+        .mat-table tbody tr:hover {
+            background: #fafbff;
+        }
+
+    .mat-table td {
+        padding: 10px 12px;
+        vertical-align: middle;
+    }
+
+/* ── Badges ──────────────────────────────────────────────── */
+.unit-badge {
+    display: inline-block;
+    background: #EBF3FF;
+    color: var(--primary, #1B3A6B);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #F4F6F9;
+    color: #444;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+    .count-badge.inv {
+        background: #FFF8EC;
+        color: #B45309;
+    }
+
+/* ── Info Grid (detail cards) ────────────────────────────── */
+.mat-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.mat-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mat-info-label {
+    font-size: 0.75rem;
+    color: #999;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.mat-info-value {
+    font-size: 0.95rem;
+    color: #333;
+    font-weight: 500;
+}
+
+/* ── Add Supplier / Material form ────────────────────────── */
+.mat-add-form {
+    background: #F8F9FC;
+    border: 1px dashed #C8D4E8;
+    border-radius: 8px;
+    padding: 18px 20px;
+}
+
+.mat-add-title {
+    font-weight: 600;
+    color: var(--primary, #1B3A6B);
+    font-size: 0.9rem;
+    margin-bottom: 14px;
+}
+
+/* ── Form grids ──────────────────────────────────────────── */
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 640px) {
+    .form-grid-2,
+    .form-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Inventory card grid (Index view) ────────────────────── */
+.inv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.inv-card {
+    background: #fff;
+    border: 1px solid #E8ECF4;
+    border-radius: 10px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: box-shadow 0.2s;
+}
+
+    .inv-card:hover {
+        box-shadow: 0 4px 16px rgba(27, 58, 107, 0.08);
+    }
+
+.inv-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.inv-card-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--primary, #1B3A6B);
+}
+
+    .inv-card-name i {
+        color: var(--secondary, #C8922A);
+        margin-left: 6px;
+    }
+
+.inv-card-location {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 3px;
+}
+
+.inv-card-stats {
+    display: flex;
+    gap: 14px;
+    border-top: 1px solid #F4F6F9;
+    padding-top: 10px;
+}
+
+.inv-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.inv-stat-label {
+    font-size: 0.72rem;
+    color: #aaa;
+}
+
+.inv-stat-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary, #1B3A6B);
+}
+
+.inv-card-link {
+    display: block;
+    text-align: center;
+    color: var(--secondary, #C8922A);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-top: 1px solid #F4F6F9;
+    padding-top: 10px;
+}
+
+    .inv-card-link:hover {
+        text-decoration: underline;
+    }
+
+/* ── Alerts ──────────────────────────────────────────────── */
+.alert-success-msg {
+    background: #D1E7DD;
+    color: #146C43;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.alert-error-msg {
+    background: #F8D7DA;
+    color: #842029;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.empty-state {
+    text-align: center;
+    padding: 48px 16px;
+    color: #bbb;
+}
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .empty-state p {
+        font-size: 1rem;
+    }
+
+/* ── Filter bar ──────────────────────────────────────────── */
+.filter-bar {
+    background: #fff;
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    direction: rtl;
+    flex-wrap: wrap;
+}
+
+/* ── Reuse existing btn-action classes from the system ───── */

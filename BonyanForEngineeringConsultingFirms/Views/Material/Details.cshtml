@@ -1,0 +1,259 @@
+﻿@model Bonyan.DAL.Models.Material
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تفاصيل المادة";
+    var role = Context.Session.GetString("Role");
+    var availableSuppliers = ViewBag.AvailableSuppliers as List<Bonyan.DAL.Models.Supplier> ?? new();
+}
+
+<link rel="stylesheet" href="~/css/material.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-cube" style="color:var(--secondary)"></i>
+            @Model.MaterialName
+        </h2>
+    </div>
+    <div style="display:flex; gap:10px">
+        <a asp-action="Index" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i> رجوع للمواد
+        </a>
+        @if (role == "Admin")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.MaterialID" class="btn-bonyan-secondary">
+                <i class="fas fa-edit"></i> تعديل
+            </a>
+        }
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-success-msg">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+    </div>
+}
+
+<!-- Info Card -->
+<div class="details-card" style="margin-bottom:20px">
+    <div class="details-section-title">
+        <i class="fas fa-info-circle"></i> بيانات المادة
+    </div>
+    <div class="mat-info-grid">
+        <div class="mat-info-item">
+            <span class="mat-info-label">اسم المادة</span>
+            <span class="mat-info-value">@Model.MaterialName</span>
+        </div>
+        <div class="mat-info-item">
+            <span class="mat-info-label">وحدة القياس</span>
+            <span class="mat-info-value">
+                <span class="unit-badge">@(Model.Unit ?? "—")</span>
+            </span>
+        </div>
+        <div class="mat-info-item">
+            <span class="mat-info-label">سعر الوحدة</span>
+            <span class="mat-info-value">@(Model.UnitPrice.HasValue? Model.UnitPrice.Value.ToString("N2") + " ج.م" : "—")</span>
+        </div>
+        <div class="mat-info-item" style="grid-column: 1 / -1">
+            <span class="mat-info-label">الوصف</span>
+            <span class="mat-info-value">@(string.IsNullOrWhiteSpace(Model.Description) ? "—" : Model.Description)</span>
+        </div>
+    </div>
+</div>
+
+<!-- SUPPLIERS TAB SECTION -->
+<div class="details-card" style="margin-bottom:20px">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+        <div class="details-section-title" style="margin-bottom:0">
+            <i class="fas fa-truck"></i> الموردون
+            <span class="tab-count">@Model.MaterialSuppliers.Count</span>
+        </div>
+    </div>
+
+    @if (Model.MaterialSuppliers != null && Model.MaterialSuppliers.Any())
+    {
+        <table class="mat-table" style="margin-bottom:20px">
+            <thead>
+                <tr>
+                    <th>المورد</th>
+                    <th>شخص التواصل</th>
+                    <th>الهاتف</th>
+                    <th>سعر التوريد</th>
+                    <th>آخر توريد</th>
+                    @if (role == "Admin")
+                    {
+                        <th>إجراءات</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ms in Model.MaterialSuppliers)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Supplier" asp-action="Details"
+                               asp-route-id="@ms.SupplierID"
+                               style="color:var(--primary); font-weight:600; text-decoration:none">
+                                @ms.Supplier?.SupplierName
+                            </a>
+                        </td>
+                        <td>@(ms.Supplier?.ContactPerson ?? "—")</td>
+                        <td>@(ms.Supplier?.Phone ?? "—")</td>
+                        <td>@(ms.SupplyPrice.HasValue? ms.SupplyPrice.Value.ToString("N2") + " ج.م" : "—")</td>
+                        <td>@(ms.LastSupplyDate.HasValue? ms.LastSupplyDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                        @if (role == "Admin")
+                        {
+                            <td>
+                                <form asp-action="RemoveSupplier" method="post" style="display:inline"
+                                      onsubmit="return confirm('إزالة هذا المورد من المادة؟')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="materialId" value="@Model.MaterialID" />
+                                    <input type="hidden" name="supplierId" value="@ms.SupplierID" />
+                                    <button type="submit" class="btn-action delete" title="إزالة">
+                                        <i class="fas fa-unlink"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color:#aaa; font-size:0.88rem; margin-bottom:16px">لا يوجد موردون مرتبطون بهذه المادة</p>
+    }
+
+    @if (role == "Admin" && availableSuppliers.Any())
+    {
+        <div class="mat-add-form">
+            <div class="mat-add-title"><i class="fas fa-plus-circle"></i> ربط مورد جديد</div>
+            <form asp-action="AddSupplier" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="materialId" value="@Model.MaterialID" />
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label>المورد <span style="color:red">*</span></label>
+                        <select name="supplierId" class="form-control" required>
+                            <option value="">-- اختر مورداً --</option>
+                            @foreach (var s in availableSuppliers)
+                            {
+                                <option value="@s.SupplierID">@s.SupplierName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>سعر التوريد (ج.م)</label>
+                        <input type="number" name="supplyPrice" step="0.01" min="0"
+                               class="form-control" placeholder="0.00" />
+                    </div>
+                    <div class="form-group">
+                        <label>تاريخ آخر توريد</label>
+                        <input type="date" name="lastSupplyDate" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn-bonyan-secondary" style="margin-top:6px">
+                    <i class="fas fa-link"></i> ربط المورد
+                </button>
+            </form>
+        </div>
+    }
+</div>
+
+<!-- INVENTORIES SECTION -->
+<div class="details-card" style="margin-bottom:20px">
+    <div class="details-section-title">
+        <i class="fas fa-warehouse"></i> المخازن
+        <span class="tab-count">@Model.MaterialInventories.Count</span>
+    </div>
+    @if (Model.MaterialInventories != null && Model.MaterialInventories.Any())
+    {
+        <table class="mat-table">
+            <thead>
+                <tr>
+                    <th>المخزن</th>
+                    <th>الموقع</th>
+                    <th>الكمية المتاحة</th>
+                    <th>مكان التخزين</th>
+                    <th>آخر تحديث</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var mi in Model.MaterialInventories)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Inventory" asp-action="Details"
+                               asp-route-id="@mi.InventoryID"
+                               style="color:var(--primary); font-weight:600; text-decoration:none">
+                                @(mi.Inventory?.InventoryName ?? "—")
+                            </a>
+                        </td>
+                        <td>@(mi.Inventory?.Location ?? "—")</td>
+                        <td>
+                            <strong>@mi.QuantityAvailable.ToString("N2")</strong>
+                        </td>
+                        <td>@(mi.StorageLocation ?? "—")</td>
+                        <td>@mi.TransactionDate.ToString("yyyy-MM-dd")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="color:#aaa; font-size:0.88rem">المادة غير موجودة في أي مخزن</p>
+    }
+</div>
+
+<!-- MATERIAL TASKS SECTION -->
+@if (Model.MaterialTasks != null && Model.MaterialTasks.Any())
+{
+    <div class="details-card">
+        <div class="details-section-title">
+            <i class="fas fa-clipboard-list"></i> طلبات المادة في المشاريع
+            <span class="tab-count">@Model.MaterialTasks.Count</span>
+        </div>
+        <table class="mat-table">
+            <thead>
+                <tr>
+                    <th>المهمة</th>
+                    <th>المشروع</th>
+                    <th>الكمية المطلوبة</th>
+                    <th>الكمية المستخدمة</th>
+                    <th>الحالة</th>
+                    <th>تاريخ الطلب</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var mt in Model.MaterialTasks)
+                {
+                    string statusLabel = mt.Status switch
+                    {
+                        Bonyan.DAL.Enums.MaterialTaskStatus.Requested => "مطلوب",
+                        Bonyan.DAL.Enums.MaterialTaskStatus.Approved => "معتمد",
+                        Bonyan.DAL.Enums.MaterialTaskStatus.Delivered => "تم التسليم",
+                        _ => mt.Status.ToString()
+                    };
+                    string statusClass = mt.Status switch
+                    {
+                        Bonyan.DAL.Enums.MaterialTaskStatus.Requested => "badge-pending",
+                        Bonyan.DAL.Enums.MaterialTaskStatus.Approved => "badge-inprogress",
+                        Bonyan.DAL.Enums.MaterialTaskStatus.Delivered => "badge-completed",
+                        _ => ""
+                    };
+                    <tr>
+                        <td>@(mt.Task?.Task_Name ?? "—")</td>
+                        <td>@(mt.Task?.Project?.ProjectName ?? "—")</td>
+                        <td>@mt.QuantityRequired.ToString("N2")</td>
+                        <td>@(mt.QuantityUsed.HasValue? mt.QuantityUsed.Value.ToString("N2") : "—")</td>
+                        <td><span class="task-status-badge @statusClass">@statusLabel</span></td>
+                        <td>@mt.RequestDate.ToString("yyyy-MM-dd")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
