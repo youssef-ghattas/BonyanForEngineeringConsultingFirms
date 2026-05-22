@@ -28,11 +28,12 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
                 .Include(m => m.MaterialSuppliers)
                     .ThenInclude(ms => ms.Supplier)
                 .Include(m => m.MaterialInventories)
+                    .ThenInclude(mi => mi.Inventory)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(m => m.MaterialName.Contains(search) ||
-                                         m.Description.Contains(search));
+                                          m.Description.Contains(search));
 
             ViewBag.Search = search;
             return View(await query.OrderBy(m => m.MaterialName).ToListAsync());
