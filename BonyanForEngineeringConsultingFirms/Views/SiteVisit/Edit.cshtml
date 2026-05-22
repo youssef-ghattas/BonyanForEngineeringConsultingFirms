@@ -1,0 +1,121 @@
+﻿@model Bonyan.DAL.Models.SiteVisit
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تعديل زيارة الموقع";
+    string projectName = ViewBag.ProjectName ?? "—";
+}
+
+<link rel="stylesheet" href="~/css/sitevisit.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2><i class="fas fa-edit" style="color:var(--secondary)"></i> تعديل زيارة الموقع</h2>
+    </div>
+    <a asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjId" class="btn-bonyan-primary">
+        <i class="fas fa-arrow-right"></i> رجوع للمشروع
+    </a>
+</div>
+
+<div class="upload-card">
+    <div class="upload-card-header">
+        <i class="fas fa-edit"></i>
+        <h4>تعديل بيانات الزيارة</h4>
+    </div>
+    <div class="upload-card-body">
+        <div class="project-badge">
+            <i class="fas fa-project-diagram"></i> @projectName
+        </div>
+
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="VisitId" />
+            <input type="hidden" asp-for="ProjId" />
+            <input type="hidden" asp-for="EmployeeId" />
+            <input type="hidden" asp-for="VisitPhotos" />
+
+            <div class="form-group">
+                <label>تاريخ الزيارة <span style="color:red">*</span></label>
+                <input asp-for="VisitDate" type="date" class="form-control" required />
+                <span asp-validation-for="VisitDate" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>حالة السلامة <span style="color:red">*</span></label>
+                <select asp-for="SafetyStatus" class="form-select" required>
+                    <option value="0">آمن</option>
+                    <option value="1">يحتاج انتباه</option>
+                    <option value="2">حرج</option>
+                </select>
+                <span asp-validation-for="SafetyStatus" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>تقرير الزيارة</label>
+                <textarea asp-for="Report" class="form-control" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>استبدال صورة الموقع (اختياري)</label>
+                @if (!string.IsNullOrEmpty(Model.VisitPhotos))
+                {
+                    <div style="margin-bottom:10px">
+                        <img src="@Model.VisitPhotos"
+                             style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:1px solid #ddd"
+                             onerror="this.style.display='none'" alt="الصورة الحالية" />
+                        <p style="font-size:0.8rem; color:#888; margin:4px 0 0">الصورة الحالية</p>
+                    </div>
+                }
+                <div class="file-drop-zone" id="dropZone">
+                    <div id="dropContent">
+                        <i class="fas fa-camera"></i>
+                        <p>اسحب الصورة الجديدة هنا أو انقر للاختيار</p>
+                        <span>JPG, PNG, WEBP, GIF</span>
+                    </div>
+                    <img id="imgPreview" style="display:none; max-height:160px; border-radius:8px; margin-top:10px" alt="معاينة" />
+                    <input type="file" name="visitPhoto" id="fileInput" accept="image/*" onchange="previewImage(this)" />
+                </div>
+                <span class="text-danger">@Html.ValidationMessage("visitPhoto")</span>
+            </div>
+
+            <div class="upload-actions">
+                <a asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjId" class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-save"></i> حفظ التعديلات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = document.getElementById('imgPreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('dropContent').style.display = 'none';
+                    document.getElementById('dropZone').style.borderColor = 'var(--secondary)';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        const zone = document.getElementById('dropZone');
+        zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop', e => {
+            e.preventDefault(); zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                document.getElementById('fileInput').files = e.dataTransfer.files;
+                previewImage(document.getElementById('fileInput'));
+            }
+        });
+    </script>
+}

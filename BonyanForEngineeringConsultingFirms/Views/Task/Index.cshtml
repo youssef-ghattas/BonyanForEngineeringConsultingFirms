@@ -41,6 +41,35 @@
     </div>
 }
 
+<div class="filter-bar" style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; direction: rtl;">
+    <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 400px;">
+        <label style="font-weight: bold; color: var(--primary); white-space: nowrap;">تصفية حسب المشروع:</label>
+        <select id="projectFilterSelector" class="form-control" onchange="filterTasksByProject(this.value)" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; width: 100%;">
+            <option value="">-- استعراض مهام كافة المشاريع --</option>
+            @if (ViewBag.Projects != null)
+            {
+                foreach (var proj in ViewBag.Projects)
+                {
+                    if (projectId == proj.ProjectId)
+                    {
+                        <option value="@proj.ProjectId" selected="selected">@proj.ProjectName</option>
+                    }
+                    else
+                    {
+                        <option value="@proj.ProjectId">@proj.ProjectName</option>
+                    }
+                }
+            }
+        </select>
+    </div>
+    @if (projectId.HasValue)
+    {
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px; padding: 6px 12px; font-size: 0.85rem; text-decoration: none; border: 1px solid #ccc; color: #333; background: #f8f9fa;">
+            <i class="fas fa-undo"></i> إلغاء التصفية
+        </a>
+    }
+</div>
+
 <div class="details-card">
     @if (Model.Any())
     {
@@ -96,15 +125,15 @@
                         {
                             <td>@(t.Project?.ProjectName ?? "—")</td>
                         }
-                        <td><span class="task-status-badge @statusClass">@statusLabel</span></td>
-                        <td>@(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
-                        <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
+                    <td><span class="task-status-badge @statusClass">@statusLabel</span></td>
+                    <td>@(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                    <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
                     <td>
                         @(t.AssignedToEmployee != null
                                             ? t.AssignedToEmployee.FirstName + " " + t.AssignedToEmployee.LastName
                                             : "—")
-                    </td>
-                        @if (role == "ProjectManager")
+                </td>
+                @if (role == "ProjectManager")
                         {
                             <td>
                                 <a asp-action="Edit" asp-route-id="@t.TaskId"
@@ -134,3 +163,15 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script type="text/javascript">
+        function filterTasksByProject(projId) {
+            if (projId) {
+                window.location.href = '@Url.Action("Index", "Task")?projectId=' + projId;
+            } else {
+                window.location.href = '@Url.Action("Index", "Task")';
+            }
+        }
+    </script>
+}

@@ -286,6 +286,12 @@
             الفواتير
             <span class="tab-count">@projectInvoices.Count</span>
         </button>
+        <button onclick="showTab('tab-sitevisits')" id="btn-tab-sitevisits"
+                class="tab-btn">
+            <i class="fas fa-hard-hat"></i>
+            زيارات الموقع
+            <span class="tab-count">@Model.SiteVisits.Count</span>
+        </button>
     </div>
 
     <!-- ── TASKS TAB ────────────────────────────── -->
@@ -563,6 +569,131 @@
         </div>
     </div>
 
+</div>
+
+<!-- ── SITE VISITS TAB ──────────────────────────── -->
+<div id="tab-sitevisits" class="tab-panel" style="display:none">
+    <div class="details-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+            <div class="details-section-title" style="margin-bottom:0">زيارات الموقع</div>
+            @if (role == "Engineer" || role == "ProjectManager")
+            {
+                <a asp-controller="SiteVisit" asp-action="Create"
+                   asp-route-projectId="@Model.ProjectId"
+                   class="btn-bonyan-secondary" style="font-size:0.82rem; padding:7px 14px">
+                    <i class="fas fa-plus"></i> إضافة زيارة موقع
+                </a>
+            }
+        </div>
+
+        @if (Model.SiteVisits != null && Model.SiteVisits.Any())
+        {
+            <table style="width:100%; border-collapse:collapse; font-size:0.88rem">
+                <thead>
+                    <tr style="background:#F8F9FC">
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">تاريخ الزيارة</th>
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">أُجريت بواسطة</th>
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">الدور</th>
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">حالة السلامة</th>
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">التقرير</th>
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">الصورة</th>
+                        @if (role == "Admin")
+                        {
+                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">حذف</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sv in Model.SiteVisits.OrderByDescending(x => x.VisitDate))
+                    {
+                        string safetyLabel = sv.SafetyStatus switch
+                        {
+                            SafetyStatus.Safe => "آمن",
+                            SafetyStatus.NeedAttention => "يحتاج انتباه",
+                            SafetyStatus.Critical => "حرج",
+                            _ => sv.SafetyStatus.ToString()
+                        };
+                        string safetyColor = sv.SafetyStatus switch
+                        {
+                            SafetyStatus.Safe => "#146c43",
+                            SafetyStatus.NeedAttention => "#7c4a00",
+                            SafetyStatus.Critical => "#842029",
+                            _ => "#666"
+                        };
+                        string safetyBg = sv.SafetyStatus switch
+                        {
+                            SafetyStatus.Safe => "#d1e7dd",
+                            SafetyStatus.NeedAttention => "#fff3cd",
+                            SafetyStatus.Critical => "#f8d7da",
+                            _ => "#eee"
+                        };
+                        bool empIsPM = sv.Employee?.UserAccount?.Role == UserRole.ProjectManager;
+                        string empRole = empIsPM ? "مدير مشروع" : "مهندس";
+
+                        <tr style="border-bottom:1px solid #F4F6F9">
+                            <td style="padding:10px">@sv.VisitDate.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td style="padding:10px; font-weight:600">
+                                @(sv.Employee != null ? sv.Employee.FirstName + " " + sv.Employee.LastName : "—")
+                            </td>
+                            <td style="padding:10px">
+                                <span style="font-size:0.75rem; background:#EEF2FF; color:#3730a3;
+                                                     padding:2px 8px; border-radius:10px; font-weight:600">
+                                    @empRole
+                                </span>
+                            </td>
+                            <td style="padding:10px">
+                                <span style="background:@safetyBg; color:@safetyColor;
+                                                     padding:3px 10px; border-radius:12px;
+                                                     font-size:0.75rem; font-weight:700">
+                                    @safetyLabel
+                                </span>
+                            </td>
+                            <td style="padding:10px; max-width:220px; white-space:nowrap;
+                                               overflow:hidden; text-overflow:ellipsis" title="@sv.Report">
+                                @(sv.Report?.Length > 60 ? sv.Report.Substring(0, 60) + "..." : sv.Report ?? "—")
+                            </td>
+                            <td style="padding:10px">
+                                @if (!string.IsNullOrEmpty(sv.VisitPhotos))
+                                {
+                                    <a href="@sv.VisitPhotos" target="_blank">
+                                        <img src="@sv.VisitPhotos" alt="صورة الزيارة"
+                                             style="width:48px; height:48px; object-fit:cover;
+                                                                border-radius:6px; border:1px solid #eee"
+                                             onerror="this.style.display='none'" />
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span style="color:#aaa; font-size:0.8rem">لا توجد</span>
+                                }
+                            </td>
+                            @if (role == "Admin")
+                            {
+                                <td style="padding:10px">
+                                    <form asp-controller="SiteVisit" asp-action="Delete"
+                                          asp-route-id="@sv.VisitId" method="post"
+                                          style="display:inline"
+                                          onsubmit="return confirm('هل أنت متأكد من حذف هذه الزيارة؟')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-action delete" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div style="text-align:center; padding:40px; color:#aaa">
+                <i class="fas fa-hard-hat" style="font-size:3rem; margin-bottom:14px; display:block"></i>
+                <p>لا توجد زيارات موقع لهذا المشروع حتى الآن</p>
+            </div>
+        }
+    </div>
 </div>
 
 <!-- Tab Styles -->

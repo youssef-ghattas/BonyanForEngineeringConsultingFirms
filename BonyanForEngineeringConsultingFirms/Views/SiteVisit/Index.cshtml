@@ -1,0 +1,177 @@
+﻿@model IEnumerable<Bonyan.DAL.Models.SiteVisit>
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "زيارات الموقع";
+    var role = Context.Session.GetString("Role");
+    var projects = ViewBag.Projects as List<Bonyan.DAL.Models.Project> ?? new();
+    int? selectedProjectId = ViewBag.SelectedProjectId as int?;
+}
+
+<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-hard-hat" style="color:var(--secondary)"></i>
+            زيارات الموقع
+        </h2>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div style="background:#d1e7dd; color:#146c43; border-radius:8px;
+                    padding:12px 18px; margin-bottom:16px; font-weight:600">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (projects.Any())
+{
+    <div class="filter-bar">
+        <form method="get" asp-action="Index"
+              style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+            <label style="font-weight:600; font-size:0.88rem; color:#444">
+                <i class="fas fa-filter" style="color:var(--secondary)"></i>
+                تصفية حسب المشروع:
+            </label>
+            <select name="projectId" class="form-select filter-select"
+                    onchange="this.form.submit()">
+                <option value="">-- جميع المشاريع --</option>
+                @foreach (var p in projects)
+                {
+                    if (selectedProjectId == p.ProjectId)
+                    {
+                        <option value="@p.ProjectId" selected>@p.ProjectName</option>
+                    }
+                    else
+                    {
+                        <option value="@p.ProjectId">@p.ProjectName</option>
+                    }
+                }
+            </select>
+            @if (selectedProjectId.HasValue)
+            {
+                <a asp-action="Index" class="btn-bonyan-primary"
+                   style="font-size:0.82rem; padding:7px 12px">
+                    <i class="fas fa-times"></i> إلغاء التصفية
+                </a>
+            }
+        </form>
+    </div>
+}
+
+<div class="details-card">
+    @if (Model.Any())
+    {
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th>المشروع</th>
+                    <th>أُجريت بواسطة</th>
+                    <th>الدور الوظيفي</th>
+                    <th>تاريخ الزيارة</th>
+                    <th>حالة السلامة</th>
+                    <th>ملخص التقرير</th>
+                    <th>صورة</th>
+                    @if (role == "Admin")
+                    {
+                        <th>إجراءات</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var sv in Model)
+                {
+                    string safetyLabel = sv.SafetyStatus switch
+                    {
+                        SafetyStatus.Safe => "آمن",
+                        SafetyStatus.NeedAttention => "يحتاج انتباه",
+                        SafetyStatus.Critical => "حرج",
+                        _ => sv.SafetyStatus.ToString()
+                    };
+                    string safetyColor = sv.SafetyStatus switch
+                    {
+                        SafetyStatus.Safe => "#146c43",
+                        SafetyStatus.NeedAttention => "#7c4a00",
+                        SafetyStatus.Critical => "#842029",
+                        _ => "#666"
+                    };
+                    string safetyBg = sv.SafetyStatus switch
+                    {
+                        SafetyStatus.Safe => "#d1e7dd",
+                        SafetyStatus.NeedAttention => "#fff3cd",
+                        SafetyStatus.Critical => "#f8d7da",
+                        _ => "#eee"
+                    };
+                    bool empIsPM = sv.Employee?.UserAccount?.Role == UserRole.ProjectManager;
+                    string empRoleLabel = empIsPM ? "مدير مشروع" : "مهندس";
+
+                    <tr>
+                        <td><strong>@(sv.Project?.ProjectName ?? "—")</strong></td>
+                        <td>
+                            <span style="font-weight:600; color:var(--primary)">
+                                @(sv.Employee != null
+                                                        ? sv.Employee.FirstName + " " + sv.Employee.LastName
+                                                        : "—")
+                    </span>
+                </td>
+                <td>
+                    <span style="font-size:0.75rem; background:#EEF2FF; color:#3730a3;
+                                         padding:2px 8px; border-radius:10px; font-weight:600">
+                        @empRoleLabel
+                    </span>
+                </td>
+                <td>@sv.VisitDate.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <span style="background:@safetyBg; color:@safetyColor;
+                                         padding:3px 10px; border-radius:12px;
+                                         font-size:0.75rem; font-weight:700">
+                        @safetyLabel
+                    </span>
+                </td>
+                <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis"
+                    title="@sv.Report">
+                    @(sv.Report?.Length > 50 ? sv.Report.Substring(0, 50) + "..." : sv.Report ?? "—")
+                </td>
+                <td>
+                    @if (!string.IsNullOrEmpty(sv.VisitPhotos))
+                            {
+                                <a href="@sv.VisitPhotos" target="_blank">
+                                    <img src="@sv.VisitPhotos" alt="صورة"
+                                         style="width:44px; height:44px; object-fit:cover;
+                                                            border-radius:6px; border:1px solid #eee"
+                                         onerror="this.style.display='none'" />
+                                </a>
+                            }
+                            else
+                            {
+                                <span style="color:#aaa; font-size:0.8rem">—</span>
+                            }
+                        </td>
+                        @if (role == "Admin")
+                        {
+                            <td>
+                                <form asp-action="Delete" asp-route-id="@sv.VisitId"
+                                      method="post" style="display:inline"
+                                      onsubmit="return confirm('هل أنت متأكد من حذف هذه الزيارة؟')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-action delete" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div style="text-align:center; padding:40px; color:#aaa">
+            <i class="fas fa-hard-hat" style="font-size:3rem; margin-bottom:14px; display:block"></i>
+            <p>لا توجد زيارات موقع حتى الآن</p>
+        </div>
+    }
+</div>

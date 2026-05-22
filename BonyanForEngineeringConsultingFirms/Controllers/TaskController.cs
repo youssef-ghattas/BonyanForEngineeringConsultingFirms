@@ -37,9 +37,22 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
             var tasks = await query.OrderByDescending(t => t.CreatedAt).ToListAsync();
 
+            if (role == "Admin")
+            {
+                ViewBag.Projects = await _context.Projects.ToListAsync();
+            }
+            else
+            {
+                ViewBag.Projects = await _context.Projects
+                    .Where(p => p.EmployeeProjects.Any(ep => ep.EmployeeId == employeeId))
+                    .ToListAsync();
+            }
+
             ViewBag.ProjectId = projectId;
             if (projectId.HasValue)
-                ViewBag.ProjectName = (await _context.Projects.FindAsync(projectId.Value))?.ProjectName ?? "—";
+            {
+                ViewBag.ProjectName = (await _context.Projects.FindAsync(projectId.Value))?.ProjectName;
+            }
 
             return View(tasks);
         }

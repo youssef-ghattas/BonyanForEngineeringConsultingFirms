@@ -1,0 +1,107 @@
+﻿@model Bonyan.DAL.Models.SiteVisit
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تفاصيل زيارة الموقع";
+    var role = Context.Session.GetString("Role");
+    string safetyLabel = Model.SafetyStatus switch
+    {
+        SafetyStatus.Safe => "آمن",
+        SafetyStatus.NeedAttention => "يحتاج انتباه",
+        SafetyStatus.Critical => "حرج",
+        _ => Model.SafetyStatus.ToString()
+    };
+    string safetyClass = Model.SafetyStatus switch
+    {
+        SafetyStatus.Safe => "badge-safe",
+        SafetyStatus.NeedAttention => "badge-attention",
+        SafetyStatus.Critical => "badge-critical",
+        _ => ""
+    };
+}
+
+<link rel="stylesheet" href="~/css/sitevisit.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2><i class="fas fa-hard-hat" style="color:var(--secondary)"></i> تفاصيل زيارة الموقع</h2>
+    </div>
+    <div style="display:flex; gap:10px">
+        <a asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjId" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i> رجوع للمشروع
+        </a>
+        @if (role == "Admin")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.VisitId" class="btn-bonyan-secondary">
+                <i class="fas fa-edit"></i> تعديل
+            </a>
+        }
+    </div>
+</div>
+
+<div class="details-card" style="max-width:660px; margin:0 auto">
+    <div class="visit-detail-header">
+        <h3>
+            <i class="fas fa-calendar-check" style="font-size:1rem; margin-left:6px; color:var(--secondary)"></i>
+            زيارة بتاريخ @Model.VisitDate.ToString("yyyy-MM-dd")
+        </h3>
+        <span class="@safetyClass">@safetyLabel</span>
+    </div>
+
+    <div class="visit-detail-body">
+        <div class="visit-detail-row">
+            <span class="visit-detail-label"><i class="fas fa-project-diagram"></i> المشروع</span>
+            <span>@(Model.Project?.ProjectName ?? "—")</span>
+        </div>
+        <div class="visit-detail-row">
+            <span class="visit-detail-label"><i class="fas fa-user-hard-hat"></i> المهندس</span>
+            <span>@(Model.Employee != null ? Model.Employee.FirstName + " " + Model.Employee.LastName : "—")</span>
+        </div>
+        <div class="visit-detail-row">
+            <span class="visit-detail-label"><i class="fas fa-calendar-alt"></i> تاريخ الزيارة</span>
+            <span>@Model.VisitDate.ToString("yyyy-MM-dd")</span>
+        </div>
+        <div class="visit-detail-row">
+            <span class="visit-detail-label"><i class="fas fa-shield-alt"></i> حالة السلامة</span>
+            <span class="@safetyClass">@safetyLabel</span>
+        </div>
+        @if (!string.IsNullOrEmpty(Model.Report))
+        {
+            <div class="visit-detail-row" style="flex-direction:column; align-items:flex-start; gap:8px">
+                <span class="visit-detail-label"><i class="fas fa-file-alt"></i> تقرير الزيارة</span>
+                <p style="margin:0; color:#555; font-size:0.9rem; line-height:1.7; white-space:pre-wrap">@Model.Report</p>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.VisitPhotos))
+        {
+            <div class="visit-detail-row" style="flex-direction:column; align-items:flex-start; gap:8px">
+                <span class="visit-detail-label"><i class="fas fa-camera"></i> صورة الموقع</span>
+                <img src="@Model.VisitPhotos" class="visit-thumb"
+                     style="width:120px; height:120px; cursor:pointer"
+                     onclick="openLightbox('@Model.VisitPhotos')"
+                     onerror="this.style.display='none'" alt="صورة الزيارة" />
+                <a href="@Model.VisitPhotos" target="_blank"
+                   class="btn-bonyan-primary" style="font-size:0.82rem; padding:6px 12px">
+                    <i class="fas fa-download"></i> تحميل الصورة
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<div id="lightbox-overlay" onclick="closeLightbox()">
+    <button id="lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+    <img id="lightbox-img" src="" alt="صورة الزيارة" />
+</div>
+
+@section Scripts {
+    <script>
+        function openLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox-overlay').classList.add('active');
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox-overlay').classList.remove('active');
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+    </script>
+}
