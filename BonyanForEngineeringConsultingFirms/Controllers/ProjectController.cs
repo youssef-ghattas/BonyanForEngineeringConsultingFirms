@@ -47,71 +47,73 @@ namespace Bonyan.Web.Controllers
 			return View(projects);
 		}
 
-		// ────────────────────────────────────────────────────────
-		// 2. DETAILS — load everything for this project
-		// ────────────────────────────────────────────────────────
-		public async Task<IActionResult> Details(int? id)
-		{
-			if (id == null) return NotFound();
+        // ────────────────────────────────────────────────────────
+        // 2. DETAILS — load everything for this project
+        // ────────────────────────────────────────────────────────
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
 
-			var role = HttpContext.Session.GetString("Role");
-			var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+            var role = HttpContext.Session.GetString("Role");
+            var employeeId = HttpContext.Session.GetInt32("EmployeeId");
 
-			// Load project with all related data
-			var project = await _context.Projects
-				.Include(p => p.EmployeeProjects)
-					.ThenInclude(ep => ep.Employee)
-					.ThenInclude(e=>e.UserAccount)
-				.Include(p => p.Tasks)
-				.ThenInclude(t=>t.AssignedToEmployee)
-				.Include(p => p.Documents)
-				.ThenInclude(d=>d.Employee)
-				.Include(p => p.Drawings)
-                .ThenInclude(dr => dr.Employee)
+            // Load project with all related data
+            var project = await _context.Projects
+                .Include(p => p.EmployeeProjects)
+                    .ThenInclude(ep => ep.Employee)
+                    .ThenInclude(e => e.UserAccount)
+                .Include(p => p.Tasks)
+                    .ThenInclude(t => t.AssignedToEmployee)
+                .Include(p => p.Documents)
+                    .ThenInclude(d => d.Employee)
+                .Include(p => p.Drawings)
+                    .ThenInclude(dr => dr.Employee)
+                .Include(p => p.SiteVisits)
+                    .ThenInclude(sv => sv.Employee)
                 .FirstOrDefaultAsync(p => p.ProjectId == id);
 
-			if (project == null) return NotFound();
+            if (project == null) return NotFound();
 
-			// Engineer can only open a project they are assigned to
-			if (role != "Admin" && employeeId != null)
-			{
-				bool assigned = project.EmployeeProjects
-					.Any(ep => ep.EmployeeId == employeeId);
-				if (!assigned) return Forbid();
-			}
+            // Engineer can only open a project they are assigned to
+            if (role != "Admin" && employeeId != null)
+            {
+                bool assigned = project.EmployeeProjects
+                    .Any(ep => ep.EmployeeId == employeeId);
+                if (!assigned) return Forbid();
+            }
 
-			// ── Load invoices (both direct + via tasks) ──────────
-			var directInvoices = await _context.Invoices
-				.Where(i => i.ProjectId == id)
-				.ToListAsync();
+            // ── Load invoices (both direct + via tasks) ──────────
+            var directInvoices = await _context.Invoices
+                .Where(i => i.ProjectId == id)
+                .ToListAsync();
 
-			var taskInvoices = await _context.Invoices
-				.Include(i => i.Task)
-				.Where(i => i.TaskId != null && i.Task.ProjectId == id)
-				.ToListAsync();
+            var taskInvoices = await _context.Invoices
+                .Include(i => i.Task)
+                .Where(i => i.TaskId != null && i.Task.ProjectId == id)
+                .ToListAsync();
 
-			var allInvoices = directInvoices
-				.Union(taskInvoices, new InvoiceComparer())
-				.ToList();
+            var allInvoices = directInvoices
+                .Union(taskInvoices, new Bonyan.PL.Helpers.InvoiceComparer())
+                .ToList();
 
-			ViewBag.ProjectInvoices = allInvoices;
-			// ─────────────────────────────────────────────────────
+            ViewBag.ProjectInvoices = allInvoices;
+            // ─────────────────────────────────────────────────────
 
-			// Pass employee list so admin can assign from details page
-			if (role == "Admin")
-			{
-				ViewBag.Employees = await _context.Employees
-					.Include(e => e.UserAccount)
-					.ToListAsync();
-			}
+            // Pass employee list so admin can assign from details page
+            if (role == "Admin")
+            {
+                ViewBag.Employees = await _context.Employees
+                    .Include(e => e.UserAccount)
+                    .ToListAsync();
+            }
 
-			return View(project);
-		}
+            return View(project);
+        }
 
-		// ────────────────────────────────────────────────────────
-		// 3. CREATE (GET) — load employees for checkbox dropdown
-		// ────────────────────────────────────────────────────────
-		public async Task<IActionResult> Create()
+        // ────────────────────────────────────────────────────────
+        // 3. CREATE (GET) — load employees for checkbox dropdown
+        // ────────────────────────────────────────────────────────
+        public async Task<IActionResult> Create()
 		{
 			var role = HttpContext.Session.GetString("Role");
 			if (role != "Admin") return Forbid();
