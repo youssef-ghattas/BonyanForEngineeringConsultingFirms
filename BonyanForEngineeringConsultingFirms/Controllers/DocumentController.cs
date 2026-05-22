@@ -60,11 +60,10 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
         {
             var role = HttpContext.Session.GetString("Role");
             if (role == null) return RedirectToAction("Login", "Account");
+            if (role == "Admin") return Forbid(); // Admin cannot upload documents
 
             ViewBag.ProjectId = projectId;
-            var project = _context.Projects.Find(projectId);
-            ViewBag.ProjectName = project?.ProjectName ?? "—";
-
+            ViewBag.ProjectName = _context.Projects.Find(projectId)?.ProjectName ?? "—";
             return View();
         }
 
@@ -76,6 +75,13 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             var employeeId = HttpContext.Session.GetInt32("EmployeeId");
 
             if (role == null) return RedirectToAction("Login", "Account");
+            if (role == "Admin") return Forbid();
+
+            if (employeeId == null)
+            {
+                TempData["ErrorMessage"] = "لم يتم العثور على بيانات المستخدم، يرجى تسجيل الدخول مجدداً.";
+                return RedirectToAction("Login", "Account");
+            }
 
             ModelState.Remove("Project");
             ModelState.Remove("Task");
@@ -89,16 +95,14 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.ProjectId = document.ProjectId;
-                var proj = _context.Projects.Find(document.ProjectId);
-                ViewBag.ProjectName = proj?.ProjectName ?? "—";
+                ViewBag.ProjectName = _context.Projects.Find(document.ProjectId)?.ProjectName ?? "—";
                 return View(document);
             }
 
-            // Save file
             var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "documents");
             Directory.CreateDirectory(uploadsFolder);
 
-            var uniqueName = Guid.NewGuid().ToString() + Path.GetExtension(uploadedFile!.FileName);
+            var uniqueName = Guid.NewGuid().ToString() + Path.GetExtension(uploadedFile.FileName);
             var filePath = Path.Combine(uploadsFolder, uniqueName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
@@ -107,7 +111,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             document.FilePath = "/uploads/documents/" + uniqueName;
             document.FileType = Path.GetExtension(uploadedFile.FileName).TrimStart('.').ToUpper();
             document.UploadDate = DateTime.Now;
-            document.EmployeeId = employeeId ?? 1; // fallback to 1 if session not set
+            document.EmployeeId = employeeId.Value; // exact employee, no fallback
 
             _context.Documents.Add(document);
             await _context.SaveChangesAsync();

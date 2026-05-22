@@ -61,10 +61,14 @@ namespace Bonyan.Web.Controllers
 			var project = await _context.Projects
 				.Include(p => p.EmployeeProjects)
 					.ThenInclude(ep => ep.Employee)
+					.ThenInclude(e=>e.UserAccount)
 				.Include(p => p.Tasks)
+				.ThenInclude(t=>t.AssignedToEmployee)
 				.Include(p => p.Documents)
+				.ThenInclude(d=>d.Employee)
 				.Include(p => p.Drawings)
-				.FirstOrDefaultAsync(p => p.ProjectId == id);
+                .ThenInclude(dr => dr.Employee)
+                .FirstOrDefaultAsync(p => p.ProjectId == id);
 
 			if (project == null) return NotFound();
 

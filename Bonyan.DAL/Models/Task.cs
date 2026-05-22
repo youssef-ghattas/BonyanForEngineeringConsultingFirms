@@ -21,9 +21,7 @@ namespace Bonyan.DAL.Models
 
 		[Required]
 		public int ProjectId { get; set; }
-
-		[Required]
-		public int CreatedBy_UserID { get; set; }
+		public int? CreatedBy_UserID { get; set; }
 
 		[Required]
 		public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -36,10 +34,15 @@ namespace Bonyan.DAL.Models
 
 		public string Notes { get; set; }
 
-		[ForeignKey("ProjectId")]
-		public virtual Project Project { get; set; }
+        public int? AssignedToEmployeeId { get; set; }
 
-		[ForeignKey("CreatedBy_UserID")]
+        [ForeignKey("AssignedToEmployeeId")]
+        public virtual Employee AssignedToEmployee { get; set; }
+
+        [ForeignKey("ProjectId")]
+        public virtual Project Project { get; set; }
+
+        [ForeignKey("CreatedBy_UserID")]
 		public virtual UserAccount Creator { get; set; }
 
 		public virtual ICollection<Document> Documents { get; set; } = new List<Document>();

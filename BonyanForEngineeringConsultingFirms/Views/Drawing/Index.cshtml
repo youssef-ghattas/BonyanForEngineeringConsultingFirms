@@ -65,13 +65,18 @@
                         <p title="@dr.DrawingTitle">@dr.DrawingTitle</p>
                         <span>@(dr.Project?.ProjectName ?? "—")</span><br />
                         <span>@dr.UploadDate.ToString("yyyy-MM-dd")</span>
+                        @* inside photo-card-info *@
+                        <span style="font-size:0.72rem; color:#888">
+                            <i class="fas fa-user" style="font-size:0.65rem"></i>
+                            @(dr.Employee?.FirstName + " " + dr.Employee?.LastName ?? "—")
+                        </span>
                     </div>
                     <div class="photo-card-actions">
                         <a href="@dr.FilePath" target="_blank"
                            class="btn-action view" title="عرض">
                             <i class="fas fa-eye"></i>
                         </a>
-                        @if (role == "Admin")
+                        @if (role == "ProjectManager" || role == "Engineer")
                         {
                             <form asp-action="Delete" asp-route-id="@dr.DrawingId"
                                   method="post" style="display:inline"

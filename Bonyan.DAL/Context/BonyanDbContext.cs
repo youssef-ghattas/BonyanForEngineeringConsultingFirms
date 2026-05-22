@@ -64,7 +64,8 @@ namespace Bonyan.DAL.Context
 				.HasOne(t => t.Creator)
 				.WithMany(u => u.CreatedTasks)
 				.HasForeignKey(t => t.CreatedBy_UserID)
-				.OnDelete(DeleteBehavior.Restrict);
+				.OnDelete(DeleteBehavior.Restrict)
+				.IsRequired(false);
 
 			// ── Task → Project ────────────────────────────
 			modelBuilder.Entity<Task>()
@@ -73,8 +74,17 @@ namespace Bonyan.DAL.Context
 				.HasForeignKey(t => t.ProjectId)
 				.OnDelete(DeleteBehavior.Restrict);
 
-			// ── EmployeeProject ───────────────────────────
-			modelBuilder.Entity<EmployeeProject>()
+
+            // ── Task → Assigned to employee ────────────────────────────
+            modelBuilder.Entity<Task>()
+                .HasOne(t => t.AssignedToEmployee)
+                .WithMany()
+                .HasForeignKey(t => t.AssignedToEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            // ── EmployeeProject ───────────────────────────
+            modelBuilder.Entity<EmployeeProject>()
 				.HasOne(ep => ep.Employee)
 				.WithMany(e => e.EmployeeProjects)
 				.HasForeignKey(ep => ep.EmployeeId)

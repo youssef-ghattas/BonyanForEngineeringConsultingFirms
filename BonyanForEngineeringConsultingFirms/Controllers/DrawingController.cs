@@ -50,10 +50,10 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
         {
             var role = HttpContext.Session.GetString("Role");
             if (role == null) return RedirectToAction("Login", "Account");
+            if (role == "Admin") return Forbid(); // Admin cannot upload drawings
 
             ViewBag.ProjectId = projectId;
-            var project = _context.Projects.Find(projectId);
-            ViewBag.ProjectName = project?.ProjectName ?? "—";
+            ViewBag.ProjectName = _context.Projects.Find(projectId)?.ProjectName ?? "—";
             return View();
         }
 
@@ -63,7 +63,15 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
         {
             var role = HttpContext.Session.GetString("Role");
             var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+
             if (role == null) return RedirectToAction("Login", "Account");
+            if (role == "Admin") return Forbid();
+
+            if (employeeId == null)
+            {
+                TempData["ErrorMessage"] = "لم يتم العثور على بيانات المستخدم، يرجى تسجيل الدخول مجدداً.";
+                return RedirectToAction("Login", "Account");
+            }
 
             ModelState.Remove("Project");
             ModelState.Remove("Task");
@@ -98,7 +106,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
             drawing.FilePath = "/uploads/drawings/" + uniqueName;
             drawing.UploadDate = DateTime.Now;
-            drawing.EmployeeId = employeeId ?? 1;
+            drawing.EmployeeId = employeeId.Value; // exact employee, no fallback
 
             _context.Drawings.Add(drawing);
             await _context.SaveChangesAsync();

@@ -293,7 +293,7 @@
         <div class="details-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
                 <div class="details-section-title" style="margin-bottom:0" data-lang="tasks">مهام المشروع</div>
-                @if (role == "Admin")
+                @if (role == "ProjectManager")
                 {
                     <a asp-controller="Task" asp-action="Create"
                        asp-route-projectId="@Model.ProjectId"
@@ -310,7 +310,7 @@
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">المهمة</th>
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">الحالة</th>
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">الموعد النهائي</th>
-                            @if (role == "Admin")
+                            @if (role == "ProjectManager")
                             {
                                 <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">إجراءات</th>
                             }
@@ -351,7 +351,7 @@
                                 <td style="padding:10px">
                                     @(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")
                                 </td>
-                                @if (role == "Admin")
+                                @if (role == "ProjectManager")
                                 {
                                     <td style="padding:10px">
                                         <a asp-controller="Task" asp-action="Edit"
@@ -389,7 +389,7 @@
         <div class="details-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
                 <div class="details-section-title" style="margin-bottom:0">مستندات المشروع</div>
-                @if (role == "Admin" || role == "Engineer" || role == "ProjectManager")
+                @if (role == "Engineer" || role == "ProjectManager")
                 {
                     <a asp-controller="Document" asp-action="Create"
                        asp-route-projectId="@Model.ProjectId"
@@ -406,7 +406,9 @@
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">العنوان</th>
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">النوع</th>
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">تاريخ الرفع</th>
+                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">رُفع بواسطة</th>
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">تحميل</th>
+                            
                         </tr>
                     </thead>
                     <tbody>
@@ -416,6 +418,9 @@
                                 <td style="padding:10px">@d.DocTitle</td>
                                 <td style="padding:10px">@(d.FileType ?? "—")</td>
                                 <td style="padding:10px">@d.UploadDate.ToString("yyyy-MM-dd")</td>
+                                <td style="padding:10px">
+                                    @(d.Employee != null ? d.Employee.FirstName + " " + d.Employee.LastName : "—")
+                                </td>
                                 <td style="padding:10px">
                                     <a href="@d.FilePath" target="_blank"
                                        class="btn-action view" title="تحميل">
@@ -439,7 +444,7 @@
         <div class="details-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
                 <div class="details-section-title" style="margin-bottom:0">صور المشروع</div>
-                @if (role == "Admin" || role == "Engineer" || role == "ProjectManager")
+                @if (role == "Engineer" || role == "ProjectManager")
                 {
                     <a asp-controller="Drawing" asp-action="Create"
                        asp-route-projectId="@Model.ProjectId"
@@ -464,6 +469,10 @@
                                  onerror="this.src='/images/placeholder.png'" />
                             <p style="padding:6px; font-size:0.78rem; color:#555; margin:0">
                                 @dr.DrawingTitle
+                            <p style="padding:0 6px 4px; font-size:0.72rem; color:#888; margin:0">
+                                <i class="fas fa-user" style="font-size:0.65rem"></i>
+                                @(dr.Employee != null ? dr.Employee.FirstName + " " + dr.Employee.LastName : "—")
+                            </p>
                             </p>
                             <p style="padding:0 6px 6px; font-size:0.72rem; color:#aaa; margin:0">
                                 @dr.UploadDate.ToString("yyyy-MM-dd")
@@ -484,7 +493,7 @@
         <div class="details-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
                 <div class="details-section-title" style="margin-bottom:0">فواتير المشروع</div>
-                @if (role == "Admin")
+                @if (role == "Engineer" || role == "ProjectManager")
                 {
                     <a asp-controller="Invoice" asp-action="Create"
                        asp-route-projectId="@Model.ProjectId"
