@@ -63,6 +63,7 @@
                     <th>التصنيف</th>
                     <th>تاريخ الرفع</th>
                     <th>إجراءات</th>
+                    <th>رُفع بواسطة</th>
                 </tr>
             </thead>
             <tbody>
@@ -84,12 +85,13 @@
                         </td>
                         <td>@(doc.Category ?? "—")</td>
                         <td>@doc.UploadDate.ToString("yyyy-MM-dd")</td>
+                        <td>@(doc.Employee?.FirstName + " " + doc.Employee?.LastName ?? "—")</td>
                         <td>
                             <a href="@doc.FilePath" target="_blank"
                                class="btn-action view" title="تحميل">
                                 <i class="fas fa-download"></i>
                             </a>
-                            @if (role == "Admin")
+                            @if (role == "ProjectManager" || role == "Engineer")
                             {
                                 <form asp-action="Delete" asp-route-id="@doc.DocId"
                                       method="post" style="display:inline"

@@ -24,7 +24,7 @@
                 <i class="fas fa-arrow-right"></i> رجوع للمشروع
             </a>
         }
-        @if (role == "Admin" && projectId.HasValue)
+        @if (role == "ProjectManager" && projectId.HasValue)
         {
             <a asp-action="Create" asp-route-projectId="@projectId"
                class="btn-bonyan-secondary">
@@ -53,9 +53,10 @@
                         <th>المشروع</th>
                     }
                     <th>الحالة</th>
-                    <th>الموعد النهائي</th>
                     <th>تاريخ الإنشاء</th>
-                    @if (role == "Admin")
+                    <th>الموعد النهائي</th>
+                    <th>المهندس المعيَّن</th>
+                    @if (role == "ProjectManager")
                     {
                         <th>إجراءات</th>
                     }
@@ -98,7 +99,12 @@
                         <td><span class="task-status-badge @statusClass">@statusLabel</span></td>
                         <td>@(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
                         <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
-                        @if (role == "Admin")
+                    <td>
+                        @(t.AssignedToEmployee != null
+                                            ? t.AssignedToEmployee.FirstName + " " + t.AssignedToEmployee.LastName
+                                            : "—")
+                    </td>
+                        @if (role == "ProjectManager")
                         {
                             <td>
                                 <a asp-action="Edit" asp-route-id="@t.TaskId"

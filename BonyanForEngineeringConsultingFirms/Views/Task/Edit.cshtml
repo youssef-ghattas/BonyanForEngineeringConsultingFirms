@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "تعديل المهمة";
     string projectName = ViewBag.ProjectName ?? "—";
+    var engineers = ViewBag.Engineers as List<Bonyan.DAL.Models.Employee> ?? new List<Bonyan.DAL.Models.Employee>();
 }
 
 <link rel="stylesheet" href="~/css/task.css" />
@@ -43,6 +44,24 @@
                 <label>اسم المهمة <span style="color:red">*</span></label>
                 <input asp-for="Task_Name" class="form-control" required />
                 <span asp-validation-for="Task_Name" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>تعيين إلى مهندس</label>
+                <select asp-for="AssignedToEmployeeId" class="form-select">
+                    <option value="">-- بدون تعيين --</option>
+                    @foreach (var eng in engineers)
+                    {
+                        if (Model.AssignedToEmployeeId == eng.EmployeeId)
+                        {
+                            <option value="@eng.EmployeeId" selected>@eng.FirstName @eng.LastName</option>
+                        }
+                        else
+                        {
+                            <option value="@eng.EmployeeId">@eng.FirstName @eng.LastName</option>
+                        }
+                    }
+                </select>
             </div>
 
             <div class="form-group">

@@ -60,6 +60,21 @@
             <span>@(Model.Project?.ProjectName ?? "—")</span>
         </div>
         <div class="task-detail-row">
+            <span class="task-detail-label">
+                <i class="fas fa-user-hard-hat"></i> مُعيَّن إلى
+            </span>
+            <span>
+                @if (Model.AssignedToEmployee != null)
+                {
+                    @(Model.AssignedToEmployee.FirstName + " " + Model.AssignedToEmployee.LastName)
+                }
+                else
+                {
+                    <text>—</text>
+                }
+            </span>
+        </div>
+        <div class="task-detail-row">
             <span class="task-detail-label"><i class="fas fa-calendar-alt"></i> الموعد النهائي</span>
             <span>@(Model.DueDate.HasValue? Model.DueDate.Value.ToString("yyyy-MM-dd") : "—")</span>
         </div>
