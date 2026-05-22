@@ -20,7 +20,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Bonyan.BLL")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0e7914d70bb9f839440154ccb13b717015f7c6c0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c2bfde435909f76191f24d87ec9461501ee14eca")]
 [assembly: System.Reflection.AssemblyProductAttribute("Bonyan.BLL")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Bonyan.BLL")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
@@ -8557,71 +8557,73 @@ namespace Bonyan.Web.Controllers
 			return View(projects);
 		}
 
-		// ────────────────────────────────────────────────────────
-		// 2. DETAILS — load everything for this project
-		// ────────────────────────────────────────────────────────
-		public async Task<IActionResult> Details(int? id)
-		{
-			if (id == null) return NotFound();
+        // ────────────────────────────────────────────────────────
+        // 2. DETAILS — load everything for this project
+        // ────────────────────────────────────────────────────────
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
 
-			var role = HttpContext.Session.GetString("Role");
-			var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+            var role = HttpContext.Session.GetString("Role");
+            var employeeId = HttpContext.Session.GetInt32("EmployeeId");
 
-			// Load project with all related data
-			var project = await _context.Projects
-				.Include(p => p.EmployeeProjects)
-					.ThenInclude(ep => ep.Employee)
-					.ThenInclude(e=>e.UserAccount)
-				.Include(p => p.Tasks)
-				.ThenInclude(t=>t.AssignedToEmployee)
-				.Include(p => p.Documents)
-				.ThenInclude(d=>d.Employee)
-				.Include(p => p.Drawings)
-                .ThenInclude(dr => dr.Employee)
+            // Load project with all related data
+            var project = await _context.Projects
+                .Include(p => p.EmployeeProjects)
+                    .ThenInclude(ep => ep.Employee)
+                    .ThenInclude(e => e.UserAccount)
+                .Include(p => p.Tasks)
+                    .ThenInclude(t => t.AssignedToEmployee)
+                .Include(p => p.Documents)
+                    .ThenInclude(d => d.Employee)
+                .Include(p => p.Drawings)
+                    .ThenInclude(dr => dr.Employee)
+                .Include(p => p.SiteVisits)
+                    .ThenInclude(sv => sv.Employee)
                 .FirstOrDefaultAsync(p => p.ProjectId == id);
 
-			if (project == null) return NotFound();
+            if (project == null) return NotFound();
 
-			// Engineer can only open a project they are assigned to
-			if (role != "Admin" && employeeId != null)
-			{
-				bool assigned = project.EmployeeProjects
-					.Any(ep => ep.EmployeeId == employeeId);
-				if (!assigned) return Forbid();
-			}
+            // Engineer can only open a project they are assigned to
+            if (role != "Admin" && employeeId != null)
+            {
+                bool assigned = project.EmployeeProjects
+                    .Any(ep => ep.EmployeeId == employeeId);
+                if (!assigned) return Forbid();
+            }
 
-			// ── Load invoices (both direct + via tasks) ──────────
-			var directInvoices = await _context.Invoices
-				.Where(i => i.ProjectId == id)
-				.ToListAsync();
+            // ── Load invoices (both direct + via tasks) ──────────
+            var directInvoices = await _context.Invoices
+                .Where(i => i.ProjectId == id)
+                .ToListAsync();
 
-			var taskInvoices = await _context.Invoices
-				.Include(i => i.Task)
-				.Where(i => i.TaskId != null && i.Task.ProjectId == id)
-				.ToListAsync();
+            var taskInvoices = await _context.Invoices
+                .Include(i => i.Task)
+                .Where(i => i.TaskId != null && i.Task.ProjectId == id)
+                .ToListAsync();
 
-			var allInvoices = directInvoices
-				.Union(taskInvoices, new InvoiceComparer())
-				.ToList();
+            var allInvoices = directInvoices
+                .Union(taskInvoices, new Bonyan.PL.Helpers.InvoiceComparer())
+                .ToList();
 
-			ViewBag.ProjectInvoices = allInvoices;
-			// ─────────────────────────────────────────────────────
+            ViewBag.ProjectInvoices = allInvoices;
+            // ─────────────────────────────────────────────────────
 
-			// Pass employee list so admin can assign from details page
-			if (role == "Admin")
-			{
-				ViewBag.Employees = await _context.Employees
-					.Include(e => e.UserAccount)
-					.ToListAsync();
-			}
+            // Pass employee list so admin can assign from details page
+            if (role == "Admin")
+            {
+                ViewBag.Employees = await _context.Employees
+                    .Include(e => e.UserAccount)
+                    .ToListAsync();
+            }
 
-			return View(project);
-		}
+            return View(project);
+        }
 
-		// ────────────────────────────────────────────────────────
-		// 3. CREATE (GET) — load employees for checkbox dropdown
-		// ────────────────────────────────────────────────────────
-		public async Task<IActionResult> Create()
+        // ────────────────────────────────────────────────────────
+        // 3. CREATE (GET) — load employees for checkbox dropdown
+        // ────────────────────────────────────────────────────────
+        public async Task<IActionResult> Create()
 		{
 			var role = HttpContext.Session.GetString("Role");
 			if (role != "Admin") return Forbid();
@@ -8832,85 +8834,182 @@ namespace Bonyan.Web.Controllers
 			_context.Projects.Any(e => e.ProjectId == id);
 	}
 }=== File: ./BonyanForEngineeringConsultingFirms/Controllers/SiteVisitController.cs ===
-﻿using Bonyan.BLL.Services;
+﻿// BonyanForEngineeringConsultingFirms/Controllers/SiteVisitController.cs
+using Bonyan.DAL.Context;
+using Bonyan.DAL.Enums;
 using Bonyan.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BonyanForEngineeringConsultingFirms.Controllers
 {
-	public class SiteVisitController : Controller
-	{
-		private readonly IService<SiteVisit> _siteVisitService;
+    public class SiteVisitController : Controller
+    {
+        private readonly BonyanDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-		public SiteVisitController(IService<SiteVisit> siteVisitService)
-		{
-			_siteVisitService = siteVisitService;
-		}
+        public SiteVisitController(BonyanDbContext context, IWebHostEnvironment env)
+        {
+            _context = context;
+            _env = env;
+        }
 
-		public IActionResult Index()
-		{
-			var siteVisits = _siteVisitService.GetAll();
-			return View(siteVisits);
-		}
+        // ── INDEX — Admin sees all (with project filter), employees see their project visits
+        public async Task<IActionResult> Index(int? projectId)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role == null) return RedirectToAction("Login", "Account");
 
-		public IActionResult Details(int id)
-		{
-			var siteVisit = _siteVisitService.GetById(id);
-			if (siteVisit == null) return NotFound();
-			return View(siteVisit);
-		}
+            var employeeId = HttpContext.Session.GetInt32("EmployeeId");
 
-		public IActionResult Create()
-		{
-			return View();
-		}
+            IQueryable<SiteVisit> query = _context.SiteVisits
+                .Include(sv => sv.Project)
+                .Include(sv => sv.Employee);
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public IActionResult Create(SiteVisit siteVisit)
-		{
-			if (ModelState.IsValid)
-			{
-				_siteVisitService.Add(siteVisit);
-				return RedirectToAction(nameof(Index));
-			}
-			return View(siteVisit);
-		}
+            // Non-admin: only their assigned projects
+            if (role != "Admin" && employeeId != null)
+                query = query.Where(sv => sv.Project.EmployeeProjects
+                                            .Any(ep => ep.EmployeeId == employeeId));
 
-		public IActionResult Edit(int id)
-		{
-			var siteVisit = _siteVisitService.GetById(id);
-			if (siteVisit == null) return NotFound();
-			return View(siteVisit);
-		}
+            // Filter by project
+            if (projectId.HasValue)
+                query = query.Where(sv => sv.ProjId == projectId.Value);
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public IActionResult Edit(SiteVisit siteVisit)
-		{
-			if (ModelState.IsValid)
-			{
-				_siteVisitService.Update(siteVisit);
-				return RedirectToAction(nameof(Index));
-			}
-			return View(siteVisit);
-		}
+            var visits = await query.OrderByDescending(sv => sv.VisitDate).ToListAsync();
 
-		public IActionResult Delete(int id)
-		{
-			var siteVisit = _siteVisitService.GetById(id);
-			if (siteVisit == null) return NotFound();
-			return View(siteVisit);
-		}
+            // Projects list for filter dropdown
+            IQueryable<Project> projectsQuery = role == "Admin"
+                ? _context.Projects.OrderBy(p => p.ProjectName)
+                : _context.Projects
+                    .Where(p => p.EmployeeProjects.Any(ep => ep.EmployeeId == employeeId))
+                    .OrderBy(p => p.ProjectName);
 
-		[HttpPost, ActionName("Delete")]
-		[ValidateAntiForgeryToken]
-		public IActionResult DeleteConfirmed(int id)
-		{
-			_siteVisitService.Delete(id);
-			return RedirectToAction(nameof(Index));
-		}
-	}
+            ViewBag.Projects = await projectsQuery.ToListAsync();
+            ViewBag.SelectedProjectId = projectId;
+
+            return View(visits);
+        }
+
+        // ── DETAILS
+        public async Task<IActionResult> Details(int id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role == null) return RedirectToAction("Login", "Account");
+
+            var siteVisit = await _context.SiteVisits
+                .Include(sv => sv.Project)
+                .Include(sv => sv.Employee)
+                .FirstOrDefaultAsync(sv => sv.VisitId == id);
+
+            if (siteVisit == null) return NotFound();
+            return View(siteVisit);
+        }
+
+        // ── CREATE GET — Only ProjectManager or Engineer (NOT Admin)
+        public IActionResult Create(int projectId)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role == null) return RedirectToAction("Login", "Account");
+            if (role == "Admin") return Forbid(); // Admin cannot add site visits
+
+            var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+
+            // Must be assigned to this project
+            bool assigned = _context.EmployeeProjects
+                .Any(ep => ep.ProjectId == projectId && ep.EmployeeId == employeeId);
+            if (!assigned) return Forbid();
+
+            ViewBag.ProjectId = projectId;
+            ViewBag.ProjectName = _context.Projects.Find(projectId)?.ProjectName ?? "—";
+            return View();
+        }
+
+        // ── CREATE POST
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(SiteVisit siteVisit, IFormFile? visitPhoto)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role == null) return RedirectToAction("Login", "Account");
+            if (role == "Admin") return Forbid();
+
+            var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+            if (employeeId == null) return RedirectToAction("Login", "Account");
+
+            // Must be assigned
+            bool assigned = _context.EmployeeProjects
+                .Any(ep => ep.ProjectId == siteVisit.ProjId && ep.EmployeeId == employeeId);
+            if (!assigned) return Forbid();
+
+            ModelState.Remove("Project");
+            ModelState.Remove("Employee");
+            ModelState.Remove("VisitPhotos");
+
+            // Handle photo upload
+            string photoPath = "";
+            if (visitPhoto != null && visitPhoto.Length > 0)
+            {
+                var allowedExts = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var ext = Path.GetExtension(visitPhoto.FileName).ToLower();
+                if (!allowedExts.Contains(ext))
+                    ModelState.AddModelError("visitPhoto", "يُسمح فقط برفع ملفات الصور");
+                else
+                {
+                    var folder = Path.Combine(_env.WebRootPath, "uploads", "sitevisits");
+                    Directory.CreateDirectory(folder);
+                    var uniqueName = Guid.NewGuid() + ext;
+                    var fullPath = Path.Combine(folder, uniqueName);
+                    using (var stream = new FileStream(fullPath, FileMode.Create))
+                        await visitPhoto.CopyToAsync(stream);
+                    photoPath = "/uploads/sitevisits/" + uniqueName;
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.ProjectId = siteVisit.ProjId;
+                ViewBag.ProjectName = _context.Projects.Find(siteVisit.ProjId)?.ProjectName ?? "—";
+                return View(siteVisit);
+            }
+
+            siteVisit.EmployeeId = employeeId.Value;
+            siteVisit.VisitDate = DateTime.Now;
+            siteVisit.VisitPhotos = photoPath;
+
+            _context.SiteVisits.Add(siteVisit);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "تمت إضافة زيارة الموقع بنجاح";
+            return RedirectToAction("Details", "Project", new { id = siteVisit.ProjId });
+        }
+
+        // ── DELETE — Only Admin
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role != "Admin") return Forbid();
+
+            var sv = await _context.SiteVisits.FindAsync(id);
+            if (sv == null) return NotFound();
+
+            int projectId = sv.ProjId;
+
+            if (!string.IsNullOrEmpty(sv.VisitPhotos))
+            {
+                var fullPath = Path.Combine(_env.WebRootPath, sv.VisitPhotos.TrimStart('/'));
+                if (System.IO.File.Exists(fullPath))
+                    System.IO.File.Delete(fullPath);
+            }
+
+            _context.SiteVisits.Remove(sv);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "تم حذف زيارة الموقع بنجاح";
+            return RedirectToAction("Index");
+        }
+    }
 }=== File: ./BonyanForEngineeringConsultingFirms/Controllers/SupplierController.cs ===
 ﻿using Bonyan.BLL.Services;
 using Bonyan.DAL.Models;
@@ -9031,9 +9130,22 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
             var tasks = await query.OrderByDescending(t => t.CreatedAt).ToListAsync();
 
+            if (role == "Admin")
+            {
+                ViewBag.Projects = await _context.Projects.ToListAsync();
+            }
+            else
+            {
+                ViewBag.Projects = await _context.Projects
+                    .Where(p => p.EmployeeProjects.Any(ep => ep.EmployeeId == employeeId))
+                    .ToListAsync();
+            }
+
             ViewBag.ProjectId = projectId;
             if (projectId.HasValue)
-                ViewBag.ProjectName = (await _context.Projects.FindAsync(projectId.Value))?.ProjectName ?? "—";
+            {
+                ViewBag.ProjectName = (await _context.Projects.FindAsync(projectId.Value))?.ProjectName;
+            }
 
             return View(tasks);
         }
@@ -9271,7 +9383,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BonyanForEngineeringConsultingFirms")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c2bfde435909f76191f24d87ec9461501ee14eca")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+451f7d04ee04015a71f33aef39e331fbdca4da33")]
 [assembly: System.Reflection.AssemblyProductAttribute("BonyanForEngineeringConsultingFirms")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BonyanForEngineeringConsultingFirms")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
@@ -13255,6 +13367,12 @@ namespace Bonyan.PL.ViewModels
             الفواتير
             <span class="tab-count">@projectInvoices.Count</span>
         </button>
+        <button onclick="showTab('tab-sitevisits')" id="btn-tab-sitevisits"
+                class="tab-btn">
+            <i class="fas fa-hard-hat"></i>
+            زيارات الموقع
+            <span class="tab-count">@Model.SiteVisits.Count</span>
+        </button>
     </div>
 
     <!-- ── TASKS TAB ────────────────────────────── -->
@@ -13532,6 +13650,131 @@ namespace Bonyan.PL.ViewModels
         </div>
     </div>
 
+</div>
+
+<!-- ── SITE VISITS TAB ──────────────────────────── -->
+<div id="tab-sitevisits" class="tab-panel" style="display:none">
+    <div class="details-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+            <div class="details-section-title" style="margin-bottom:0">زيارات الموقع</div>
+            @if (role == "Engineer" || role == "ProjectManager")
+            {
+                <a asp-controller="SiteVisit" asp-action="Create"
+                   asp-route-projectId="@Model.ProjectId"
+                   class="btn-bonyan-secondary" style="font-size:0.82rem; padding:7px 14px">
+                    <i class="fas fa-plus"></i> إضافة زيارة موقع
+                </a>
+            }
+        </div>
+
+        @if (Model.SiteVisits != null && Model.SiteVisits.Any())
+        {
+            <table style="width:100%; border-collapse:collapse; font-size:0.88rem">
+                <thead>
+                    <tr style="background:#F8F9FC">
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">تاريخ الزيارة</th>
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">أُجريت بواسطة</th>
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">الدور</th>
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">حالة السلامة</th>
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">التقرير</th>
+                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">الصورة</th>
+                        @if (role == "Admin")
+                        {
+                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">حذف</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sv in Model.SiteVisits.OrderByDescending(x => x.VisitDate))
+                    {
+                        string safetyLabel = sv.SafetyStatus switch
+                        {
+                            SafetyStatus.Safe => "آمن",
+                            SafetyStatus.NeedAttention => "يحتاج انتباه",
+                            SafetyStatus.Critical => "حرج",
+                            _ => sv.SafetyStatus.ToString()
+                        };
+                        string safetyColor = sv.SafetyStatus switch
+                        {
+                            SafetyStatus.Safe => "#146c43",
+                            SafetyStatus.NeedAttention => "#7c4a00",
+                            SafetyStatus.Critical => "#842029",
+                            _ => "#666"
+                        };
+                        string safetyBg = sv.SafetyStatus switch
+                        {
+                            SafetyStatus.Safe => "#d1e7dd",
+                            SafetyStatus.NeedAttention => "#fff3cd",
+                            SafetyStatus.Critical => "#f8d7da",
+                            _ => "#eee"
+                        };
+                        bool empIsPM = sv.Employee?.UserAccount?.Role == UserRole.ProjectManager;
+                        string empRole = empIsPM ? "مدير مشروع" : "مهندس";
+
+                        <tr style="border-bottom:1px solid #F4F6F9">
+                            <td style="padding:10px">@sv.VisitDate.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td style="padding:10px; font-weight:600">
+                                @(sv.Employee != null ? sv.Employee.FirstName + " " + sv.Employee.LastName : "—")
+                            </td>
+                            <td style="padding:10px">
+                                <span style="font-size:0.75rem; background:#EEF2FF; color:#3730a3;
+                                                     padding:2px 8px; border-radius:10px; font-weight:600">
+                                    @empRole
+                                </span>
+                            </td>
+                            <td style="padding:10px">
+                                <span style="background:@safetyBg; color:@safetyColor;
+                                                     padding:3px 10px; border-radius:12px;
+                                                     font-size:0.75rem; font-weight:700">
+                                    @safetyLabel
+                                </span>
+                            </td>
+                            <td style="padding:10px; max-width:220px; white-space:nowrap;
+                                               overflow:hidden; text-overflow:ellipsis" title="@sv.Report">
+                                @(sv.Report?.Length > 60 ? sv.Report.Substring(0, 60) + "..." : sv.Report ?? "—")
+                            </td>
+                            <td style="padding:10px">
+                                @if (!string.IsNullOrEmpty(sv.VisitPhotos))
+                                {
+                                    <a href="@sv.VisitPhotos" target="_blank">
+                                        <img src="@sv.VisitPhotos" alt="صورة الزيارة"
+                                             style="width:48px; height:48px; object-fit:cover;
+                                                                border-radius:6px; border:1px solid #eee"
+                                             onerror="this.style.display='none'" />
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span style="color:#aaa; font-size:0.8rem">لا توجد</span>
+                                }
+                            </td>
+                            @if (role == "Admin")
+                            {
+                                <td style="padding:10px">
+                                    <form asp-controller="SiteVisit" asp-action="Delete"
+                                          asp-route-id="@sv.VisitId" method="post"
+                                          style="display:inline"
+                                          onsubmit="return confirm('هل أنت متأكد من حذف هذه الزيارة؟')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-action delete" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div style="text-align:center; padding:40px; color:#aaa">
+                <i class="fas fa-hard-hat" style="font-size:3rem; margin-bottom:14px; display:block"></i>
+                <p>لا توجد زيارات موقع لهذا المشروع حتى الآن</p>
+            </div>
+        }
+    </div>
 </div>
 
 <!-- Tab Styles -->
@@ -14227,7 +14470,495 @@ else
 </html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Shared/_ValidationScriptsPartial.cshtml ===
 ﻿<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
 <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
-=== File: ./BonyanForEngineeringConsultingFirms/Views/Task/Create.cshtml ===
+=== File: ./BonyanForEngineeringConsultingFirms/Views/SiteVisit/Create.cshtml ===
+﻿@model Bonyan.DAL.Models.SiteVisit
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "إضافة زيارة موقع";
+    int projectId = ViewBag.ProjectId ?? 0;
+    string projectName = ViewBag.ProjectName as string ?? "—";
+}
+
+<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-hard-hat" style="color:var(--secondary)"></i>
+            إضافة زيارة موقع
+        </h2>
+    </div>
+    <a asp-controller="Project" asp-action="Details"
+       asp-route-id="@projectId" class="btn-bonyan-primary">
+        <i class="fas fa-arrow-right"></i> رجوع للمشروع
+    </a>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div style="background:#f8d7da; color:#842029; border-radius:8px;
+                    padding:12px 18px; margin-bottom:16px; font-weight:600">
+        <i class="fas fa-exclamation-circle"></i>
+        يرجى تصحيح الأخطاء أدناه
+    </div>
+}
+
+<div class="upload-card">
+    <div class="upload-card-header">
+        <i class="fas fa-map-marker-alt"></i>
+        <h4>بيانات زيارة الموقع</h4>
+    </div>
+
+    <div class="upload-card-body">
+        <div class="project-badge">
+            <i class="fas fa-project-diagram"></i>
+            @projectName
+        </div>
+
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ProjId" value="@projectId" />
+
+            <div class="form-group">
+                <label>تقرير الزيارة <span style="color:red">*</span></label>
+                <textarea asp-for="Report" class="form-control" rows="5"
+                          placeholder="اكتب تقرير تفصيلي عن الزيارة..." required></textarea>
+                <span asp-validation-for="Report" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>حالة السلامة <span style="color:red">*</span></label>
+                <select asp-for="SafetyStatus" class="form-select" required>
+                    <option value="0">آمن</option>
+                    <option value="1">يحتاج انتباه</option>
+                    <option value="2">حرج</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>صورة الموقع (اختياري)</label>
+                <input type="file" name="visitPhoto" class="form-control"
+                       accept=".jpg,.jpeg,.png,.gif,.webp" />
+                <small style="color:#888">الصيغ المسموح بها: jpg, jpeg, png, gif, webp</small>
+            </div>
+
+            <div class="upload-actions">
+                <a asp-controller="Project" asp-action="Details"
+                   asp-route-id="@projectId" class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-save"></i> حفظ الزيارة
+                </button>
+            </div>
+        </form>
+    </div>
+</div>=== File: ./BonyanForEngineeringConsultingFirms/Views/SiteVisit/Details.cshtml ===
+﻿@model Bonyan.DAL.Models.SiteVisit
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تفاصيل زيارة الموقع";
+    var role = Context.Session.GetString("Role");
+    string safetyLabel = Model.SafetyStatus switch
+    {
+        SafetyStatus.Safe => "آمن",
+        SafetyStatus.NeedAttention => "يحتاج انتباه",
+        SafetyStatus.Critical => "حرج",
+        _ => Model.SafetyStatus.ToString()
+    };
+    string safetyClass = Model.SafetyStatus switch
+    {
+        SafetyStatus.Safe => "badge-safe",
+        SafetyStatus.NeedAttention => "badge-attention",
+        SafetyStatus.Critical => "badge-critical",
+        _ => ""
+    };
+}
+
+<link rel="stylesheet" href="~/css/sitevisit.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2><i class="fas fa-hard-hat" style="color:var(--secondary)"></i> تفاصيل زيارة الموقع</h2>
+    </div>
+    <div style="display:flex; gap:10px">
+        <a asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjId" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i> رجوع للمشروع
+        </a>
+        @if (role == "Admin")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.VisitId" class="btn-bonyan-secondary">
+                <i class="fas fa-edit"></i> تعديل
+            </a>
+        }
+    </div>
+</div>
+
+<div class="details-card" style="max-width:660px; margin:0 auto">
+    <div class="visit-detail-header">
+        <h3>
+            <i class="fas fa-calendar-check" style="font-size:1rem; margin-left:6px; color:var(--secondary)"></i>
+            زيارة بتاريخ @Model.VisitDate.ToString("yyyy-MM-dd")
+        </h3>
+        <span class="@safetyClass">@safetyLabel</span>
+    </div>
+
+    <div class="visit-detail-body">
+        <div class="visit-detail-row">
+            <span class="visit-detail-label"><i class="fas fa-project-diagram"></i> المشروع</span>
+            <span>@(Model.Project?.ProjectName ?? "—")</span>
+        </div>
+        <div class="visit-detail-row">
+            <span class="visit-detail-label"><i class="fas fa-user-hard-hat"></i> المهندس</span>
+            <span>@(Model.Employee != null ? Model.Employee.FirstName + " " + Model.Employee.LastName : "—")</span>
+        </div>
+        <div class="visit-detail-row">
+            <span class="visit-detail-label"><i class="fas fa-calendar-alt"></i> تاريخ الزيارة</span>
+            <span>@Model.VisitDate.ToString("yyyy-MM-dd")</span>
+        </div>
+        <div class="visit-detail-row">
+            <span class="visit-detail-label"><i class="fas fa-shield-alt"></i> حالة السلامة</span>
+            <span class="@safetyClass">@safetyLabel</span>
+        </div>
+        @if (!string.IsNullOrEmpty(Model.Report))
+        {
+            <div class="visit-detail-row" style="flex-direction:column; align-items:flex-start; gap:8px">
+                <span class="visit-detail-label"><i class="fas fa-file-alt"></i> تقرير الزيارة</span>
+                <p style="margin:0; color:#555; font-size:0.9rem; line-height:1.7; white-space:pre-wrap">@Model.Report</p>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.VisitPhotos))
+        {
+            <div class="visit-detail-row" style="flex-direction:column; align-items:flex-start; gap:8px">
+                <span class="visit-detail-label"><i class="fas fa-camera"></i> صورة الموقع</span>
+                <img src="@Model.VisitPhotos" class="visit-thumb"
+                     style="width:120px; height:120px; cursor:pointer"
+                     onclick="openLightbox('@Model.VisitPhotos')"
+                     onerror="this.style.display='none'" alt="صورة الزيارة" />
+                <a href="@Model.VisitPhotos" target="_blank"
+                   class="btn-bonyan-primary" style="font-size:0.82rem; padding:6px 12px">
+                    <i class="fas fa-download"></i> تحميل الصورة
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<div id="lightbox-overlay" onclick="closeLightbox()">
+    <button id="lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+    <img id="lightbox-img" src="" alt="صورة الزيارة" />
+</div>
+
+@section Scripts {
+    <script>
+        function openLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox-overlay').classList.add('active');
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox-overlay').classList.remove('active');
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+    </script>
+}=== File: ./BonyanForEngineeringConsultingFirms/Views/SiteVisit/Edit.cshtml ===
+﻿@model Bonyan.DAL.Models.SiteVisit
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تعديل زيارة الموقع";
+    string projectName = ViewBag.ProjectName ?? "—";
+}
+
+<link rel="stylesheet" href="~/css/sitevisit.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2><i class="fas fa-edit" style="color:var(--secondary)"></i> تعديل زيارة الموقع</h2>
+    </div>
+    <a asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjId" class="btn-bonyan-primary">
+        <i class="fas fa-arrow-right"></i> رجوع للمشروع
+    </a>
+</div>
+
+<div class="upload-card">
+    <div class="upload-card-header">
+        <i class="fas fa-edit"></i>
+        <h4>تعديل بيانات الزيارة</h4>
+    </div>
+    <div class="upload-card-body">
+        <div class="project-badge">
+            <i class="fas fa-project-diagram"></i> @projectName
+        </div>
+
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="VisitId" />
+            <input type="hidden" asp-for="ProjId" />
+            <input type="hidden" asp-for="EmployeeId" />
+            <input type="hidden" asp-for="VisitPhotos" />
+
+            <div class="form-group">
+                <label>تاريخ الزيارة <span style="color:red">*</span></label>
+                <input asp-for="VisitDate" type="date" class="form-control" required />
+                <span asp-validation-for="VisitDate" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>حالة السلامة <span style="color:red">*</span></label>
+                <select asp-for="SafetyStatus" class="form-select" required>
+                    <option value="0">آمن</option>
+                    <option value="1">يحتاج انتباه</option>
+                    <option value="2">حرج</option>
+                </select>
+                <span asp-validation-for="SafetyStatus" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>تقرير الزيارة</label>
+                <textarea asp-for="Report" class="form-control" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>استبدال صورة الموقع (اختياري)</label>
+                @if (!string.IsNullOrEmpty(Model.VisitPhotos))
+                {
+                    <div style="margin-bottom:10px">
+                        <img src="@Model.VisitPhotos"
+                             style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:1px solid #ddd"
+                             onerror="this.style.display='none'" alt="الصورة الحالية" />
+                        <p style="font-size:0.8rem; color:#888; margin:4px 0 0">الصورة الحالية</p>
+                    </div>
+                }
+                <div class="file-drop-zone" id="dropZone">
+                    <div id="dropContent">
+                        <i class="fas fa-camera"></i>
+                        <p>اسحب الصورة الجديدة هنا أو انقر للاختيار</p>
+                        <span>JPG, PNG, WEBP, GIF</span>
+                    </div>
+                    <img id="imgPreview" style="display:none; max-height:160px; border-radius:8px; margin-top:10px" alt="معاينة" />
+                    <input type="file" name="visitPhoto" id="fileInput" accept="image/*" onchange="previewImage(this)" />
+                </div>
+                <span class="text-danger">@Html.ValidationMessage("visitPhoto")</span>
+            </div>
+
+            <div class="upload-actions">
+                <a asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjId" class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-save"></i> حفظ التعديلات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = document.getElementById('imgPreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('dropContent').style.display = 'none';
+                    document.getElementById('dropZone').style.borderColor = 'var(--secondary)';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        const zone = document.getElementById('dropZone');
+        zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop', e => {
+            e.preventDefault(); zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                document.getElementById('fileInput').files = e.dataTransfer.files;
+                previewImage(document.getElementById('fileInput'));
+            }
+        });
+    </script>
+}=== File: ./BonyanForEngineeringConsultingFirms/Views/SiteVisit/Index.cshtml ===
+﻿@model IEnumerable<Bonyan.DAL.Models.SiteVisit>
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "زيارات الموقع";
+    var role = Context.Session.GetString("Role");
+    var projects = ViewBag.Projects as List<Bonyan.DAL.Models.Project> ?? new();
+    int? selectedProjectId = ViewBag.SelectedProjectId as int?;
+}
+
+<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-hard-hat" style="color:var(--secondary)"></i>
+            زيارات الموقع
+        </h2>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div style="background:#d1e7dd; color:#146c43; border-radius:8px;
+                    padding:12px 18px; margin-bottom:16px; font-weight:600">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (projects.Any())
+{
+    <div class="filter-bar">
+        <form method="get" asp-action="Index"
+              style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+            <label style="font-weight:600; font-size:0.88rem; color:#444">
+                <i class="fas fa-filter" style="color:var(--secondary)"></i>
+                تصفية حسب المشروع:
+            </label>
+            <select name="projectId" class="form-select filter-select"
+                    onchange="this.form.submit()">
+                <option value="">-- جميع المشاريع --</option>
+                @foreach (var p in projects)
+                {
+                    if (selectedProjectId == p.ProjectId)
+                    {
+                        <option value="@p.ProjectId" selected>@p.ProjectName</option>
+                    }
+                    else
+                    {
+                        <option value="@p.ProjectId">@p.ProjectName</option>
+                    }
+                }
+            </select>
+            @if (selectedProjectId.HasValue)
+            {
+                <a asp-action="Index" class="btn-bonyan-primary"
+                   style="font-size:0.82rem; padding:7px 12px">
+                    <i class="fas fa-times"></i> إلغاء التصفية
+                </a>
+            }
+        </form>
+    </div>
+}
+
+<div class="details-card">
+    @if (Model.Any())
+    {
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th>المشروع</th>
+                    <th>أُجريت بواسطة</th>
+                    <th>الدور الوظيفي</th>
+                    <th>تاريخ الزيارة</th>
+                    <th>حالة السلامة</th>
+                    <th>ملخص التقرير</th>
+                    <th>صورة</th>
+                    @if (role == "Admin")
+                    {
+                        <th>إجراءات</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var sv in Model)
+                {
+                    string safetyLabel = sv.SafetyStatus switch
+                    {
+                        SafetyStatus.Safe => "آمن",
+                        SafetyStatus.NeedAttention => "يحتاج انتباه",
+                        SafetyStatus.Critical => "حرج",
+                        _ => sv.SafetyStatus.ToString()
+                    };
+                    string safetyColor = sv.SafetyStatus switch
+                    {
+                        SafetyStatus.Safe => "#146c43",
+                        SafetyStatus.NeedAttention => "#7c4a00",
+                        SafetyStatus.Critical => "#842029",
+                        _ => "#666"
+                    };
+                    string safetyBg = sv.SafetyStatus switch
+                    {
+                        SafetyStatus.Safe => "#d1e7dd",
+                        SafetyStatus.NeedAttention => "#fff3cd",
+                        SafetyStatus.Critical => "#f8d7da",
+                        _ => "#eee"
+                    };
+                    bool empIsPM = sv.Employee?.UserAccount?.Role == UserRole.ProjectManager;
+                    string empRoleLabel = empIsPM ? "مدير مشروع" : "مهندس";
+
+                    <tr>
+                        <td><strong>@(sv.Project?.ProjectName ?? "—")</strong></td>
+                        <td>
+                            <span style="font-weight:600; color:var(--primary)">
+                                @(sv.Employee != null
+                                                        ? sv.Employee.FirstName + " " + sv.Employee.LastName
+                                                        : "—")
+                    </span>
+                </td>
+                <td>
+                    <span style="font-size:0.75rem; background:#EEF2FF; color:#3730a3;
+                                         padding:2px 8px; border-radius:10px; font-weight:600">
+                        @empRoleLabel
+                    </span>
+                </td>
+                <td>@sv.VisitDate.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <span style="background:@safetyBg; color:@safetyColor;
+                                         padding:3px 10px; border-radius:12px;
+                                         font-size:0.75rem; font-weight:700">
+                        @safetyLabel
+                    </span>
+                </td>
+                <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis"
+                    title="@sv.Report">
+                    @(sv.Report?.Length > 50 ? sv.Report.Substring(0, 50) + "..." : sv.Report ?? "—")
+                </td>
+                <td>
+                    @if (!string.IsNullOrEmpty(sv.VisitPhotos))
+                            {
+                                <a href="@sv.VisitPhotos" target="_blank">
+                                    <img src="@sv.VisitPhotos" alt="صورة"
+                                         style="width:44px; height:44px; object-fit:cover;
+                                                            border-radius:6px; border:1px solid #eee"
+                                         onerror="this.style.display='none'" />
+                                </a>
+                            }
+                            else
+                            {
+                                <span style="color:#aaa; font-size:0.8rem">—</span>
+                            }
+                        </td>
+                        @if (role == "Admin")
+                        {
+                            <td>
+                                <form asp-action="Delete" asp-route-id="@sv.VisitId"
+                                      method="post" style="display:inline"
+                                      onsubmit="return confirm('هل أنت متأكد من حذف هذه الزيارة؟')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-action delete" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div style="text-align:center; padding:40px; color:#aaa">
+            <i class="fas fa-hard-hat" style="font-size:3rem; margin-bottom:14px; display:block"></i>
+            <p>لا توجد زيارات موقع حتى الآن</p>
+        </div>
+    }
+</div>=== File: ./BonyanForEngineeringConsultingFirms/Views/Task/Create.cshtml ===
 ﻿@model Bonyan.DAL.Models.Task
 @using Bonyan.DAL.Enums
 @{
@@ -14563,6 +15294,35 @@ else
     </div>
 }
 
+<div class="filter-bar" style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; direction: rtl;">
+    <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 400px;">
+        <label style="font-weight: bold; color: var(--primary); white-space: nowrap;">تصفية حسب المشروع:</label>
+        <select id="projectFilterSelector" class="form-control" onchange="filterTasksByProject(this.value)" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; width: 100%;">
+            <option value="">-- استعراض مهام كافة المشاريع --</option>
+            @if (ViewBag.Projects != null)
+            {
+                foreach (var proj in ViewBag.Projects)
+                {
+                    if (projectId == proj.ProjectId)
+                    {
+                        <option value="@proj.ProjectId" selected="selected">@proj.ProjectName</option>
+                    }
+                    else
+                    {
+                        <option value="@proj.ProjectId">@proj.ProjectName</option>
+                    }
+                }
+            }
+        </select>
+    </div>
+    @if (projectId.HasValue)
+    {
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px; padding: 6px 12px; font-size: 0.85rem; text-decoration: none; border: 1px solid #ccc; color: #333; background: #f8f9fa;">
+            <i class="fas fa-undo"></i> إلغاء التصفية
+        </a>
+    }
+</div>
+
 <div class="details-card">
     @if (Model.Any())
     {
@@ -14618,15 +15378,15 @@ else
                         {
                             <td>@(t.Project?.ProjectName ?? "—")</td>
                         }
-                        <td><span class="task-status-badge @statusClass">@statusLabel</span></td>
-                        <td>@(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
-                        <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
+                    <td><span class="task-status-badge @statusClass">@statusLabel</span></td>
+                    <td>@(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                    <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
                     <td>
                         @(t.AssignedToEmployee != null
                                             ? t.AssignedToEmployee.FirstName + " " + t.AssignedToEmployee.LastName
                                             : "—")
-                    </td>
-                        @if (role == "ProjectManager")
+                </td>
+                @if (role == "ProjectManager")
                         {
                             <td>
                                 <a asp-action="Edit" asp-route-id="@t.TaskId"
@@ -14655,7 +15415,19 @@ else
             <p>لا توجد مهام حتى الآن</p>
         </div>
     }
-</div>=== File: ./BonyanForEngineeringConsultingFirms/Views/_ViewImports.cshtml ===
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        function filterTasksByProject(projId) {
+            if (projId) {
+                window.location.href = '@Url.Action("Index", "Task")?projectId=' + projId;
+            } else {
+                window.location.href = '@Url.Action("Index", "Task")';
+            }
+        }
+    </script>
+}=== File: ./BonyanForEngineeringConsultingFirms/Views/_ViewImports.cshtml ===
 ﻿@using BonyanForEngineeringConsultingFirms
 @using BonyanForEngineeringConsultingFirms.Models
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
