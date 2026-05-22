@@ -60,20 +60,42 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
         // ── CREATE POST ───────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Supplier supplier)
+        public async Task<IActionResult> Create(Supplier supplier, List<int> selectedMaterials,
+                                         List<decimal?> supplyPrices, List<DateTime?> lastSupplyDates)
         {
             if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
             if (_context.Suppliers.Any(s => s.Email == supplier.Email))
             {
                 ModelState.AddModelError("Email", "البريد الإلكتروني مسجل مسبقاً لمورد آخر");
+                ViewBag.AllMaterials = await _context.Materials.OrderBy(m => m.MaterialName).ToListAsync();
                 return View(supplier);
             }
 
-            if (!ModelState.IsValid) return View(supplier);
+            if (!ModelState.IsValid)
+            {
+                ViewBag.AllMaterials = await _context.Materials.OrderBy(m => m.MaterialName).ToListAsync();
+                return View(supplier);
+            }
 
             _context.Suppliers.Add(supplier);
             await _context.SaveChangesAsync();
+
+            // Link selected materials to this supplier
+            if (selectedMaterials != null && selectedMaterials.Any())
+            {
+                for (int i = 0; i < selectedMaterials.Count; i++)
+                {
+                    _context.MaterialSuppliers.Add(new MaterialSupplier
+                    {
+                        MaterialID = selectedMaterials[i],
+                        SupplierID = supplier.SupplierID,
+                        SupplyPrice = supplyPrices != null && i < supplyPrices.Count ? supplyPrices[i] : null,
+                        LastSupplyDate = lastSupplyDates != null && i < lastSupplyDates.Count ? lastSupplyDates[i] : null
+                    });
+                }
+                await _context.SaveChangesAsync();
+            }
 
             TempData["SuccessMessage"] = "تمت إضافة المورد بنجاح";
             return RedirectToAction(nameof(Index));
