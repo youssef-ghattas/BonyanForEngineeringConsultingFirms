@@ -67,15 +67,22 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 		// ── CREATE GET ────────────────────────────────────────────
 		public async Task<IActionResult> Create(
-	int? materialId,
-	int? supplierId,
-	decimal? quantity,
-	decimal? unitPrice)
+			int? materialId,
+			int? supplierId,
+			decimal? quantity,
+			decimal? unitPrice)
 		{
 			if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
 
 			ViewBag.Materials = await _context.Materials.OrderBy(m => m.MaterialName).ToListAsync();
 			ViewBag.Suppliers = await _context.Suppliers.OrderBy(s => s.SupplierName).ToListAsync();
+
+			// Tell the view if we came from Material Create (so fields are locked)
+			ViewBag.FromMaterial = materialId.HasValue;
+			ViewBag.LockedMaterialId = materialId;
+			ViewBag.LockedSupplierId = supplierId;
+			ViewBag.LockedQuantity = quantity;
+			ViewBag.LockedUnitPrice = unitPrice;
 
 			var invoice = new MaterialInvoice
 			{
@@ -102,7 +109,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Create(MaterialInvoice invoice)
 		{
-			if (!IsAdmin()) return RedirectToAction("Login", "Account");
+			if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
 
 			ModelState.Remove("Material");
 			ModelState.Remove("Supplier");
@@ -110,9 +117,10 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			if (!ModelState.IsValid)
 			{
 				ViewBag.Materials = await _context.Materials
-					.Include(m => m.MaterialSuppliers).ThenInclude(ms => ms.Supplier)
 					.OrderBy(m => m.MaterialName).ToListAsync();
-				ViewBag.Suppliers = await _context.Suppliers.OrderBy(s => s.SupplierName).ToListAsync();
+				ViewBag.Suppliers = await _context.Suppliers
+					.OrderBy(s => s.SupplierName).ToListAsync();
+				ViewBag.FromMaterial = invoice.MaterialID > 0;
 				return View(invoice);
 			}
 
@@ -200,14 +208,44 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			return RedirectToAction(nameof(Index));
 		}
 
+		// ── CANCEL INVOICE & DELETE MATERIAL ─────────────────────────────────
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> CancelAndDeleteMaterial(int materialId)
+		{
+			if (!IsAdmin()) return RedirectToAction("Login", "Account");
+
+			var material = await _context.Materials
+				.Include(m => m.MaterialInvoices)
+				.Include(m => m.MaterialInventories)
+				.Include(m => m.MaterialSuppliers)
+				.FirstOrDefaultAsync(m => m.MaterialID == materialId);
+
+			if (material == null) return NotFound();
+
+			// Remove related records first
+			_context.MaterialInvoices.RemoveRange(material.MaterialInvoices);
+			_context.MaterialInventories.RemoveRange(material.MaterialInventories);
+			_context.MaterialSuppliers.RemoveRange(material.MaterialSuppliers);
+			_context.Materials.Remove(material);
+
+			await _context.SaveChangesAsync();
+
+			TempData["SuccessMessage"] = "تم إلغاء الفاتورة وحذف المادة بنجاح";
+			return RedirectToAction("Index", "Material");
+		}
+
 		// ── GET SUPPLIERS FOR MATERIAL (AJAX) ─────────────────────
 		[HttpGet]
 		public async Task<IActionResult> GetSuppliersForMaterial(int materialId)
 		{
 			var suppliers = await _context.MaterialSuppliers
 				.Where(ms => ms.MaterialID == materialId)
-				.Select(ms => new { ms.SupplierID, ms.Supplier.SupplierName, ms.SupplyPrice })
+				.Include(ms => ms.Supplier)
+				.Select(ms => new { ms.Supplier.SupplierID, ms.Supplier.SupplierName })
+				.OrderBy(s => s.SupplierName)
 				.ToListAsync();
+
 			return Json(suppliers);
 		}
 

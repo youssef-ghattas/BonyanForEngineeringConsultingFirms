@@ -237,7 +237,7 @@
             updateNotice();
         }
 
-        function renderSuppliers(matType) {
+                function renderSuppliers(matType) {
             var container = document.getElementById('supplierContainer');
             document.getElementById('preferredSupplierID').value = '';
 
@@ -255,25 +255,16 @@
                 });
             });
 
-            var others = allSuppliers.filter(function (s) {
-                return matching.indexOf(s) === -1;
-            });
-
-            var combined = matching.concat(others);
-
-            if (combined.length === 0) {
-                container.innerHTML = '<div style="color:#c62828;font-size:0.88rem;padding:14px;background:#fff3f3;border-radius:8px;border:1px solid #ffcdd2"><i class="fas fa-exclamation-triangle"></i> لا يوجد موردون. يرجى إضافة مورد أولاً من صفحة الموردين.</div>';
+            if (matching.length === 0) {
+                container.innerHTML = '<div style="color:#c62828;font-size:0.88rem;padding:14px;background:#fff3f3;border-radius:8px;border:1px solid #ffcdd2"><i class="fas fa-exclamation-triangle"></i> لا يوجد موردون لهذه المادة. يرجى إضافة مورد من صفحة الموردين.</div>';
                 return;
             }
 
             var html = '<div style="display:flex;flex-direction:column;gap:8px">';
-            combined.forEach(function (s) {
-                var isMatch = matching.indexOf(s) !== -1;
-                var borderColor = isMatch ? 'var(--secondary)' : '#e8e8e8';
-                var label = isMatch ? '' : '<span style="font-size:0.72rem;color:#aaa;margin-right:8px">(نوع مختلف)</span>';
-                html += '<label class="supplier-card" style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#fff;border:2px solid ' + borderColor + ';border-radius:10px;cursor:pointer;transition:all 0.2s">'
+            matching.forEach(function (s) {
+                html += '<label class="supplier-card" style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#fff;border:2px solid var(--secondary);border-radius:10px;cursor:pointer;transition:all 0.2s">'
                     + '<input type="radio" name="_supRadio" value="' + s.id + '" onchange="selectSupplier(' + s.id + ',this)" style="width:18px;height:18px;accent-color:var(--primary)">'
-                    + '<div><div style="font-weight:700;color:var(--primary);font-size:0.95rem">' + s.name + label + '</div>'
+                    + '<div><div style="font-weight:700;color:var(--primary);font-size:0.95rem">' + s.name + '</div>'
                     + (s.phone ? '<div style="font-size:0.78rem;color:#888"><i class="fas fa-phone"></i> ' + s.phone + '</div>' : '')
                     + '</div></label>';
             });
