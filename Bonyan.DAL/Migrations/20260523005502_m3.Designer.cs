@@ -4,6 +4,7 @@ using Bonyan.DAL.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bonyan.DAL.Migrations
 {
     [DbContext(typeof(BonyanDbContext))]
-    partial class BonyanDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260523005502_m3")]
+    partial class m3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -282,35 +285,6 @@ namespace Bonyan.DAL.Migrations
                     b.HasIndex("ProjectId");
 
                     b.ToTable("EmployeeProjects");
-                });
-
-            modelBuilder.Entity("Bonyan.DAL.Models.Inventory", b =>
-                {
-                    b.Property<int>("InventoryID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InventoryID"));
-
-                    b.Property<decimal?>("Capacity")
-                        .HasColumnType("decimal(15, 2)");
-
-                    b.Property<string>("InventoryName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<DateTime>("LastUpdatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Location")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.HasKey("InventoryID");
-
-                    b.ToTable("Inventories");
                 });
 
             modelBuilder.Entity("Bonyan.DAL.Models.Invoice", b =>
@@ -780,6 +754,35 @@ namespace Bonyan.DAL.Migrations
                     b.ToTable("UserAccounts");
                 });
 
+            modelBuilder.Entity("Inventory", b =>
+                {
+                    b.Property<int>("InventoryID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InventoryID"));
+
+                    b.Property<decimal?>("Capacity")
+                        .HasColumnType("decimal(15, 2)");
+
+                    b.Property<string>("InventoryName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("InventoryID");
+
+                    b.ToTable("Inventories");
+                });
+
             modelBuilder.Entity("Bonyan.DAL.Models.AdminAccount", b =>
                 {
                     b.HasOne("Bonyan.DAL.Models.Admin", "Admin")
@@ -892,7 +895,7 @@ namespace Bonyan.DAL.Migrations
                         .HasForeignKey("PreferredSupplierID")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Bonyan.DAL.Models.Inventory", "TargetInventory")
+                    b.HasOne("Inventory", "TargetInventory")
                         .WithMany()
                         .HasForeignKey("TargetInventoryID")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -904,7 +907,7 @@ namespace Bonyan.DAL.Migrations
 
             modelBuilder.Entity("Bonyan.DAL.Models.MaterialInventory", b =>
                 {
-                    b.HasOne("Bonyan.DAL.Models.Inventory", "Inventory")
+                    b.HasOne("Inventory", "Inventory")
                         .WithMany("MaterialInventories")
                         .HasForeignKey("InventoryID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1064,11 +1067,6 @@ namespace Bonyan.DAL.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Bonyan.DAL.Models.Inventory", b =>
-                {
-                    b.Navigation("MaterialInventories");
-                });
-
             modelBuilder.Entity("Bonyan.DAL.Models.Invoice", b =>
                 {
                     b.Navigation("Payments");
@@ -1119,6 +1117,11 @@ namespace Bonyan.DAL.Migrations
             modelBuilder.Entity("Bonyan.DAL.Models.UserAccount", b =>
                 {
                     b.Navigation("CreatedTasks");
+                });
+
+            modelBuilder.Entity("Inventory", b =>
+                {
+                    b.Navigation("MaterialInventories");
                 });
 #pragma warning restore 612, 618
         }

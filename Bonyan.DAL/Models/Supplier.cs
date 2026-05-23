@@ -30,6 +30,11 @@ namespace Bonyan.DAL.Models
 		[StringLength(300)]
 		public string Address { get; set; }
 
+		// Comma-separated list of material types this supplier provides
+		// e.g. "Steel,Cement,Others:Gravel"
+		[StringLength(500)]
+		public string SuppliedMaterialTypes { get; set; }
+
 		public virtual ICollection<MaterialSupplier> SuppliedMaterials { get; set; } = new List<MaterialSupplier>();
 	}
 }
