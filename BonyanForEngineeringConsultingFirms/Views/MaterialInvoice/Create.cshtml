@@ -5,11 +5,12 @@
     ViewData["Title"] = "إنشاء فاتورة مادة";
     var materials = ViewBag.Materials as List<Bonyan.DAL.Models.Material> ?? new();
     var suppliers = ViewBag.Suppliers as List<Bonyan.DAL.Models.Supplier> ?? new();
-    int? selectedMatId = ViewBag.SelectedMaterialId;
+    bool fromMaterial = ViewBag.FromMaterial == true;
 }
 
 <link rel="stylesheet" href="~/css/invoice.css" />
 <link rel="stylesheet" href="~/css/material.css" />
+<link rel="stylesheet" href="~/css/materialinvoice.css" />
 
 <div class="page-header">
     <div class="page-header-left">
@@ -18,10 +19,24 @@
             إنشاء فاتورة مادة جديدة
         </h2>
     </div>
-    <a asp-action="Index" class="btn-bonyan-primary">
-        <i class="fas fa-arrow-right"></i> رجوع للفواتير
-    </a>
+    @if (!fromMaterial)
+    {
+        <a asp-action="Index" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i> رجوع للفواتير
+        </a>
+    }
 </div>
+
+@if (fromMaterial)
+{
+    <div class="locked-fields-banner">
+        <i class="fas fa-lock"></i>
+        <span>
+            تم تعبئة بيانات المادة والمورد والكمية والسعر تلقائياً ولا يمكن تعديلها.
+            يمكنك إكمال بيانات الضريبة والخصم وتاريخ الاستحقاق وحالة الدفع.
+        </span>
+    </div>
+}
 
 <div class="upload-card">
     <div class="upload-card-header">
@@ -33,23 +48,24 @@
             @Html.AntiForgeryToken()
 
             <div class="form-grid-2">
+
+                @* ── MATERIAL ── *@
                 <div class="form-group">
                     <label>المادة <span style="color:red">*</span></label>
-                    <select asp-for="MaterialID" class="form-control" required onchange="onMaterialChange(this)">
-                        <option value="">-- اختر المادة --</option>
-                        @foreach (var m in materials)
-                        {
-                            if (Model.MaterialID == m.MaterialID)
-                            {
-                                <option value="@m.MaterialID"
-                                        data-price="@(m.UnitPrice ?? 0)"
-                                        data-unit="@(m.Unit ?? "")"
-                                        data-qty="@(m.Quantity ?? 1)"
-                                        selected>
-                                    @m.MaterialName @(!string.IsNullOrEmpty(m.Unit) ? $"({m.Unit})" : "")
-                                </option>
-                            }
-                            else
+                    @if (fromMaterial)
+                    {
+                        var mat = materials.FirstOrDefault(m => m.MaterialID == Model.MaterialID);
+                        <input type="hidden" name="MaterialID" value="@Model.MaterialID" />
+                        <input type="text"
+                               value="@(mat?.MaterialName ?? Model.MaterialID.ToString())"
+                               class="form-control input-locked"
+                               readonly disabled />
+                    }
+                    else
+                    {
+                        <select asp-for="MaterialID" class="form-control" required id="materialSelect">
+                            <option value="">-- اختر المادة --</option>
+                            @foreach (var m in materials)
                             {
                                 <option value="@m.MaterialID"
                                         data-price="@(m.UnitPrice ?? 0)"
@@ -58,133 +74,284 @@
                                     @m.MaterialName @(!string.IsNullOrEmpty(m.Unit) ? $"({m.Unit})" : "")
                                 </option>
                             }
-                        }
-                    </select>
+                        </select>
+                    }
                     <span asp-validation-for="MaterialID" class="text-danger"></span>
                 </div>
+
+                @* ── SUPPLIER ── *@
                 <div class="form-group">
                     <label>المورد <span style="color:red">*</span></label>
-                    <select asp-for="SupplierID" class="form-control" required id="supplierSelect">
-                        <option value="">-- اختر المورد --</option>
-                        @foreach (var s in suppliers)
-                        {
-                            if (Model.SupplierID == s.SupplierID)
-                            {
-                                <option value="@s.SupplierID" selected>@s.SupplierName</option>
-                            }
-                            else
-                            {
-                                <option value="@s.SupplierID">@s.SupplierName</option>
-                            }
-                        }
-                    </select>
+                    @if (fromMaterial)
+                    {
+                        var sup = suppliers.FirstOrDefault(s => s.SupplierID == Model.SupplierID);
+                        <input type="hidden" name="SupplierID" value="@Model.SupplierID" />
+                        <input type="text"
+                               value="@(sup?.SupplierName ?? Model.SupplierID.ToString())"
+                               class="form-control input-locked"
+                               readonly disabled />
+                    }
+                    else
+                    {
+                        <select asp-for="SupplierID" class="form-control" required id="supplierSelect">
+                            <option value="">-- اختر المادة أولاً --</option>
+                        </select>
+                        <small class="text-muted" id="supplierHint" style="display:none">
+                            لا يوجد موردون مرتبطون بهذه المادة
+                        </small>
+                    }
                     <span asp-validation-for="SupplierID" class="text-danger"></span>
                 </div>
+
+                @* ── QUANTITY ── *@
                 <div class="form-group">
                     <label>الكمية <span style="color:red">*</span></label>
-                    <input asp-for="Quantity" type="number" step="0.001" min="0.001"
-                           class="form-control" required id="qty" oninput="calcAll()" />
+                    @if (fromMaterial)
+                    {
+                        <input type="hidden" name="Quantity" value="@Model.Quantity" />
+                        <input type="text"
+                               value="@Model.Quantity"
+                               class="form-control input-locked"
+                               readonly disabled />
+                    }
+                    else
+                    {
+                        <input asp-for="Quantity" type="number" step="0.001" min="0.001"
+                               class="form-control" required oninput="calcFinal()" />
+                    }
                 </div>
+
+                @* ── UNIT PRICE ── *@
                 <div class="form-group">
                     <label>سعر الوحدة (ج.م) <span style="color:red">*</span></label>
-                    <input asp-for="UnitPrice" type="number" step="0.01" min="0"
-                           class="form-control" required id="unitPrice" oninput="calcAll()" />
+                    @if (fromMaterial)
+                    {
+                        <input type="hidden" name="UnitPrice" value="@Model.UnitPrice" />
+                        <input type="text"
+                               value="@Model.UnitPrice"
+                               class="form-control input-locked"
+                               readonly disabled />
+                    }
+                    else
+                    {
+                        <input asp-for="UnitPrice" type="number" step="0.01" min="0"
+                               class="form-control" required oninput="calcFinal()" />
+                    }
                 </div>
+
+                @* ── TAX ── *@
                 <div class="form-group">
                     <label>نسبة الضريبة (%)</label>
                     <input asp-for="TaxPercent" type="number" step="0.01" min="0" max="100"
-                           class="form-control" id="tax" oninput="calcAll()" placeholder="0" />
+                           class="form-control" id="TaxPercent" oninput="calcFinal()" placeholder="0" />
                 </div>
+
+                @* ── DISCOUNT ── *@
                 <div class="form-group">
                     <label>نسبة الخصم (%)</label>
                     <input asp-for="DiscountPercent" type="number" step="0.01" min="0" max="100"
-                           class="form-control" id="disc" oninput="calcAll()" placeholder="0" />
+                           class="form-control" id="DiscountPercent" oninput="calcFinal()" placeholder="0" />
                 </div>
+
+                @* ── INVOICE DATE ── *@
                 <div class="form-group">
                     <label>تاريخ الفاتورة <span style="color:red">*</span></label>
                     <input asp-for="InvoiceDate" type="date" class="form-control" required />
                 </div>
+
+                @* ── DUE DATE ── *@
                 <div class="form-group">
                     <label>تاريخ الاستحقاق</label>
                     <input asp-for="DueDate" type="date" class="form-control" />
                 </div>
+
+                @* ── STATUS ── *@
                 <div class="form-group">
-                    <label>الحالة</label>
+                    <label>حالة الدفع</label>
                     <select asp-for="Status" class="form-control">
                         <option value="1">غير مدفوعة</option>
                         <option value="0">مدفوعة</option>
                         <option value="2">مدفوعة جزئياً</option>
                     </select>
                 </div>
+
+                @* ── NOTES ── *@
                 <div class="form-group" style="grid-column:1 / -1">
                     <label>ملاحظات</label>
                     <textarea asp-for="Notes" class="form-control" rows="2" placeholder="أي ملاحظات..."></textarea>
                 </div>
+
             </div>
 
-            <!-- Summary Box -->
-            <div style="background:linear-gradient(135deg,#e8f5e9,#e3f2fd); border-radius:10px; padding:20px; margin:16px 0; border:1px solid #c8e6c9">
-                <div style="font-weight:700; font-size:1rem; color:var(--primary); margin-bottom:14px">
+            @* ── SUMMARY BOX ── *@
+            <div class="invoice-summary-box">
+                <div class="invoice-summary-title">
                     <i class="fas fa-calculator"></i> ملخص الفاتورة
                 </div>
-                <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; text-align:center">
-                    <div>
-                        <div style="font-size:0.76rem; color:#888; margin-bottom:4px">المجموع قبل الضريبة</div>
-                        <div style="font-size:1.2rem; font-weight:700; color:#333" id="dispTotal">0.00 ج.م</div>
+                <div class="invoice-summary-grid">
+                    <div class="invoice-summary-item">
+                        <div class="invoice-summary-label">المجموع قبل الضريبة</div>
+                        <div class="invoice-summary-value" id="dispTotal">0.00 ج.م</div>
                     </div>
-                    <div>
-                        <div style="font-size:0.76rem; color:#888; margin-bottom:4px">الضريبة</div>
-                        <div style="font-size:1.2rem; font-weight:700; color:#f57c00" id="dispTax">0.00 ج.م</div>
+                    <div class="invoice-summary-item">
+                        <div class="invoice-summary-label">الضريبة</div>
+                        <div class="invoice-summary-value tax-value" id="dispTax">0.00 ج.م</div>
                     </div>
-                    <div>
-                        <div style="font-size:0.76rem; color:#888; margin-bottom:4px">الخصم</div>
-                        <div style="font-size:1.2rem; font-weight:700; color:#388e3c" id="dispDisc">0.00 ج.م</div>
+                    <div class="invoice-summary-item">
+                        <div class="invoice-summary-label">الخصم</div>
+                        <div class="invoice-summary-value disc-value" id="dispDisc">0.00 ج.م</div>
                     </div>
-                    <div style="background:#fff; border-radius:8px; padding:10px; border:2px solid var(--secondary)">
-                        <div style="font-size:0.76rem; color:#888; margin-bottom:4px">الصافي النهائي</div>
-                        <div style="font-size:1.5rem; font-weight:700; color:var(--secondary)" id="dispFinal">0.00 ج.م</div>
+                    <div class="invoice-summary-item invoice-summary-final">
+                        <div class="invoice-summary-label">الصافي النهائي</div>
+                        <div class="invoice-summary-value" id="dispFinal">0.00 ج.م</div>
                     </div>
                 </div>
             </div>
 
-            <div class="upload-actions">
-                <a asp-action="Index" class="btn-bonyan-primary">
-                    <i class="fas fa-times"></i> إلغاء
-                </a>
+            @* ── ACTION BUTTONS ── *@
+            <div class="invoice-actions">
+                @if (fromMaterial)
+                {
+                    <button type="button" class="btn-cancel-invoice" onclick="confirmCancelInvoice()">
+                        <i class="fas fa-ban"></i> إلغاء الفاتورة
+                    </button>
+                }
+                else
+                {
+                    <a asp-action="Index" class="btn-bonyan-primary">
+                        <i class="fas fa-times"></i> إلغاء
+                    </a>
+                }
+
                 <button type="submit" class="btn-bonyan-secondary">
                     <i class="fas fa-save"></i> حفظ الفاتورة
                 </button>
             </div>
+
         </form>
+
+        @if (fromMaterial)
+        {
+            <form id="cancelInvoiceForm"
+                  asp-action="CancelAndDeleteMaterial"
+                  asp-controller="MaterialInvoice"
+                  method="post"
+                  style="display:none">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="materialId" value="@Model.MaterialID" />
+            </form>
+        }
     </div>
 </div>
 
+@* ── CANCEL WARNING MODAL ── *@
+@if (fromMaterial)
+{
+    <div id="cancelModal" class="cancel-modal-overlay">
+        <div class="cancel-modal-box">
+            <div class="cancel-modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h4 class="cancel-modal-title">تحذير: إلغاء الفاتورة</h4>
+            <p class="cancel-modal-body">
+                سيتم <strong>حذف المادة المرتبطة بهذه الفاتورة</strong> بشكل نهائي من قاعدة البيانات.
+                هل أنت متأكد من الإلغاء؟
+            </p>
+            <div class="cancel-modal-actions">
+                <button class="btn-modal-back" onclick="closeCancelModal()">
+                    <i class="fas fa-arrow-right"></i> لا، ارجع
+                </button>
+                <button class="btn-modal-confirm-delete"
+                        onclick="document.getElementById('cancelInvoiceForm').submit()">
+                    <i class="fas fa-trash"></i> نعم، احذف المادة وألغِ الفاتورة
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @section Scripts {
     <script>
-        function calcFinal() {
-            var qty      = parseFloat(document.getElementById('Quantity')?.value)      || 0;
-            var price    = parseFloat(document.getElementById('UnitPrice')?.value)     || 0;
-            var tax      = parseFloat(document.getElementById('TaxPercent')?.value)    || 0;
-            var discount = parseFloat(document.getElementById('DiscountPercent')?.value) || 0;
+        // ── Supplier loader via AJAX ───────────────────────────────
+        var materialSelect = document.getElementById('materialSelect');
+        var supplierSelect = document.getElementById('supplierSelect');
+        var supplierHint   = document.getElementById('supplierHint');
 
-            var total    = qty * price;
-            var taxAmt   = total * tax / 100;
-            var discAmt  = total * discount / 100;
-            var final    = total + taxAmt - discAmt;
+        if (materialSelect) {
+            materialSelect.addEventListener('change', function () {
+                var matId = this.value;
 
-            var totalEl = document.getElementById('TotalAmount');
-            var finalEl = document.getElementById('FinalAmount');
-            if (totalEl) totalEl.value = total.toFixed(2);
-            if (finalEl) finalEl.value = final.toFixed(2);
+                supplierSelect.innerHTML = '<option value="">-- جاري التحميل... --</option>';
+                if (supplierHint) supplierHint.style.display = 'none';
+
+                if (!matId) {
+                    supplierSelect.innerHTML = '<option value="">-- اختر المادة أولاً --</option>';
+                    calcFinal();
+                    return;
+                }
+
+                fetch('/MaterialInvoice/GetSuppliersForMaterial?materialId=' + matId)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        supplierSelect.innerHTML = '<option value="">-- اختر المورد --</option>';
+                        if (data.length === 0) {
+                            if (supplierHint) supplierHint.style.display = 'block';
+                        } else {
+                            data.forEach(function (s) {
+                                var opt = document.createElement('option');
+                                opt.value = s.supplierID;
+                                opt.textContent = s.supplierName;
+                                supplierSelect.appendChild(opt);
+                            });
+                        }
+                    })
+                    .catch(function () {
+                        supplierSelect.innerHTML = '<option value="">-- خطأ في تحميل الموردين --</option>';
+                    });
+
+                // auto-fill unit price and quantity from data attributes
+                var selected = materialSelect.options[materialSelect.selectedIndex];
+                var price    = selected ? selected.getAttribute('data-price') : null;
+                var qty      = selected ? selected.getAttribute('data-qty')   : null;
+                var priceEl  = document.querySelector('[name="UnitPrice"]');
+                var qtyEl    = document.querySelector('[name="Quantity"]');
+                if (priceEl && price) priceEl.value = price;
+                if (qtyEl   && qty)   qtyEl.value   = qty;
+
+                calcFinal();
+            });
         }
 
-        // Attach to inputs
-        ['Quantity','UnitPrice','TaxPercent','DiscountPercent'].forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el) el.addEventListener('input', calcFinal);
-        });
+        // ── Calculation ───────────────────────────────────────────
+        function calcFinal() {
+            var qty      = parseFloat(document.querySelector('[name="Quantity"]')?.value)        || 0;
+            var price    = parseFloat(document.querySelector('[name="UnitPrice"]')?.value)       || 0;
+            var tax      = parseFloat(document.getElementById('TaxPercent')?.value)     || 0;
+            var discount = parseFloat(document.getElementById('DiscountPercent')?.value) || 0;
 
-        // Run once on load to show pre-filled values
-        calcFinal();
+            var total   = qty * price;
+            var taxAmt  = total * tax / 100;
+            var discAmt = total * discount / 100;
+            var final   = total + taxAmt - discAmt;
+
+            var setEl = function (id, val) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = val.toFixed(2) + ' ج.م';
+            };
+            setEl('dispTotal', total);
+            setEl('dispTax',   taxAmt);
+            setEl('dispDisc',  discAmt);
+            setEl('dispFinal', final);
+        }
+
+        document.addEventListener('DOMContentLoaded', calcFinal);
+
+        // ── Cancel modal ──────────────────────────────────────────
+        function confirmCancelInvoice() {
+            document.getElementById('cancelModal').classList.add('active');
+        }
+        function closeCancelModal() {
+            document.getElementById('cancelModal').classList.remove('active');
+        }
     </script>
 }
