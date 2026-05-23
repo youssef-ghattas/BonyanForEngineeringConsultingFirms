@@ -1,218 +1,268 @@
-﻿using Bonyan.DAL.Context;
+﻿// Controllers/InventoryController.cs
+using Bonyan.DAL.Context;
 using Bonyan.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace BonyanForEngineeringConsultingFirms.Controllers
 {
-    public class InventoryController : Controller
-    {
-        private readonly BonyanDbContext _context;
+	public class InventoryController : Controller
+	{
+		private readonly BonyanDbContext _context;
 
-        public InventoryController(BonyanDbContext context)
-        {
-            _context = context;
-        }
+		public InventoryController(BonyanDbContext context)
+		{
+			_context = context;
+		}
 
-        private bool IsAdmin() => HttpContext.Session.GetString("Role") == "Admin";
-        private bool IsLoggedIn() => HttpContext.Session.GetString("Role") != null;
+		private bool IsAdmin() => HttpContext.Session.GetString("Role") == "Admin";
+		private bool IsLoggedIn() => HttpContext.Session.GetString("Role") != null;
 
-        // ── INDEX ─────────────────────────────────────────────────
-        public async Task<IActionResult> Index()
-        {
-            if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
+		// ── INDEX ─────────────────────────────────────────────────
+		public async Task<IActionResult> Index()
+		{
+			if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
 
-            var inventories = await _context.Inventories
-                .Include(i => i.MaterialInventories)
-                    .ThenInclude(mi => mi.Material)
-                .OrderBy(i => i.InventoryName)
-                .ToListAsync();
+			var inventories = await _context.Inventories
+				.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
+				.OrderBy(i => i.InventoryName)
+				.ToListAsync();
 
-            return View(inventories);
-        }
+			return View(inventories);
+		}
 
-        // ── DETAILS ───────────────────────────────────────────────
-        public async Task<IActionResult> Details(int id)
-        {
-            if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
+		// ── DETAILS ───────────────────────────────────────────────
+		public async Task<IActionResult> Details(int id)
+		{
+			if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
 
-            var inventory = await _context.Inventories
-                .Include(i => i.MaterialInventories)
-                    .ThenInclude(mi => mi.Material)
-                .FirstOrDefaultAsync(i => i.InventoryID == id);
+			var inventory = await _context.Inventories
+				.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
+				.FirstOrDefaultAsync(i => i.InventoryID == id);
 
-            if (inventory == null) return NotFound();
+			if (inventory == null) return NotFound();
 
-            // For AddMaterial: materials not yet in this inventory
-            if (IsAdmin())
-            {
-                var existingMaterialIds = inventory.MaterialInventories
-                    .Select(mi => mi.MaterialID).ToList();
-                ViewBag.AvailableMaterials = await _context.Materials
-                    .Where(m => !existingMaterialIds.Contains(m.MaterialID))
-                    .OrderBy(m => m.MaterialName)
-                    .ToListAsync();
-            }
+			// ── VOLUME-BASED CAPACITY CALCULATION ─────────────────
+			// Each material has a VolumeFactorM3: how many m³ does 1 unit occupy
+			if (inventory.Capacity.HasValue && inventory.Capacity > 0)
+			{
+				decimal usedVolume = inventory.MaterialInventories
+					.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
 
-            return View(inventory);
-        }
+				decimal remaining = inventory.Capacity.Value - usedVolume;
+				decimal fillRate = Math.Round((usedVolume / inventory.Capacity.Value) * 100, 1);
 
-        // ── CREATE GET ────────────────────────────────────────────
-        public IActionResult Create()
-        {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
-            return View();
-        }
+				ViewBag.UsedVolumeM3 = Math.Round(usedVolume, 2);
+				ViewBag.RemainingCapacityM3 = Math.Round(remaining, 2);
+				ViewBag.FillRatePercent = fillRate;
+				ViewBag.ShowWarning = fillRate >= 85;
+			}
 
-        // ── CREATE POST ───────────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Inventory inventory)
-        {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			if (IsAdmin())
+			{
+				var existingMaterialIds = inventory.MaterialInventories
+					.Select(mi => mi.MaterialID).ToList();
+				ViewBag.AvailableMaterials = await _context.Materials
+					.Where(m => !existingMaterialIds.Contains(m.MaterialID))
+					.OrderBy(m => m.MaterialName)
+					.ToListAsync();
+			}
 
-            if (!ModelState.IsValid) return View(inventory);
+			return View(inventory);
+		}
 
-            inventory.LastUpdatedDate = DateTime.Now;
-            _context.Inventories.Add(inventory);
-            await _context.SaveChangesAsync();
+		// ── CREATE GET ────────────────────────────────────────────
+		public IActionResult Create()
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			return View();
+		}
 
-            TempData["SuccessMessage"] = "تمت إضافة المخزن بنجاح";
-            return RedirectToAction(nameof(Index));
-        }
+		// ── CREATE POST ───────────────────────────────────────────
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Create(Inventory inventory)
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			if (!ModelState.IsValid) return View(inventory);
 
-        // ── EDIT GET ──────────────────────────────────────────────
-        public async Task<IActionResult> Edit(int id)
-        {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			inventory.LastUpdatedDate = DateTime.Now;
+			_context.Inventories.Add(inventory);
+			await _context.SaveChangesAsync();
 
-            var inventory = await _context.Inventories.FindAsync(id);
-            if (inventory == null) return NotFound();
-            return View(inventory);
-        }
+			TempData["SuccessMessage"] = "تمت إضافة المخزن بنجاح";
+			return RedirectToAction(nameof(Index));
+		}
 
-        // ── EDIT POST ─────────────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Inventory inventory)
-        {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
-            if (!ModelState.IsValid) return View(inventory);
+		// ── EDIT GET ──────────────────────────────────────────────
+		public async Task<IActionResult> Edit(int id)
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			var inventory = await _context.Inventories.FindAsync(id);
+			if (inventory == null) return NotFound();
+			return View(inventory);
+		}
 
-            var existing = await _context.Inventories.FindAsync(inventory.InventoryID);
-            if (existing == null) return NotFound();
+		// ── EDIT POST ─────────────────────────────────────────────
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Edit(Inventory inventory)
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			if (!ModelState.IsValid) return View(inventory);
 
-            existing.InventoryName = inventory.InventoryName;
-            existing.Location = inventory.Location;
-            existing.Capacity = inventory.Capacity;
-            existing.LastUpdatedDate = DateTime.Now;
+			var existing = await _context.Inventories.FindAsync(inventory.InventoryID);
+			if (existing == null) return NotFound();
 
-            await _context.SaveChangesAsync();
+			existing.InventoryName = inventory.InventoryName;
+			existing.Location = inventory.Location;
+			existing.Capacity = inventory.Capacity;
+			existing.LastUpdatedDate = DateTime.Now;
 
-            TempData["SuccessMessage"] = "تم تحديث بيانات المخزن بنجاح";
-            return RedirectToAction(nameof(Index));
-        }
+			await _context.SaveChangesAsync();
 
-        // ── DELETE POST ───────────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
-        {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			TempData["SuccessMessage"] = "تم تحديث بيانات المخزن بنجاح";
+			return RedirectToAction(nameof(Index));
+		}
 
-            var inventory = await _context.Inventories
-                .Include(i => i.MaterialInventories)
-                .FirstOrDefaultAsync(i => i.InventoryID == id);
+		// ── DELETE POST ───────────────────────────────────────────
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Delete(int id)
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
-            if (inventory == null) return NotFound();
+			var inventory = await _context.Inventories
+				.Include(i => i.MaterialInventories)
+				.FirstOrDefaultAsync(i => i.InventoryID == id);
 
-            _context.MaterialInventories.RemoveRange(inventory.MaterialInventories);
-            _context.Inventories.Remove(inventory);
-            await _context.SaveChangesAsync();
+			if (inventory == null) return NotFound();
 
-            TempData["SuccessMessage"] = "تم حذف المخزن بنجاح";
-            return RedirectToAction(nameof(Index));
-        }
+			_context.MaterialInventories.RemoveRange(inventory.MaterialInventories);
+			_context.Inventories.Remove(inventory);
+			await _context.SaveChangesAsync();
 
-        // ── ADD MATERIAL TO INVENTORY ─────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddMaterial(int inventoryId, int materialId,
-                                                      decimal quantityAvailable,
-                                                      string storageLocation, string notes)
-        {
-            if (!IsAdmin()) return Forbid();
+			TempData["SuccessMessage"] = "تم حذف المخزن بنجاح";
+			return RedirectToAction(nameof(Index));
+		}
 
-            bool already = await _context.MaterialInventories
-                .AnyAsync(mi => mi.InventoryID == inventoryId && mi.MaterialID == materialId);
+		// ── ADD MATERIAL TO INVENTORY ─────────────────────────────
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> AddMaterial(int inventoryId, int materialId,
+													  decimal quantityAvailable,
+													  string storageLocation, string notes)
+		{
+			if (!IsAdmin()) return Forbid();
 
-            if (!already)
-            {
-                _context.MaterialInventories.Add(new MaterialInventory
-                {
-                    InventoryID = inventoryId,
-                    MaterialID = materialId,
-                    QuantityAvailable = quantityAvailable,
-                    StorageLocation = storageLocation ?? "",
-                    Notes = notes ?? "",
-                    TransactionDate = DateTime.Now,
-                    TransactionQuantity = quantityAvailable
-                });
+			bool already = await _context.MaterialInventories
+				.AnyAsync(mi => mi.InventoryID == inventoryId && mi.MaterialID == materialId);
 
-                var inv = await _context.Inventories.FindAsync(inventoryId);
-                if (inv != null) inv.LastUpdatedDate = DateTime.Now;
+			if (!already)
+			{
+				// Check if adding this quantity would exceed capacity
+				var inv = await _context.Inventories
+					.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
+					.FirstOrDefaultAsync(i => i.InventoryID == inventoryId);
 
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "تمت إضافة المادة للمخزن بنجاح";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "هذه المادة موجودة مسبقاً في هذا المخزن";
-            }
+				var material = await _context.Materials.FindAsync(materialId);
 
-            return RedirectToAction(nameof(Details), new { id = inventoryId });
-        }
+				if (inv?.Capacity.HasValue == true && material != null)
+				{
+					decimal currentUsed = inv.MaterialInventories
+						.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+					decimal newVolume = quantityAvailable * material.VolumeFactorM3;
+					decimal fillRate = ((currentUsed + newVolume) / inv.Capacity.Value) * 100;
 
-        // ── UPDATE STOCK ──────────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateStock(int inventoryId, int materialInventoryId,
-                                                      decimal newQuantity, string notes)
-        {
-            if (!IsAdmin()) return Forbid();
+					if (currentUsed + newVolume > inv.Capacity.Value)
+					{
+						TempData["ErrorMessage"] = $"لا يمكن إضافة هذه الكمية! الحجم المطلوب ({newVolume:N2} م³) يتجاوز السعة المتبقية ({(inv.Capacity.Value - currentUsed):N2} م³).";
+						return RedirectToAction(nameof(Details), new { id = inventoryId });
+					}
+				}
 
-            var entry = await _context.MaterialInventories.FindAsync(materialInventoryId);
-            if (entry == null) return NotFound();
+				_context.MaterialInventories.Add(new MaterialInventory
+				{
+					InventoryID = inventoryId,
+					MaterialID = materialId,
+					QuantityAvailable = quantityAvailable,
+					StorageLocation = storageLocation ?? "",
+					Notes = notes ?? "",
+					TransactionDate = DateTime.Now,
+					TransactionQuantity = quantityAvailable
+				});
 
-            entry.TransactionQuantity = newQuantity - entry.QuantityAvailable;
-            entry.QuantityAvailable = newQuantity;
-            entry.TransactionDate = DateTime.Now;
-            if (!string.IsNullOrWhiteSpace(notes)) entry.Notes = notes;
+				if (inv != null) inv.LastUpdatedDate = DateTime.Now;
+				await _context.SaveChangesAsync();
+				TempData["SuccessMessage"] = "تمت إضافة المادة للمخزن بنجاح";
+			}
+			else
+			{
+				TempData["ErrorMessage"] = "هذه المادة موجودة مسبقاً في هذا المخزن";
+			}
 
-            var inv = await _context.Inventories.FindAsync(inventoryId);
-            if (inv != null) inv.LastUpdatedDate = DateTime.Now;
+			return RedirectToAction(nameof(Details), new { id = inventoryId });
+		}
 
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "تم تحديث الكمية بنجاح";
-            return RedirectToAction(nameof(Details), new { id = inventoryId });
-        }
+		// ── UPDATE STOCK ──────────────────────────────────────────
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> UpdateStock(int inventoryId, int materialId,
+													  decimal newQuantity, string notes)
+		{
+			if (!IsAdmin()) return Forbid();
 
-        // ── REMOVE MATERIAL FROM INVENTORY ────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RemoveMaterial(int inventoryId, int materialInventoryId)
-        {
-            if (!IsAdmin()) return Forbid();
+			var entry = await _context.MaterialInventories
+				.FirstOrDefaultAsync(mi => mi.InventoryID == inventoryId && mi.MaterialID == materialId);
+			if (entry == null) return NotFound();
 
-            var entry = await _context.MaterialInventories.FindAsync(materialInventoryId);
-            if (entry != null)
-            {
-                _context.MaterialInventories.Remove(entry);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "تم إزالة المادة من المخزن";
-            }
+			// Volume check
+			var inv = await _context.Inventories
+				.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
+				.FirstOrDefaultAsync(i => i.InventoryID == inventoryId);
+			var material = await _context.Materials.FindAsync(materialId);
 
-            return RedirectToAction(nameof(Details), new { id = inventoryId });
-        }
-    }
+			if (inv?.Capacity.HasValue == true && material != null)
+			{
+				decimal otherVolume = inv.MaterialInventories
+					.Where(mi => mi.MaterialID != materialId)
+					.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+				decimal newVolume = newQuantity * material.VolumeFactorM3;
+
+				if (otherVolume + newVolume > inv.Capacity.Value)
+				{
+					TempData["ErrorMessage"] = $"لا يمكن تحديث الكمية! الحجم الكلي ({otherVolume + newVolume:N2} م³) يتجاوز سعة المخزن ({inv.Capacity.Value:N2} م³).";
+					return RedirectToAction(nameof(Details), new { id = inventoryId });
+				}
+			}
+
+			entry.TransactionQuantity = newQuantity - entry.QuantityAvailable;
+			entry.QuantityAvailable = newQuantity;
+			entry.TransactionDate = DateTime.Now;
+			if (!string.IsNullOrWhiteSpace(notes)) entry.Notes = notes;
+
+			if (inv != null) inv.LastUpdatedDate = DateTime.Now;
+			await _context.SaveChangesAsync();
+			TempData["SuccessMessage"] = "تم تحديث الكمية بنجاح";
+			return RedirectToAction(nameof(Details), new { id = inventoryId });
+		}
+
+		// ── REMOVE MATERIAL FROM INVENTORY ────────────────────────
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> RemoveMaterial(int inventoryId, int materialId)
+		{
+			if (!IsAdmin()) return Forbid();
+
+			var entry = await _context.MaterialInventories
+				.FirstOrDefaultAsync(mi => mi.InventoryID == inventoryId && mi.MaterialID == materialId);
+			if (entry != null)
+			{
+				_context.MaterialInventories.Remove(entry);
+				await _context.SaveChangesAsync();
+				TempData["SuccessMessage"] = "تم إزالة المادة من المخزن";
+			}
+			return RedirectToAction(nameof(Details), new { id = inventoryId });
+		}
+	}
 }

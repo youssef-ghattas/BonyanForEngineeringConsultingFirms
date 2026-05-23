@@ -1,17 +1,19 @@
-﻿using System;
+﻿using Bonyan.DAL.Enums;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Bonyan.DAL.Enums;
 
 namespace Bonyan.DAL.Models
 {
+	[PrimaryKey(nameof(InventoryID), nameof(MaterialID))]
 	public class MaterialInventory
 	{
-		[Key]
+		[Required]
 		public int InventoryID { get; set; }
 
 		[Required]

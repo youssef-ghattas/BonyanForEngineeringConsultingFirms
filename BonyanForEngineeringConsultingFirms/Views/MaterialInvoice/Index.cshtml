@@ -1,0 +1,281 @@
+﻿@* Views/MaterialInvoice/Index.cshtml *@
+@model List<Bonyan.DAL.Models.MaterialInvoice>
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "فواتير المواد";
+    var materials = ViewBag.Materials as List<Bonyan.DAL.Models.Material> ?? new();
+    var suppliers  = ViewBag.Suppliers  as List<Bonyan.DAL.Models.Supplier>  ?? new();
+    int? selMat  = ViewBag.SelectedMaterialId;
+    int? selSup  = ViewBag.SelectedSupplierId;
+    int? selStat = ViewBag.SelectedStatus;
+    decimal totalAmt   = ViewBag.TotalAmount  != null ? (decimal)ViewBag.TotalAmount  : 0;
+    decimal unpaidAmt  = ViewBag.UnpaidAmount != null ? (decimal)ViewBag.UnpaidAmount : 0;
+    int    totalCount  = ViewBag.TotalInvoices != null ? (int)ViewBag.TotalInvoices   : 0;
+}
+
+<link rel="stylesheet" href="~/css/invoice.css" />
+<link rel="stylesheet" href="~/css/material.css" />
+
+<div class="mi-page">
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="mi-alert-success">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <!-- Header -->
+    <div class="mi-header">
+        <h2>
+            <i class="fas fa-file-invoice-dollar"></i>
+            فواتير المواد
+        </h2>
+        <a asp-action="Create" class="btn-bonyan-secondary">
+            <i class="fas fa-plus"></i> فاتورة جديدة
+        </a>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="mi-kpi-grid">
+        <div class="mi-kpi blue">
+            <div class="mi-kpi-icon"><i class="fas fa-file-invoice"></i></div>
+            <div>
+                <div class="mi-kpi-label">إجمالي الفواتير</div>
+                <div class="mi-kpi-value">@totalCount</div>
+            </div>
+        </div>
+        <div class="mi-kpi green">
+            <div class="mi-kpi-icon"><i class="fas fa-coins"></i></div>
+            <div>
+                <div class="mi-kpi-label">إجمالي المبالغ</div>
+                <div class="mi-kpi-value" style="font-size:1.15rem">@totalAmt.ToString("N2") ج.م</div>
+            </div>
+        </div>
+        <div class="mi-kpi red">
+            <div class="mi-kpi-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <div>
+                <div class="mi-kpi-label">غير مدفوع</div>
+                <div class="mi-kpi-value" style="font-size:1.15rem;color:#d32f2f">@unpaidAmt.ToString("N2") ج.م</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="mi-filter">
+        <form method="get" asp-action="Index"
+              style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;width:100%">
+            <select name="materialId" class="form-control" style="width:180px;height:40px;border-radius:8px">
+                <option value="">— كل المواد —</option>
+                @foreach (var m in materials)
+                {
+                    if (selMat == m.MaterialID)
+                    {
+                        <option value="@m.MaterialID" selected>@m.MaterialName</option>
+                    }
+                    else
+                    {
+                        <option value="@m.MaterialID">@m.MaterialName</option>
+                    }
+                }
+            </select>
+
+            <select name="supplierId" class="form-control" style="width:180px;height:40px;border-radius:8px">
+                <option value="">— كل الموردين —</option>
+                @foreach (var s in suppliers)
+                {
+                    if (selSup == s.SupplierID)
+                    {
+                        <option value="@s.SupplierID" selected>@s.SupplierName</option>
+                    }
+                    else
+                    {
+                        <option value="@s.SupplierID">@s.SupplierName</option>
+                    }
+                }
+            </select>
+
+            <select name="status" class="form-control" style="width:160px;height:40px;border-radius:8px">
+                <option value="">— كل الحالات —</option>
+                @{
+                    var statuses = new[] {
+                                new { Val = "0", Label = "مدفوعة" },
+                                new { Val = "1", Label = "غير مدفوعة" },
+                                new { Val = "2", Label = "مدفوعة جزئياً" }
+                                };
+                }
+                @foreach (var st in statuses)
+                {
+                    if (selStat != null && selStat.ToString() == st.Val)
+                    {
+                        <option value="@st.Val" selected>@st.Label</option>
+                    }
+                    else
+                    {
+                        <option value="@st.Val">@st.Label</option>
+                    }
+                }
+            </select>
+            <button type="submit" class="btn-bonyan-secondary" style="height:40px;padding:0 18px">
+                <i class="fas fa-filter"></i> تصفية
+            </button>
+            <a asp-action="Index" class="btn-bonyan-primary" style="height:40px;padding:0 16px;display:flex;align-items:center;gap:6px">
+                <i class="fas fa-times"></i> إلغاء
+            </a>
+        </form>
+    </div>
+
+    <!-- Table Card -->
+    <div class="mi-card">
+        <div class="mi-card-head">
+            <i class="fas fa-list-alt"></i>
+            قائمة الفواتير
+            <span class="count-badge">@Model.Count فاتورة</span>
+        </div>
+
+        @if (Model.Any())
+        {
+            <div style="overflow-x:auto">
+                <table class="mi-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>المادة</th>
+                            <th>المورد</th>
+                            <th>الكمية</th>
+                            <th>سعر الوحدة</th>
+                            <th>المجموع</th>
+                            <th>ضريبة %</th>
+                            <th>خصم %</th>
+                            <th>الصافي</th>
+                            <th>تاريخ الفاتورة</th>
+                            <th>الاستحقاق</th>
+                            <th>الحالة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var inv in Model)
+                        {
+                            string statusLabel = inv.Status switch {
+                                InvoiceStatus.Paid          => "مدفوعة",
+                                InvoiceStatus.Unpaid        => "غير مدفوعة",
+                                InvoiceStatus.PartiallyPaid => "مدفوعة جزئياً",
+                                _ => inv.Status.ToString()
+                            };
+                            string statusClass = inv.Status switch {
+                                InvoiceStatus.Paid          => "status-paid",
+                                InvoiceStatus.Unpaid        => "status-unpaid",
+                                InvoiceStatus.PartiallyPaid => "status-partial",
+                                _ => ""
+                            };
+                            string statusIcon = inv.Status switch {
+                                InvoiceStatus.Paid          => "fas fa-check-circle",
+                                InvoiceStatus.Unpaid        => "fas fa-times-circle",
+                                InvoiceStatus.PartiallyPaid => "fas fa-adjust",
+                                _ => ""
+                            };
+                            bool overdue = inv.Status != InvoiceStatus.Paid &&
+                                           inv.DueDate.HasValue &&
+                                           inv.DueDate.Value < DateTime.Today;
+                            <tr>
+                                <td style="font-weight:700;color:#999;font-size:0.8rem">#@inv.MaterialInvoiceID</td>
+                                <td>
+                                    <div style="font-weight:700;color:var(--primary)">
+                                        @(inv.Material?.MaterialName ?? "—")
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(inv.Material?.Unit))
+                                    {
+                                        <span style="font-size:0.73rem;background:#e3f2fd;color:#1976d2;
+                                                     padding:1px 7px;border-radius:10px">
+                                            @inv.Material.Unit
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div style="font-weight:600">@(inv.Supplier?.SupplierName ?? "—")</div>
+                                </td>
+                                <td style="font-weight:700">@inv.Quantity.ToString("N3")</td>
+                                <td>@inv.UnitPrice.ToString("N2") ج.م</td>
+                                <td>@inv.TotalAmount.ToString("N2") ج.م</td>
+                                <td>
+                                    @if ((inv.TaxPercent ?? 0) > 0)
+                                    {
+                                        <span style="color:#f57c00;font-weight:600">+@inv.TaxPercent%</span>
+                                    }
+                                    else { <span style="color:#ccc">—</span> }
+                                </td>
+                                <td>
+                                    @if ((inv.DiscountPercent ?? 0) > 0)
+                                    {
+                                        <span style="color:#388e3c;font-weight:600">-@inv.DiscountPercent%</span>
+                                    }
+                                    else { <span style="color:#ccc">—</span> }
+                                </td>
+                                <td class="final-col">@inv.FinalAmount.ToString("N2") ج.م</td>
+                                <td style="color:#555">@inv.InvoiceDate.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    @if (inv.DueDate.HasValue)
+                                    {
+                                        <span style="color:@(overdue?"#c62828":"#555");font-weight:@(overdue?"700":"400")">
+                                            @if (overdue) { <i class="fas fa-exclamation-triangle"></i> }
+                                            @inv.DueDate.Value.ToString("yyyy-MM-dd")
+                                        </span>
+                                    }
+                                    else { <span style="color:#ccc">—</span> }
+                                </td>
+                                <td>
+                                    <span class="status-badge @statusClass">
+                                        <i class="@statusIcon"></i>
+                                        @statusLabel
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="mi-actions">
+                                        <a asp-action="Details" asp-route-id="@inv.MaterialInvoiceID"
+                                           class="mi-btn mi-btn-view" title="عرض">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@inv.MaterialInvoiceID"
+                                           class="mi-btn mi-btn-edit" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form asp-action="Delete" asp-route-id="@inv.MaterialInvoiceID"
+                                              method="post" style="display:inline"
+                                              onsubmit="return confirm('حذف هذه الفاتورة نهائياً؟')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="mi-btn mi-btn-delete" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f5f7fa;border-top:2px solid #e0e0e0">
+                            <td colspan="8" style="text-align:left;font-weight:700;padding:14px 16px;color:#555">
+                                الإجمالي الكلي
+                            </td>
+                            <td class="final-col" style="font-size:1.05rem">
+                                @Model.Sum(i => i.FinalAmount).ToString("N2") ج.م
+                            </td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="mi-empty">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <p>لا توجد فواتير مواد حتى الآن</p>
+                <a asp-action="Create" class="btn-bonyan-secondary" style="margin-top:16px;display:inline-flex">
+                    <i class="fas fa-plus"></i> إنشاء أول فاتورة
+                </a>
+            </div>
+        }
+    </div>
+</div>

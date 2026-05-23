@@ -1,7 +1,9 @@
-﻿@* ── SAVE AS: Views/Material/Edit.cshtml ── *@
+﻿@* Views/Material/Edit.cshtml *@
 @model Bonyan.DAL.Models.Material
 @{
     ViewData["Title"] = "تعديل مادة";
+    var suppliers = ViewBag.Suppliers as List<Bonyan.DAL.Models.Supplier> ?? new();
+    var inventories = ViewBag.Inventories as List<Bonyan.DAL.Models.Inventory> ?? new();
 }
 
 <link rel="stylesheet" href="~/css/material.css" />
@@ -45,17 +47,64 @@
                         <option value="CubicMeter">متر مكعب</option>
                         <option value="Piece">قطعة</option>
                     </select>
-                    <span asp-validation-for="Unit" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label>سعر الوحدة (ج.م)</label>
-                    <input asp-for="UnitPrice" type="number" step="0.01" min="0" class="form-control" />
-                    <span asp-validation-for="UnitPrice" class="text-danger"></span>
+                    <input asp-for="UnitPrice" type="number" step="0.01" min="0"
+                           class="form-control" id="unitPrice" oninput="calcTotal()" />
+                </div>
+                <div class="form-group">
+                    <label>الكمية</label>
+                    <input asp-for="Quantity" type="number" step="0.001" min="0"
+                           class="form-control" id="quantity" oninput="calcTotal()" />
+                </div>
+                <div class="form-group">
+                    <label>الإجمالي (ج.م)</label>
+                    <input type="text" id="totalAmount" class="form-control" readonly
+                           style="background:#f5f5f5; font-weight:700; color:var(--primary)"
+                           value="@((Model.UnitPrice ?? 0) * (Model.Quantity ?? 0))" />
+                </div>
+                <div class="form-group">
+                    <label>المورد المفضل</label>
+                    <select asp-for="PreferredSupplierID" class="form-control">
+                        <option value="">-- اختر المورد --</option>
+                        @foreach (var s in suppliers)
+                        {
+                            if (Model.PreferredSupplierID == s.SupplierID)
+                            {
+                                <option value="@s.SupplierID" selected>@s.SupplierName</option>
+                            }
+                            else
+                            {
+                                <option value="@s.SupplierID">@s.SupplierName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>المخزن المستهدف</label>
+                    <select asp-for="TargetInventoryID" class="form-control">
+                        <option value="">-- اختر المخزن --</option>
+                        @foreach (var inv in inventories)
+                        {
+                            if (Model.TargetInventoryID == inv.InventoryID)
+                            {
+                                <option value="@inv.InventoryID" selected>
+                                    @inv.InventoryName @(!string.IsNullOrEmpty(inv.Location) ? $"({inv.Location})" : "")
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="@inv.InventoryID">
+                                    @inv.InventoryName @(!string.IsNullOrEmpty(inv.Location) ? $"({inv.Location})" : "")
+                                </option>
+                            }
+                        }
+                    </select>
                 </div>
                 <div class="form-group" style="grid-column:1 / -1">
                     <label>الوصف</label>
                     <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                    <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
             </div>
 
@@ -70,3 +119,13 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function calcTotal() {
+            var price = parseFloat(document.getElementById('unitPrice').value) || 0;
+            var qty = parseFloat(document.getElementById('quantity').value) || 0;
+            document.getElementById('totalAmount').value = (price * qty).toFixed(2);
+        }
+    </script>
+}

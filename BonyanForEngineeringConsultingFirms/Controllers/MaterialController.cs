@@ -1,4 +1,5 @@
-﻿using Bonyan.DAL.Context;
+﻿// Controllers/MaterialController.cs
+using Bonyan.DAL.Context;
 using Bonyan.DAL.Enums;
 using Bonyan.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -6,211 +7,278 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BonyanForEngineeringConsultingFirms.Controllers
 {
-    public class MaterialController : Controller
-    {
-        private readonly BonyanDbContext _context;
+	public class MaterialController : Controller
+	{
+		private readonly BonyanDbContext _context;
 
-        public MaterialController(BonyanDbContext context)
-        {
-            _context = context;
-        }
+		public MaterialController(BonyanDbContext context)
+		{
+			_context = context;
+		}
 
-        // ── Auth Helper ───────────────────────────────────────────
-        private bool IsAdmin() => HttpContext.Session.GetString("Role") == "Admin";
-        private bool IsLoggedIn() => HttpContext.Session.GetString("Role") != null;
+		private bool IsAdmin() => HttpContext.Session.GetString("Role") == "Admin";
+		private bool IsLoggedIn() => HttpContext.Session.GetString("Role") != null;
 
-        // ── INDEX ─────────────────────────────────────────────────
-        public async Task<IActionResult> Index(string search = "")
-        {
-            if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
+		private static string GetMaterialTypeKey(string materialName)
+		{
+			if (string.IsNullOrWhiteSpace(materialName)) return "Others";
+			var n = materialName.ToLower();
+			if (n == "steel") return "Steel";
+			if (n == "sand") return "Sand";
+			if (n == "cement") return "Cement";
+			if (n == "bricks") return "Bricks";
+			return "Others";
+		}
 
-            var query = _context.Materials
-                .Include(m => m.MaterialSuppliers)
-                    .ThenInclude(ms => ms.Supplier)
-                .Include(m => m.MaterialInventories)
-                    .ThenInclude(mi => mi.Inventory)
-                .AsQueryable();
+		private static decimal GetDefaultVolumeFactor(string materialName)
+		{
+			return GetMaterialTypeKey(materialName) switch
+			{
+				"Sand" => 1.0m,
+				"Cement" => 0.85m,
+				"Steel" => 0.55m,
+				"Bricks" => 1.25m,
+				_ => 1.0m
+			};
+		}
 
-            if (!string.IsNullOrWhiteSpace(search))
-                query = query.Where(m => m.MaterialName.Contains(search) ||
-                                          m.Description.Contains(search));
+		// ── INDEX ─────────────────────────────────────────────────
+		public async Task<IActionResult> Index(string search = "")
+		{
+			if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
 
-            ViewBag.Search = search;
-            return View(await query.OrderBy(m => m.MaterialName).ToListAsync());
-        }
+			var query = _context.Materials
+				.Include(m => m.PreferredSupplier)
+				.Include(m => m.TargetInventory)
+				.Include(m => m.MaterialInventories).ThenInclude(mi => mi.Inventory)
+				.AsQueryable();
 
-        // ── DETAILS ───────────────────────────────────────────────
-        public async Task<IActionResult> Details(int id)
-        {
-            if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
+			if (!string.IsNullOrWhiteSpace(search))
+				query = query.Where(m => m.MaterialName.Contains(search) ||
+										 (m.Description != null && m.Description.Contains(search)));
 
-            var material = await _context.Materials
-                .Include(m => m.MaterialSuppliers)
-                    .ThenInclude(ms => ms.Supplier)
-                .Include(m => m.MaterialInventories)
-                    .ThenInclude(mi => mi.Inventory)
-                .Include(m => m.MaterialTasks)
-                    .ThenInclude(mt => mt.Task)
-                        .ThenInclude(t => t.Project)
-                .FirstOrDefaultAsync(m => m.MaterialID == id);
+			ViewBag.Search = search;
+			return View(await query.OrderBy(m => m.MaterialName).ToListAsync());
+		}
 
-            if (material == null) return NotFound();
+		// ── DETAILS ───────────────────────────────────────────────
+		public async Task<IActionResult> Details(int id)
+		{
+			if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
 
-            // All suppliers not yet linked to this material (for Add Supplier form)
-            if (IsAdmin())
-            {
-                var linkedIds = material.MaterialSuppliers.Select(ms => ms.SupplierID).ToList();
-                ViewBag.AvailableSuppliers = await _context.Suppliers
-                    .Where(s => !linkedIds.Contains(s.SupplierID))
-                    .OrderBy(s => s.SupplierName)
-                    .ToListAsync();
-            }
+			var material = await _context.Materials
+				.Include(m => m.MaterialSuppliers).ThenInclude(ms => ms.Supplier)
+				.Include(m => m.MaterialInventories).ThenInclude(mi => mi.Inventory)
+				.Include(m => m.MaterialTasks)
+				.Include(m => m.PreferredSupplier)
+				.Include(m => m.TargetInventory)
+				.FirstOrDefaultAsync(m => m.MaterialID == id);
 
-            return View(material);
-        }
+			if (material == null) return NotFound();
+			return View(material);
+		}
 
-        // ── CREATE GET ────────────────────────────────────────────
-        public IActionResult Create()
-        {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
-            return View();
-        }
+		// ── CREATE GET ────────────────────────────────────────────
+		public async Task<IActionResult> Create()
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
-        // ── CREATE POST ───────────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Material material)
-        {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			ViewBag.AllSuppliers = await _context.Suppliers
+				.OrderBy(s => s.SupplierName).ToListAsync();
+			ViewBag.Inventories = await _context.Inventories
+				.OrderBy(i => i.InventoryName).ToListAsync();
+			return View();
+		}
 
-            if (_context.Materials.Any(m => m.MaterialName == material.MaterialName))
-            {
-                ModelState.AddModelError("MaterialName", "هذه المادة مسجلة مسبقاً");
-                return View(material);
-            }
+		// ── CREATE POST ───────────────────────────────────────────
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Create(Material material)
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
-            if (!ModelState.IsValid) return View(material);
+			if (_context.Materials.Any(m => m.MaterialName == material.MaterialName))
+				ModelState.AddModelError("MaterialName", "هذه المادة مسجلة مسبقاً");
 
-            _context.Materials.Add(material);
-            await _context.SaveChangesAsync();
+			ModelState.Remove("PreferredSupplier");
+			ModelState.Remove("TargetInventory");
+			ModelState.Remove("MaterialSuppliers");
+			ModelState.Remove("MaterialTasks");
+			ModelState.Remove("MaterialInventories");
+			ModelState.Remove("MaterialInvoices");
 
-            TempData["SuccessMessage"] = "تمت إضافة المادة بنجاح";
-            return RedirectToAction(nameof(Index));
-        }
+			if (!ModelState.IsValid)
+			{
+				ViewBag.AllSuppliers = await _context.Suppliers.OrderBy(s => s.SupplierName).ToListAsync();
+				ViewBag.Inventories = await _context.Inventories.OrderBy(i => i.InventoryName).ToListAsync();
+				return View(material);
+			}
 
-        // ── EDIT GET ──────────────────────────────────────────────
-        public async Task<IActionResult> Edit(int id)
-        {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			if (material.VolumeFactorM3 <= 0)
+				material.VolumeFactorM3 = GetDefaultVolumeFactor(material.MaterialName);
 
-            var material = await _context.Materials.FindAsync(id);
-            if (material == null) return NotFound();
-            return View(material);
-        }
+			_context.Materials.Add(material);
+			await _context.SaveChangesAsync();
 
-        // ── EDIT POST ─────────────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Material material)
-        {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			// ── AUTO-CREATE MATERIAL INVOICE ──────────────────────
+			if (material.PreferredSupplierID.HasValue &&
+				material.Quantity.HasValue && material.Quantity > 0 &&
+				material.UnitPrice.HasValue && material.UnitPrice > 0)
+			{
+				var total = material.Quantity.Value * material.UnitPrice.Value;
+				_context.MaterialInvoices.Add(new MaterialInvoice
+				{
+					MaterialID = material.MaterialID,
+					SupplierID = material.PreferredSupplierID.Value,
+					Quantity = material.Quantity.Value,
+					UnitPrice = material.UnitPrice.Value,
+					TotalAmount = total,
+					TaxPercent = 0,
+					DiscountPercent = 0,
+					FinalAmount = total,
+					InvoiceDate = DateTime.Now,
+					Status = InvoiceStatus.Unpaid,
+					Notes = $"فاتورة تلقائية — {material.MaterialName}"
+				});
+			}
 
-            if (_context.Materials.Any(m => m.MaterialName == material.MaterialName &&
-                                            m.MaterialID != material.MaterialID))
-            {
-                ModelState.AddModelError("MaterialName", "هذا الاسم مستخدم لمادة أخرى");
-                return View(material);
-            }
+			// ── AUTO-ADD TO INVENTORY ─────────────────────────────
+			if (material.TargetInventoryID.HasValue &&
+				material.Quantity.HasValue && material.Quantity > 0)
+			{
+				bool already = await _context.MaterialInventories
+					.AnyAsync(mi => mi.InventoryID == material.TargetInventoryID.Value &&
+									mi.MaterialID == material.MaterialID);
+				if (!already)
+				{
+					_context.MaterialInventories.Add(new MaterialInventory
+					{
+						InventoryID = material.TargetInventoryID.Value,
+						MaterialID = material.MaterialID,
+						QuantityAvailable = material.Quantity.Value,
+						TransactionQuantity = material.Quantity.Value,
+						TransactionDate = DateTime.Now,
+						Notes = "إضافة تلقائية عند إنشاء المادة"
+					});
+					var inv = await _context.Inventories.FindAsync(material.TargetInventoryID.Value);
+					if (inv != null) inv.LastUpdatedDate = DateTime.Now;
+				}
+			}
 
-            if (!ModelState.IsValid) return View(material);
+			await _context.SaveChangesAsync();
 
-            var existing = await _context.Materials.FindAsync(material.MaterialID);
-            if (existing == null) return NotFound();
+			TempData["SuccessMessage"] = "تمت إضافة المادة وإنشاء الفاتورة بنجاح";
+			return RedirectToAction(nameof(Index));
+		}
 
-            existing.MaterialName = material.MaterialName;
-            existing.Unit = material.Unit;
-            existing.UnitPrice = material.UnitPrice;
-            existing.Description = material.Description;
+		// ── EDIT GET ──────────────────────────────────────────────
+		public async Task<IActionResult> Edit(int id)
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			var material = await _context.Materials.FindAsync(id);
+			if (material == null) return NotFound();
 
-            await _context.SaveChangesAsync();
+			ViewBag.AllSuppliers = await _context.Suppliers.OrderBy(s => s.SupplierName).ToListAsync();
+			ViewBag.Inventories = await _context.Inventories.OrderBy(i => i.InventoryName).ToListAsync();
+			return View(material);
+		}
 
-            TempData["SuccessMessage"] = "تم تحديث بيانات المادة بنجاح";
-            return RedirectToAction(nameof(Index));
-        }
+		// ── EDIT POST ─────────────────────────────────────────────
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Edit(Material material)
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
-        // ── DELETE POST ───────────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
-        {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
+			if (_context.Materials.Any(m => m.MaterialName == material.MaterialName &&
+											m.MaterialID != material.MaterialID))
+				ModelState.AddModelError("MaterialName", "هذا الاسم مستخدم لمادة أخرى");
 
-            var material = await _context.Materials
-                .Include(m => m.MaterialSuppliers)
-                .Include(m => m.MaterialInventories)
-                .Include(m => m.MaterialTasks)
-                .FirstOrDefaultAsync(m => m.MaterialID == id);
+			ModelState.Remove("PreferredSupplier");
+			ModelState.Remove("TargetInventory");
+			ModelState.Remove("MaterialSuppliers");
+			ModelState.Remove("MaterialTasks");
+			ModelState.Remove("MaterialInventories");
+			ModelState.Remove("MaterialInvoices");
 
-            if (material == null) return NotFound();
+			if (!ModelState.IsValid)
+			{
+				ViewBag.AllSuppliers = await _context.Suppliers.OrderBy(s => s.SupplierName).ToListAsync();
+				ViewBag.Inventories = await _context.Inventories.OrderBy(i => i.InventoryName).ToListAsync();
+				return View(material);
+			}
 
-            if (material.MaterialTasks.Any())
-            {
-                TempData["ErrorMessage"] = "لا يمكن حذف المادة لأنها مرتبطة بطلبات مهام.";
-                return RedirectToAction(nameof(Index));
-            }
+			var existing = await _context.Materials.FindAsync(material.MaterialID);
+			if (existing == null) return NotFound();
 
-            _context.MaterialSuppliers.RemoveRange(material.MaterialSuppliers);
-            _context.MaterialInventories.RemoveRange(material.MaterialInventories);
-            _context.Materials.Remove(material);
-            await _context.SaveChangesAsync();
+			existing.MaterialName = material.MaterialName;
+			existing.Unit = material.Unit;
+			existing.UnitPrice = material.UnitPrice;
+			existing.Quantity = material.Quantity;
+			existing.Description = material.Description;
+			existing.PreferredSupplierID = material.PreferredSupplierID;
+			existing.TargetInventoryID = material.TargetInventoryID;
+			existing.VolumeFactorM3 = material.VolumeFactorM3 > 0
+				? material.VolumeFactorM3
+				: GetDefaultVolumeFactor(material.MaterialName);
 
-            TempData["SuccessMessage"] = "تم حذف المادة بنجاح";
-            return RedirectToAction(nameof(Index));
-        }
+			await _context.SaveChangesAsync();
 
-        // ── ADD SUPPLIER LINK ─────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddSupplier(int materialId, int supplierId,
-                                                      decimal? supplyPrice, DateTime? lastSupplyDate)
-        {
-            if (!IsAdmin()) return Forbid();
+			TempData["SuccessMessage"] = "تم تحديث بيانات المادة بنجاح";
+			return RedirectToAction(nameof(Index));
+		}
 
-            bool already = await _context.MaterialSuppliers
-                .AnyAsync(ms => ms.MaterialID == materialId && ms.SupplierID == supplierId);
-            if (!already)
-            {
-                _context.MaterialSuppliers.Add(new MaterialSupplier
-                {
-                    MaterialID = materialId,
-                    SupplierID = supplierId,
-                    SupplyPrice = supplyPrice,
-                    LastSupplyDate = lastSupplyDate
-                });
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "تمت إضافة المورد للمادة بنجاح";
-            }
+		// ── DELETE POST ───────────────────────────────────────────
+		[HttpPost, ActionName("Delete")]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> DeleteConfirmed(int id)
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
-            return RedirectToAction(nameof(Details), new { id = materialId });
-        }
+			var material = await _context.Materials
+				.Include(m => m.MaterialSuppliers)
+				.Include(m => m.MaterialInventories)
+				.Include(m => m.MaterialTasks)
+				.Include(m => m.MaterialInvoices)
+				.FirstOrDefaultAsync(m => m.MaterialID == id);
 
-        // ── REMOVE SUPPLIER LINK ──────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RemoveSupplier(int materialId, int supplierId)
-        {
-            if (!IsAdmin()) return Forbid();
+			if (material == null) return NotFound();
 
-            var link = await _context.MaterialSuppliers
-                .FirstOrDefaultAsync(ms => ms.MaterialID == materialId && ms.SupplierID == supplierId);
-            if (link != null)
-            {
-                _context.MaterialSuppliers.Remove(link);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "تم إزالة المورد من المادة";
-            }
+			if (material.MaterialTasks.Any())
+			{
+				TempData["ErrorMessage"] = "لا يمكن حذف المادة لأنها مرتبطة بطلبات مهام.";
+				return RedirectToAction(nameof(Index));
+			}
 
-            return RedirectToAction(nameof(Details), new { id = materialId });
-        }
-    }
+			_context.MaterialSuppliers.RemoveRange(material.MaterialSuppliers);
+			_context.MaterialInventories.RemoveRange(material.MaterialInventories);
+			_context.MaterialInvoices.RemoveRange(material.MaterialInvoices);
+			_context.Materials.Remove(material);
+			await _context.SaveChangesAsync();
+
+			TempData["SuccessMessage"] = "تم حذف المادة بنجاح";
+			return RedirectToAction(nameof(Index));
+		}
+
+		// ── GET SUPPLIERS FOR MATERIAL TYPE (AJAX) ────────────────
+		[HttpGet]
+		public async Task<IActionResult> GetSuppliersForType(string materialName)
+		{
+			var typeKey = GetMaterialTypeKey(materialName ?? "");
+
+			var allSuppliers = await _context.Suppliers
+				.Where(s => s.SuppliedMaterialTypes != null)
+				.ToListAsync();
+
+			var matching = allSuppliers
+				.Where(s => s.SuppliedMaterialTypes!
+					.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Any(t => t == typeKey ||
+							  (typeKey == "Others" && t.StartsWith("Others"))))
+				.Select(s => new { s.SupplierID, s.SupplierName, s.Phone })
+				.ToList();
+
+			return Json(matching);
+		}
+	}
 }

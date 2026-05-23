@@ -1,9 +1,15 @@
-﻿@* ── SAVE AS: Views/Inventory/Details.cshtml ── *@
-@model Inventory
+﻿@* Views/Inventory/Details.cshtml *@
+@model Bonyan.DAL.Models.Inventory
 @{
     ViewData["Title"] = "تفاصيل المخزن";
     var role = Context.Session.GetString("Role");
     var availableMaterials = ViewBag.AvailableMaterials as List<Bonyan.DAL.Models.Material> ?? new();
+    decimal usedVol = ViewBag.UsedVolumeM3 != null ? (decimal)ViewBag.UsedVolumeM3 : 0;
+    decimal remCap = ViewBag.RemainingCapacityM3 != null ? (decimal)ViewBag.RemainingCapacityM3 : 0;
+    decimal fillRate = ViewBag.FillRatePercent != null ? (decimal)ViewBag.FillRatePercent : 0;
+    bool showWarning = ViewBag.ShowWarning != null && (bool)ViewBag.ShowWarning;
+    bool hasCapacity = Model.Capacity.HasValue && Model.Capacity > 0;
+    string barColor = fillRate >= 85 ? "#e53935" : fillRate >= 60 ? "#f57c00" : "#4caf50";
 }
 
 <link rel="stylesheet" href="~/css/material.css" />
@@ -16,12 +22,12 @@
         </h2>
         @if (!string.IsNullOrWhiteSpace(Model.Location))
         {
-            <p style="color:#888; font-size:0.9rem; margin:4px 0 0">
+            <p style="color:#888;font-size:0.9rem;margin:4px 0 0">
                 <i class="fas fa-map-marker-alt"></i> @Model.Location
             </p>
         }
     </div>
-    <div style="display:flex; gap:10px">
+    <div style="display:flex;gap:10px">
         <a asp-action="Index" class="btn-bonyan-primary">
             <i class="fas fa-arrow-right"></i> رجوع للمخازن
         </a>
@@ -43,23 +49,102 @@
     <div class="alert-error-msg"><i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]</div>
 }
 
-<!-- Summary -->
-<div class="mat-info-grid" style="margin-bottom:20px">
-    <div class="details-card" style="text-align:center; padding:18px">
-        <div style="font-size:0.78rem; color:#888; margin-bottom:4px">عدد المواد</div>
-        <div style="font-size:1.6rem; font-weight:700; color:var(--primary)">@Model.MaterialInventories.Count</div>
+<!-- ══ 85% WARNING ALERT ══════════════════════════════ -->
+@if (showWarning)
+{
+    <div style="background:#fff3e0;border:2px solid #ff9800;border-radius:10px;padding:16px;
+                    margin-bottom:20px;display:flex;align-items:center;gap:14px">
+        <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:#ff9800"></i>
+        <div>
+            <div style="font-weight:700;font-size:1rem;color:#e65100">⚠️ تحذير: المخزن على وشك الامتلاء!</div>
+            <div style="font-size:0.88rem;color:#555;margin-top:4px">
+                نسبة الاستخدام وصلت إلى <strong>@fillRate%</strong>.
+                يُنصح بالنظر في توفير مخزن إضافي أو تأجيل الشحنات الواردة.
+            </div>
+        </div>
     </div>
-    <div class="details-card" style="text-align:center; padding:18px">
-        <div style="font-size:0.78rem; color:#888; margin-bottom:4px">السعة الكلية</div>
-        <div style="font-size:1.6rem; font-weight:700; color:var(--secondary)">@(Model.Capacity.HasValue? Model.Capacity.Value.ToString("N0") : "—")</div>
+}
+
+<!-- ══ SUMMARY CARDS ═════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:20px">
+    <div class="details-card" style="text-align:center;padding:18px">
+        <div style="font-size:0.78rem;color:#888;margin-bottom:4px">عدد المواد</div>
+        <div style="font-size:1.8rem;font-weight:700;color:var(--primary)">@Model.MaterialInventories.Count</div>
     </div>
-    <div class="details-card" style="text-align:center; padding:18px">
-        <div style="font-size:0.78rem; color:#888; margin-bottom:4px">آخر تحديث</div>
-        <div style="font-size:1rem; font-weight:600; color:#444">@Model.LastUpdatedDate.ToString("yyyy-MM-dd")</div>
+    <div class="details-card" style="text-align:center;padding:18px">
+        <div style="font-size:0.78rem;color:#888;margin-bottom:4px">السعة الكلية (م³)</div>
+        <div style="font-size:1.6rem;font-weight:700;color:var(--secondary)">
+            @(hasCapacity? Model.Capacity!.Value.ToString("N0") : "—")
+        </div>
+    </div>
+    @if (hasCapacity)
+    {
+        <div class="details-card" style="text-align:center;padding:18px">
+            <div style="font-size:0.78rem;color:#888;margin-bottom:4px">الحجم المستخدم (م³)</div>
+            <div style="font-size:1.4rem;font-weight:700;color:#f57c00">@usedVol.ToString("N2")</div>
+        </div>
+        <div class="details-card" style="text-align:center;padding:18px;border:2px solid @(remCap < 0 ? "#e53935" : "#4caf50")">
+            <div style="font-size:0.78rem;color:#888;margin-bottom:4px">السعة المتبقية (م³)</div>
+            <div style="font-size:1.4rem;font-weight:700;color:@(remCap < 0 ? "#e53935" : "#388e3c")">
+                @remCap.ToString("N2")
+                @if (remCap < 0)
+                {
+                    <div style="font-size:0.7rem;color:#e53935">تجاوز السعة!</div>
+                }
+            </div>
+        </div>
+    }
+    <div class="details-card" style="text-align:center;padding:18px">
+        <div style="font-size:0.78rem;color:#888;margin-bottom:4px">آخر تحديث</div>
+        <div style="font-size:0.95rem;font-weight:600;color:#444">@Model.LastUpdatedDate.ToString("yyyy-MM-dd")</div>
     </div>
 </div>
 
-<!-- Materials in Inventory -->
+<!-- ══ CAPACITY BAR ══════════════════════════════════ -->
+@if (hasCapacity)
+{
+    <div class="details-card" style="margin-bottom:20px;padding:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-weight:700;color:var(--primary)">
+                <i class="fas fa-tachometer-alt"></i> نسبة استخدام المخزن
+            </span>
+            <span style="font-size:1.2rem;font-weight:700;color:@barColor">@fillRate%</span>
+        </div>
+        <div style="background:#e0e0e0;border-radius:20px;height:18px;overflow:hidden;position:relative">
+            <div style="width:@(Math.Min(fillRate, 100))%;background:@barColor;height:100%;
+                            border-radius:20px;transition:width 0.6s ease;
+                            box-shadow:0 2px 6px rgba(0,0,0,0.2)"></div>
+            @if (fillRate < 100)
+            {
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                                    font-size:0.72rem;font-weight:700;color:#555">
+                    @usedVol.ToString("N1") م³ / @Model.Capacity!.Value.ToString("N0") م³
+                </div>
+            }
+        </div>
+        <!-- Scale markers -->
+        <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#aaa;margin-top:4px">
+            <span>0%</span><span>25%</span><span>50%</span>
+            <span style="color:#ff9800;font-weight:700">85%⚠</span><span>100%</span>
+        </div>
+        <!-- Legend -->
+        <div style="display:flex;gap:16px;margin-top:10px;font-size:0.78rem;flex-wrap:wrap">
+            @foreach (var mi in Model.MaterialInventories)
+            {
+                if (mi.Material == null) continue;
+                decimal vol = Math.Round(mi.QuantityAvailable * mi.Material.VolumeFactorM3, 2);
+                <span style="display:flex;align-items:center;gap:4px;color:#555">
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--primary)"></span>
+                    @mi.Material.MaterialName:
+                    <strong>@vol م³</strong>
+                    <span style="color:#aaa">(@mi.QuantityAvailable.ToString("N2") @(mi.Material.Unit ?? "") × @mi.Material.VolumeFactorM3 م³/وحدة)</span>
+                </span>
+            }
+        </div>
+    </div>
+}
+
+<!-- ══ MATERIALS TABLE ═══════════════════════════════ -->
 <div class="details-card" style="margin-bottom:20px">
     <div class="details-section-title">
         <i class="fas fa-boxes"></i> المواد في المخزن
@@ -74,6 +159,8 @@
                     <th>المادة</th>
                     <th>الوحدة</th>
                     <th>الكمية المتاحة</th>
+                    <th>الحجم المشغول (م³)</th>
+                    <th>معامل الحجم</th>
                     <th>مكان التخزين</th>
                     <th>آخر تحديث</th>
                     <th>ملاحظات</th>
@@ -86,11 +173,12 @@
             <tbody>
                 @foreach (var mi in Model.MaterialInventories)
                 {
+                    decimal occupied = Math.Round(mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1m), 2);
                     <tr>
                         <td>
                             <a asp-controller="Material" asp-action="Details"
                                asp-route-id="@mi.MaterialID"
-                               style="color:var(--primary); font-weight:600; text-decoration:none">
+                               style="color:var(--primary);font-weight:600;text-decoration:none">
                                 @(mi.Material?.MaterialName ?? "—")
                             </a>
                         </td>
@@ -100,18 +188,23 @@
                                 <span class="unit-badge">@mi.Material.Unit</span>
                             }
                         </td>
+                        <td><strong style="color:var(--primary)">@mi.QuantityAvailable.ToString("N2")</strong></td>
                         <td>
-                            <strong style="color:var(--primary)">@mi.QuantityAvailable.ToString("N2")</strong>
+                            <span style="font-weight:700;color:#f57c00">@occupied م³</span>
+                        </td>
+                        <td>
+                            <span style="font-size:0.82rem;color:#888">
+                                @((mi.Material?.VolumeFactorM3 ?? 1m).ToString("F4"))
+                            </span>
                         </td>
                         <td>@(mi.StorageLocation ?? "—")</td>
                         <td>@mi.TransactionDate.ToString("yyyy-MM-dd")</td>
-                        <td style="font-size:0.8rem; color:#666">@(mi.Notes ?? "—")</td>
+                        <td style="font-size:0.8rem;color:#666">@(mi.Notes ?? "—")</td>
                         @if (role == "Admin")
                         {
                             <td>
-                                <!-- Update stock -->
                                 <button type="button" class="btn-action edit"
-                                        onclick="openUpdateForm(@mi.InventoryID, @mi.MaterialID, @mi.QuantityAvailable.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))"
+                                        onclick="openUpdateForm(@mi.InventoryID, @mi.MaterialID, '@mi.QuantityAvailable.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)')"
                                         title="تحديث الكمية">
                                     <i class="fas fa-sync-alt"></i>
                                 </button>
@@ -119,7 +212,7 @@
                                       onsubmit="return confirm('إزالة هذه المادة من المخزن؟')">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
-                                    <input type="hidden" name="materialInventoryId" value="@mi.InventoryID" />
+                                    <input type="hidden" name="materialId" value="@mi.MaterialID" />
                                     <button type="submit" class="btn-action delete" title="إزالة">
                                         <i class="fas fa-minus-circle"></i>
                                     </button>
@@ -133,9 +226,10 @@
     }
     else
     {
-        <p style="color:#aaa; font-size:0.88rem; margin-bottom:16px">لا توجد مواد في هذا المخزن بعد</p>
+        <p style="color:#aaa;font-size:0.88rem;margin-bottom:16px">لا توجد مواد في هذا المخزن بعد</p>
     }
 
+    <!-- Add Material Form (Admin only) -->
     @if (role == "Admin" && availableMaterials.Any())
     {
         <div class="mat-add-form" style="margin-top:20px">
@@ -146,28 +240,46 @@
                 <div class="form-grid-3">
                     <div class="form-group">
                         <label>المادة <span style="color:red">*</span></label>
-                        <select name="materialId" class="form-control" required>
+                        <select name="materialId" class="form-control" required onchange="showVolPreview(this)">
                             <option value="">-- اختر مادة --</option>
                             @foreach (var mat in availableMaterials)
                             {
-                                <option value="@mat.MaterialID">@mat.MaterialName (@(mat.Unit ?? "—"))</option>
+                                <option value="@mat.MaterialID"
+                                        data-factor="@mat.VolumeFactorM3.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)"
+                                        data-unit="@(mat.Unit ?? "")">
+                                    @mat.MaterialName (@(mat.Unit ?? "—")) — معامل الحجم: @mat.VolumeFactorM3
+                                </option>
                             }
                         </select>
                     </div>
                     <div class="form-group">
                         <label>الكمية <span style="color:red">*</span></label>
                         <input type="number" name="quantityAvailable" step="0.001" min="0"
-                               class="form-control" placeholder="0.000" required />
+                               class="form-control" placeholder="0.000" required id="addQty"
+                               oninput="showVolPreview(null)" />
                     </div>
                     <div class="form-group">
                         <label>مكان التخزين</label>
-                        <input type="text" name="storageLocation" class="form-control"
-                               placeholder="مثال: رف A-3" />
+                        <input type="text" name="storageLocation" class="form-control" placeholder="مثال: رف A-3" />
                     </div>
                     <div class="form-group" style="grid-column:1 / -1">
                         <label>ملاحظات</label>
                         <input type="text" name="notes" class="form-control" placeholder="أي ملاحظات..." />
                     </div>
+                </div>
+                <!-- Volume preview -->
+                <div id="volPreview" style="display:none;margin-bottom:12px;padding:10px;background:#fff3e0;
+                         border-radius:8px;font-size:0.85rem;color:#555;border:1px solid #ffe0b2">
+                    <i class="fas fa-cube" style="color:#f57c00"></i>
+                    الحجم الذي ستشغله هذه الكمية:
+                    <strong id="volPreviewVal" style="color:#f57c00">0 م³</strong>
+                    @if (hasCapacity)
+                    {
+                        <span>
+                            — السعة المتبقية حالياً:
+                            <strong style="color:@(remCap > 0 ? "#388e3c" : "#e53935")">@remCap.ToString("N2") م³</strong>
+                        </span>
+                    }
                 </div>
                 <button type="submit" class="btn-bonyan-secondary">
                     <i class="fas fa-plus"></i> إضافة للمخزن
@@ -177,18 +289,18 @@
     }
 </div>
 
-<!-- Update Stock Modal (inline form) -->
+<!-- Update Stock Modal -->
 @if (role == "Admin")
 {
-    <div id="updateStockOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:999; align-items:center; justify-content:center">
-        <div style="background:#fff; border-radius:12px; padding:28px; max-width:420px; width:90%; direction:rtl">
-            <h4 style="margin:0 0 18px; color:var(--primary); font-size:1rem">
+    <div id="updateStockOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center">
+        <div style="background:#fff;border-radius:12px;padding:28px;max-width:420px;width:90%;direction:rtl">
+            <h4 style="margin:0 0 18px;color:var(--primary);font-size:1rem">
                 <i class="fas fa-sync-alt" style="color:var(--secondary)"></i> تحديث الكمية
             </h4>
             <form asp-action="UpdateStock" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
-                <input type="hidden" name="materialInventoryId" id="updateMatInvId" />
+                <input type="hidden" name="materialId" id="updateMatId" />
                 <div class="form-group">
                     <label>الكمية الجديدة <span style="color:red">*</span></label>
                     <input type="number" name="newQuantity" id="updateNewQty"
@@ -198,7 +310,7 @@
                     <label>ملاحظات</label>
                     <input type="text" name="notes" class="form-control" placeholder="سبب التعديل..." />
                 </div>
-                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px">
+                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
                     <button type="button" onclick="closeUpdateForm()" class="btn-bonyan-primary">
                         <i class="fas fa-times"></i> إلغاء
                     </button>
@@ -214,13 +326,27 @@
 @section Scripts {
     <script>
         function openUpdateForm(invId, matId, currentQty) {
-            document.getElementById('updateMatInvId').value = invId;
+            document.getElementById('updateMatId').value = matId;
             document.getElementById('updateNewQty').value = currentQty;
-            var overlay = document.getElementById('updateStockOverlay');
-            overlay.style.display = 'flex';
+            document.getElementById('updateStockOverlay').style.display = 'flex';
         }
         function closeUpdateForm() {
             document.getElementById('updateStockOverlay').style.display = 'none';
+        }
+
+        function showVolPreview(matSel) {
+            var sel = matSel || document.querySelector('select[name="materialId"]');
+            var qty = parseFloat(document.getElementById('addQty')?.value) || 0;
+            var opt = sel?.options[sel?.selectedIndex];
+            var factor = parseFloat(opt?.dataset?.factor) || 0;
+            var vol = qty * factor;
+            var preview = document.getElementById('volPreview');
+            if (qty > 0 && factor > 0) {
+                preview.style.display = 'block';
+                document.getElementById('volPreviewVal').textContent = vol.toFixed(2) + ' م³';
+            } else {
+                preview.style.display = 'none';
+            }
         }
     </script>
 }

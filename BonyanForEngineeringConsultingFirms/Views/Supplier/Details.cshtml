@@ -60,6 +60,38 @@
             <span class="mat-info-label">العنوان</span>
             <span class="mat-info-value">@(Model.Address ?? "—")</span>
         </div>
+        <div class="mat-info-item" style="grid-column:1 / -1">
+            <span class="mat-info-label">المواد المورَّدة</span>
+            <span class="mat-info-value">
+                @{
+                    var types = (Model.SuppliedMaterialTypes ?? "")
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    var typeLabels = new Dictionary<string, string> {
+                                {"Steel","حديد"}, {"Sand","رمل"}, {"Cement","أسمنت"},
+                                {"Bricks","طوب"}
+                                };
+                }
+                @if (types.Any())
+                {
+                    foreach (var t in types)
+                    {
+                        string display = t.StartsWith("Others:") ? "أخرى: " + t.Substring(7)
+                        : (typeLabels.ContainsKey(t) ? typeLabels[t] : t);
+                        string bgColor = t == "Steel" ? "#607d8b" : t == "Sand" ? "#ffa726" :
+                        t == "Cement" ? "#90a4ae" : t == "Bricks" ? "#ef5350" : "#ab47bc";
+                        <span style="display:inline-flex;align-items:center;gap:6px;
+                                     background:@bgColor;color:#fff;padding:3px 10px;
+                                     border-radius:16px;font-size:0.82rem;margin-left:6px;font-weight:600">
+                            @display
+                        </span>
+                    }
+                }
+                else
+                {
+                    <span style="color:#aaa">—</span>
+                }
+            </span>
+        </div>
     </div>
 </div>
 

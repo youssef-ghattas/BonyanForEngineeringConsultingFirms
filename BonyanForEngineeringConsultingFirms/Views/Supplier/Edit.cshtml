@@ -1,7 +1,17 @@
-﻿@* ── SAVE AS: Views/Supplier/Edit.cshtml ── *@
+﻿@* Views/Supplier/Edit.cshtml *@
 @model Bonyan.DAL.Models.Supplier
 @{
     ViewData["Title"] = "تعديل مورد";
+    var materialTypes = new[] { "Steel", "Sand", "Cement", "Bricks", "Others" };
+    var materialLabels = new Dictionary<string, string> {
+        {"Steel","حديد (Steel)"},{"Sand","رمل (Sand)"},
+        {"Cement","أسمنت (Cement)"},{"Bricks","طوب (Bricks)"},{"Others","أخرى (Others)"}
+    };
+    // Parse existing types
+    var existingTypes = (Model.SuppliedMaterialTypes ?? "")
+        .Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+    var checkedTypes = existingTypes.Select(t => t.StartsWith("Others:") ? "Others" : t).ToList();
+    var othersValue = existingTypes.FirstOrDefault(t => t.StartsWith("Others:"))?.Substring(7) ?? "";
 }
 
 <link rel="stylesheet" href="~/css/material.css" />
@@ -24,9 +34,10 @@
         <h4>تعديل بيانات المورد</h4>
     </div>
     <div class="upload-card-body">
-        <form asp-action="Edit" method="post">
+        <form asp-action="Edit" method="post" id="supplierForm">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="SupplierID" />
+
             <div class="form-grid-2">
                 <div class="form-group">
                     <label>اسم المورد <span style="color:red">*</span></label>
@@ -34,27 +45,75 @@
                     <span asp-validation-for="SupplierName" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label>شخص التواصل <span style="color:red">*</span></label>
-                    <input asp-for="ContactPerson" class="form-control" required />
-                    <span asp-validation-for="ContactPerson" class="text-danger"></span>
+                    <label>شخص التواصل</label>
+                    <input asp-for="ContactPerson" class="form-control" />
                 </div>
                 <div class="form-group">
-                    <label>البريد الإلكتروني <span style="color:red">*</span></label>
-                    <input asp-for="Email" type="email" class="form-control" required />
+                    <label>البريد الإلكتروني</label>
+                    <input asp-for="Email" type="email" class="form-control" />
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label>الهاتف <span style="color:red">*</span></label>
-                    <input asp-for="Phone" class="form-control" required />
-                    <span asp-validation-for="Phone" class="text-danger"></span>
+                    <label>الهاتف</label>
+                    <input asp-for="Phone" class="form-control" />
                 </div>
                 <div class="form-group" style="grid-column:1 / -1">
-                    <label>العنوان <span style="color:red">*</span></label>
-                    <textarea asp-for="Address" class="form-control" rows="2" required></textarea>
-                    <span asp-validation-for="Address" class="text-danger"></span>
+                    <label>العنوان</label>
+                    <textarea asp-for="Address" class="form-control" rows="2"></textarea>
                 </div>
             </div>
-            <div class="upload-actions">
+
+            <hr style="margin:24px 0;" />
+
+            <div class="form-group">
+                <label style="font-weight:700; color:var(--primary)">
+                    <i class="fas fa-boxes"></i> المواد التي يورّدها هذا المورد
+                </label>
+
+                <div style="position:relative; max-width:400px">
+                    <button type="button" id="dropdownToggle" onclick="toggleDropdown()"
+                            style="width:100%;background:#fff;border:1px solid #ddd;border-radius:8px;
+                                   padding:10px 14px;text-align:right;cursor:pointer;font-size:0.9rem;
+                                   display:flex;justify-content:space-between;align-items:center">
+                        <span id="dropdownLabel" style="color:var(--primary)">
+                            @(checkedTypes.Any() ? checkedTypes.Count + " مادة محددة" : "-- اختر المواد المورَّدة --")
+                        </span>
+                        <i class="fas fa-chevron-down" id="dropdownArrow" style="color:#aaa;transition:transform 0.2s"></i>
+                    </button>
+
+                    <div id="materialDropdown"
+                         style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;
+                                background:#fff;border:1px solid #ddd;border-radius:8px;
+                                box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:100;overflow:hidden">
+                        @foreach (var type in materialTypes)
+                        {
+                            bool isChecked2 = checkedTypes.Contains(type);
+                            <label id="label_@type"
+                                   style="display:flex;align-items:center;gap:12px;padding:12px 16px;
+                                              cursor:pointer;border-bottom:1px solid #f0f0f0;margin:0;
+                                              background:@(isChecked2 ? "#e8f5e9" : "#fff");
+                                              transition:background 0.15s;font-size:0.92rem">
+                                <input type="checkbox" name="selectedMaterialTypes" value="@type"
+                                       id="chk_@type" class="mat-type-cb"
+                                       @(isChecked2 ? "checked" : "")
+                                       onchange="onTypeChange('@type')"
+                                       style="width:17px;height:17px;cursor:pointer;accent-color:var(--primary)" />
+                                <span>@materialLabels[type]</span>
+                            </label>
+                        }
+                    </div>
+                </div>
+
+                <div id="othersBox" style="display:@(checkedTypes.Contains("Others") ? "block" : "none");margin-top:10px;max-width:400px">
+                    <input type="text" name="othersText" id="othersText"
+                           class="form-control" value="@othersValue"
+                           placeholder="اكتب نوع المادة الأخرى..." />
+                </div>
+
+                <div id="selectedChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+            </div>
+
+            <div class="upload-actions" style="margin-top:24px">
                 <a asp-action="Details" asp-route-id="@Model.SupplierID" class="btn-bonyan-primary">
                     <i class="fas fa-times"></i> إلغاء
                 </a>
@@ -65,3 +124,91 @@
         </form>
     </div>
 </div>
+
+<style>
+    .mat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--primary);
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+        .mat-chip.others {
+            background: #ab47bc;
+        }
+
+        .mat-chip.steel {
+            background: #607d8b;
+        }
+
+        .mat-chip.sand {
+            background: #ffa726;
+        }
+
+        .mat-chip.cement {
+            background: #90a4ae;
+            color: #333;
+        }
+
+        .mat-chip.bricks {
+            background: #ef5350;
+        }
+</style>
+
+@section Scripts {
+    <script>
+        const labels = { Steel:'حديد (Steel)', Sand:'رمل (Sand)', Cement:'أسمنت (Cement)', Bricks:'طوب (Bricks)', Others:'أخرى' };
+        const chipClass = { Steel:'steel', Sand:'sand', Cement:'cement', Bricks:'bricks', Others:'others' };
+
+        function toggleDropdown() {
+            var d = document.getElementById('materialDropdown');
+            var a = document.getElementById('dropdownArrow');
+            var open = d.style.display === 'block';
+            d.style.display = open ? 'none' : 'block';
+            a.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+        document.addEventListener('click', function(e) {
+            if (!document.getElementById('dropdownToggle').contains(e.target) &&
+                !document.getElementById('materialDropdown').contains(e.target)) {
+                document.getElementById('materialDropdown').style.display = 'none';
+                document.getElementById('dropdownArrow').style.transform = 'rotate(0deg)';
+            }
+        });
+        function isChecked(type) { return document.getElementById('chk_' + type)?.checked; }
+        function onTypeChange(type) {
+            var cb = document.getElementById('chk_' + type);
+            document.getElementById('label_' + type).style.background = cb.checked ? '#e8f5e9' : '#fff';
+            if (type === 'Others') {
+                document.getElementById('othersBox').style.display = cb.checked ? 'block' : 'none';
+                if (!cb.checked) document.getElementById('othersText').value = '';
+            }
+            updateChips(); updateDropdownLabel();
+        }
+        function updateChips() {
+            var c = document.getElementById('selectedChips');
+            c.innerHTML = '';
+            document.querySelectorAll('.mat-type-cb:checked').forEach(function(cb) {
+                var type = cb.value;
+                var text = type === 'Others' ? 'أخرى: ' + (document.getElementById('othersText').value || '...') : labels[type];
+                var chip = document.createElement('span');
+                chip.className = 'mat-chip ' + (chipClass[type] || '');
+                chip.innerHTML = '<i class="fas fa-check"></i> ' + text;
+                c.appendChild(chip);
+            });
+        }
+        function updateDropdownLabel() {
+            var checked = document.querySelectorAll('.mat-type-cb:checked');
+            var lbl = document.getElementById('dropdownLabel');
+            lbl.textContent = checked.length === 0 ? '-- اختر المواد المورَّدة --' : checked.length + ' مادة محددة';
+            lbl.style.color = checked.length === 0 ? '#888' : 'var(--primary)';
+        }
+        document.getElementById('othersText')?.addEventListener('input', updateChips);
+        // Initialize chips on page load
+        updateChips();
+    </script>
+}
