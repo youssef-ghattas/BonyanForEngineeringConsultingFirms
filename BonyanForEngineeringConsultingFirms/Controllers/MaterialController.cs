@@ -97,15 +97,13 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		{
 			if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
-			if (_context.Materials.Any(m => m.MaterialName == material.MaterialName))
-				ModelState.AddModelError("MaterialName", "هذه المادة مسجلة مسبقاً");
-
 			ModelState.Remove("PreferredSupplier");
 			ModelState.Remove("TargetInventory");
 			ModelState.Remove("MaterialSuppliers");
 			ModelState.Remove("MaterialTasks");
 			ModelState.Remove("MaterialInventories");
 			ModelState.Remove("MaterialInvoices");
+			ModelState.Remove("Description");
 
 			if (!ModelState.IsValid)
 			{
@@ -119,28 +117,6 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			_context.Materials.Add(material);
 			await _context.SaveChangesAsync();
-
-			// ── AUTO-CREATE MATERIAL INVOICE ──────────────────────
-			if (material.PreferredSupplierID.HasValue &&
-				material.Quantity.HasValue && material.Quantity > 0 &&
-				material.UnitPrice.HasValue && material.UnitPrice > 0)
-			{
-				var total = material.Quantity.Value * material.UnitPrice.Value;
-				_context.MaterialInvoices.Add(new MaterialInvoice
-				{
-					MaterialID = material.MaterialID,
-					SupplierID = material.PreferredSupplierID.Value,
-					Quantity = material.Quantity.Value,
-					UnitPrice = material.UnitPrice.Value,
-					TotalAmount = total,
-					TaxPercent = 0,
-					DiscountPercent = 0,
-					FinalAmount = total,
-					InvoiceDate = DateTime.Now,
-					Status = InvoiceStatus.Unpaid,
-					Notes = $"فاتورة تلقائية — {material.MaterialName}"
-				});
-			}
 
 			// ── AUTO-ADD TO INVENTORY ─────────────────────────────
 			if (material.TargetInventoryID.HasValue &&
@@ -158,19 +134,32 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 						QuantityAvailable = material.Quantity.Value,
 						TransactionQuantity = material.Quantity.Value,
 						TransactionDate = DateTime.Now,
+						StorageLocation = "غير محدد",
 						Notes = "إضافة تلقائية عند إنشاء المادة"
 					});
 					var inv = await _context.Inventories.FindAsync(material.TargetInventoryID.Value);
 					if (inv != null) inv.LastUpdatedDate = DateTime.Now;
+					await _context.SaveChangesAsync();
 				}
 			}
 
-			await _context.SaveChangesAsync();
+			// ── REDIRECT TO INVOICE CREATE WITH PRE-FILLED DATA ──
+			if (material.PreferredSupplierID.HasValue &&
+				material.Quantity.HasValue && material.Quantity > 0 &&
+				material.UnitPrice.HasValue && material.UnitPrice > 0)
+			{
+				return RedirectToAction("Create", "MaterialInvoice", new
+				{
+					materialId = material.MaterialID,
+					supplierId = material.PreferredSupplierID.Value,
+					quantity = material.Quantity.Value,
+					unitPrice = material.UnitPrice.Value
+				});
+			}
 
-			TempData["SuccessMessage"] = "تمت إضافة المادة وإنشاء الفاتورة بنجاح";
+			TempData["SuccessMessage"] = "تمت إضافة المادة بنجاح";
 			return RedirectToAction(nameof(Index));
 		}
-
 		// ── EDIT GET ──────────────────────────────────────────────
 		public async Task<IActionResult> Edit(int id)
 		{
@@ -266,19 +255,35 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		{
 			var typeKey = GetMaterialTypeKey(materialName ?? "");
 
-			var allSuppliers = await _context.Suppliers
-				.Where(s => s.SuppliedMaterialTypes != null)
-				.ToListAsync();
+			// Load ALL suppliers — show them all but sort matching ones first
+			var allSuppliers = await _context.Suppliers.ToListAsync();
 
-			var matching = allSuppliers
-				.Where(s => s.SuppliedMaterialTypes!
-					.Split(',', StringSplitOptions.RemoveEmptyEntries)
-					.Any(t => t == typeKey ||
-							  (typeKey == "Others" && t.StartsWith("Others"))))
+			var result = allSuppliers
+				.Select(s =>
+				{
+					bool matches = false;
+					if (!string.IsNullOrWhiteSpace(s.SuppliedMaterialTypes))
+					{
+						var parts = s.SuppliedMaterialTypes
+							.Split(',', StringSplitOptions.RemoveEmptyEntries);
+						matches = parts.Any(t =>
+							t == typeKey ||
+							(typeKey == "Others" && t.StartsWith("Others")));
+					}
+					return new
+					{
+						s.SupplierID,
+						s.SupplierName,
+						s.Phone,
+						IsMatch = matches
+					};
+				})
+				.OrderByDescending(s => s.IsMatch)
+				.ThenBy(s => s.SupplierName)
 				.Select(s => new { s.SupplierID, s.SupplierName, s.Phone })
 				.ToList();
 
-			return Json(matching);
+			return Json(result);
 		}
 	}
 }

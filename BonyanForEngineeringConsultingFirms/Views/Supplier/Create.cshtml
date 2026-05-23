@@ -20,6 +20,34 @@
         <form asp-action="Create" method="post" id="supplierForm">
             @Html.AntiForgeryToken()
 
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div style="background:#fde8e8; border:1px solid #f5c6cb; border-radius:10px;
+                    padding:14px 18px; margin-bottom:18px; color:#842029;">
+                    <strong><i class="fas fa-exclamation-triangle"></i> يوجد أخطاء في النموذج:</strong>
+                    <ul style="margin:8px 0 0 0; padding-right:20px">
+                        @foreach (var error in ViewData.ModelState.Values
+                                            .SelectMany(v => v.Errors))
+                        {
+                            <li style="font-size:0.88rem">@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (ViewBag.ValidationErrors != null)
+            {
+                <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:10px;
+                    padding:14px 18px; margin-bottom:18px; color:#664d03;">
+                    <strong><i class="fas fa-bug"></i> تفاصيل الخطأ:</strong>
+                    <ul style="margin:8px 0 0 0; padding-right:20px">
+                        @foreach (var err in ViewBag.ValidationErrors as List<string>)
+                        {
+                            <li style="font-size:0.88rem; font-family:monospace">@err</li>
+                        }
+                    </ul>
+                </div>
+            }
             <div class="form-grid-2">
                 <div class="form-group">
                     <label>اسم المورد <span style="color:red">*</span></label>

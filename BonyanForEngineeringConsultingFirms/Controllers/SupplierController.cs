@@ -21,95 +21,140 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		private bool IsAdmin() => HttpContext.Session.GetString("Role") == "Admin";
 		private bool IsLoggedIn() => HttpContext.Session.GetString("Role") != null;
 
-		public IActionResult Index()
+		// ── INDEX ─────────────────────────────────────────────────
+		public async Task<IActionResult> Index(string search = "")
 		{
 			if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
-			var suppliers = _supplierService.GetAll();
+
+			var query = _context.Suppliers
+				.Include(s => s.SuppliedMaterials)
+				.AsQueryable();
+
+			if (!string.IsNullOrWhiteSpace(search))
+				query = query.Where(s => s.SupplierName.Contains(search) ||
+										 (s.Email != null && s.Email.Contains(search)) ||
+										 (s.Phone != null && s.Phone.Contains(search)));
+
+			ViewBag.Search = search;
+			var suppliers = await query.OrderBy(s => s.SupplierName).ToListAsync();
 			return View(suppliers);
 		}
 
-		public IActionResult Details(int id)
+		// ── DETAILS ───────────────────────────────────────────────
+		public async Task<IActionResult> Details(int id)
 		{
 			if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
-			var supplier = _supplierService.GetById(id);
+
+			var supplier = await _context.Suppliers
+				.Include(s => s.SuppliedMaterials).ThenInclude(ms => ms.Material)
+				.FirstOrDefaultAsync(s => s.SupplierID == id);
+
 			if (supplier == null) return NotFound();
 			return View(supplier);
 		}
 
+		// ── CREATE GET ────────────────────────────────────────────
 		public IActionResult Create()
 		{
 			if (!IsAdmin()) return RedirectToAction("Index", "Home");
 			return View();
 		}
 
+		// ── CREATE POST ───────────────────────────────────────────
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Create(
-			Supplier supplier,
-			List<string> selectedMaterialTypes,
-			string othersText)
+	Supplier supplier,
+	List<string> selectedMaterialTypes,
+	string othersText)
 		{
 			if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
-			// Remove navigation properties from ModelState so they don't block validation
 			ModelState.Remove("SuppliedMaterials");
 			ModelState.Remove("SuppliedMaterialTypes");
+			ModelState.Remove("Phone");
+			ModelState.Remove("Email");
+			ModelState.Remove("ContactPerson");
+			ModelState.Remove("Address");
+			ModelState.Remove("othersText");
+			ModelState.Remove("selectedMaterialTypes");
 
 			if (!ModelState.IsValid)
+			{
+				ViewBag.ValidationErrors = ModelState
+					.Where(x => x.Value.Errors.Count > 0)
+					.Select(x => $"{x.Key}: {string.Join(", ", x.Value.Errors.Select(e => e.ErrorMessage))}")
+					.ToList();
 				return View(supplier);
+			}
 
-			// Build the SuppliedMaterialTypes comma-separated string
 			var types = new List<string>();
 			if (selectedMaterialTypes != null && selectedMaterialTypes.Count > 0)
 			{
 				foreach (var t in selectedMaterialTypes)
 				{
 					if (t == "Others")
-					{
-						if (!string.IsNullOrWhiteSpace(othersText))
-							types.Add("Others:" + othersText.Trim());
-						else
-							types.Add("Others");
-					}
+						types.Add(!string.IsNullOrWhiteSpace(othersText)
+							? "Others:" + othersText.Trim()
+							: "Others");
 					else
-					{
 						types.Add(t);
-					}
 				}
 			}
 			supplier.SuppliedMaterialTypes = types.Count > 0
 				? string.Join(",", types)
 				: null;
 
-			_context.Suppliers.Add(supplier);
-			await _context.SaveChangesAsync();
-
-			TempData["SuccessMessage"] = "تمت إضافة المورد بنجاح";
-			return RedirectToAction(nameof(Index));
+			try
+			{
+				_context.Suppliers.Add(supplier);
+				await _context.SaveChangesAsync();
+				TempData["SuccessMessage"] = "تمت إضافة المورد بنجاح";
+				return RedirectToAction(nameof(Index));
+			}
+			catch (Exception ex)
+			{
+				ModelState.AddModelError("", "حدث خطأ أثناء الحفظ: " + ex.Message);
+				return View(supplier);
+			}
 		}
 
-		public IActionResult Edit(int id)
+		// ── EDIT GET ──────────────────────────────────────────────
+		public async Task<IActionResult> Edit(int id)
 		{
 			if (!IsAdmin()) return RedirectToAction("Index", "Home");
-			var supplier = _supplierService.GetById(id);
+			var supplier = await _context.Suppliers.FindAsync(id);
 			if (supplier == null) return NotFound();
 			return View(supplier);
 		}
 
+		// ── EDIT POST ─────────────────────────────────────────────
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Edit(
-			Supplier supplier,
-			List<string> selectedMaterialTypes,
-			string othersText)
+	Supplier supplier,
+	List<string> selectedMaterialTypes,
+	string othersText)
 		{
 			if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
 			ModelState.Remove("SuppliedMaterials");
 			ModelState.Remove("SuppliedMaterialTypes");
+			ModelState.Remove("Phone");
+			ModelState.Remove("Email");
+			ModelState.Remove("ContactPerson");
+			ModelState.Remove("Address");
+			ModelState.Remove("othersText");
+			ModelState.Remove("selectedMaterialTypes");
 
 			if (!ModelState.IsValid)
+			{
+				ViewBag.ValidationErrors = ModelState
+					.Where(x => x.Value.Errors.Count > 0)
+					.Select(x => $"{x.Key}: {string.Join(", ", x.Value.Errors.Select(e => e.ErrorMessage))}")
+					.ToList();
 				return View(supplier);
+			}
 
 			var existing = await _context.Suppliers.FindAsync(supplier.SupplierID);
 			if (existing == null) return NotFound();
@@ -126,42 +171,57 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				foreach (var t in selectedMaterialTypes)
 				{
 					if (t == "Others")
-					{
-						if (!string.IsNullOrWhiteSpace(othersText))
-							types.Add("Others:" + othersText.Trim());
-						else
-							types.Add("Others");
-					}
+						types.Add(!string.IsNullOrWhiteSpace(othersText)
+							? "Others:" + othersText.Trim()
+							: "Others");
 					else
-					{
 						types.Add(t);
-					}
 				}
 			}
 			existing.SuppliedMaterialTypes = types.Count > 0
 				? string.Join(",", types)
 				: null;
 
-			await _context.SaveChangesAsync();
-
-			TempData["SuccessMessage"] = "تم تحديث بيانات المورد بنجاح";
-			return RedirectToAction(nameof(Index));
+			try
+			{
+				await _context.SaveChangesAsync();
+				TempData["SuccessMessage"] = "تم تحديث بيانات المورد بنجاح";
+				return RedirectToAction(nameof(Index));
+			}
+			catch (Exception ex)
+			{
+				ModelState.AddModelError("", "حدث خطأ أثناء الحفظ: " + ex.Message);
+				return View(supplier);
+			}
 		}
 
-		public IActionResult Delete(int id)
+		// ── DELETE GET ────────────────────────────────────────────
+		public async Task<IActionResult> Delete(int id)
 		{
 			if (!IsAdmin()) return RedirectToAction("Index", "Home");
-			var supplier = _supplierService.GetById(id);
+			var supplier = await _context.Suppliers.FindAsync(id);
 			if (supplier == null) return NotFound();
 			return View(supplier);
 		}
 
+		// ── DELETE POST ───────────────────────────────────────────
 		[HttpPost, ActionName("Delete")]
 		[ValidateAntiForgeryToken]
-		public IActionResult DeleteConfirmed(int id)
+		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
 			if (!IsAdmin()) return RedirectToAction("Index", "Home");
-			_supplierService.Delete(id);
+
+			var supplier = await _context.Suppliers
+				.Include(s => s.SuppliedMaterials)
+				.FirstOrDefaultAsync(s => s.SupplierID == id);
+
+			if (supplier == null) return NotFound();
+
+			// Remove junction records first
+			_context.MaterialSuppliers.RemoveRange(supplier.SuppliedMaterials);
+			_context.Suppliers.Remove(supplier);
+			await _context.SaveChangesAsync();
+
 			TempData["SuccessMessage"] = "تم حذف المورد بنجاح";
 			return RedirectToAction(nameof(Index));
 		}

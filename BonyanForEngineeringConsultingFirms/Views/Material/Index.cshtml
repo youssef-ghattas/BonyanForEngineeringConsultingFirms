@@ -7,6 +7,28 @@
 
 <link rel="stylesheet" href="~/css/material.css" />
 
+@* ── DEBUG LOG — remove this block after fixing the issue ── *@
+@if (TempData["DebugLog"] != null)
+{
+    var logs = TempData["DebugLog"].ToString().Split('|');
+    <div style="background:#1e1e2e; color:#cdd6f4; border-radius:12px;
+                    padding:20px 24px; margin-bottom:22px; font-family:monospace;
+                    font-size:0.82rem; line-height:1.8; direction:ltr; text-align:left">
+        <div style="color:#89b4fa; font-weight:700; font-size:0.95rem; margin-bottom:10px">
+            🔍 Debug Log — Material Create
+        </div>
+        @foreach (var log in logs)
+        {
+            string color = log.StartsWith("✅") ? "#a6e3a1"
+            : log.StartsWith("❌") ? "#f38ba8"
+            : log.StartsWith("⚠️") ? "#fab387"
+            : "#cdd6f4";
+            <div style="color:@color">@log</div>
+        }
+    </div>
+}
+@* ── END DEBUG LOG ── *@
+
 <div class="page-header">
     <div class="page-header-left">
         <h2>
@@ -37,10 +59,14 @@
 
 <!-- Search -->
 <div class="filter-bar">
-    <form method="get" asp-action="Index" style="display:flex; align-items:center; gap:10px; width:100%; max-width:420px">
-        <div class="input-group" style="flex:1">
-            <i class="fas fa-search" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#aaa; z-index:1"></i>
-            <input type="text" name="search" value="@search" placeholder="بحث بالاسم أو الوصف..."
+    <form method="get" asp-action="Index"
+          style="display:flex; align-items:center; gap:10px; width:100%; max-width:420px">
+        <div class="input-group" style="flex:1; position:relative;">
+            <i class="fas fa-search"
+               style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
+                      color:#aaa; z-index:1"></i>
+            <input type="text" name="search" value="@search"
+                   placeholder="بحث بالاسم أو الوصف..."
                    class="form-control" style="padding-right:36px" />
         </div>
         <button type="submit" class="btn-bonyan-secondary" style="padding:8px 16px">
@@ -76,18 +102,23 @@
                         <td>
                             <a asp-action="Details" asp-route-id="@m.MaterialID"
                                style="color:var(--primary); font-weight:600; text-decoration:none">
-                                <i class="fas fa-cube" style="font-size:0.65rem; color:var(--secondary); margin-left:6px"></i>
+                                <i class="fas fa-cube"
+                                   style="font-size:0.65rem; color:var(--secondary); margin-left:6px"></i>
                                 @m.MaterialName
                             </a>
                             @if (!string.IsNullOrWhiteSpace(m.Description))
                             {
-                                <div style="font-size:0.78rem; color:#888; margin-top:2px">@m.Description</div>
+                                <div style="font-size:0.78rem; color:#888; margin-top:2px">
+                                    @m.Description
+                                </div>
                             }
                         </td>
                         <td>
                             <span class="unit-badge">@(m.Unit ?? "—")</span>
                         </td>
-                        <td>@(m.UnitPrice.HasValue? m.UnitPrice.Value.ToString("N2") + " ج.م" : "—")</td>
+                        <td>
+                            @(m.UnitPrice.HasValue? m.UnitPrice.Value.ToString("N2") + " ج.م" : "—")
+                        </td>
                         <td>
                             <span class="count-badge">
                                 <i class="fas fa-truck"></i> @m.MaterialSuppliers.Count
@@ -109,8 +140,8 @@
                                    class="btn-action edit" title="تعديل">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form asp-action="Delete" asp-route-id="@m.MaterialID" method="post"
-                                      style="display:inline"
+                                <form asp-action="Delete" asp-route-id="@m.MaterialID"
+                                      method="post" style="display:inline"
                                       onsubmit="return confirm('هل أنت متأكد من حذف هذه المادة؟')">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn-action delete" title="حذف">

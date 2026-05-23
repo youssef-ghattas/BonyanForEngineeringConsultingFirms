@@ -161,75 +161,30 @@
 
 @section Scripts {
     <script>
-        // All materials data for quick lookup
-        const matData = {
-            @foreach (var m in materials)
-            {
-                @Html.Raw($"'{m.MaterialID}': {{ price: {(m.UnitPrice ?? 0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}, qty: {(m.Quantity ?? 1).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)}, unit: '{m.Unit ?? ""}' }},")
-            }
-        };
+        function calcFinal() {
+            var qty      = parseFloat(document.getElementById('Quantity')?.value)      || 0;
+            var price    = parseFloat(document.getElementById('UnitPrice')?.value)     || 0;
+            var tax      = parseFloat(document.getElementById('TaxPercent')?.value)    || 0;
+            var discount = parseFloat(document.getElementById('DiscountPercent')?.value) || 0;
 
-        // Material suppliers mapping
-        const matSuppliers = {
-            @foreach (var m in materials)
-            {
-                var suppList = string.Join(",", m.MaterialSuppliers.Select(ms => $"{{id:{ms.SupplierID},name:'{ms.Supplier?.SupplierName}',price:{(ms.SupplyPrice ?? 0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}}}"));
-                @Html.Raw($"'{m.MaterialID}': [{suppList}],")
-            }
-        };
+            var total    = qty * price;
+            var taxAmt   = total * tax / 100;
+            var discAmt  = total * discount / 100;
+            var final    = total + taxAmt - discAmt;
 
-        function onMaterialChange(sel) {
-            var matId = sel.value;
-            if (!matId) return;
-
-            var d = matData[matId];
-            if (d) {
-                document.getElementById('unitPrice').value = d.price.toFixed(2);
-                document.getElementById('qty').value = d.qty.toFixed(3);
-            }
-
-            // Filter suppliers to those linked to this material
-            var sups = matSuppliers[matId] || [];
-            var supplierSel = document.getElementById('supplierSelect');
-            supplierSel.innerHTML = '<option value="">-- اختر المورد --</option>';
-
-            if (sups.length > 0) {
-                sups.forEach(function(s) {
-                    var opt = document.createElement('option');
-                    opt.value = s.id;
-                    opt.textContent = s.name + (s.price > 0 ? ' (' + s.price.toFixed(2) + ' ج.م)' : '');
-                    opt.dataset.price = s.price;
-                    supplierSel.appendChild(opt);
-                });
-            } else {
-                // Show all suppliers if no specific link
-                @foreach (var s in suppliers)
-                {
-                    @Html.Raw($"supplierSel.innerHTML += '<option value=\"{s.SupplierID}\">{s.SupplierName}</option>';")
-                }
-            }
-
-            calcAll();
+            var totalEl = document.getElementById('TotalAmount');
+            var finalEl = document.getElementById('FinalAmount');
+            if (totalEl) totalEl.value = total.toFixed(2);
+            if (finalEl) finalEl.value = final.toFixed(2);
         }
 
-        function calcAll() {
-            var qty = parseFloat(document.getElementById('qty').value) || 0;
-            var price = parseFloat(document.getElementById('unitPrice').value) || 0;
-            var taxPct = parseFloat(document.getElementById('tax').value) || 0;
-            var discPct = parseFloat(document.getElementById('disc').value) || 0;
+        // Attach to inputs
+        ['Quantity','UnitPrice','TaxPercent','DiscountPercent'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('input', calcFinal);
+        });
 
-            var total = qty * price;
-            var taxAmt = total * taxPct / 100;
-            var discAmt = total * discPct / 100;
-            var final = total + taxAmt - discAmt;
-
-            document.getElementById('dispTotal').textContent = total.toFixed(2) + ' ج.م';
-            document.getElementById('dispTax').textContent = taxAmt.toFixed(2) + ' ج.م';
-            document.getElementById('dispDisc').textContent = discAmt.toFixed(2) + ' ج.م';
-            document.getElementById('dispFinal').textContent = final.toFixed(2) + ' ج.م';
-        }
-
-        // Initial calculation
-        calcAll();
+        // Run once on load to show pre-filled values
+        calcFinal();
     </script>
 }

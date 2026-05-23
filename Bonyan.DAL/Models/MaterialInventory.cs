@@ -25,7 +25,7 @@ namespace Bonyan.DAL.Models
 		public decimal QuantityAvailable { get; set; }
 
 		[StringLength(200)]
-		public string StorageLocation { get; set; }
+		public string? StorageLocation { get; set; }
 
 		[Column(TypeName = "decimal(15, 3)")]
 		[Range(0, double.MaxValue)]
