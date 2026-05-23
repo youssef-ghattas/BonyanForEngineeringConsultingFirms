@@ -5,11 +5,56 @@
     var allSuppliers = ViewBag.AllSuppliers as List<Bonyan.DAL.Models.Supplier> ?? new();
     var inventories = ViewBag.Inventories as List<Bonyan.DAL.Models.Inventory> ?? new();
 }
+
 <link rel="stylesheet" href="~/css/material.css" />
+
+@if (ViewBag.ShowSuccess == true)
+{
+    <div style="background:#d1e7dd; color:#146c43; border-radius:10px;
+                    padding:14px 18px; margin-bottom:16px; font-weight:600">
+        <i class="fas fa-check-circle"></i> تم الحفظ بنجاح
+    </div>
+}
+
+@if (ViewBag.DebugLog != null)
+{
+    <div style="background:#1e1e2e; color:#cdd6f4; border-radius:12px;
+                    padding:20px 24px; margin-bottom:22px; font-family:monospace;
+                    font-size:0.83rem; line-height:1.9; direction:ltr; text-align:left">
+        <div style="color:#89b4fa; font-weight:700; font-size:1rem; margin-bottom:12px">
+            🔍 Debug Log
+        </div>
+        @foreach (var log in ViewBag.DebugLog as List<string>)
+        {
+            string color = log.StartsWith("✅") ? "#a6e3a1"
+            : log.StartsWith("❌") ? "#f38ba8"
+            : log.StartsWith("⚠️") ? "#fab387"
+            : "#cdd6f4";
+            <div style="color:@color; padding:1px 0">@log</div>
+        }
+    </div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div style="background:#fde8e8; border:1px solid #f5c6cb; border-radius:10px;
+                    padding:14px 18px; margin-bottom:18px; color:#842029;">
+        <strong><i class="fas fa-exclamation-triangle"></i> يوجد أخطاء في النموذج:</strong>
+        <ul style="margin:8px 0 0 0; padding-right:20px">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li style="font-size:0.88rem">@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
 
 <div class="page-header">
     <div class="page-header-left">
-        <h2><i class="fas fa-plus-circle" style="color:var(--secondary)"></i> إضافة مادة جديدة</h2>
+        <h2>
+            <i class="fas fa-plus-circle" style="color:var(--secondary)"></i>
+            إضافة مادة جديدة
+        </h2>
     </div>
     <a asp-action="Index" class="btn-bonyan-primary">
         <i class="fas fa-arrow-right"></i> رجوع للمواد
@@ -17,7 +62,10 @@
 </div>
 
 <div class="upload-card">
-    <div class="upload-card-header"><i class="fas fa-cube"></i><h4>بيانات المادة</h4></div>
+    <div class="upload-card-header">
+        <i class="fas fa-cube"></i>
+        <h4>بيانات المادة</h4>
+    </div>
     <div class="upload-card-body">
         <form asp-action="Create" method="post" id="matForm">
             @Html.AntiForgeryToken()
@@ -74,17 +122,20 @@
                 <div class="form-group">
                     <label>الإجمالي (ج.م)</label>
                     <input type="text" id="totalDisplay" readonly class="form-control"
-                           style="background:#f0f7ff;font-weight:700;color:var(--secondary)" value="0.00" />
+                           style="background:#f0f7ff; font-weight:700; color:var(--secondary)"
+                           value="0.00" />
                 </div>
 
                 <div class="form-group">
                     <label>
                         معامل الحجم (م³/وحدة)
-                        <span style="font-size:0.73rem;color:#888;font-weight:400">— لحساب سعة المخزن</span>
+                        <span style="font-size:0.73rem; color:#888; font-weight:400">
+                            — لحساب سعة المخزن
+                        </span>
                     </label>
                     <input asp-for="VolumeFactorM3" type="number" step="0.0001" min="0"
                            class="form-control" id="volFactor" placeholder="1.0000" />
-                    <div id="volHint" style="font-size:0.76rem;color:#888;margin-top:3px"></div>
+                    <div id="volHint" style="font-size:0.76rem; color:#888; margin-top:3px"></div>
                 </div>
 
                 <div class="form-group">
@@ -107,19 +158,21 @@
                     <textarea asp-for="Description" class="form-control" rows="2"
                               placeholder="وصف مختصر..."></textarea>
                 </div>
+
             </div>
 
             <!-- Supplier section -->
             <div style="margin:20px 0">
-                <label style="font-weight:700;color:var(--primary);font-size:1rem;display:block;margin-bottom:8px">
+                <label style="font-weight:700; color:var(--primary); font-size:1rem;
+                               display:block; margin-bottom:8px">
                     <i class="fas fa-truck"></i> اختر المورد
-                    <span style="font-size:0.78rem;color:#888;font-weight:400">
+                    <span style="font-size:0.78rem; color:#888; font-weight:400">
                         — يُعرض الموردون الذين يورّدون هذه المادة فقط
                     </span>
                 </label>
                 <div id="supplierContainer">
-                    <div style="color:#aaa;font-size:0.88rem;padding:14px;background:#f9f9f9;
-                                border-radius:8px;border:1px dashed #ddd">
+                    <div style="color:#aaa; font-size:0.88rem; padding:14px;
+                                background:#f9f9f9; border-radius:8px; border:1px dashed #ddd">
                         <i class="fas fa-info-circle"></i> اختر نوع المادة أولاً
                     </div>
                 </div>
@@ -127,13 +180,16 @@
             </div>
 
             <!-- Auto-invoice notice -->
-            <div id="invoiceNotice" style="display:none;background:linear-gradient(135deg,#e8f5e9,#e3f2fd);
-                 border-radius:10px;padding:18px;margin:16px 0;border:1px solid #c8e6c9">
-                <div style="font-weight:700;color:var(--primary);margin-bottom:10px;font-size:0.95rem">
+            <div id="invoiceNotice"
+                 style="display:none; background:linear-gradient(135deg,#e8f5e9,#e3f2fd);
+                        border-radius:10px; padding:18px; margin:16px 0;
+                        border:1px solid #c8e6c9">
+                <div style="font-weight:700; color:var(--primary); margin-bottom:10px; font-size:0.95rem">
                     <i class="fas fa-file-invoice" style="color:var(--secondary)"></i>
                     ✓ سيتم إنشاء فاتورة تلقائياً عند الحفظ
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:0.85rem">
+                <div style="display:grid; grid-template-columns:repeat(3,1fr);
+                            gap:10px; font-size:0.85rem">
                     <div><span style="color:#888">المادة: </span><strong id="notMat">—</strong></div>
                     <div><span style="color:#888">الحساب: </span><strong id="notCalc">—</strong></div>
                     <div>
@@ -144,7 +200,9 @@
             </div>
 
             <div class="upload-actions">
-                <a asp-action="Index" class="btn-bonyan-primary"><i class="fas fa-times"></i> إلغاء</a>
+                <a asp-action="Index" class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
                 <button type="submit" class="btn-bonyan-secondary" onclick="return beforeSubmit()">
                     <i class="fas fa-save"></i> حفظ المادة وإنشاء الفاتورة
                 </button>
@@ -155,7 +213,6 @@
 
 @section Scripts {
     <script>
-        // Supplier data injected from server
         var allSuppliers = [
             @foreach (var s in allSuppliers)
             {
@@ -163,106 +220,110 @@
             }
         ];
 
-        var volFactors = {Steel:0.55,Sand:1.0,Cement:0.85,Bricks:1.25,Others:1.0};
-        var volHints   = {
-            Steel:'حديد: 1 طن ≈ 0.55 م³',
-            Sand:'رمل: 1 م³ = 1.0 م³',
-            Cement:'أسمنت: 1 طن ≈ 0.85 م³',
-            Bricks:'طوب: 1000 قطعة ≈ 1.25 م³',
-            Others:'أدخل المعامل المناسب'
+        var volFactors = { Steel: 0.55, Sand: 1.0, Cement: 0.85, Bricks: 1.25, Others: 1.0 };
+        var volHints = {
+            Steel:  'حديد: 1 طن ≈ 0.55 م³',
+            Sand:   'رمل: 1 م³ = 1.0 م³',
+            Cement: 'أسمنت: 1 طن ≈ 0.85 م³',
+            Bricks: 'طوب: 1000 قطعة ≈ 1.25 م³',
+            Others: 'أدخل المعامل المناسب'
         };
 
-        function onMatTypeChange(val){
-            // Show/hide custom name
-            document.getElementById('customNameWrap').style.display = val==='Others'?'block':'none';
-
-            // Auto volume factor
-            document.getElementById('volFactor').value = (volFactors[val]||1.0).toFixed(4);
-            document.getElementById('volHint').textContent = volHints[val]||'';
-
-            // Filter suppliers
+        function onMatTypeChange(val) {
+            document.getElementById('customNameWrap').style.display = val === 'Others' ? 'block' : 'none';
+            document.getElementById('volFactor').value = (volFactors[val] || 1.0).toFixed(4);
+            document.getElementById('volHint').textContent = volHints[val] || '';
             renderSuppliers(val);
             updateNotice();
         }
 
-        function renderSuppliers(matType){
+        function renderSuppliers(matType) {
             var container = document.getElementById('supplierContainer');
             document.getElementById('preferredSupplierID').value = '';
 
-            if(!matType){
-                container.innerHTML='<div style="color:#aaa;font-size:0.88rem;padding:14px;background:#f9f9f9;border-radius:8px;border:1px dashed #ddd"><i class="fas fa-info-circle"></i> اختر نوع المادة أولاً</div>';
+            if (!matType) {
+                container.innerHTML = '<div style="color:#aaa;font-size:0.88rem;padding:14px;background:#f9f9f9;border-radius:8px;border:1px dashed #ddd"><i class="fas fa-info-circle"></i> اختر نوع المادة أولاً</div>';
                 return;
             }
 
-            var matching = allSuppliers.filter(function(s){
-                if(!s.types) return false;
-                return s.types.split(',').some(function(t){
+            var matching = allSuppliers.filter(function (s) {
+                if (!s.types) return false;
+                return s.types.split(',').some(function (t) {
                     t = t.trim();
-                    if(matType==='Others') return t==='Others' || t.startsWith('Others:');
+                    if (matType === 'Others') return t === 'Others' || t.startsWith('Others:');
                     return t === matType;
                 });
             });
 
-            if(matching.length===0){
-                container.innerHTML='<div style="color:#c62828;font-size:0.88rem;padding:14px;background:#fff3f3;border-radius:8px;border:1px solid #ffcdd2"><i class="fas fa-exclamation-triangle"></i> لا يوجد موردون مسجلون لهذا النوع من المواد. يرجى إضافة مورد أولاً من صفحة الموردين.</div>';
+            var others = allSuppliers.filter(function (s) {
+                return matching.indexOf(s) === -1;
+            });
+
+            var combined = matching.concat(others);
+
+            if (combined.length === 0) {
+                container.innerHTML = '<div style="color:#c62828;font-size:0.88rem;padding:14px;background:#fff3f3;border-radius:8px;border:1px solid #ffcdd2"><i class="fas fa-exclamation-triangle"></i> لا يوجد موردون. يرجى إضافة مورد أولاً من صفحة الموردين.</div>';
                 return;
             }
 
-            var html='<div style="display:flex;flex-direction:column;gap:8px">';
-            matching.forEach(function(s){
-                html+='<label class="supplier-card" style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#fff;border:2px solid #e8e8e8;border-radius:10px;cursor:pointer;transition:all 0.2s">'
-                    +'<input type="radio" name="_supRadio" value="'+s.id+'" onchange="selectSupplier('+s.id+',this)" style="width:18px;height:18px;accent-color:var(--primary)">'
-                    +'<div><div style="font-weight:700;color:var(--primary);font-size:0.95rem">'+s.name+'</div>'
-                    +(s.phone?'<div style="font-size:0.78rem;color:#888"><i class="fas fa-phone"></i> '+s.phone+'</div>':'')
-                    +'</div></label>';
+            var html = '<div style="display:flex;flex-direction:column;gap:8px">';
+            combined.forEach(function (s) {
+                var isMatch = matching.indexOf(s) !== -1;
+                var borderColor = isMatch ? 'var(--secondary)' : '#e8e8e8';
+                var label = isMatch ? '' : '<span style="font-size:0.72rem;color:#aaa;margin-right:8px">(نوع مختلف)</span>';
+                html += '<label class="supplier-card" style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#fff;border:2px solid ' + borderColor + ';border-radius:10px;cursor:pointer;transition:all 0.2s">'
+                    + '<input type="radio" name="_supRadio" value="' + s.id + '" onchange="selectSupplier(' + s.id + ',this)" style="width:18px;height:18px;accent-color:var(--primary)">'
+                    + '<div><div style="font-weight:700;color:var(--primary);font-size:0.95rem">' + s.name + label + '</div>'
+                    + (s.phone ? '<div style="font-size:0.78rem;color:#888"><i class="fas fa-phone"></i> ' + s.phone + '</div>' : '')
+                    + '</div></label>';
             });
-            html+='</div>';
-            container.innerHTML=html;
+            html += '</div>';
+            container.innerHTML = html;
         }
 
-        function selectSupplier(id,radio){
-            document.getElementById('preferredSupplierID').value=id;
-            document.querySelectorAll('.supplier-card').forEach(function(c){
-                c.style.borderColor='#e8e8e8';c.style.background='#fff';
+        function selectSupplier(id, radio) {
+            document.getElementById('preferredSupplierID').value = id;
+            document.querySelectorAll('.supplier-card').forEach(function (c) {
+                c.style.borderColor = '#e8e8e8';
+                c.style.background = '#fff';
             });
-            radio.closest('.supplier-card').style.borderColor='var(--secondary)';
-            radio.closest('.supplier-card').style.background='#e8f5e9';
+            radio.closest('.supplier-card').style.borderColor = 'var(--secondary)';
+            radio.closest('.supplier-card').style.background = '#e8f5e9';
             updateNotice();
         }
 
-        function calcTotal(){
-            var p=parseFloat(document.getElementById('unitPrice').value)||0;
-            var q=parseFloat(document.getElementById('qty').value)||0;
-            var t=p*q;
-            document.getElementById('totalDisplay').value=t.toFixed(2);
+        function calcTotal() {
+            var p = parseFloat(document.getElementById('unitPrice').value) || 0;
+            var q = parseFloat(document.getElementById('qty').value) || 0;
+            var t = p * q;
+            document.getElementById('totalDisplay').value = t.toFixed(2);
             updateNotice();
             return t;
         }
 
-        function updateNotice(){
-            var suppId=document.getElementById('preferredSupplierID').value;
-            var qty=parseFloat(document.getElementById('qty').value)||0;
-            var price=parseFloat(document.getElementById('unitPrice').value)||0;
-            var matType=document.getElementById('matTypeSelect').value;
-            var total=qty*price;
-            var notice=document.getElementById('invoiceNotice');
-            if(suppId && qty>0 && price>0 && matType){
-                notice.style.display='block';
-                document.getElementById('notMat').textContent=matType;
-                document.getElementById('notCalc').textContent=qty.toFixed(3)+' × '+price.toFixed(2)+' ج.م';
-                document.getElementById('notTotal').textContent=total.toFixed(2)+' ج.م';
-            }else{
-                notice.style.display='none';
+        function updateNotice() {
+            var suppId  = document.getElementById('preferredSupplierID').value;
+            var qty     = parseFloat(document.getElementById('qty').value) || 0;
+            var price   = parseFloat(document.getElementById('unitPrice').value) || 0;
+            var matType = document.getElementById('matTypeSelect').value;
+            var total   = qty * price;
+            var notice  = document.getElementById('invoiceNotice');
+            if (suppId && qty > 0 && price > 0 && matType) {
+                notice.style.display = 'block';
+                document.getElementById('notMat').textContent   = matType;
+                document.getElementById('notCalc').textContent  = qty.toFixed(3) + ' × ' + price.toFixed(2) + ' ج.م';
+                document.getElementById('notTotal').textContent = total.toFixed(2) + ' ج.م';
+            } else {
+                notice.style.display = 'none';
             }
         }
 
-        function beforeSubmit(){
-            // If Others, put the custom name as MaterialName
-            var matType=document.getElementById('matTypeSelect').value;
-            if(matType==='Others'){
-                var custom=document.getElementById('customName').value.trim();
-                if(!custom){alert('يرجى كتابة اسم المادة الأخرى');return false;}
-                document.getElementById('matTypeSelect').value=custom;
+        function beforeSubmit() {
+            var matType = document.getElementById('matTypeSelect').value;
+            if (matType === 'Others') {
+                var custom = document.getElementById('customName').value.trim();
+                if (!custom) { alert('يرجى كتابة اسم المادة الأخرى'); return false; }
+                document.getElementById('matTypeSelect').value = custom;
             }
             return true;
         }

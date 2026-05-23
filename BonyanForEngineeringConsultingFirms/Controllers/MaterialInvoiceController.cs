@@ -66,27 +66,34 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		}
 
 		// ── CREATE GET ────────────────────────────────────────────
-		public async Task<IActionResult> Create(int? materialId)
+		public async Task<IActionResult> Create(
+	int? materialId,
+	int? supplierId,
+	decimal? quantity,
+	decimal? unitPrice)
 		{
-			if (!IsAdmin()) return RedirectToAction("Login", "Account");
+			if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
 
-			ViewBag.Materials = await _context.Materials
-				.Include(m => m.MaterialSuppliers).ThenInclude(ms => ms.Supplier)
-				.OrderBy(m => m.MaterialName).ToListAsync();
+			ViewBag.Materials = await _context.Materials.OrderBy(m => m.MaterialName).ToListAsync();
 			ViewBag.Suppliers = await _context.Suppliers.OrderBy(s => s.SupplierName).ToListAsync();
-			ViewBag.SelectedMaterialId = materialId;
 
-			var invoice = new MaterialInvoice { InvoiceDate = DateTime.Now };
-			if (materialId.HasValue)
+			var invoice = new MaterialInvoice
 			{
-				invoice.MaterialID = materialId.Value;
-				var mat = await _context.Materials.FindAsync(materialId.Value);
-				if (mat != null)
-				{
-					invoice.UnitPrice = mat.UnitPrice ?? 0;
-					invoice.Quantity = mat.Quantity ?? 1;
-				}
+				InvoiceDate = DateTime.Today,
+				Status = InvoiceStatus.Unpaid
+			};
+
+			if (materialId.HasValue) invoice.MaterialID = materialId.Value;
+			if (supplierId.HasValue) invoice.SupplierID = supplierId.Value;
+			if (quantity.HasValue) invoice.Quantity = quantity.Value;
+			if (unitPrice.HasValue) invoice.UnitPrice = unitPrice.Value;
+
+			if (quantity.HasValue && unitPrice.HasValue)
+			{
+				invoice.TotalAmount = quantity.Value * unitPrice.Value;
+				invoice.FinalAmount = invoice.TotalAmount;
 			}
+
 			return View(invoice);
 		}
 
