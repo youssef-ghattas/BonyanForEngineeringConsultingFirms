@@ -46,6 +46,15 @@ namespace Bonyan.DAL.Models
 		[Column(TypeName = "decimal(18, 2)")]
 		public decimal FinalAmount { get; set; }
 
+		// ── ADD THESE TWO NEW FIELDS ──────────────────────────────
+		[Column(TypeName = "decimal(18, 2)")]
+		[Range(0, double.MaxValue)]
+		public decimal? AmountPaid { get; set; } = 0;
+
+		// Auto-calculated: FinalAmount - AmountPaid
+		[Column(TypeName = "decimal(18, 2)")]
+		public decimal? RemainingAmount { get; set; } = 0;
+
 		[Required]
 		[DataType(DataType.Date)]
 		public DateTime InvoiceDate { get; set; } = DateTime.Now;

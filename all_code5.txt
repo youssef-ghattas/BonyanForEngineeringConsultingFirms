@@ -2277,6 +2277,11 @@ public async Task<IActionResult> Landing()
         return View(vm);
     }
     public IActionResult Index()
+        public IActionResult Landing()
+        {
+            return View();
+        }
+        public IActionResult Index()
 		{
 			if (HttpContext.Session.GetString("Email") == null)
 				return RedirectToAction("Login", "Account");
@@ -8051,6 +8056,304 @@ namespace Bonyan.PL.ViewModels
     </script>
 </body>
 </html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Privacy.cshtml ===
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Landing.cshtml ===
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>بنيان | Bonyan - منصة إدارة المكاتب الهندسية</title>
+
+    <!-- Bootstrap RTL -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" />
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Google Fonts Arabic + English -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@400;600;700&display=swap"
+          rel="stylesheet" />
+
+    <!-- Our Existing Tokens / Components -->
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+
+    <!-- Landing Page Specific Styles -->
+    <link rel="stylesheet" href="~/css/landing.css" />
+</head>
+<body class="landing-body">
+
+    <!-- ── Landing Navbar ─────────────────────────── -->
+    <nav class="landing-navbar">
+        <div class="navbar-logo landing-logo">
+            <i class="fas fa-building"></i>
+            <span>Bonyan</span>
+        </div>
+
+        <div class="navbar-right">
+            <button id="langBtn" class="lang-btn" onclick="toggleLanding()">English</button>
+            <a class="btn-bonyan-primary" asp-controller="Account" asp-action="Login">
+                <i class="fas fa-sign-in-alt"></i>
+                <span data-lang="nav_login">تسجيل الدخول</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- ── Hero Section ───────────────────────────── -->
+    <section class="hero-section">
+        <div class="hero-grid">
+
+            <!-- Left Column -->
+            <div class="hero-text">
+                <span class="hero-badge">
+                    <i class="fas fa-bolt"></i>
+                    <span data-lang="hero_badge">مميزات المنصة</span>
+                </span>
+
+                <h1 class="hero-title">
+                    <span data-lang="hero_title_1">مستقبل</span>
+                    <span class="text-gold" data-lang="hero_title_2">إدارة المكاتب الهندسية</span>
+                </h1>
+
+                <p class="hero-subtitle" data-lang="hero_subtitle">
+                    منصة رقمية متكاملة تُحدث نقلة في طريقة إدارة المكاتب الهندسية لمشاريعها ومخططاتها وعملائها وعقودها ومهامها وفرقها — كل ذلك من لوحة تحكم واحدة قوية.
+                </p>
+
+                <a class="btn-bonyan-primary hero-cta-btn" asp-controller="Account" asp-action="Login">
+                    <span data-lang="hero_cta">تسجيل دخول ←</span>
+                </a>
+            </div>
+
+            <!-- Right Column: Dashboard Preview Mockup -->
+            <div class="hero-mockup">
+                <div class="mockup-floating-badge">
+                    <i class="fas fa-sack-dollar"></i>
+                    <span data-lang="mockup_badge">إجمالي الميزانية 5.2 مليون $</span>
+                </div>
+
+                <div class="bonyan-card mockup-card">
+                    <div class="mockup-stats-grid">
+                        <div class="stat-card stat-card-mini">
+                            <div class="stat-icon blue"><i class="fas fa-diagram-project"></i></div>
+                            <div class="stat-info">
+                                <h3>24</h3>
+                                <p data-lang="stat_projects_label">مشروع نشط</p>
+                            </div>
+                        </div>
+                        <div class="stat-card stat-card-mini">
+                            <div class="stat-icon green"><i class="fas fa-list-check"></i></div>
+                            <div class="stat-info">
+                                <h3>128</h3>
+                                <p data-lang="stat_tasks_label">مهمة منجزة</p>
+                            </div>
+                        </div>
+                        <div class="stat-card stat-card-mini">
+                            <div class="stat-icon gold"><i class="fas fa-handshake"></i></div>
+                            <div class="stat-info">
+                                <h3>18</h3>
+                                <p data-lang="stat_clients_label">عميل</p>
+                            </div>
+                        </div>
+                        <div class="stat-card stat-card-mini">
+                            <div class="stat-icon red"><i class="fas fa-file-alt"></i></div>
+                            <div class="stat-info">
+                                <h3>342</h3>
+                                <p data-lang="stat_documents_label">مستند</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mockup-chart">
+                        <div class="chart-bar-row">
+                            <span class="chart-bar-label" data-lang="chart_planning">تخطيط</span>
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar-fill" style="width:30%; background:#1565C0;"></div>
+                            </div>
+                        </div>
+                        <div class="chart-bar-row">
+                            <span class="chart-bar-label" data-lang="chart_inprogress">قيد التنفيذ</span>
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar-fill" style="width:55%; background:#C8922A;"></div>
+                            </div>
+                        </div>
+                        <div class="chart-bar-row">
+                            <span class="chart-bar-label" data-lang="chart_completed">مكتمل</span>
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar-fill" style="width:80%; background:#28A745;"></div>
+                            </div>
+                        </div>
+                        <div class="chart-bar-row">
+                            <span class="chart-bar-label" data-lang="chart_onhold">متوقف</span>
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar-fill" style="width:15%; background:#6A1B9A;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ── Features Grid Section ─────────────────── -->
+    <section class="features-section">
+        <div class="section-header">
+            <h2 data-lang="features_title">كل ما يحتاجه مكتبك الهندسي</h2>
+            <p data-lang="features_subtitle">مجموعة متكاملة من الأدوات لإدارة مكتبك الهندسي بكفاءة وسهولة</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon blue"><i class="fas fa-diagram-project"></i></div>
+                <h3 data-lang="feat1_title">إدارة المشاريع</h3>
+                <p data-lang="feat1_desc">تتبع كل مشروع منذ البداية وحتى التسليم. راقب الحالة والميزانيات والجداول الزمنية والمعالم الرئيسية لحظة بلحظة.</p>
+            </div>
+
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon gold"><i class="fas fa-list-check"></i></div>
+                <h3 data-lang="feat2_title">إسناد المهام</h3>
+                <p data-lang="feat2_desc">أسند المهام للمهندسين، حدد المواعيد النهائية، وتابع التقدم والمهام المتأخرة بتنبيهات تلقائية.</p>
+            </div>
+
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon green"><i class="fas fa-folder-open"></i></div>
+                <h3 data-lang="feat3_title">إدارة المستندات</h3>
+                <p data-lang="feat3_desc">ارفع ونظّم وحمّل المخططات والرسومات والمستندات المرتبطة مباشرة بكل مشروع.</p>
+            </div>
+
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon red"><i class="fas fa-handshake"></i></div>
+                <h3 data-lang="feat4_title">إدارة العملاء والعقود</h3>
+                <p data-lang="feat4_desc">احتفظ بسجلات كاملة للعملاء والعقود والميزانيات. اربط العملاء مباشرة بمشاريعهم.</p>
+            </div>
+
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon purple"><i class="fas fa-users-gear"></i></div>
+                <h3 data-lang="feat5_title">الموارد البشرية</h3>
+                <p data-lang="feat5_desc">أدر فريق المهندسين والأدوار وصلاحيات الوصول. أضف أعضاء جدد ببيانات دخول تُنشأ تلقائياً.</p>
+            </div>
+
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon teal"><i class="fas fa-language"></i></div>
+                <h3 data-lang="feat6_title">ثنائي اللغة (عربي/إنجليزي)</h3>
+                <p data-lang="feat6_desc">دعم كامل للغة العربية (RTL) والإنجليزية (LTR) مع تبديل فوري للغة عبر المنصة بالكامل.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Bottom CTA Banner ──────────────────────── -->
+    <section class="cta-banner">
+        <h2 data-lang="cta_title">هل أنت مستعد لتطوير مكتبك الهندسي؟</h2>
+        <p data-lang="cta_subtitle">سجّل الدخول للوصول إلى مساحة العمل المتكاملة لإدارة مكتبك الهندسي.</p>
+        <a class="btn-bonyan-secondary cta-btn" asp-controller="Account" asp-action="Login">
+            <span data-lang="cta_button">تسجيل دخول ←</span>
+        </a>
+    </section>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Landing Language Switch -->
+    <script>
+        const landingTranslations = {
+            ar: {
+                nav_login: "تسجيل الدخول",
+                hero_badge: "مميزات المنصة",
+                hero_title_1: "مستقبل",
+                hero_title_2: "إدارة المكاتب الهندسية",
+                hero_subtitle: "منصة رقمية متكاملة تُحدث نقلة في طريقة إدارة المكاتب الهندسية لمشاريعها ومخططاتها وعملائها وعقودها ومهامها وفرقها — كل ذلك من لوحة تحكم واحدة قوية.",
+                hero_cta: "تسجيل دخول ←",
+                mockup_badge: "إجمالي الميزانية 5.2 مليون $",
+                stat_projects_label: "مشروع نشط",
+                stat_tasks_label: "مهمة منجزة",
+                stat_clients_label: "عميل",
+                stat_documents_label: "مستند",
+                chart_planning: "تخطيط",
+                chart_inprogress: "قيد التنفيذ",
+                chart_completed: "مكتمل",
+                chart_onhold: "متوقف",
+                features_title: "كل ما يحتاجه مكتبك الهندسي",
+                features_subtitle: "مجموعة متكاملة من الأدوات لإدارة مكتبك الهندسي بكفاءة وسهولة",
+                feat1_title: "إدارة المشاريع",
+                feat1_desc: "تتبع كل مشروع منذ البداية وحتى التسليم. راقب الحالة والميزانيات والجداول الزمنية والمعالم الرئيسية لحظة بلحظة.",
+                feat2_title: "إسناد المهام",
+                feat2_desc: "أسند المهام للمهندسين، حدد المواعيد النهائية، وتابع التقدم والمهام المتأخرة بتنبيهات تلقائية.",
+                feat3_title: "إدارة المستندات",
+                feat3_desc: "ارفع ونظّم وحمّل المخططات والرسومات والمستندات المرتبطة مباشرة بكل مشروع.",
+                feat4_title: "إدارة العملاء والعقود",
+                feat4_desc: "احتفظ بسجلات كاملة للعملاء والعقود والميزانيات. اربط العملاء مباشرة بمشاريعهم.",
+                feat5_title: "الموارد البشرية",
+                feat5_desc: "أدر فريق المهندسين والأدوار وصلاحيات الوصول. أضف أعضاء جدد ببيانات دخول تُنشأ تلقائياً.",
+                feat6_title: "ثنائي اللغة (عربي/إنجليزي)",
+                feat6_desc: "دعم كامل للغة العربية (RTL) والإنجليزية (LTR) مع تبديل فوري للغة عبر المنصة بالكامل.",
+                cta_title: "هل أنت مستعد لتطوير مكتبك الهندسي؟",
+                cta_subtitle: "سجّل الدخول للوصول إلى مساحة العمل المتكاملة لإدارة مكتبك الهندسي.",
+                cta_button: " تسجيل دخول←"
+            },
+            en: {
+                nav_login: "Login",
+                hero_badge: "Platform Features",
+                hero_title_1: "The Future of",
+                hero_title_2: "Engineering Office Management",
+                hero_subtitle: "An integrated digital platform that transforms how engineering offices manage projects, blueprints, clients, contracts, tasks, and teams — all from one powerful dashboard.",
+                hero_cta: "Login →",
+                mockup_badge: "TOTAL BUDGET $5.2M",
+                stat_projects_label: "Active Projects",
+                stat_tasks_label: "Completed Tasks",
+                stat_clients_label: "Clients",
+                stat_documents_label: "Documents",
+                chart_planning: "Planning",
+                chart_inprogress: "In Progress",
+                chart_completed: "Completed",
+                chart_onhold: "On Hold",
+                features_title: "Everything Your Engineering Office Needs",
+                features_subtitle: "A complete suite of tools to manage every aspect of your engineering office efficiently.",
+                feat1_title: "Project Management",
+                feat1_desc: "Track every project from inception to delivery. Monitor status, budgets, timelines, and milestones in real-time.",
+                feat2_title: "Task Assignment",
+                feat2_desc: "Assign tasks to engineers, set deadlines, track progress and overdue items with automatic alerts.",
+                feat3_title: "Document Control",
+                feat3_desc: "Upload, organize, and download blueprints, drawings, and documents linked directly to each project.",
+                feat4_title: "Client & Contract Management",
+                feat4_desc: "Maintain complete client records, contracts, and budgets. Link clients directly to their projects.",
+                feat5_title: "Human Resources",
+                feat5_desc: "Manage engineering staff, roles, and access. Onboard new team members with auto-generated credentials.",
+                feat6_title: "Bilingual (AR / EN)",
+                feat6_desc: "Full Arabic RTL and English LTR support with one-click language switching across the entire platform.",
+                cta_title: "Ready to Transform Your Engineering Office?",
+                cta_subtitle: "Log in to access your complete engineering management workspace.",
+                cta_button: "Login →"
+            }
+        };
+
+        function toggleLanding() {
+            const html = document.documentElement;
+            const isAr = html.lang === "ar";
+            const newLang = isAr ? "en" : "ar";
+
+            html.lang = newLang;
+            html.dir = newLang === "ar" ? "rtl" : "ltr";
+            document.getElementById("langBtn").textContent = newLang === "ar" ? "English" : "العربية";
+
+            document.querySelectorAll("[data-lang]").forEach(el => {
+                const key = el.getAttribute("data-lang");
+                if (landingTranslations[newLang][key]) {
+                    el.textContent = landingTranslations[newLang][key];
+                }
+            });
+        }
+    </script>
+</body>
+</html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Privacy.cshtml ===
 ﻿@{
     ViewData["Title"] = "Privacy Policy";
 }
@@ -8170,6 +8473,65 @@ namespace Bonyan.PL.ViewModels
 @if (TempData["ErrorMessage"] != null)
 {
     <div class="alert-error-msg"><i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]</div>
+}
+@if (TempData["WarningMessage"] != null)
+{
+    <div style="background:#fff3e0;border:2px solid #ff9800;border-radius:10px;padding:14px 18px;
+                    margin-bottom:18px;display:flex;align-items:flex-start;gap:12px">
+        <i class="fas fa-exclamation-triangle" style="font-size:1.5rem;color:#ff9800;margin-top:2px"></i>
+        <div style="font-size:0.9rem;color:#555">@TempData["WarningMessage"]</div>
+    </div>
+}
+
+<!-- ══ FULL CAPACITY ALERT ════════════════════════════ -->
+@if (isFull && hasCapacity)
+{
+    <div style="background:#fdecea;border:2px solid #e53935;border-radius:12px;padding:20px 24px;
+                        margin-bottom:22px;display:flex;align-items:flex-start;gap:16px">
+        <i class="fas fa-ban" style="font-size:2.4rem;color:#e53935;margin-top:2px"></i>
+        <div>
+            <div style="font-weight:700;font-size:1.05rem;color:#b71c1c;margin-bottom:6px">
+                ⛔ المخزن وصل إلى طاقته الاستيعابية الكاملة!
+            </div>
+            <div style="font-size:0.9rem;color:#555;margin-bottom:10px">
+                لا توجد مساحة متاحة في هذا المخزن. لا يمكن إضافة أي مواد جديدة.
+                يرجى اختيار مخزن آخر لديه سعة كافية.
+            </div>
+            @if (otherInventories.Any())
+            {
+                <div style="font-weight:600;font-size:0.88rem;color:#333;margin-bottom:8px">
+                    <i class="fas fa-warehouse" style="color:#388e3c"></i> المخازن المتاحة:
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    @foreach (var oi in otherInventories)
+                    {
+                        decimal oiUsed = oi.MaterialInventories
+                        .Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+                        decimal oiRemaining = oi.Capacity.HasValue ? oi.Capacity.Value - oiUsed : -1;
+                        bool oiFull = oi.Capacity.HasValue && oiRemaining <= 0;
+
+                        if (!oiFull)
+                        {
+                            <a asp-action="Details" asp-route-id="@oi.InventoryID"
+                               style="display:inline-flex;align-items:center;gap:6px;
+                                                      background:#e8f5e9;border:1px solid #a5d6a7;border-radius:20px;
+                                                      padding:6px 14px;font-size:0.85rem;color:#2e7d32;
+                                                      text-decoration:none;font-weight:600">
+                                <i class="fas fa-warehouse"></i>
+                                @oi.InventoryName
+                                @if (oi.Capacity.HasValue)
+                                {
+                                    <span style="font-size:0.78rem;color:#555;font-weight:400">
+                                        (@oiRemaining.ToString("N1") م³ متبقية)
+                                    </span>
+                                }
+                            </a>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    </div>
 }
 @if (TempData["WarningMessage"] != null)
 {
@@ -8619,6 +8981,39 @@ namespace Bonyan.PL.ViewModels
         }
 
         // ── Add Material form ─────────────────────────────────────
+        function checkUpdateCapacity() {
+            if (TOTAL_CAP < 0) return;
+            var qty = parseFloat(document.getElementById('updateNewQty').value) || 0;
+            var factor = parseFloat(document.getElementById('updateMatFactor').value) || 0;
+            var newVol = qty * factor;
+            var totalAfter = updateMatOtherVolume + newVol;
+
+            var previewBox = document.getElementById('updateVolPreview');
+            var warnBox = document.getElementById('updateWarnBox');
+            var warnText = document.getElementById('updateWarnText');
+            var submitBtn = document.getElementById('updateSubmitBtn');
+            var volVal = document.getElementById('updateVolVal');
+
+            if (qty > 0 && factor > 0) {
+                previewBox.style.display = 'block';
+                volVal.textContent = newVol.toFixed(2) + ' م³';
+            } else {
+                previewBox.style.display = 'none';
+            }
+
+            if (totalAfter > TOTAL_CAP && TOTAL_CAP > 0) {
+                warnBox.style.display = 'block';
+                warnText.textContent = 'الكمية المدخلة (' + newVol.toFixed(2) + ' م³) ستتجاوز سعة المخزن! الحد الأقصى المتاح: ' + (TOTAL_CAP - updateMatOtherVolume).toFixed(2) + ' م³';
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.5';
+            } else {
+                warnBox.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            }
+        }
+
+        // ── Add Material form ─────────────────────────────────────
         function showVolPreview(matSel) {
             var sel = matSel || document.querySelector('select[name="materialId"]');
             var qty = parseFloat(document.getElementById('addQty')?.value) || 0;
@@ -8637,6 +9032,28 @@ namespace Bonyan.PL.ViewModels
             } else {
                 preview.style.display = 'none';
             }
+
+            // Live capacity enforcement
+            if (REMAINING_CAP >= 0 && qty > 0 && factor > 0) {
+                if (vol > REMAINING_CAP) {
+                    var maxQty = REMAINING_CAP / factor;
+                    warnBox.style.display = 'block';
+                    warnText.textContent =
+                        'الحجم المطلوب (' + vol.toFixed(2) + ' م³) يتجاوز السعة المتبقية (' +
+                        REMAINING_CAP.toFixed(2) + ' م³). الحد الأقصى الذي يمكن إضافته: ' +
+                        maxQty.toFixed(3) + ' ' + (opt?.dataset?.unit || 'وحدة') + '.';
+                    addBtn.disabled = true;
+                    addBtn.style.opacity = '0.5';
+                } else {
+                    warnBox.style.display = 'none';
+                    addBtn.disabled = false;
+                    addBtn.style.opacity = '1';
+                }
+            } else {
+                warnBox.style.display = 'none';
+                if (addBtn) { addBtn.disabled = false; addBtn.style.opacity = '1'; }
+            }
+        }
 
             // Live capacity enforcement
             if (REMAINING_CAP >= 0 && qty > 0 && factor > 0) {

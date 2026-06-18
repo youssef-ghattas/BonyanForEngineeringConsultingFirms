@@ -70,6 +70,12 @@
         <form asp-action="Create" method="post" id="matForm">
             @Html.AntiForgeryToken()
 
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="inventoryDecision" id="hdnDecision" value="ok" />
+            <input type="hidden" name="secondaryInventoryId" id="hdnSecondaryInv" value="" />
+            <input type="hidden" name="splitQtyPrimary" id="hdnSplitPrimary" value="" />
+            <input type="hidden" name="splitQtySecondary" id="hdnSplitSecondary" value="" />
+
             <div class="form-grid-2">
 
                 <div class="form-group">
@@ -203,7 +209,7 @@
                 <a asp-action="Index" class="btn-bonyan-primary">
                     <i class="fas fa-times"></i> إلغاء
                 </a>
-                <button type="submit" class="btn-bonyan-secondary" onclick="return beforeSubmit()">
+                <button type="button" class="btn-bonyan-secondary" onclick="interceptSubmit(event)">
                     <i class="fas fa-save"></i> حفظ المادة وإنشاء الفاتورة
                 </button>
             </div>
@@ -212,11 +218,35 @@
 </div>
 
 @section Scripts {
+    <div id="capModal" style="display:none; position:fixed; inset:0;
+         background:rgba(0,0,0,.55); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:16px; padding:32px 28px;
+                    max-width:520px; width:94%; box-shadow:0 8px 40px rgba(0,0,0,.25);
+                    direction:rtl; text-align:right; position:relative;">
+            <div id="cmIcon" style="font-size:2.4rem; text-align:center; margin-bottom:8px;"></div>
+            <h4 id="cmTitle" style="margin:0 0 8px; color:#2C3E6B; font-size:1.1rem; text-align:center;"></h4>
+            <p id="cmBody" style="margin:0 0 18px; color:#555; font-size:0.9rem; line-height:1.7; text-align:center;"></p>
+
+            <div id="cmSecSection" style="display:none; margin-bottom:18px;">
+                <label style="font-weight:600; font-size:0.88rem; color:#444; margin-bottom:6px; display:block;">
+                    اختر المخزن البديل:
+                </label>
+                <select id="cmSecSelect" class="form-control" style="width:100%;"></select>
+                <div id="cmSecHint" style="font-size:0.8rem; color:#e53935; margin-top:5px;"></div>
+            </div>
+
+            <div id="cmActions" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+    </div>
+
     <script>
+        // ═══════════════════════════════════════════════════
+        //  Keep ALL original functions exactly as they were
+        // ═══════════════════════════════════════════════════
         var allSuppliers = [
             @foreach (var s in allSuppliers)
             {
-                    @Html.Raw($"{{id:{s.SupplierID},name:'{s.SupplierName.Replace("'", "\\'")}',phone:'{s.Phone ?? ""}',types:'{s.SuppliedMaterialTypes ?? ""}'}},")
+                        @Html.Raw($"{{id:{s.SupplierID},name:'{s.SupplierName.Replace("'", "\\'")}',phone:'{s.Phone ?? ""}',types:'{s.SuppliedMaterialTypes ?? ""}'}},")
             }
         ];
 
@@ -237,7 +267,7 @@
             updateNotice();
         }
 
-                function renderSuppliers(matType) {
+        function renderSuppliers(matType) {
             var container = document.getElementById('supplierContainer');
             document.getElementById('preferredSupplierID').value = '';
 
@@ -309,14 +339,157 @@
             }
         }
 
-        function beforeSubmit() {
+        // ═══════════════════════════════════════════════════
+        //  NEW: intercept submit → capacity check first
+        // ═══════════════════════════════════════════════════
+        function interceptSubmit(e) {
+            // Run original name validation first
             var matType = document.getElementById('matTypeSelect').value;
             if (matType === 'Others') {
                 var custom = document.getElementById('customName').value.trim();
-                if (!custom) { alert('يرجى كتابة اسم المادة الأخرى'); return false; }
+                if (!custom) { alert('يرجى كتابة اسم المادة الأخرى'); return; }
                 document.getElementById('matTypeSelect').value = custom;
             }
-            return true;
+
+            var invSel = document.querySelector('[name="TargetInventoryID"]');
+            var invId  = invSel ? invSel.value : '';
+            var qty    = parseFloat(document.getElementById('qty').value) || 0;
+            var vol    = parseFloat(document.getElementById('volFactor').value) || 1.0;
+
+            // No inventory selected or no quantity → submit normally
+            if (!invId || qty <= 0) {
+                document.getElementById('matForm').submit();
+                return;
+            }
+
+            // Call the capacity check API
+            fetch('/Material/CheckInventoryCapacity?inventoryId=' + invId + '&quantity=' + qty + '&volumeFactor=' + vol)
+                .then(function(r){ return r.json(); })
+                .then(function(result){
+                    if (result.status === 'ok') {
+                        document.getElementById('hdnDecision').value = 'ok';
+                        document.getElementById('matForm').submit();
+                    } else if (result.status === 'full') {
+                        showFullModal(result, invId, qty, vol);
+                    } else if (result.status === 'partial') {
+                        showPartialModal(result, invId, qty, vol);
+                    } else {
+                        document.getElementById('matForm').submit();
+                    }
+                })
+                .catch(function(){ document.getElementById('matForm').submit(); });
         }
+
+        // ── FULL modal (zero capacity) ─────────────────────
+        function showFullModal(result, invId, qty, vol) {
+            document.getElementById('cmIcon').textContent  = '⛔';
+            document.getElementById('cmTitle').textContent = 'المخزن ممتلئ!';
+            document.getElementById('cmBody').innerHTML =
+                'لا توجد مساحة متاحة في مخزن <strong>' + result.inventoryName + '</strong>.<br>' +
+                'الحجم المطلوب: <strong>' + result.neededM3.toFixed(2) + ' م³</strong> — المتاح: <strong>0 م³</strong>.<br>' +
+                'يجب اختيار مخزن آخر لتخزين الكمية كاملة.';
+
+            document.getElementById('cmSecSection').style.display = 'block';
+            loadAltInventories(invId, qty, vol, true);
+
+            document.getElementById('cmActions').innerHTML =
+                '<button onclick="confirmMove()" class="btn-bonyan-secondary" style="width:100%">' +
+                '<i class="fas fa-warehouse"></i> تخزين الكمية في مخزن آخر</button>' +
+                '<button onclick="closeCapModal()" style="border:none;background:none;color:#888;' +
+                'cursor:pointer;font-size:0.9rem;text-align:center;padding:6px;">إلغاء / تعديل البيانات</button>';
+
+            openCapModal();
+        }
+
+        // ── PARTIAL modal (some capacity but not enough) ───
+        function showPartialModal(result, invId, qty, vol) {
+            document.getElementById('cmIcon').textContent  = '⚠️';
+            document.getElementById('cmTitle').textContent = 'المساحة غير كافية!';
+            document.getElementById('cmBody').innerHTML =
+                'مخزن <strong>' + result.inventoryName + '</strong> يتوفر فيه <strong>' +
+                result.availableM3.toFixed(2) + ' م³</strong> فقط، لكن المادة تحتاج <strong>' +
+                result.neededM3.toFixed(2) + ' م³</strong>.<br><br>' +
+                'يمكن تخزين <strong>' + result.availableQty + ' وحدة</strong> هنا، ' +
+                'والباقي <strong>' + result.remainingQty + ' وحدة</strong> في مخزن آخر.';
+
+            document.getElementById('cmSecSection').style.display = 'block';
+            loadAltInventories(invId, result.remainingQty, vol, false);
+
+            var aq = result.availableQty;
+            var rq = result.remainingQty;
+            document.getElementById('cmActions').innerHTML =
+                '<button onclick="confirmSplit(' + aq + ',' + rq + ')" class="btn-bonyan-secondary" style="width:100%;background:#2C3E6B">' +
+                '<i class="fas fa-compress-arrows-alt"></i> تخزين ' + aq + ' وحدة هنا + ' + rq + ' وحدة في مخزن آخر</button>' +
+                '<button onclick="confirmMove()" class="btn-bonyan-secondary" style="width:100%;background:#8B5E3C">' +
+                '<i class="fas fa-warehouse"></i> تخزين الكمية كاملة (' + qty + ' وحدة) في مخزن آخر فقط</button>' +
+                '<button onclick="closeCapModal()" style="border:none;background:none;color:#888;' +
+                'cursor:pointer;font-size:0.9rem;text-align:center;padding:6px;">إلغاء / تعديل البيانات</button>';
+
+            openCapModal();
+        }
+
+        // ── Load alternative inventories into picker ────────
+        function loadAltInventories(excludeId, qtyNeeded, vol, mustFitAll) {
+            var sel  = document.getElementById('cmSecSelect');
+            var hint = document.getElementById('cmSecHint');
+            sel.innerHTML = '<option value="">جاري التحميل...</option>';
+
+            fetch('/Material/GetInventoriesWithCapacity?volumeFactor=' + vol + '&quantity=' + qtyNeeded)
+                .then(function(r){ return r.json(); })
+                .then(function(list){
+                    sel.innerHTML = '<option value="">-- اختر مخزناً بديلاً --</option>';
+                    var count = 0;
+                    list.forEach(function(inv){
+                        if (inv.inventoryID == excludeId) return;
+                        if (mustFitAll && !inv.canFitAll)  return;
+                        var o = document.createElement('option');
+                        o.value = inv.inventoryID;
+                        var avail = inv.availableM3 != null
+                            ? 'متاح: ' + inv.availableM3.toFixed(1) + ' م³'
+                            : 'غير محدود';
+                        o.textContent = inv.inventoryName + ' — ' + avail + (inv.canFitAll ? ' ✅' : ' ⚠️');
+                        sel.appendChild(o);
+                        count++;
+                    });
+                    if (count === 0) {
+                        sel.innerHTML = '<option value="">⛔ لا توجد مخازن بديلة</option>';
+                        hint.textContent = 'لا يوجد مخزن لديه سعة كافية. يرجى تعديل الكمية أو إضافة مخزن.';
+                    } else {
+                        hint.textContent = '';
+                    }
+                })
+                .catch(function(){
+                    sel.innerHTML = '<option value="">-- خطأ في التحميل --</option>';
+                });
+        }
+
+        function confirmSplit(primaryQty, secondaryQty) {
+            var secId = document.getElementById('cmSecSelect').value;
+            if (!secId) { alert('يرجى اختيار مخزن بديل أولاً'); return; }
+            document.getElementById('hdnDecision').value       = 'split';
+            document.getElementById('hdnSecondaryInv').value   = secId;
+            document.getElementById('hdnSplitPrimary').value   = primaryQty;
+            document.getElementById('hdnSplitSecondary').value = secondaryQty;
+            closeCapModal();
+            document.getElementById('matForm').submit();
+        }
+
+        function confirmMove() {
+            var secId = document.getElementById('cmSecSelect').value;
+            if (!secId) { alert('يرجى اختيار مخزن بديل أولاً'); return; }
+            document.getElementById('hdnDecision').value       = 'move';
+            document.getElementById('hdnSecondaryInv').value   = secId;
+            document.getElementById('hdnSplitPrimary').value   = '';
+            document.getElementById('hdnSplitSecondary').value = '';
+            closeCapModal();
+            document.getElementById('matForm').submit();
+        }
+
+        function openCapModal()  { var m=document.getElementById('capModal'); m.style.display='flex'; }
+        function closeCapModal() { document.getElementById('capModal').style.display='none'; }
+
+        document.getElementById('capModal').addEventListener('click', function(e){
+            if (e.target === this) closeCapModal();
+        });
     </script>
 }
