@@ -1,7 +1,9 @@
 ﻿using Bonyan.DAL.Context;
 using Bonyan.DAL.Enums;
+using BonyanForEngineeringConsultingFirms.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace BonyanForEngineeringConsultingFirms.Controllers
 {
@@ -14,11 +16,45 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context = context;
 		}
 
-        public IActionResult Landing()
+public async Task<IActionResult> Landing()
+    {
+        // ── Global system-wide counts ─────────────────────────────────────────────
+        int totalProjects = await _context.Projects.CountAsync();
+        int totalOffices = await _context.Admins.CountAsync();   // each Admin = one subscribed office
+        int completedProjects = await _context.Projects
+                                    .CountAsync(p => p.Status == ProjectStatus.Completed);
+        int totalDocuments = await _context.Documents.CountAsync()
+                             + await _context.Drawings.CountAsync(); // combined doc + drawing count
+
+        // ── Status breakdown for progress bars ───────────────────────────────────
+        int planningCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.Planning);
+        int inProgressCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.InProgress);
+        int onHoldCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.OnHold);
+
+        // ── Calculate percentages (guard against divide-by-zero) ─────────────────
+        double planningPct = totalProjects > 0 ? Math.Round((double)planningCount / totalProjects * 100, 1) : 0;
+        double inProgressPct = totalProjects > 0 ? Math.Round((double)inProgressCount / totalProjects * 100, 1) : 0;
+        double completedPct = totalProjects > 0 ? Math.Round((double)completedProjects / totalProjects * 100, 1) : 0;
+        double onHoldPct = totalProjects > 0 ? Math.Round((double)onHoldCount / totalProjects * 100, 1) : 0;
+
+        var vm = new LandingStatsViewModel
         {
-            return View();
-        }
-        public IActionResult Index()
+            TotalSubscribedOffices = totalOffices,
+            TotalCompletedProjects = completedProjects,
+            TotalProjects = totalProjects,
+            TotalDocuments = totalDocuments,
+            PlanningPercent = planningPct,
+            InProgressPercent = inProgressPct,
+            CompletedPercent = completedPct,
+            OnHoldPercent = onHoldPct,
+            ProjectsPlanning = planningCount,
+            ProjectsInProgress = inProgressCount,
+            ProjectsOnHold = onHoldCount
+        };
+
+        return View(vm);
+    }
+    public IActionResult Index()
 		{
 			if (HttpContext.Session.GetString("Email") == null)
 				return RedirectToAction("Login", "Account");
