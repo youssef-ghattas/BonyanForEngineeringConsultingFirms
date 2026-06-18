@@ -48,7 +48,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			ViewBag.TotalAmount = all.Sum(i => i.FinalAmount);
 			ViewBag.UnpaidAmount = all.Where(i => i.Status == InvoiceStatus.Unpaid).Sum(i => i.FinalAmount);
 
-			return View(all.OrderByDescending(i => i.InvoiceDate).ToList());
+			return View(all.OrderByDescending(i => i.InvoiceDate).ThenByDescending(i => i.MaterialInvoiceID).ToList());
 		}
 
 		// ── DETAILS ───────────────────────────────────────────────
@@ -109,31 +109,47 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Create(MaterialInvoice invoice)
 		{
-			if (!IsLoggedIn()) return RedirectToAction("Login", "Account");
-
 			ModelState.Remove("Material");
 			ModelState.Remove("Supplier");
+			ModelState.Remove("Notes");
 
 			if (!ModelState.IsValid)
 			{
-				ViewBag.Materials = await _context.Materials
-					.OrderBy(m => m.MaterialName).ToListAsync();
-				ViewBag.Suppliers = await _context.Suppliers
-					.OrderBy(s => s.SupplierName).ToListAsync();
-				ViewBag.FromMaterial = invoice.MaterialID > 0;
+				ViewBag.Materials = await _context.Materials.OrderBy(m => m.MaterialName).ToListAsync();
+				ViewBag.Suppliers = await _context.Suppliers.OrderBy(s => s.SupplierName).ToListAsync();
+				ViewBag.FromMaterial = false;
 				return View(invoice);
 			}
 
-			// Calculate amounts
+			// Calculate totals
 			invoice.TotalAmount = invoice.Quantity * invoice.UnitPrice;
-			decimal taxAmount = invoice.TotalAmount * (invoice.TaxPercent ?? 0) / 100;
-			decimal discountAmount = invoice.TotalAmount * (invoice.DiscountPercent ?? 0) / 100;
-			invoice.FinalAmount = invoice.TotalAmount + taxAmount - discountAmount;
+			var taxAmt = invoice.TotalAmount * (invoice.TaxPercent ?? 0) / 100;
+			var discAmt = invoice.TotalAmount * (invoice.DiscountPercent ?? 0) / 100;
+			invoice.FinalAmount = invoice.TotalAmount + taxAmt - discAmt;
+
+			// ── PARTIAL PAYMENT LOGIC ─────────────────────────────
+			if (invoice.Status == InvoiceStatus.PartiallyPaid)
+			{
+				decimal paid = invoice.AmountPaid ?? 0;
+				if (paid < 0) paid = 0;
+				if (paid > invoice.FinalAmount) paid = invoice.FinalAmount;
+				invoice.AmountPaid = paid;
+				invoice.RemainingAmount = invoice.FinalAmount - paid;
+			}
+			else if (invoice.Status == InvoiceStatus.Paid)
+			{
+				invoice.AmountPaid = invoice.FinalAmount;
+				invoice.RemainingAmount = 0;
+			}
+			else // Unpaid
+			{
+				invoice.AmountPaid = 0;
+				invoice.RemainingAmount = invoice.FinalAmount;
+			}
 
 			_context.MaterialInvoices.Add(invoice);
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تمت إضافة فاتورة المواد بنجاح";
 			return RedirectToAction(nameof(Details), new { id = invoice.MaterialInvoiceID });
 		}
 

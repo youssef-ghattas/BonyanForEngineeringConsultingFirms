@@ -168,11 +168,20 @@
                 @* ── STATUS ── *@
                 <div class="form-group">
                     <label>حالة الدفع</label>
-                    <select asp-for="Status" class="form-control">
+                    <select asp-for="Status" class="form-control" id="statusSelect" onchange="onStatusChange()">
                         <option value="1">غير مدفوعة</option>
                         <option value="0">مدفوعة</option>
                         <option value="2">مدفوعة جزئياً</option>
                     </select>
+                </div>
+
+                @* ── AMOUNT PAID (shown only when PartiallyPaid) ── *@
+                <div class="form-group" id="amountPaidRow" style="display:none;">
+                    <label>المبلغ المدفوع (ج.م) <span style="color:red">*</span></label>
+                    <input asp-for="AmountPaid" type="number" step="0.01" min="0"
+                           class="form-control" id="amountPaidInput"
+                           placeholder="0.00" oninput="calcRemaining()" />
+                    <span asp-validation-for="AmountPaid" class="text-danger"></span>
                 </div>
 
                 @* ── NOTES ── *@
@@ -204,6 +213,14 @@
                     <div class="invoice-summary-item invoice-summary-final">
                         <div class="invoice-summary-label">الصافي النهائي</div>
                         <div class="invoice-summary-value" id="dispFinal">0.00 ج.م</div>
+                    </div>
+                    <div class="invoice-summary-item invoice-summary-final" id="rowRemaining" style="display:none;">
+                        <div class="invoice-summary-label" style="color:#c62828;">المبلغ المتبقي</div>
+                        <div class="invoice-summary-value" id="dispRemaining" style="color:#c62828;">0.00 ج.م</div>
+                    </div>
+                    <div class="invoice-summary-item" id="rowPaid" style="display:none;">
+                        <div class="invoice-summary-label" style="color:#2e7d32;">المبلغ المدفوع</div>
+                        <div class="invoice-summary-value" id="dispPaid" style="color:#2e7d32;">0.00 ج.م</div>
                     </div>
                 </div>
             </div>
@@ -342,6 +359,9 @@
             setEl('dispTax',   taxAmt);
             setEl('dispDisc',  discAmt);
             setEl('dispFinal', final);
+
+            calcRemaining(); // ← ADD THIS LINE
+
         }
 
         document.addEventListener('DOMContentLoaded', calcFinal);
@@ -352,6 +372,45 @@
         }
         function closeCancelModal() {
             document.getElementById('cancelModal').classList.remove('active');
+        }
+                // ── Partial payment logic ─────────────────────────────────────
+        function onStatusChange() {
+            var status = document.getElementById('statusSelect').value;
+            var row    = document.getElementById('amountPaidRow');
+            var rowR   = document.getElementById('rowRemaining');
+            var rowP   = document.getElementById('rowPaid');
+
+            if (status === '2') {          // PartiallyPaid
+                row.style.display  = 'block';
+                rowR.style.display = 'flex';
+                rowP.style.display = 'flex';
+            } else {
+                row.style.display  = 'none';
+                rowR.style.display = 'none';
+                rowP.style.display = 'none';
+                document.getElementById('amountPaidInput').value = '';
+            }
+            calcRemaining();
+        }
+
+        function calcRemaining() {
+            var finalEl    = document.getElementById('dispFinal');
+            var finalText  = finalEl ? finalEl.textContent.replace(' ج.م', '').trim() : '0';
+            var final      = parseFloat(finalText) || 0;
+            var paid       = parseFloat(document.getElementById('amountPaidInput')?.value) || 0;
+
+            if (paid > final) {
+                paid = final;
+                document.getElementById('amountPaidInput').value = final.toFixed(2);
+            }
+
+            var remaining = final - paid;
+            var setEl = function(id, val) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = val.toFixed(2) + ' ج.م';
+            };
+            setEl('dispPaid',      paid);
+            setEl('dispRemaining', remaining);
         }
     </script>
 }
