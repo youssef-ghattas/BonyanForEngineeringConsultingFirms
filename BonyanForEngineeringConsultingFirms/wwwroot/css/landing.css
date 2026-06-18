@@ -1,0 +1,282 @@
+﻿/* ── Landing Page ─────────────────────────────────── */
+.landing-body {
+    background: var(--bg);
+}
+
+/* ── Landing Navbar (light variant of bonyan-navbar) ── */
+.landing-navbar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 40px;
+    background: var(--white);
+    box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+    z-index: 1000;
+}
+
+.landing-logo {
+    color: var(--primary);
+}
+
+    .landing-logo i {
+        color: var(--secondary);
+        font-size: 1.4rem;
+    }
+
+/* ── Hero Section ─────────────────────────────────── */
+.hero-section {
+    padding: 70px 40px;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #FFF8EE;
+    color: var(--secondary);
+    border: 1px solid #F5E6CF;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.hero-title {
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: var(--text);
+    margin-bottom: 20px;
+}
+
+    .hero-title .text-gold {
+        color: var(--secondary);
+        display: block;
+    }
+
+.hero-subtitle {
+    font-size: 1.05rem;
+    color: #666;
+    line-height: 1.8;
+    margin-bottom: 32px;
+    max-width: 540px;
+}
+
+.hero-cta-btn {
+    padding: 14px 30px;
+    font-size: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(27,58,107,0.25);
+}
+
+    .hero-cta-btn:hover {
+        transform: translateY(-2px);
+    }
+
+/* ── Hero Mockup ──────────────────────────────────── */
+.hero-mockup {
+    position: relative;
+}
+
+.mockup-card {
+    margin-bottom: 0;
+    padding-top: 34px;
+}
+
+.mockup-floating-badge {
+    position: absolute;
+    top: -16px;
+    inset-inline-start: 24px;
+    background: linear-gradient(135deg, var(--secondary), #e6a832);
+    color: var(--white);
+    padding: 9px 18px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    box-shadow: 0 8px 20px rgba(200,146,42,0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 5;
+    letter-spacing: 0.3px;
+}
+
+.mockup-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.stat-card-mini {
+    padding: 14px;
+    gap: 12px;
+}
+
+    .stat-card-mini .stat-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
+        border-radius: 10px;
+    }
+
+    .stat-card-mini .stat-info h3 {
+        font-size: 1.3rem;
+    }
+
+.mockup-chart {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 16px 18px;
+}
+
+.chart-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+    .chart-bar-row:last-child {
+        margin-bottom: 0;
+    }
+
+.chart-bar-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #777;
+    width: 80px;
+    flex-shrink: 0;
+}
+
+.chart-bar-row .progress-bar-wrap {
+    flex: 1;
+}
+
+/* ── Features Section ─────────────────────────────── */
+.features-section {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 50px 40px 80px;
+}
+
+.section-header {
+    text-align: center;
+    max-width: 620px;
+    margin: 0 auto 44px;
+}
+
+    .section-header h2 {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 10px;
+    }
+
+    .section-header p {
+        font-size: 1rem;
+        color: #888;
+    }
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.feature-card {
+    margin-bottom: 0;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .feature-card .stat-icon {
+        margin-bottom: 18px;
+    }
+
+    .feature-card h3 {
+        font-size: 1.08rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 10px;
+    }
+
+    .feature-card p {
+        font-size: 0.9rem;
+        color: #777;
+        line-height: 1.75;
+        margin: 0;
+    }
+
+/* ── Bottom CTA Banner ─────────────────────────────── */
+.cta-banner {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--sidebar) 100%);
+    text-align: center;
+    padding: 70px 40px;
+}
+
+    .cta-banner h2 {
+        color: var(--white);
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+
+    .cta-banner p {
+        color: rgba(255,255,255,0.75);
+        font-size: 1rem;
+        margin-bottom: 28px;
+    }
+
+.cta-btn {
+    padding: 14px 32px;
+    font-size: 1rem;
+    border-radius: 10px;
+}
+
+/* ── Responsive ────────────────────────────────────── */
+@media (max-width: 992px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-title {
+        font-size: 2.1rem;
+    }
+
+    .hero-mockup {
+        margin-top: 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .landing-navbar {
+        padding: 14px 20px;
+    }
+
+    .hero-section,
+    .features-section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}

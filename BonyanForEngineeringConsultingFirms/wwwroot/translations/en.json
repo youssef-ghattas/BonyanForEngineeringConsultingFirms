@@ -134,7 +134,33 @@
   "reset_new_password": "New Password",
   "reset_confirm_password": "Confirm Password",
   "reset_submit_btn": "Save and Send Password",
-  "reset_card_title": "Set New Password"
+  "reset_card_title": "Set New Password",
+  {
+  "Landing_Title": "Bonyan for Engineering Consulting",
+  "Landing_Badge": "Bonyan Engineering Platform",
+  "Landing_Heading_Part1": "The Future of",
+  "Landing_Heading_Gradient": "Engineering Office Management",
+  "Landing_Description": "An integrated digital platform that transforms how engineering offices manage projects, blueprints, clients, contracts, tasks, and teams — all from one powerful dashboard.",
+  "Landing_CTA_Button": "Enter Your Dashboard →",
+  "Landing_Stats_Title": "Live System Stats",
+  "Landing_Stat_ActiveProjects": "Active Projects",
+  "Landing_Stat_TotalTasks": "Assigned Tasks",
+  "Landing_Stat_TotalEmployees": "Engineers & Staff",
+  "Landing_Stat_TotalDocuments": "Blueprints & Docs",
+  "Landing_Progress_Label": "Overall Project Status Overview",
+  "Landing_Features_Title": "Everything Your Engineering Office Needs",
+  "Landing_Features_Subtitle": "From blueprint management to client contracts, manage your entire workflow in one unified platform.",
+  "Landing_Feat1_Title": "📁 Project Management",
+  "Landing_Feat1_Desc": "Track every project from inception to delivery. Monitor status, budgets, timelines, and milestones in real-time.",
+  "Landing_Feat2_Title": "📋 Task Assignment",
+  "Landing_Feat2_Desc": "Assign tasks to engineers, set deadlines, track progress and overdue items with automatic alerts.",
+  "Landing_Feat3_Title": "📐 Document Control",
+  "Landing_Feat3_Desc": "Upload, organize, and download blueprints, drawings, and documents linked directly to each project.",
+  "Landing_Bottom_CTA_Title": "Ready to Transform Your Engineering Office?",
+  "Landing_Bottom_CTA_Desc": "Log in to access your complete engineering management workspace and synchronize with your team instantly.",
+  "Landing_Bottom_CTA_Button": "Access Dashboard Now →"
+}
+
 
 
 }

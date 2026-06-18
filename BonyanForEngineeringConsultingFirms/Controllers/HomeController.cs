@@ -14,7 +14,11 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context = context;
 		}
 
-		public IActionResult Index()
+        public IActionResult Landing()
+        {
+            return View();
+        }
+        public IActionResult Index()
 		{
 			if (HttpContext.Session.GetString("Email") == null)
 				return RedirectToAction("Login", "Account");
