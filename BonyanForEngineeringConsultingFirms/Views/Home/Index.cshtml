@@ -5,6 +5,8 @@
     var fullName = Context.Session.GetString("FullName") ?? "المستخدم";
     var email = Context.Session.GetString("Email") ?? "";
     var isAdmin = role == "Admin";
+    var isPM = role == "ProjectManager";
+    var isEngineer = role == "Engineer";
 
     int projectCount = ViewBag.ProjectCount ?? 0;
     int taskCount = ViewBag.TaskCount ?? 0;
@@ -16,9 +18,23 @@
     int onHold = ViewBag.ProjectsOnHold ?? 0;
 
     string today = DateTime.Now.ToString("dddd، d MMMM yyyy",
-                   new System.Globalization.CultureInfo("ar-SA"));
+                     new System.Globalization.CultureInfo("ar-SA"));
     string todayEn = DateTime.Now.ToString("dddd, MMMM d, yyyy",
                      System.Globalization.CultureInfo.InvariantCulture);
+
+    // ── Role display info ─────────────────────────────────────
+    string roleIconClass = isAdmin ? "fas fa-shield-alt"
+                         : isPM ? "fas fa-project-diagram"
+                         : "fas fa-hard-hat";
+    string roleColorClass = isAdmin ? "role-badge-admin"
+                          : isPM ? "role-badge-pm"
+                          : "role-badge-engineer";
+    string roleArLabel = isAdmin ? "مدير النظام"
+                       : isPM ? "مدير المشروع"
+                       : "مهندس";
+    string roleEnLabel = isAdmin ? "Admin"
+                       : isPM ? "Project Manager"
+                       : "Engineer";
 }
 
 <link rel="stylesheet" href="~/css/home.css" />
@@ -37,6 +53,14 @@
                 <span data-lang="greeting_hello">أهلاً،</span>
                 @fullName
             </h2>
+
+            <!-- ── Role Badge ─────────────────────────────── -->
+            <div class="role-badge @roleColorClass">
+                <i class="@roleIconClass"></i>
+                <span class="role-ar">@roleArLabel</span>
+                <span class="role-en" style="display:none">@roleEnLabel</span>
+            </div>
+
             <p class="greeting-sub">
                 <span data-lang="greeting_sub">إليك ملخص نشاط مكتبك الهندسي اليوم</span>
             </p>
@@ -54,6 +78,14 @@
                    class="btn-banner-outline">
                     <i class="fas fa-plus"></i>
                     <span data-lang="btn_new_project">مشروع جديد</span>
+                </a>
+            }
+            @if (isPM)
+            {
+                <a asp-controller="Task" asp-action="Create"
+                   class="btn-banner-outline">
+                    <i class="fas fa-plus"></i>
+                    <span data-lang="btn_new_task">مهمة جديدة</span>
                 </a>
             }
         </div>
@@ -164,61 +196,124 @@
 </div>
 
 <!-- ════════════════════════════════════════════════
-     QUICK ACTIONS
+     QUICK ACTIONS  —  Role-based
 ════════════════════════════════════════════════ -->
 <div class="home-section-header">
     <h3 class="home-section-title">
         <i class="fas fa-bolt"></i>
         <span data-lang="quick_actions">إجراءات سريعة ⚡</span>
     </h3>
+    <span class="qa-role-hint @roleColorClass">
+        <i class="@roleIconClass"></i>
+        <span class="role-ar">@roleArLabel</span>
+        <span class="role-en" style="display:none">@roleEnLabel</span>
+    </span>
 </div>
 
 <div class="quick-actions-grid">
 
-    <a class="qa-btn" asp-controller="Project" asp-action="Index">
-        <div class="qa-icon blue"><i class="fas fa-project-diagram"></i></div>
-        <span class="qa-label" data-lang="qa_projects">المشاريع</span>
-    </a>
+    <!-- ══ ADMIN — full access ═══════════════════════════════ -->
+    @if (isAdmin)
+    {
+        <a class="qa-btn" asp-controller="Employee" asp-action="Index">
+            <div class="qa-icon cyan"><i class="fas fa-users-cog"></i></div>
+            <span class="qa-label" data-lang="qa_hr">الموارد البشرية</span>
+        </a>
+        <a class="qa-btn" asp-controller="Project" asp-action="Index">
+            <div class="qa-icon blue"><i class="fas fa-project-diagram"></i></div>
+            <span class="qa-label" data-lang="qa_projects">المشاريع</span>
+        </a>
+        <a class="qa-btn" asp-controller="Task" asp-action="Index">
+            <div class="qa-icon gold"><i class="fas fa-tasks"></i></div>
+            <span class="qa-label" data-lang="qa_tasks">المهام</span>
+        </a>
+        <a class="qa-btn" asp-controller="Document" asp-action="Index">
+            <div class="qa-icon teal"><i class="fas fa-file-alt"></i></div>
+            <span class="qa-label" data-lang="qa_documents">المستندات</span>
+        </a>
+        <a class="qa-btn" asp-controller="Drawing" asp-action="Index">
+            <div class="qa-icon purple"><i class="fas fa-drafting-compass"></i></div>
+            <span class="qa-label" data-lang="qa_drawings">الرسومات</span>
+        </a>
+        <a class="qa-btn" asp-controller="Invoice" asp-action="Index">
+            <div class="qa-icon green"><i class="fas fa-file-invoice-dollar"></i></div>
+            <span class="qa-label" data-lang="qa_invoices">الفواتير</span>
+        </a>
+        <a class="qa-btn" asp-controller="Material" asp-action="Index">
+            <div class="qa-icon orange"><i class="fas fa-boxes"></i></div>
+            <span class="qa-label" data-lang="qa_materials">المواد</span>
+        </a>
+        <a class="qa-btn" asp-controller="Inventory" asp-action="Index">
+            <div class="qa-icon orange"><i class="fas fa-warehouse"></i></div>
+            <span class="qa-label" data-lang="qa_inventory">المخزون</span>
+        </a>
+        <a class="qa-btn" asp-controller="Supplier" asp-action="Index">
+            <div class="qa-icon indigo"><i class="fas fa-truck"></i></div>
+            <span class="qa-label" data-lang="qa_suppliers">الموردون</span>
+        </a>
+        <a class="qa-btn" asp-controller="SiteVisit" asp-action="Index">
+            <div class="qa-icon rose"><i class="fas fa-hard-hat"></i></div>
+            <span class="qa-label" data-lang="qa_sitevisits">حضور الموقع</span>
+        </a>
+        <a class="qa-btn" asp-controller="MaterialInvoice" asp-action="Index">
+            <div class="qa-icon green"><i class="fas fa-file-invoice"></i></div>
+            <span class="qa-label" data-lang="qa_material_invoices">فواتير المواد</span>
+        </a>
+    }
 
-    <a class="qa-btn" asp-controller="Task" asp-action="Index">
-        <div class="qa-icon gold"><i class="fas fa-tasks"></i></div>
-        <span class="qa-label" data-lang="qa_tasks">المهام</span>
-    </a>
+    <!-- ══ PROJECT MANAGER — project operations ══════════════ -->
+    @if (isPM)
+    {
+        <a class="qa-btn" asp-controller="Project" asp-action="Index">
+            <div class="qa-icon blue"><i class="fas fa-project-diagram"></i></div>
+            <span class="qa-label" data-lang="qa_projects">المشاريع</span>
+        </a>
+        <a class="qa-btn" asp-controller="Task" asp-action="Index">
+            <div class="qa-icon gold"><i class="fas fa-tasks"></i></div>
+            <span class="qa-label" data-lang="qa_tasks">المهام</span>
+        </a>
+        <a class="qa-btn" asp-controller="Document" asp-action="Index">
+            <div class="qa-icon teal"><i class="fas fa-file-alt"></i></div>
+            <span class="qa-label" data-lang="qa_documents">المستندات</span>
+        </a>
+        <a class="qa-btn" asp-controller="Drawing" asp-action="Index">
+            <div class="qa-icon purple"><i class="fas fa-drafting-compass"></i></div>
+            <span class="qa-label" data-lang="qa_drawings">الرسومات</span>
+        </a>
+        <a class="qa-btn" asp-controller="SiteVisit" asp-action="Index">
+            <div class="qa-icon rose"><i class="fas fa-hard-hat"></i></div>
+            <span class="qa-label" data-lang="qa_sitevisits">حضور الموقع</span>
+        </a>
+        <a class="qa-btn" asp-controller="Invoice" asp-action="Index">
+            <div class="qa-icon green"><i class="fas fa-file-invoice-dollar"></i></div>
+            <span class="qa-label" data-lang="qa_invoices">الفواتير</span>
+        </a>
+    }
 
-    <a class="qa-btn" asp-controller="Document" asp-action="Index">
-        <div class="qa-icon teal"><i class="fas fa-file-alt"></i></div>
-        <span class="qa-label" data-lang="qa_documents">المستندات</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="Drawing" asp-action="Index">
-        <div class="qa-icon purple"><i class="fas fa-drafting-compass"></i></div>
-        <span class="qa-label" data-lang="qa_drawings">الرسومات</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="Invoice" asp-action="Index">
-        <div class="qa-icon green"><i class="fas fa-file-invoice-dollar"></i></div>
-        <span class="qa-label" data-lang="qa_invoices">الفواتير</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="Inventory" asp-action="Index">
-        <div class="qa-icon orange"><i class="fas fa-warehouse"></i></div>
-        <span class="qa-label" data-lang="qa_inventory">المخزون</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="Supplier" asp-action="Index">
-        <div class="qa-icon indigo"><i class="fas fa-truck"></i></div>
-        <span class="qa-label" data-lang="qa_suppliers">الموردون</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="SiteVisit" asp-action="Index">
-        <div class="qa-icon rose"><i class="fas fa-hard-hat"></i></div>
-        <span class="qa-label" data-lang="qa_sitevisits">حضور الموقع</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="Employee" asp-action="Index">
-        <div class="qa-icon cyan"><i class="fas fa-users-cog"></i></div>
-        <span class="qa-label" data-lang="qa_hr">الموارد البشرية</span>
-    </a>
+    <!-- ══ ENGINEER — personal work ══════════════════════════ -->
+    @if (isEngineer)
+    {
+        <a class="qa-btn" asp-controller="Project" asp-action="Index">
+            <div class="qa-icon blue"><i class="fas fa-project-diagram"></i></div>
+            <span class="qa-label" data-lang="qa_projects">المشاريع</span>
+        </a>
+        <a class="qa-btn" asp-controller="Task" asp-action="Index">
+            <div class="qa-icon gold"><i class="fas fa-tasks"></i></div>
+            <span class="qa-label" data-lang="qa_tasks">المهام</span>
+        </a>
+        <a class="qa-btn" asp-controller="Document" asp-action="Index">
+            <div class="qa-icon teal"><i class="fas fa-file-alt"></i></div>
+            <span class="qa-label" data-lang="qa_documents">المستندات</span>
+        </a>
+        <a class="qa-btn" asp-controller="Drawing" asp-action="Index">
+            <div class="qa-icon purple"><i class="fas fa-drafting-compass"></i></div>
+            <span class="qa-label" data-lang="qa_drawings">الرسومات</span>
+        </a>
+        <a class="qa-btn" asp-controller="SiteVisit" asp-action="Index">
+            <div class="qa-icon rose"><i class="fas fa-hard-hat"></i></div>
+            <span class="qa-label" data-lang="qa_sitevisits">حضور الموقع</span>
+        </a>
+    }
 
 </div>
 
@@ -252,7 +347,6 @@
                         ProjectStatus.Cancelled => "cancelled",
                         _ => "planning"
                     };
-                    string badgeClass = topClass;
                     string statusAr = p.Status switch
                     {
                         ProjectStatus.Planning => "تخطيط",
@@ -280,7 +374,7 @@
                                 @(p.Client_Name ?? "—")
                             </div>
 
-                            <span class="rp-status-badge @badgeClass"
+                            <span class="rp-status-badge @topClass"
                                   data-en="@statusEn" data-ar="@statusAr">
                                 @statusAr
                             </span>
@@ -321,7 +415,7 @@
         </div>
     </div>
 
-    <!-- Right: Recent Activity -->
+    <!-- Right: Recent Tasks -->
     <div class="home-panel">
         <div class="home-panel-header">
             <h3 class="home-section-title">
@@ -379,11 +473,21 @@
 
 @section Scripts {
     <script>
-        // ── Date pill: switch AR/EN on lang toggle ─────────
+        // ── Date pill + role badge: switch AR/EN on lang toggle ─────────
         document.addEventListener('bonyanLangChanged', function (e) {
             const lang = e.detail;
+
+            // Date pill
             document.querySelectorAll('[data-lang-text]').forEach(el => {
                 el.style.display = (el.getAttribute('data-lang-text') === lang) ? '' : 'none';
+            });
+
+            // Role badge text
+            document.querySelectorAll('.role-ar').forEach(el => {
+                el.style.display = lang === 'ar' ? '' : 'none';
+            });
+            document.querySelectorAll('.role-en').forEach(el => {
+                el.style.display = lang === 'en' ? '' : 'none';
             });
         });
     </script>

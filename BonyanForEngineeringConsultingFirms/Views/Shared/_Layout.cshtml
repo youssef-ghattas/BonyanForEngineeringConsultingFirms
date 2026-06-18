@@ -98,6 +98,14 @@
 
                 @if (role == "Admin")
                 {
+
+                    
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
                     <li class="sidebar-section-title">
                         <span data-lang="management">الإدارة</span>
                     </li>
@@ -180,6 +188,13 @@
 
                 @if (role == "ProjectManager")
                 {
+
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
                     <li class="sidebar-section-title">
                         <span data-lang="my_projects">مشاريعي</span>
                     </li>
@@ -226,6 +241,12 @@
 
                 @if (role == "Engineer")
                 {
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
                     <li class="sidebar-section-title">
                         <span data-lang="my_projects">مشاريعي</span>
                     </li>

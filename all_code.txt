@@ -2222,8 +2222,10 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 }=== File: ./BonyanForEngineeringConsultingFirms/Controllers/HomeController.cs ===
 ﻿using Bonyan.DAL.Context;
 using Bonyan.DAL.Enums;
+using BonyanForEngineeringConsultingFirms.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace BonyanForEngineeringConsultingFirms.Controllers
 {
@@ -2236,11 +2238,45 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context = context;
 		}
 
-        public IActionResult Landing()
+public async Task<IActionResult> Landing()
+    {
+        // ── Global system-wide counts ─────────────────────────────────────────────
+        int totalProjects = await _context.Projects.CountAsync();
+        int totalOffices = await _context.Admins.CountAsync();   // each Admin = one subscribed office
+        int completedProjects = await _context.Projects
+                                    .CountAsync(p => p.Status == ProjectStatus.Completed);
+        int totalDocuments = await _context.Documents.CountAsync()
+                             + await _context.Drawings.CountAsync(); // combined doc + drawing count
+
+        // ── Status breakdown for progress bars ───────────────────────────────────
+        int planningCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.Planning);
+        int inProgressCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.InProgress);
+        int onHoldCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.OnHold);
+
+        // ── Calculate percentages (guard against divide-by-zero) ─────────────────
+        double planningPct = totalProjects > 0 ? Math.Round((double)planningCount / totalProjects * 100, 1) : 0;
+        double inProgressPct = totalProjects > 0 ? Math.Round((double)inProgressCount / totalProjects * 100, 1) : 0;
+        double completedPct = totalProjects > 0 ? Math.Round((double)completedProjects / totalProjects * 100, 1) : 0;
+        double onHoldPct = totalProjects > 0 ? Math.Round((double)onHoldCount / totalProjects * 100, 1) : 0;
+
+        var vm = new LandingStatsViewModel
         {
-            return View();
-        }
-        public IActionResult Index()
+            TotalSubscribedOffices = totalOffices,
+            TotalCompletedProjects = completedProjects,
+            TotalProjects = totalProjects,
+            TotalDocuments = totalDocuments,
+            PlanningPercent = planningPct,
+            InProgressPercent = inProgressPct,
+            CompletedPercent = completedPct,
+            OnHoldPercent = onHoldPct,
+            ProjectsPlanning = planningCount,
+            ProjectsInProgress = inProgressCount,
+            ProjectsOnHold = onHoldCount
+        };
+
+        return View(vm);
+    }
+    public IActionResult Index()
 		{
 			if (HttpContext.Session.GetString("Email") == null)
 				return RedirectToAction("Login", "Account");
@@ -4847,6 +4883,34 @@ namespace Bonyan.PL.ViewModels
 		[DataType(DataType.Password)]
 		public string ConfirmNewPassword { get; set; }
 	}
+}=== File: ./BonyanForEngineeringConsultingFirms/ViewModel/LandingStatsViewModel.cs ===
+﻿namespace BonyanForEngineeringConsultingFirms.ViewModels
+{
+    public class LandingStatsViewModel
+    {
+        // Card 1 (Blue)
+        public int TotalSubscribedOffices { get; set; }
+
+        // Card 2 (Green)
+        public int TotalCompletedProjects { get; set; }
+
+        // Card 3 (Gold/Yellow)
+        public int TotalProjects { get; set; }
+
+        // Card 4 (Red)
+        public int TotalDocuments { get; set; }
+
+        // Progress Bar percentages (0-100)
+        public double PlanningPercent { get; set; }
+        public double InProgressPercent { get; set; }
+        public double CompletedPercent { get; set; }
+        public double OnHoldPercent { get; set; }
+
+        // Raw counts for tooltips/labels
+        public int ProjectsPlanning { get; set; }
+        public int ProjectsInProgress { get; set; }
+        public int ProjectsOnHold { get; set; }
+    }
 }=== File: ./BonyanForEngineeringConsultingFirms/Views/Account/AdminRegister.cshtml ===
 ﻿@{
     ViewData["Title"] = "إنشاء حساب أدمن";
@@ -7226,17 +7290,409 @@ namespace Bonyan.PL.ViewModels
         }
     </script>
 }=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Index.cshtml ===
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "الرئيسية";
+    var role = Context.Session.GetString("Role") ?? "";
+    var fullName = Context.Session.GetString("FullName") ?? "المستخدم";
+    var email = Context.Session.GetString("Email") ?? "";
+    var isAdmin = role == "Admin";
+
+    int projectCount = ViewBag.ProjectCount ?? 0;
+    int taskCount = ViewBag.TaskCount ?? 0;
+    int employeeCount = ViewBag.EmployeeCount ?? 0;
+    int invoiceCount = ViewBag.InvoiceCount ?? 0;
+    int inProgress = ViewBag.ProjectsInProgress ?? 0;
+    int planning = ViewBag.ProjectsPlanning ?? 0;
+    int completed = ViewBag.ProjectsCompleted ?? 0;
+    int onHold = ViewBag.ProjectsOnHold ?? 0;
+
+    string today = DateTime.Now.ToString("dddd، d MMMM yyyy",
+                   new System.Globalization.CultureInfo("ar-SA"));
+    string todayEn = DateTime.Now.ToString("dddd, MMMM d, yyyy",
+                     System.Globalization.CultureInfo.InvariantCulture);
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<link rel="stylesheet" href="~/css/home.css" />
+
+<!-- ════════════════════════════════════════════════
+     WELCOME BANNER
+════════════════════════════════════════════════ -->
+<div class="home-banner">
+    <div class="banner-top">
+
+        <div class="banner-greeting">
+            <span class="greeting-label">
+                <span data-lang="greeting_label">مرحباً بعودتك 👋</span>
+            </span>
+            <h2>
+                <span data-lang="greeting_hello">أهلاً،</span>
+                @fullName
+            </h2>
+            <p class="greeting-sub">
+                <span data-lang="greeting_sub">إليك ملخص نشاط مكتبك الهندسي اليوم</span>
+            </p>
+        </div>
+
+        <div class="banner-actions">
+            <a asp-controller="Project" asp-action="Index"
+               class="btn-banner-gold">
+                <i class="fas fa-project-diagram"></i>
+                <span data-lang="btn_all_projects">كل المشاريع</span>
+            </a>
+            @if (isAdmin)
+            {
+                <a asp-controller="Project" asp-action="Create"
+                   class="btn-banner-outline">
+                    <i class="fas fa-plus"></i>
+                    <span data-lang="btn_new_project">مشروع جديد</span>
+                </a>
+            }
+        </div>
+
+    </div>
+
+    <!-- Mini stats row -->
+    <div class="banner-stats-row">
+        <div class="banner-stat-pill">
+            <i class="fas fa-layer-group"></i>
+            <strong>@inProgress</strong>
+            <span data-lang="pill_active">مشروع نشط</span>
+        </div>
+        <div class="banner-stat-pill">
+            <i class="fas fa-tasks"></i>
+            <strong>@taskCount</strong>
+            <span data-lang="pill_tasks">مهمة</span>
+        </div>
+        <div class="banner-stat-pill">
+            <i class="fas fa-users"></i>
+            <strong>@employeeCount</strong>
+            <span data-lang="pill_engineers">مهندس</span>
+        </div>
+        <div class="banner-stat-pill">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <strong>@invoiceCount</strong>
+            <span data-lang="pill_invoices">فاتورة</span>
+        </div>
+        <div class="banner-stat-pill date-pill">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="date-ar" data-lang-text="ar">@today</span>
+            <span class="date-en" data-lang-text="en" style="display:none">@todayEn</span>
+        </div>
+    </div>
 </div>
-=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Landing.cshtml ===
-﻿@{
+
+<!-- ════════════════════════════════════════════════
+     SUMMARY CARDS — 4 grid
+════════════════════════════════════════════════ -->
+<div class="home-cards-grid">
+
+    <!-- Total Projects -->
+    <a class="home-stat-card" asp-controller="Project" asp-action="Index">
+        <div class="hsc-top">
+            <div class="hsc-icon blue"><i class="fas fa-project-diagram"></i></div>
+            <span class="hsc-trend neu">
+                <i class="fas fa-layer-group"></i>
+                <span data-lang="trend_total">الإجمالي</span>
+            </span>
+        </div>
+        <span class="hsc-number">@projectCount</span>
+        <div class="hsc-bottom">
+            <span class="hsc-label" data-lang="card_projects">إجمالي المشاريع</span>
+            <span class="hsc-sub">
+                @inProgress <span data-lang="card_projects_sub">نشط · </span>@completed <span data-lang="card_projects_sub2">مكتمل</span>
+            </span>
+        </div>
+    </a>
+
+    <!-- Total Tasks -->
+    <a class="home-stat-card" asp-controller="Task" asp-action="Index">
+        <div class="hsc-top">
+            <div class="hsc-icon gold"><i class="fas fa-tasks"></i></div>
+            <span class="hsc-trend up">
+                <i class="fas fa-arrow-up"></i>
+                <span data-lang="trend_tasks">المهام</span>
+            </span>
+        </div>
+        <span class="hsc-number">@taskCount</span>
+        <div class="hsc-bottom">
+            <span class="hsc-label" data-lang="card_tasks">إجمالي المهام</span>
+            <span class="hsc-sub" data-lang="card_tasks_sub">عبر جميع المشاريع</span>
+        </div>
+    </a>
+
+    <!-- Invoices -->
+    <a class="home-stat-card" asp-controller="Invoice" asp-action="Index">
+        <div class="hsc-top">
+            <div class="hsc-icon green"><i class="fas fa-file-invoice-dollar"></i></div>
+            <span class="hsc-trend up">
+                <i class="fas fa-coins"></i>
+                <span data-lang="trend_invoices">الفواتير</span>
+            </span>
+        </div>
+        <span class="hsc-number">@invoiceCount</span>
+        <div class="hsc-bottom">
+            <span class="hsc-label" data-lang="card_invoices">الفواتير</span>
+            <span class="hsc-sub" data-lang="card_invoices_sub">إجمالي الفواتير المسجّلة</span>
+        </div>
+    </a>
+
+    <!-- Engineers -->
+    <a class="home-stat-card" asp-controller="Employee" asp-action="Index">
+        <div class="hsc-top">
+            <div class="hsc-icon purple"><i class="fas fa-hard-hat"></i></div>
+            <span class="hsc-trend neu">
+                <i class="fas fa-users"></i>
+                <span data-lang="trend_engineers">الفريق</span>
+            </span>
+        </div>
+        <span class="hsc-number">@employeeCount</span>
+        <div class="hsc-bottom">
+            <span class="hsc-label" data-lang="card_engineers">المهندسون</span>
+            <span class="hsc-sub" data-lang="card_engineers_sub">أعضاء الفريق المسجّلون</span>
+        </div>
+    </a>
+
+</div>
+
+<!-- ════════════════════════════════════════════════
+     QUICK ACTIONS
+════════════════════════════════════════════════ -->
+<div class="home-section-header">
+    <h3 class="home-section-title">
+        <i class="fas fa-bolt"></i>
+        <span data-lang="quick_actions">إجراءات سريعة ⚡</span>
+    </h3>
+</div>
+
+<div class="quick-actions-grid">
+
+    <a class="qa-btn" asp-controller="Project" asp-action="Index">
+        <div class="qa-icon blue"><i class="fas fa-project-diagram"></i></div>
+        <span class="qa-label" data-lang="qa_projects">المشاريع</span>
+    </a>
+
+    <a class="qa-btn" asp-controller="Task" asp-action="Index">
+        <div class="qa-icon gold"><i class="fas fa-tasks"></i></div>
+        <span class="qa-label" data-lang="qa_tasks">المهام</span>
+    </a>
+
+    <a class="qa-btn" asp-controller="Document" asp-action="Index">
+        <div class="qa-icon teal"><i class="fas fa-file-alt"></i></div>
+        <span class="qa-label" data-lang="qa_documents">المستندات</span>
+    </a>
+
+    <a class="qa-btn" asp-controller="Drawing" asp-action="Index">
+        <div class="qa-icon purple"><i class="fas fa-drafting-compass"></i></div>
+        <span class="qa-label" data-lang="qa_drawings">الرسومات</span>
+    </a>
+
+    <a class="qa-btn" asp-controller="Invoice" asp-action="Index">
+        <div class="qa-icon green"><i class="fas fa-file-invoice-dollar"></i></div>
+        <span class="qa-label" data-lang="qa_invoices">الفواتير</span>
+    </a>
+
+    <a class="qa-btn" asp-controller="Inventory" asp-action="Index">
+        <div class="qa-icon orange"><i class="fas fa-warehouse"></i></div>
+        <span class="qa-label" data-lang="qa_inventory">المخزون</span>
+    </a>
+
+    <a class="qa-btn" asp-controller="Supplier" asp-action="Index">
+        <div class="qa-icon indigo"><i class="fas fa-truck"></i></div>
+        <span class="qa-label" data-lang="qa_suppliers">الموردون</span>
+    </a>
+
+    <a class="qa-btn" asp-controller="SiteVisit" asp-action="Index">
+        <div class="qa-icon rose"><i class="fas fa-hard-hat"></i></div>
+        <span class="qa-label" data-lang="qa_sitevisits">حضور الموقع</span>
+    </a>
+
+    <a class="qa-btn" asp-controller="Employee" asp-action="Index">
+        <div class="qa-icon cyan"><i class="fas fa-users-cog"></i></div>
+        <span class="qa-label" data-lang="qa_hr">الموارد البشرية</span>
+    </a>
+
+</div>
+
+<!-- ════════════════════════════════════════════════
+     RECENT PROJECTS + ACTIVITY
+════════════════════════════════════════════════ -->
+<div class="home-two-col">
+
+    <!-- Left: Recent Projects -->
+    <div class="home-panel">
+        <div class="home-panel-header">
+            <h3 class="home-section-title">
+                <i class="fas fa-folder-open"></i>
+                <span data-lang="recent_projects">أحدث المشاريع</span>
+            </h3>
+            <a asp-controller="Project" asp-action="Index"
+               class="home-view-all" data-lang="view_all">عرض الكل</a>
+        </div>
+
+        <div class="recent-projects-grid">
+            @if (ViewBag.RecentProjects != null && ((IEnumerable<dynamic>)ViewBag.RecentProjects).Any())
+            {
+                foreach (var p in ViewBag.RecentProjects)
+                {
+                    string topClass = p.Status switch
+                    {
+                        ProjectStatus.InProgress => "inprogress",
+                        ProjectStatus.Planning => "planning",
+                        ProjectStatus.Completed => "completed",
+                        ProjectStatus.OnHold => "onhold",
+                        ProjectStatus.Cancelled => "cancelled",
+                        _ => "planning"
+                    };
+                    string badgeClass = topClass;
+                    string statusAr = p.Status switch
+                    {
+                        ProjectStatus.Planning => "تخطيط",
+                        ProjectStatus.InProgress => "جاري التنفيذ",
+                        ProjectStatus.Completed => "مكتمل",
+                        ProjectStatus.OnHold => "موقوف",
+                        ProjectStatus.Cancelled => "ملغي",
+                        _ => p.Status.ToString()
+                    };
+                    string statusEn = p.Status.ToString();
+
+                    int daysLeft = 0;
+                    if (p.EndDate != null)
+                        daysLeft = Math.Max(0, (int)((DateTime)p.EndDate - DateTime.Now).TotalDays);
+
+                    int taskCnt = p.Tasks?.Count ?? 0;
+                    int docCnt = p.Documents?.Count ?? 0;
+
+                    <a class="rp-card" asp-controller="Project" asp-action="Details" asp-route-id="@p.ProjectId">
+                        <div class="rp-card-top @topClass"></div>
+                        <div class="rp-card-body">
+                            <div class="rp-card-name" title="@p.ProjectName">@p.ProjectName</div>
+                            <div class="rp-card-client">
+                                <i class="fas fa-user-tie" style="font-size:0.68rem;margin-left:3px;"></i>
+                                @(p.Client_Name ?? "—")
+                            </div>
+
+                            <span class="rp-status-badge @badgeClass"
+                                  data-en="@statusEn" data-ar="@statusAr">
+                                @statusAr
+                            </span>
+
+                            <div class="rp-card-meta">
+                                @if (taskCnt > 0)
+                                {
+                                    <span>
+                                        <i class="fas fa-tasks"></i>
+                                        @taskCnt <span data-lang="meta_tasks">مهمة</span>
+                                    </span>
+                                }
+                                @if (docCnt > 0)
+                                {
+                                    <span>
+                                        <i class="fas fa-file-alt"></i>
+                                        @docCnt <span data-lang="meta_docs">مستند</span>
+                                    </span>
+                                }
+                                @if (p.EndDate != null && p.Status != ProjectStatus.Completed && p.Status != ProjectStatus.Cancelled)
+                                {
+                                    <span class="rp-days-left">
+                                        @daysLeft <span data-lang="meta_days">يوم متبقٍّ</span>
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </a>
+                }
+            }
+            else
+            {
+                <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);">
+                    <i class="fas fa-folder-open" style="font-size:2.5rem;opacity:0.3;display:block;margin-bottom:12px;"></i>
+                    <span data-lang="no_projects">لا توجد مشاريع حتى الآن</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Right: Recent Activity -->
+    <div class="home-panel">
+        <div class="home-panel-header">
+            <h3 class="home-section-title">
+                <i class="fas fa-clock"></i>
+                <span data-lang="recent_tasks">آخر المهام</span>
+            </h3>
+            <a asp-controller="Task" asp-action="Index"
+               class="home-view-all" data-lang="view_all">عرض الكل</a>
+        </div>
+
+        <div class="activity-feed">
+            @if (ViewBag.RecentTasks != null)
+            {
+                foreach (var t in ViewBag.RecentTasks)
+                {
+                    string dotColor = t.Status switch
+                    {
+                        TasksStatus.Pending => "gold",
+                        TasksStatus.InProgress => "blue",
+                        TasksStatus.Completed => "green",
+                        TasksStatus.Cancelled => "red",
+                        TasksStatus.UnderReview => "purple",
+                        _ => "blue"
+                    };
+                    string statusAr = t.Status switch
+                    {
+                        TasksStatus.Pending => "معلق",
+                        TasksStatus.InProgress => "جاري",
+                        TasksStatus.UnderReview => "قيد المراجعة",
+                        TasksStatus.Completed => "مكتمل",
+                        TasksStatus.Cancelled => "ملغي",
+                        _ => t.Status.ToString()
+                    };
+                    <div class="af-item">
+                        <div class="af-dot @dotColor">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="af-text">
+                            <p>@t.Task_Name</p>
+                            <span data-en="@t.Status.ToString()" data-ar="@statusAr">@statusAr</span>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div style="text-align:center;padding:30px;color:var(--muted);font-size:0.85rem;">
+                    <span data-lang="no_data">لا توجد بيانات</span>
+                </div>
+            }
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        // ── Date pill: switch AR/EN on lang toggle ─────────
+        document.addEventListener('bonyanLangChanged', function (e) {
+            const lang = e.detail;
+            document.querySelectorAll('[data-lang-text]').forEach(el => {
+                el.style.display = (el.getAttribute('data-lang-text') === lang) ? '' : 'none';
+            });
+        });
+    </script>
+}=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Landing.cshtml ===
+﻿@model BonyanForEngineeringConsultingFirms.ViewModels.LandingStatsViewModel
+@{
     Layout = null;
+
+    // Safe helpers so view never crashes if model is null (e.g. during design-time)
+    int offices = Model?.TotalSubscribedOffices ?? 0;
+    int completed = Model?.TotalCompletedProjects ?? 0;
+    int total = Model?.TotalProjects ?? 0;
+    int docs = Model?.TotalDocuments ?? 0;
+    double planPct = Model?.PlanningPercent ?? 30;
+    double progPct = Model?.InProgressPercent ?? 55;
+    double compPct = Model?.CompletedPercent ?? 80;
+    double holdPct = Model?.OnHoldPercent ?? 15;
 }
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -7307,75 +7763,125 @@ namespace Bonyan.PL.ViewModels
                 </a>
             </div>
 
-            <!-- Right Column: Dashboard Preview Mockup -->
-            <div class="hero-mockup">
-                <div class="mockup-floating-badge">
-                    <i class="fas fa-sack-dollar"></i>
-                    <span data-lang="mockup_badge">إجمالي الميزانية 5.2 مليون $</span>
+            <div class="bonyan-card mockup-card" style="padding: 18px;">
+
+               
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:18px;">
+
+                   
+                    <div style="padding:14px 14px 12px; border-radius:8px; border:0.5px solid rgba(0,0,0,0.08); background:#f8f9fc; display:flex; flex-direction:column; gap:10px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                            <div style="width:34px;height:34px;border-radius:8px;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                                <i class="fas fa-building-columns"></i>
+                            </div>
+                            <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:99px;background:#E6F1FB;color:#185FA5;letter-spacing:.04em;">OFFICES</span>
+                        </div>
+                        <span style="font-size:26px;font-weight:600;color:#1a1a2e;line-height:1;">+@offices</span>
+                        <div style="border-top:0.5px solid rgba(0,0,0,0.08);padding-top:8px;display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-size:11px;color:#1a1a2e;font-weight:600;" data-lang="stat_offices_label">مكتب هندسي مشترك</span>
+                            <span style="font-size:10px;color:#888;line-height:1.4;">Subscribed engineering offices across the platform</span>
+                        </div>
+                    </div>
+
+                    
+                    <div style="padding:14px 14px 12px; border-radius:8px; border:0.5px solid rgba(0,0,0,0.08); background:#f8f9fc; display:flex; flex-direction:column; gap:10px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                            <div style="width:34px;height:34px;border-radius:8px;background:#EAF3DE;color:#3B6D11;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                                <i class="fas fa-circle-check"></i>
+                            </div>
+                            <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:99px;background:#EAF3DE;color:#3B6D11;letter-spacing:.04em;">DELIVERED</span>
+                        </div>
+                        <span style="font-size:26px;font-weight:600;color:#1a1a2e;line-height:1;">@completed</span>
+                        <div style="border-top:0.5px solid rgba(0,0,0,0.08);padding-top:8px;display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-size:11px;color:#1a1a2e;font-weight:600;" data-lang="stat_completed_label">مشروع مُسلَّم بنجاح</span>
+                            <span style="font-size:10px;color:#888;line-height:1.4;">Projects completed and handed over to clients</span>
+                        </div>
+                    </div>
+
+                    
+                    <div style="padding:14px 14px 12px; border-radius:8px; border:0.5px solid rgba(0,0,0,0.08); background:#f8f9fc; display:flex; flex-direction:column; gap:10px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                            <div style="width:34px;height:34px;border-radius:8px;background:#FAEEDA;color:#854F0B;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                                <i class="fas fa-table-cells-large"></i>
+                            </div>
+                            <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:99px;background:#FAEEDA;color:#854F0B;letter-spacing:.04em;">PROJECTS</span>
+                        </div>
+                        <span style="font-size:26px;font-weight:600;color:#1a1a2e;line-height:1;">@total</span>
+                        <div style="border-top:0.5px solid rgba(0,0,0,0.08);padding-top:8px;display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-size:11px;color:#1a1a2e;font-weight:600;" data-lang="stat_projects_label">إجمالي المشاريع المسجّلة</span>
+                            <span style="font-size:10px;color:#888;line-height:1.4;">All projects registered system-wide</span>
+                        </div>
+                    </div>
+
+                   
+                    <div style="padding:14px 14px 12px; border-radius:8px; border:0.5px solid rgba(0,0,0,0.08); background:#f8f9fc; display:flex; flex-direction:column; gap:10px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                            <div style="width:34px;height:34px;border-radius:8px;background:#FCEBEB;color:#A32D2D;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                                <i class="fas fa-file-lines"></i>
+                            </div>
+                            <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:99px;background:#FCEBEB;color:#A32D2D;letter-spacing:.04em;">DOCUMENTS</span>
+                        </div>
+                        <span style="font-size:26px;font-weight:600;color:#1a1a2e;line-height:1;">@docs.ToString("N0")</span>
+                        <div style="border-top:0.5px solid rgba(0,0,0,0.08);padding-top:8px;display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-size:11px;color:#1a1a2e;font-weight:600;" data-lang="stat_documents_label">مستند ومخطط هندسي</span>
+                            <span style="font-size:10px;color:#888;line-height:1.4;">Technical docs &amp; drawings uploaded</span>
+                        </div>
+                    </div>
+
                 </div>
 
-                <div class="bonyan-card mockup-card">
-                    <div class="mockup-stats-grid">
-                        <div class="stat-card stat-card-mini">
-                            <div class="stat-icon blue"><i class="fas fa-diagram-project"></i></div>
-                            <div class="stat-info">
-                                <h3>24</h3>
-                                <p data-lang="stat_projects_label">مشروع نشط</p>
-                            </div>
+               
+                <div style="height:0.5px;background:rgba(0,0,0,0.08);margin:0 0 14px;"></div>
+
+                
+                <div style="display:flex;flex-direction:column;gap:9px;">
+
+                    <div style="display:grid;grid-template-columns:110px 1fr 34px;align-items:center;gap:10px;">
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666;">
+                            <span style="width:7px;height:7px;border-radius:50%;background:#1565C0;flex-shrink:0;"></span>
+                            <span data-lang="chart_planning">تخطيط · Planning</span>
+                        </span>
+                        <div style="height:5px;background:#eee;border-radius:99px;overflow:hidden;">
+                            <div style="height:100%;width:@(planPct)%;background:#1565C0;border-radius:99px;"></div>
                         </div>
-                        <div class="stat-card stat-card-mini">
-                            <div class="stat-icon green"><i class="fas fa-list-check"></i></div>
-                            <div class="stat-info">
-                                <h3>128</h3>
-                                <p data-lang="stat_tasks_label">مهمة منجزة</p>
-                            </div>
-                        </div>
-                        <div class="stat-card stat-card-mini">
-                            <div class="stat-icon gold"><i class="fas fa-handshake"></i></div>
-                            <div class="stat-info">
-                                <h3>18</h3>
-                                <p data-lang="stat_clients_label">عميل</p>
-                            </div>
-                        </div>
-                        <div class="stat-card stat-card-mini">
-                            <div class="stat-icon red"><i class="fas fa-file-alt"></i></div>
-                            <div class="stat-info">
-                                <h3>342</h3>
-                                <p data-lang="stat_documents_label">مستند</p>
-                            </div>
-                        </div>
+                        <span style="font-size:10px;color:#999;text-align:right;font-weight:500;">@(planPct)%</span>
                     </div>
 
-                    <div class="mockup-chart">
-                        <div class="chart-bar-row">
-                            <span class="chart-bar-label" data-lang="chart_planning">تخطيط</span>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:30%; background:#1565C0;"></div>
-                            </div>
+                    <div style="display:grid;grid-template-columns:110px 1fr 34px;align-items:center;gap:10px;">
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666;">
+                            <span style="width:7px;height:7px;border-radius:50%;background:#C8922A;flex-shrink:0;"></span>
+                            <span data-lang="chart_inprogress">قيد التنفيذ · Active</span>
+                        </span>
+                        <div style="height:5px;background:#eee;border-radius:99px;overflow:hidden;">
+                            <div style="height:100%;width:@(progPct)%;background:#C8922A;border-radius:99px;"></div>
                         </div>
-                        <div class="chart-bar-row">
-                            <span class="chart-bar-label" data-lang="chart_inprogress">قيد التنفيذ</span>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:55%; background:#C8922A;"></div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-row">
-                            <span class="chart-bar-label" data-lang="chart_completed">مكتمل</span>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:80%; background:#28A745;"></div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-row">
-                            <span class="chart-bar-label" data-lang="chart_onhold">متوقف</span>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:15%; background:#6A1B9A;"></div>
-                            </div>
-                        </div>
+                        <span style="font-size:10px;color:#999;text-align:right;font-weight:500;">@(progPct)%</span>
                     </div>
+
+                    <div style="display:grid;grid-template-columns:110px 1fr 34px;align-items:center;gap:10px;">
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666;">
+                            <span style="width:7px;height:7px;border-radius:50%;background:#28A745;flex-shrink:0;"></span>
+                            <span data-lang="chart_completed">مكتمل · Delivered</span>
+                        </span>
+                        <div style="height:5px;background:#eee;border-radius:99px;overflow:hidden;">
+                            <div style="height:100%;width:@(compPct)%;background:#28A745;border-radius:99px;"></div>
+                        </div>
+                        <span style="font-size:10px;color:#999;text-align:right;font-weight:500;">@(compPct)%</span>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:110px 1fr 34px;align-items:center;gap:10px;">
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666;">
+                            <span style="width:7px;height:7px;border-radius:50%;background:#A32D2D;flex-shrink:0;"></span>
+                            <span data-lang="chart_onhold">متوقف · On Hold</span>
+                        </span>
+                        <div style="height:5px;background:#eee;border-radius:99px;overflow:hidden;">
+                            <div style="height:100%;width:@(holdPct)%;background:#A32D2D;border-radius:99px;"></div>
+                        </div>
+                        <span style="font-size:10px;color:#999;text-align:right;font-weight:500;">@(holdPct)%</span>
+                    </div>
+
                 </div>
             </div>
-
-        </div>
     </section>
 
     <!-- ── Features Grid Section ─────────────────── -->
@@ -7438,7 +7944,7 @@ namespace Bonyan.PL.ViewModels
 
     <!-- Landing Language Switch -->
     <script>
-        const landingTranslations = {
+               const landingTranslations = {
             ar: {
                 nav_login: "تسجيل الدخول",
                 hero_badge: "مميزات المنصة",
@@ -7446,33 +7952,42 @@ namespace Bonyan.PL.ViewModels
                 hero_title_2: "إدارة المكاتب الهندسية",
                 hero_subtitle: "منصة رقمية متكاملة تُحدث نقلة في طريقة إدارة المكاتب الهندسية لمشاريعها ومخططاتها وعملائها وعقودها ومهامها وفرقها — كل ذلك من لوحة تحكم واحدة قوية.",
                 hero_cta: "تسجيل دخول ←",
-                mockup_badge: "إجمالي الميزانية 5.2 مليون $",
-                stat_projects_label: "مشروع نشط",
-                stat_tasks_label: "مهمة منجزة",
-                stat_clients_label: "عميل",
-                stat_documents_label: "مستند",
-                chart_planning: "تخطيط",
-                chart_inprogress: "قيد التنفيذ",
-                chart_completed: "مكتمل",
-                chart_onhold: "متوقف",
-                features_title: "كل ما يحتاجه مكتبك الهندسي",
+                mockup_badge: "مشروع مسجّل في المنصة",
+
+                // ── Stat cards ──────────────────────────────
+                stat_offices_label:   "مكتب هندسي مشترك",
+                stat_completed_label: "مشروع مُسلَّم بنجاح",
+                stat_projects_label:  "إجمالي المشاريع المسجّلة",
+                stat_documents_label: "مستند ومخطط هندسي",
+
+                // ── Progress bars ────────────────────────────
+                chart_planning:   "تخطيط · Planning",
+                chart_inprogress: "قيد التنفيذ · Active",
+                chart_completed:  "مكتمل · Delivered",
+                chart_onhold:     "متوقف · On Hold",
+
+                // ── Features section ─────────────────────────
+                features_title:    "كل ما يحتاجه مكتبك الهندسي",
                 features_subtitle: "مجموعة متكاملة من الأدوات لإدارة مكتبك الهندسي بكفاءة وسهولة",
                 feat1_title: "إدارة المشاريع",
-                feat1_desc: "تتبع كل مشروع منذ البداية وحتى التسليم. راقب الحالة والميزانيات والجداول الزمنية والمعالم الرئيسية لحظة بلحظة.",
+                feat1_desc:  "تتبع كل مشروع منذ البداية وحتى التسليم. راقب الحالة والميزانيات والجداول الزمنية والمعالم الرئيسية لحظة بلحظة.",
                 feat2_title: "إسناد المهام",
-                feat2_desc: "أسند المهام للمهندسين، حدد المواعيد النهائية، وتابع التقدم والمهام المتأخرة بتنبيهات تلقائية.",
+                feat2_desc:  "أسند المهام للمهندسين، حدد المواعيد النهائية، وتابع التقدم والمهام المتأخرة بتنبيهات تلقائية.",
                 feat3_title: "إدارة المستندات",
-                feat3_desc: "ارفع ونظّم وحمّل المخططات والرسومات والمستندات المرتبطة مباشرة بكل مشروع.",
+                feat3_desc:  "ارفع ونظّم وحمّل المخططات والرسومات والمستندات المرتبطة مباشرة بكل مشروع.",
                 feat4_title: "إدارة العملاء والعقود",
-                feat4_desc: "احتفظ بسجلات كاملة للعملاء والعقود والميزانيات. اربط العملاء مباشرة بمشاريعهم.",
+                feat4_desc:  "احتفظ بسجلات كاملة للعملاء والعقود والميزانيات. اربط العملاء مباشرة بمشاريعهم.",
                 feat5_title: "الموارد البشرية",
-                feat5_desc: "أدر فريق المهندسين والأدوار وصلاحيات الوصول. أضف أعضاء جدد ببيانات دخول تُنشأ تلقائياً.",
+                feat5_desc:  "أدر فريق المهندسين والأدوار وصلاحيات الوصول. أضف أعضاء جدد ببيانات دخول تُنشأ تلقائياً.",
                 feat6_title: "ثنائي اللغة (عربي/إنجليزي)",
-                feat6_desc: "دعم كامل للغة العربية (RTL) والإنجليزية (LTR) مع تبديل فوري للغة عبر المنصة بالكامل.",
-                cta_title: "هل أنت مستعد لتطوير مكتبك الهندسي؟",
+                feat6_desc:  "دعم كامل للغة العربية (RTL) والإنجليزية (LTR) مع تبديل فوري للغة عبر المنصة بالكامل.",
+
+                // ── CTA banner ───────────────────────────────
+                cta_title:    "هل أنت مستعد لتطوير مكتبك الهندسي؟",
                 cta_subtitle: "سجّل الدخول للوصول إلى مساحة العمل المتكاملة لإدارة مكتبك الهندسي.",
-                cta_button: " تسجيل دخول←"
+                cta_button:   "تسجيل دخول ←"
             },
+
             en: {
                 nav_login: "Login",
                 hero_badge: "Platform Features",
@@ -7480,32 +7995,40 @@ namespace Bonyan.PL.ViewModels
                 hero_title_2: "Engineering Office Management",
                 hero_subtitle: "An integrated digital platform that transforms how engineering offices manage projects, blueprints, clients, contracts, tasks, and teams — all from one powerful dashboard.",
                 hero_cta: "Login →",
-                mockup_badge: "TOTAL BUDGET $5.2M",
-                stat_projects_label: "Active Projects",
-                stat_tasks_label: "Completed Tasks",
-                stat_clients_label: "Clients",
-                stat_documents_label: "Documents",
-                chart_planning: "Planning",
-                chart_inprogress: "In Progress",
-                chart_completed: "Completed",
-                chart_onhold: "On Hold",
-                features_title: "Everything Your Engineering Office Needs",
+                mockup_badge: "Projects registered on the platform",
+
+                // ── Stat cards ──────────────────────────────
+                stat_offices_label:   "Subscribed engineering offices",
+                stat_completed_label: "Successfully delivered projects",
+                stat_projects_label:  "Total registered projects",
+                stat_documents_label: "Technical docs & drawings",
+
+                // ── Progress bars ────────────────────────────
+                chart_planning:   "Planning · تخطيط",
+                chart_inprogress: "Active · قيد التنفيذ",
+                chart_completed:  "Delivered · مكتمل",
+                chart_onhold:     "On Hold · متوقف",
+
+                // ── Features section ─────────────────────────
+                features_title:    "Everything Your Engineering Office Needs",
                 features_subtitle: "A complete suite of tools to manage every aspect of your engineering office efficiently.",
                 feat1_title: "Project Management",
-                feat1_desc: "Track every project from inception to delivery. Monitor status, budgets, timelines, and milestones in real-time.",
+                feat1_desc:  "Track every project from inception to delivery. Monitor status, budgets, timelines, and milestones in real-time.",
                 feat2_title: "Task Assignment",
-                feat2_desc: "Assign tasks to engineers, set deadlines, track progress and overdue items with automatic alerts.",
+                feat2_desc:  "Assign tasks to engineers, set deadlines, track progress and overdue items with automatic alerts.",
                 feat3_title: "Document Control",
-                feat3_desc: "Upload, organize, and download blueprints, drawings, and documents linked directly to each project.",
+                feat3_desc:  "Upload, organize, and download blueprints, drawings, and documents linked directly to each project.",
                 feat4_title: "Client & Contract Management",
-                feat4_desc: "Maintain complete client records, contracts, and budgets. Link clients directly to their projects.",
+                feat4_desc:  "Maintain complete client records, contracts, and budgets. Link clients directly to their projects.",
                 feat5_title: "Human Resources",
-                feat5_desc: "Manage engineering staff, roles, and access. Onboard new team members with auto-generated credentials.",
+                feat5_desc:  "Manage engineering staff, roles, and access. Onboard new team members with auto-generated credentials.",
                 feat6_title: "Bilingual (AR / EN)",
-                feat6_desc: "Full Arabic RTL and English LTR support with one-click language switching across the entire platform.",
-                cta_title: "Ready to Transform Your Engineering Office?",
+                feat6_desc:  "Full Arabic RTL and English LTR support with one-click language switching across the entire platform.",
+
+                // ── CTA banner ───────────────────────────────
+                cta_title:    "Ready to Transform Your Engineering Office?",
                 cta_subtitle: "Log in to access your complete engineering management workspace.",
-                cta_button: "Login →"
+                cta_button:   "Login →"
             }
         };
 
@@ -12015,50 +12538,45 @@ else
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bonyan - بنيان</title>
 
-    <!-- Bootstrap RTL -->
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" />
-
-    <!-- Font Awesome Icons -->
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
-    <!-- Google Fonts Arabic + English -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap"
           rel="stylesheet" />
 
-    <!-- Our Custom CSS -->
     <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/home.css" />
 </head>
 <body>
 
-    <!-- ── Top Navbar ────────────────────────────── -->
+    <!-- ── Top Navbar ─────────────────────────────── -->
     <nav class="bonyan-navbar">
-        <!-- Sidebar Toggle Button -->
+
         <button class="sidebar-toggle" onclick="toggleSidebar()">
             <i class="fas fa-bars"></i>
         </button>
 
-        <!-- Logo -->
         <div class="navbar-logo">
             <i class="fas fa-building"></i>
             <span>Bonyan | بنيان</span>
         </div>
 
-        <!-- Right Side -->
         <div class="navbar-right">
-            <!-- Language Switch Button -->
-            <button id="langBtn"
-                    class="lang-btn"
-                    onclick="toggleLanguage()">
+
+            <!-- Dark Mode Toggle -->
+            <button class="dark-mode-btn" id="darkModeBtn" onclick="toggleDarkMode()" title="Dark / Light">
+                <i class="fas fa-moon" id="darkModeIcon"></i>
+            </button>
+
+            <!-- Language Switch -->
+            <button id="langBtn" class="lang-btn" onclick="toggleLanguage()">
                 English
             </button>
 
-            <!-- User Info -->
+            <!-- User Dropdown -->
             <div class="navbar-user dropdown">
-                <div class="user-info-btn"
-                     data-bs-toggle="dropdown"
-                     style="cursor:pointer">
+                <div class="user-info-btn" data-bs-toggle="dropdown" style="cursor:pointer">
                     <i class="fas fa-user-circle fa-lg"></i>
                     <div class="user-details">
                         <span class="user-name">
@@ -12080,29 +12598,30 @@ else
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <a class="dropdown-item text-danger"
-                           asp-controller="Account"
-                           asp-action="Logout">
+                           asp-controller="Account" asp-action="Logout">
                             <i class="fas fa-sign-out-alt me-2"></i>
                             <span data-lang="logout">تسجيل الخروج</span>
                         </a>
                     </li>
                 </ul>
             </div>
+
         </div>
     </nav>
 
-    <!-- ── Wrapper ───────────────────────────────── -->
+    <!-- ── Wrapper ────────────────────────────────── -->
     <div class="bonyan-wrapper">
 
-        <!-- ── Sidebar ───────────────────────────── -->
+        <!-- ── Sidebar ────────────────────────────── -->
         <aside class="bonyan-sidebar" id="sidebar">
             <ul class="sidebar-menu">
 
-                <!-- ── Everyone sees Dashboard ────────────── -->
+                <!-- HOME button — always visible for everyone -->
                 <li>
-                    <a asp-controller="Home" asp-action="Index">
-                        <i class="fas fa-chart-line"></i>
-                        <span data-lang="dashboard">لوحة التحكم</span>
+                    <a asp-controller="Home" asp-action="Index"
+                       class="sidebar-home-btn @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                        <i class="fas fa-home"></i>
+                        <span data-lang="home">الرئيسية</span>
                     </a>
                 </li>
 
@@ -12112,7 +12631,6 @@ else
 
                 @if (role == "Admin")
                 {
-                    <!-- Admin sees everything -->
                     <li class="sidebar-section-title">
                         <span data-lang="management">الإدارة</span>
                     </li>
@@ -12195,7 +12713,6 @@ else
 
                 @if (role == "ProjectManager")
                 {
-                    <!-- Project Manager sees his projects + task management -->
                     <li class="sidebar-section-title">
                         <span data-lang="my_projects">مشاريعي</span>
                     </li>
@@ -12242,7 +12759,6 @@ else
 
                 @if (role == "Engineer")
                 {
-                    <!-- Engineer sees his projects + can add everything -->
                     <li class="sidebar-section-title">
                         <span data-lang="my_projects">مشاريعي</span>
                     </li>
@@ -12290,24 +12806,40 @@ else
             </ul>
         </aside>
 
-        <!-- ── Main Content ──────────────────────── -->
+        <!-- ── Main Content ───────────────────────── -->
         <main class="bonyan-content">
             @RenderBody()
         </main>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-    </script>
-
-    <!-- Language Switch JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/lang-switch.js"></script>
 
-    <!-- Sidebar Toggle JS -->
     <script>
+        // ── Sidebar toggle ─────────────────────────
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('collapsed');
         }
+
+        // ── Dark Mode ──────────────────────────────
+        const darkBtn  = document.getElementById('darkModeBtn');
+        const darkIcon = document.getElementById('darkModeIcon');
+
+        function applyDarkMode(on) {
+            document.body.classList.toggle('dark-mode', on);
+            darkIcon.className = on ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('bonyan-dark', on ? '1' : '0');
+        }
+
+        function toggleDarkMode() {
+            applyDarkMode(!document.body.classList.contains('dark-mode'));
+        }
+
+        // Restore preference on load
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            if (saved === '1') applyDarkMode(true);
+        })();
     </script>
 
     @RenderSection("Scripts", required: false)
@@ -15555,6 +16087,832 @@ button.accept-policy {
 
 .forgot-field {
     margin-bottom: 18px;
+}
+=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/home.css ===
+﻿/* ══════════════════════════════════════════════════════
+   home.css  —  Home Page (not dashboard)
+   Supports: Light/Dark mode · RTL/LTR · Responsive
+══════════════════════════════════════════════════════ */
+
+/* ── Dark Mode Variables ────────────────────────────── */
+body.dark-mode {
+    --bg: #0f1923;
+    --white: #1a2535;
+    --text: #e2e8f0;
+    --card-border: rgba(255,255,255,0.07);
+    --muted: #8899aa;
+    --input-bg: #1e2d40;
+}
+
+body:not(.dark-mode) {
+    --card-border: rgba(0,0,0,0.06);
+    --muted: #888;
+    --input-bg: #f4f6f9;
+}
+
+/* ════════════════════════════════════════════════════
+   WELCOME BANNER
+════════════════════════════════════════════════════ */
+.home-banner {
+    background: linear-gradient(135deg, #1B3A6B 0%, #112240 60%, #0d1c33 100%);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+
+    .home-banner::before {
+        content: '';
+        position: absolute;
+        top: -40px;
+        left: -40px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: rgba(200,146,42,0.08);
+        pointer-events: none;
+    }
+
+    .home-banner::after {
+        content: '';
+        position: absolute;
+        bottom: -60px;
+        right: 60px;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: rgba(200,146,42,0.05);
+        pointer-events: none;
+    }
+
+.banner-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.banner-greeting {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+    .banner-greeting .greeting-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--secondary);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .banner-greeting h2 {
+        font-size: 1.55rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .banner-greeting .greeting-sub {
+        font-size: 0.85rem;
+        color: rgba(255,255,255,0.5);
+        margin-top: 2px;
+    }
+
+/* ── Banner CTA Buttons ─────────────────────────────── */
+.banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.btn-banner-gold {
+    background: var(--secondary);
+    color: #fff;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 9px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.25s;
+    white-space: nowrap;
+}
+
+    .btn-banner-gold:hover {
+        background: #a87520;
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+.btn-banner-outline {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 9px 20px;
+    border-radius: 9px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.25s;
+    white-space: nowrap;
+}
+
+    .btn-banner-outline:hover {
+        background: rgba(255,255,255,0.18);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+/* ── Banner Mini Stats Row ──────────────────────────── */
+.banner-stats-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.banner-stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.85);
+    white-space: nowrap;
+}
+
+    .banner-stat-pill i {
+        color: var(--secondary);
+        font-size: 0.78rem;
+    }
+
+    .banner-stat-pill strong {
+        color: #fff;
+        font-weight: 700;
+    }
+
+    .banner-stat-pill.date-pill {
+        margin-right: auto;
+        background: rgba(200,146,42,0.15);
+        border-color: rgba(200,146,42,0.3);
+        color: var(--secondary);
+    }
+
+[dir="ltr"] .banner-stat-pill.date-pill {
+    margin-right: 0;
+    margin-left: auto;
+}
+
+/* ════════════════════════════════════════════════════
+   SUMMARY CARDS (4-grid)
+════════════════════════════════════════════════════ */
+.home-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.home-stat-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 22px 20px 18px;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: transform 0.25s, box-shadow 0.25s;
+    text-decoration: none;
+    color: inherit;
+}
+
+    .home-stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.11);
+        color: inherit;
+    }
+
+.hsc-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hsc-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+    .hsc-icon.blue {
+        background: var(--primary);
+    }
+
+    .hsc-icon.gold {
+        background: var(--secondary);
+    }
+
+    .hsc-icon.green {
+        background: #28A745;
+    }
+
+    .hsc-icon.red {
+        background: #DC3545;
+    }
+
+    .hsc-icon.purple {
+        background: #6f42c1;
+    }
+
+    .hsc-icon.teal {
+        background: #17a2b8;
+    }
+
+.hsc-trend {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+}
+
+    .hsc-trend.up {
+        background: #EAFAF1;
+        color: #1a7a3e;
+    }
+
+    .hsc-trend.down {
+        background: #FDEDEE;
+        color: #8B0000;
+    }
+
+    .hsc-trend.neu {
+        background: #EEF2FF;
+        color: #3730a3;
+    }
+
+.hsc-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1;
+}
+
+body.dark-mode .hsc-number {
+    color: #e2e8f0;
+}
+
+.hsc-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-top: 12px;
+    border-top: 1px solid var(--card-border);
+}
+
+.hsc-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.hsc-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+/* ════════════════════════════════════════════════════
+   QUICK ACTIONS
+════════════════════════════════════════════════════ */
+.home-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.home-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+body.dark-mode .home-section-title {
+    color: #e2e8f0;
+}
+
+.home-section-title i {
+    color: var(--secondary);
+}
+
+.home-view-all {
+    font-size: 0.8rem;
+    color: var(--secondary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+
+    .home-view-all:hover {
+        opacity: 0.75;
+        color: var(--secondary);
+    }
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.qa-btn {
+    background: var(--white);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 18px 10px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.25s;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    cursor: pointer;
+}
+
+    .qa-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        color: var(--text);
+    }
+
+.qa-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #fff;
+}
+
+    .qa-icon.blue {
+        background: #1B3A6B;
+    }
+
+    .qa-icon.gold {
+        background: #C8922A;
+    }
+
+    .qa-icon.green {
+        background: #28A745;
+    }
+
+    .qa-icon.red {
+        background: #DC3545;
+    }
+
+    .qa-icon.purple {
+        background: #6f42c1;
+    }
+
+    .qa-icon.teal {
+        background: #17a2b8;
+    }
+
+    .qa-icon.orange {
+        background: #fd7e14;
+    }
+
+    .qa-icon.indigo {
+        background: #4B0082;
+    }
+
+    .qa-icon.rose {
+        background: #e91e63;
+    }
+
+    .qa-icon.cyan {
+        background: #00acc1;
+    }
+
+.qa-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.3;
+}
+
+body.dark-mode .qa-label {
+    color: #c8d3df;
+}
+
+/* ════════════════════════════════════════════════════
+   RECENT PROJECTS CARDS
+════════════════════════════════════════════════════ */
+.home-two-col {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 22px;
+    margin-bottom: 28px;
+    align-items: start;
+}
+
+[dir="ltr"] .home-two-col {
+    grid-template-columns: 1fr 340px;
+}
+
+.home-panel {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 22px;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.home-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+/* ── Project Cards Grid ─────────────────────────────── */
+.recent-projects-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.rp-card {
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    overflow: hidden;
+    background: var(--white);
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+    .rp-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.09);
+        color: inherit;
+    }
+
+.rp-card-top {
+    height: 5px;
+}
+
+    .rp-card-top.inprogress {
+        background: #f59e0b;
+    }
+
+    .rp-card-top.planning {
+        background: #3b82f6;
+    }
+
+    .rp-card-top.completed {
+        background: #10b981;
+    }
+
+    .rp-card-top.onhold {
+        background: #8b5cf6;
+    }
+
+    .rp-card-top.cancelled {
+        background: #ef4444;
+    }
+
+.rp-card-body {
+    padding: 14px;
+}
+
+.rp-card-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.dark-mode .rp-card-name {
+    color: #e2e8f0;
+}
+
+.rp-card-client {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+}
+
+.rp-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+}
+
+    .rp-status-badge.inprogress {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+
+    .rp-status-badge.planning {
+        background: #DBEAFE;
+        color: #1E40AF;
+    }
+
+    .rp-status-badge.completed {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+
+    .rp-status-badge.onhold {
+        background: #EDE9FE;
+        color: #5B21B6;
+    }
+
+    .rp-status-badge.cancelled {
+        background: #FEE2E2;
+        color: #991B1B;
+    }
+
+.rp-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    flex-wrap: wrap;
+}
+
+    .rp-card-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .rp-card-meta i {
+        font-size: 0.68rem;
+    }
+
+.rp-days-left {
+    margin-right: auto;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--secondary);
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: rgba(200,146,42,0.1);
+}
+
+[dir="ltr"] .rp-days-left {
+    margin-right: 0;
+    margin-left: auto;
+}
+
+/* ════════════════════════════════════════════════════
+   RECENT ACTIVITY PANEL (right column)
+════════════════════════════════════════════════════ */
+.activity-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.af-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--card-border);
+}
+
+    .af-item:last-child {
+        border-bottom: none;
+    }
+
+.af-dot {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+    .af-dot.blue {
+        background: #1B3A6B;
+    }
+
+    .af-dot.gold {
+        background: #C8922A;
+    }
+
+    .af-dot.green {
+        background: #28A745;
+    }
+
+    .af-dot.red {
+        background: #DC3545;
+    }
+
+    .af-dot.purple {
+        background: #6f42c1;
+    }
+
+.af-text p {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 2px;
+}
+
+.af-text span {
+    font-size: 0.74rem;
+    color: var(--muted);
+}
+
+/* ════════════════════════════════════════════════════
+   DARK MODE — card adjustments
+════════════════════════════════════════════════════ */
+body.dark-mode .home-stat-card,
+body.dark-mode .home-panel,
+body.dark-mode .qa-btn,
+body.dark-mode .rp-card {
+    background: #1a2535;
+    border-color: rgba(255,255,255,0.07);
+}
+
+body.dark-mode .home-banner {
+    background: linear-gradient(135deg, #0f1f3d 0%, #0a1628 60%, #060e1c 100%);
+}
+
+body.dark-mode .rp-card-name {
+    color: #d0dce8;
+}
+
+body.dark-mode .af-text p {
+    color: #d0dce8;
+}
+
+/* ── Dark Mode Toggle Button ────────────────────────── */
+.dark-mode-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.25s;
+}
+
+    .dark-mode-btn:hover {
+        background: rgba(255,255,255,0.1);
+    }
+
+/* ── Sidebar Home button ─────────────────────────────── */
+.sidebar-home-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    color: #B0BEC5;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    border-right: 3px solid transparent;
+    background: rgba(200,146,42,0.07);
+}
+
+[dir="ltr"] .sidebar-home-btn {
+    border-right: none;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-home-btn:hover,
+.sidebar-home-btn.active {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border-right-color: var(--secondary);
+}
+
+[dir="ltr"] .sidebar-home-btn:hover,
+[dir="ltr"] .sidebar-home-btn.active {
+    border-left-color: var(--secondary);
+    border-right-color: transparent;
+}
+
+.sidebar-home-btn i {
+    width: 20px;
+    color: var(--secondary);
+    font-size: 1rem;
+}
+
+/* ════════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════════ */
+@media (max-width: 1200px) {
+    .home-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .home-two-col {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .home-banner {
+        padding: 20px;
+    }
+
+    .banner-top {
+        flex-direction: column;
+    }
+
+    .banner-actions {
+        width: 100%;
+    }
+
+    .home-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .recent-projects-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .home-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/invoice.css ===
 ﻿/* ══════════════════════════════════════════════
