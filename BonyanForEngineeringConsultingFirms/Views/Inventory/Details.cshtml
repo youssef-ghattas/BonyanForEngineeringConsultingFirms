@@ -4,12 +4,14 @@
     ViewData["Title"] = "تفاصيل المخزن";
     var role = Context.Session.GetString("Role");
     var availableMaterials = ViewBag.AvailableMaterials as List<Bonyan.DAL.Models.Material> ?? new();
+    var otherInventories = ViewBag.OtherInventories as List<Bonyan.DAL.Models.Inventory> ?? new();
     decimal usedVol = ViewBag.UsedVolumeM3 != null ? (decimal)ViewBag.UsedVolumeM3 : 0;
     decimal remCap = ViewBag.RemainingCapacityM3 != null ? (decimal)ViewBag.RemainingCapacityM3 : 0;
     decimal fillRate = ViewBag.FillRatePercent != null ? (decimal)ViewBag.FillRatePercent : 0;
     bool showWarning = ViewBag.ShowWarning != null && (bool)ViewBag.ShowWarning;
+    bool isFull = ViewBag.IsFull != null && (bool)ViewBag.IsFull;
     bool hasCapacity = Model.Capacity.HasValue && Model.Capacity > 0;
-    string barColor = fillRate >= 85 ? "#e53935" : fillRate >= 60 ? "#f57c00" : "#4caf50";
+    string barColor = fillRate >= 100 ? "#e53935" : fillRate >= 85 ? "#f57c00" : "#4caf50";
 }
 
 <link rel="stylesheet" href="~/css/material.css" />
@@ -48,12 +50,71 @@
 {
     <div class="alert-error-msg"><i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]</div>
 }
+@if (TempData["WarningMessage"] != null)
+{
+    <div style="background:#fff3e0;border:2px solid #ff9800;border-radius:10px;padding:14px 18px;
+                    margin-bottom:18px;display:flex;align-items:flex-start;gap:12px">
+        <i class="fas fa-exclamation-triangle" style="font-size:1.5rem;color:#ff9800;margin-top:2px"></i>
+        <div style="font-size:0.9rem;color:#555">@TempData["WarningMessage"]</div>
+    </div>
+}
+
+<!-- ══ FULL CAPACITY ALERT ════════════════════════════ -->
+@if (isFull && hasCapacity)
+{
+    <div style="background:#fdecea;border:2px solid #e53935;border-radius:12px;padding:20px 24px;
+                        margin-bottom:22px;display:flex;align-items:flex-start;gap:16px">
+        <i class="fas fa-ban" style="font-size:2.4rem;color:#e53935;margin-top:2px"></i>
+        <div>
+            <div style="font-weight:700;font-size:1.05rem;color:#b71c1c;margin-bottom:6px">
+                ⛔ المخزن وصل إلى طاقته الاستيعابية الكاملة!
+            </div>
+            <div style="font-size:0.9rem;color:#555;margin-bottom:10px">
+                لا توجد مساحة متاحة في هذا المخزن. لا يمكن إضافة أي مواد جديدة.
+                يرجى اختيار مخزن آخر لديه سعة كافية.
+            </div>
+            @if (otherInventories.Any())
+            {
+                <div style="font-weight:600;font-size:0.88rem;color:#333;margin-bottom:8px">
+                    <i class="fas fa-warehouse" style="color:#388e3c"></i> المخازن المتاحة:
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    @foreach (var oi in otherInventories)
+                    {
+                        decimal oiUsed = oi.MaterialInventories
+                        .Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+                        decimal oiRemaining = oi.Capacity.HasValue ? oi.Capacity.Value - oiUsed : -1;
+                        bool oiFull = oi.Capacity.HasValue && oiRemaining <= 0;
+
+                        if (!oiFull)
+                        {
+                            <a asp-action="Details" asp-route-id="@oi.InventoryID"
+                               style="display:inline-flex;align-items:center;gap:6px;
+                                                      background:#e8f5e9;border:1px solid #a5d6a7;border-radius:20px;
+                                                      padding:6px 14px;font-size:0.85rem;color:#2e7d32;
+                                                      text-decoration:none;font-weight:600">
+                                <i class="fas fa-warehouse"></i>
+                                @oi.InventoryName
+                                @if (oi.Capacity.HasValue)
+                                {
+                                    <span style="font-size:0.78rem;color:#555;font-weight:400">
+                                        (@oiRemaining.ToString("N1") م³ متبقية)
+                                    </span>
+                                }
+                            </a>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
 
 <!-- ══ 85% WARNING ALERT ══════════════════════════════ -->
-@if (showWarning)
+@if (showWarning && !isFull)
 {
     <div style="background:#fff3e0;border:2px solid #ff9800;border-radius:10px;padding:16px;
-                    margin-bottom:20px;display:flex;align-items:center;gap:14px">
+                        margin-bottom:20px;display:flex;align-items:center;gap:14px">
         <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:#ff9800"></i>
         <div>
             <div style="font-weight:700;font-size:1rem;color:#e65100">⚠️ تحذير: المخزن على وشك الامتلاء!</div>
@@ -83,13 +144,14 @@
             <div style="font-size:0.78rem;color:#888;margin-bottom:4px">الحجم المستخدم (م³)</div>
             <div style="font-size:1.4rem;font-weight:700;color:#f57c00">@usedVol.ToString("N2")</div>
         </div>
-        <div class="details-card" style="text-align:center;padding:18px;border:2px solid @(remCap < 0 ? "#e53935" : "#4caf50")">
+        <div class="details-card" style="text-align:center;padding:18px;
+                 border:2px solid @(isFull ? "#e53935" : "#4caf50")">
             <div style="font-size:0.78rem;color:#888;margin-bottom:4px">السعة المتبقية (م³)</div>
-            <div style="font-size:1.4rem;font-weight:700;color:@(remCap < 0 ? "#e53935" : "#388e3c")">
-                @remCap.ToString("N2")
-                @if (remCap < 0)
+            <div style="font-size:1.4rem;font-weight:700;color:@(isFull ? "#e53935" : "#388e3c")">
+                @(isFull ? "0.00" : remCap.ToString("N2"))
+                @if (isFull)
                 {
-                    <div style="font-size:0.7rem;color:#e53935">تجاوز السعة!</div>
+                    <div style="font-size:0.7rem;color:#e53935;font-weight:700">ممتلئ بالكامل!</div>
                 }
             </div>
         </div>
@@ -108,26 +170,22 @@
             <span style="font-weight:700;color:var(--primary)">
                 <i class="fas fa-tachometer-alt"></i> نسبة استخدام المخزن
             </span>
-            <span style="font-size:1.2rem;font-weight:700;color:@barColor">@fillRate%</span>
+            <span style="font-size:1.2rem;font-weight:700;color:@barColor">@(Math.Min(fillRate, 100))%</span>
         </div>
         <div style="background:#e0e0e0;border-radius:20px;height:18px;overflow:hidden;position:relative">
             <div style="width:@(Math.Min(fillRate, 100))%;background:@barColor;height:100%;
-                            border-radius:20px;transition:width 0.6s ease;
-                            box-shadow:0 2px 6px rgba(0,0,0,0.2)"></div>
-            @if (fillRate < 100)
-            {
-                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                                border-radius:20px;transition:width 0.6s ease;
+                                box-shadow:0 2px 6px rgba(0,0,0,0.2)"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
                                     font-size:0.72rem;font-weight:700;color:#555">
-                    @usedVol.ToString("N1") م³ / @Model.Capacity!.Value.ToString("N0") م³
-                </div>
-            }
+                @usedVol.ToString("N1") م³ / @Model.Capacity!.Value.ToString("N0") م³
+            </div>
         </div>
-        <!-- Scale markers -->
         <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#aaa;margin-top:4px">
             <span>0%</span><span>25%</span><span>50%</span>
-            <span style="color:#ff9800;font-weight:700">85%⚠</span><span>100%</span>
+            <span style="color:#ff9800;font-weight:700">85%⚠</span>
+            <span style="color:#e53935;font-weight:700">100%⛔</span>
         </div>
-        <!-- Legend -->
         <div style="display:flex;gap:16px;margin-top:10px;font-size:0.78rem;flex-wrap:wrap">
             @foreach (var mi in Model.MaterialInventories)
             {
@@ -153,58 +211,38 @@
 
     @if (Model.MaterialInventories != null && Model.MaterialInventories.Any())
     {
-        <table class="mat-table">
+        <table class="inv-table" style="width:100%;border-collapse:collapse;font-size:0.88rem">
             <thead>
-                <tr>
-                    <th>المادة</th>
-                    <th>الوحدة</th>
-                    <th>الكمية المتاحة</th>
-                    <th>الحجم المشغول (م³)</th>
-                    <th>معامل الحجم</th>
-                    <th>مكان التخزين</th>
-                    <th>آخر تحديث</th>
-                    <th>ملاحظات</th>
+                <tr style="background:#f8f9fc">
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">المادة</th>
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">الكمية</th>
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">الحجم (م³)</th>
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">مكان التخزين</th>
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">تاريخ الإدخال</th>
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">ملاحظات</th>
                     @if (role == "Admin")
                     {
-                        <th>إجراءات</th>
+                        <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">إجراءات</th>
                     }
                 </tr>
             </thead>
             <tbody>
                 @foreach (var mi in Model.MaterialInventories)
                 {
-                    decimal occupied = Math.Round(mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1m), 2);
-                    <tr>
-                        <td>
-                            <a asp-controller="Material" asp-action="Details"
-                               asp-route-id="@mi.MaterialID"
-                               style="color:var(--primary);font-weight:600;text-decoration:none">
-                                @(mi.Material?.MaterialName ?? "—")
-                            </a>
-                        </td>
-                        <td>
-                            @if (mi.Material?.Unit != null)
-                            {
-                                <span class="unit-badge">@mi.Material.Unit</span>
-                            }
-                        </td>
-                        <td><strong style="color:var(--primary)">@mi.QuantityAvailable.ToString("N2")</strong></td>
-                        <td>
-                            <span style="font-weight:700;color:#f57c00">@occupied م³</span>
-                        </td>
-                        <td>
-                            <span style="font-size:0.82rem;color:#888">
-                                @((mi.Material?.VolumeFactorM3 ?? 1m).ToString("F4"))
-                            </span>
-                        </td>
-                        <td>@(mi.StorageLocation ?? "—")</td>
-                        <td>@mi.TransactionDate.ToString("yyyy-MM-dd")</td>
-                        <td style="font-size:0.8rem;color:#666">@(mi.Notes ?? "—")</td>
+                    if (mi.Material == null) continue;
+                    decimal rowVol = Math.Round(mi.QuantityAvailable * mi.Material.VolumeFactorM3, 2);
+                    <tr style="border-bottom:1px solid #f4f6f9">
+                        <td style="padding:10px 12px;color:#333;font-weight:600">@mi.Material.MaterialName</td>
+                        <td style="padding:10px 12px;color:#444">@mi.QuantityAvailable.ToString("N3") @(mi.Material.Unit ?? "")</td>
+                        <td style="padding:10px 12px;color:#f57c00;font-weight:600">@rowVol م³</td>
+                        <td style="padding:10px 12px;color:#555">@(mi.StorageLocation ?? "—")</td>
+                        <td style="padding:10px 12px;color:#777;font-size:0.82rem">@mi.TransactionDate.ToString("yyyy-MM-dd")</td>
+                        <td style="padding:10px 12px;font-size:0.8rem;color:#666">@(mi.Notes ?? "—")</td>
                         @if (role == "Admin")
                         {
-                            <td>
+                            <td style="padding:10px 12px">
                                 <button type="button" class="btn-action edit"
-                                        onclick="openUpdateForm(@mi.InventoryID, @mi.MaterialID, '@mi.QuantityAvailable.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)')"
+                                        onclick="openUpdateForm(@mi.InventoryID, @mi.MaterialID, '@mi.QuantityAvailable.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)', @mi.Material.VolumeFactorM3.ToString("F4", System.Globalization.CultureInfo.InvariantCulture))"
                                         title="تحديث الكمية">
                                     <i class="fas fa-sync-alt"></i>
                                 </button>
@@ -229,70 +267,132 @@
         <p style="color:#aaa;font-size:0.88rem;margin-bottom:16px">لا توجد مواد في هذا المخزن بعد</p>
     }
 
-    <!-- Add Material Form (Admin only) -->
-    @if (role == "Admin" && availableMaterials.Any())
+    <!-- Add Material Form (Admin only — hidden when inventory is full) -->
+    @if (role == "Admin")
     {
-        <div class="mat-add-form" style="margin-top:20px">
-            <div class="mat-add-title"><i class="fas fa-plus-circle"></i> إضافة مادة للمخزن</div>
-            <form asp-action="AddMaterial" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
-                <div class="form-grid-3">
-                    <div class="form-group">
-                        <label>المادة <span style="color:red">*</span></label>
-                        <select name="materialId" class="form-control" required onchange="showVolPreview(this)">
-                            <option value="">-- اختر مادة --</option>
-                            @foreach (var mat in availableMaterials)
+        @if (isFull)
+        {
+            <!-- FULL: show locked state instead of the form -->
+            <div style="margin-top:20px;padding:18px 20px;background:#fafafa;border:2px dashed #e53935;
+                                border-radius:10px;text-align:center;color:#b71c1c">
+                <i class="fas fa-lock" style="font-size:1.8rem;margin-bottom:8px;display:block"></i>
+                <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px">المخزن ممتلئ — لا يمكن إضافة مواد جديدة</div>
+                <div style="font-size:0.85rem;color:#555">
+                    لقد استُنفدت الطاقة الاستيعابية الكاملة للمخزن (@Model.Capacity!.Value.ToString("N0") م³).
+                    يرجى الانتقال إلى مخزن آخر لديه مساحة كافية.
+                </div>
+                @if (otherInventories.Any(oi =>
+                {
+                    decimal u = oi.MaterialInventories.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+                    return !oi.Capacity.HasValue || (oi.Capacity.Value - u) > 0;
+                }))
+                {
+                    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
+                        @foreach (var oi in otherInventories)
+                        {
+                            decimal oiUsed2 = oi.MaterialInventories.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+                            decimal oiRem2 = oi.Capacity.HasValue ? oi.Capacity.Value - oiUsed2 : 999999;
+                            if (oiRem2 > 0)
                             {
-                                <option value="@mat.MaterialID"
-                                        data-factor="@mat.VolumeFactorM3.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)"
-                                        data-unit="@(mat.Unit ?? "")">
-                                    @mat.MaterialName (@(mat.Unit ?? "—")) — معامل الحجم: @mat.VolumeFactorM3
-                                </option>
+                                <a asp-action="Details" asp-route-id="@oi.InventoryID"
+                                   style="display:inline-flex;align-items:center;gap:6px;
+                                                              background:#e8f5e9;border:1px solid #a5d6a7;border-radius:20px;
+                                                              padding:7px 16px;font-size:0.85rem;color:#2e7d32;
+                                                              text-decoration:none;font-weight:600">
+                                    <i class="fas fa-warehouse"></i> @oi.InventoryName
+                                    @if (oi.Capacity.HasValue)
+                                    {
+                                        <span style="font-size:0.78rem;color:#555;font-weight:400">
+                                            (@oiRem2.ToString("N1") م³)
+                                        </span>
+                                    }
+                                </a>
                             }
-                        </select>
+                        }
                     </div>
-                    <div class="form-group">
-                        <label>الكمية <span style="color:red">*</span></label>
-                        <input type="number" name="quantityAvailable" step="0.001" min="0"
-                               class="form-control" placeholder="0.000" required id="addQty"
-                               oninput="showVolPreview(null)" />
+                }
+            </div>
+        }
+        else if (availableMaterials.Any())
+        {
+            <div class="mat-add-form" style="margin-top:20px">
+                <div class="mat-add-title"><i class="fas fa-plus-circle"></i> إضافة مادة للمخزن</div>
+                <form asp-action="AddMaterial" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label>المادة <span style="color:red">*</span></label>
+                            <select name="materialId" class="form-control" required
+                                    onchange="showVolPreview(this)">
+                                <option value="">-- اختر مادة --</option>
+                                @foreach (var mat in availableMaterials)
+                                {
+                                    <option value="@mat.MaterialID"
+                                            data-factor="@mat.VolumeFactorM3.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-unit="@(mat.Unit ?? "")">
+                                        @mat.MaterialName (@(mat.Unit ?? "—")) — معامل الحجم: @mat.VolumeFactorM3
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>الكمية <span style="color:red">*</span></label>
+                            <input type="number" name="quantityAvailable" step="0.001" min="0"
+                                   class="form-control" placeholder="0.000" required id="addQty"
+                                   oninput="showVolPreview(null)" />
+                        </div>
+                        <div class="form-group">
+                            <label>مكان التخزين</label>
+                            <input type="text" name="storageLocation" class="form-control" placeholder="مثال: رف A-3" />
+                        </div>
+                        <div class="form-group" style="grid-column:1 / -1">
+                            <label>ملاحظات</label>
+                            <input type="text" name="notes" class="form-control" placeholder="أي ملاحظات..." />
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>مكان التخزين</label>
-                        <input type="text" name="storageLocation" class="form-control" placeholder="مثال: رف A-3" />
+
+                    <!-- Volume preview + live capacity warning -->
+                    <div id="volPreview" style="display:none;margin-bottom:12px;padding:10px;
+                                     border-radius:8px;font-size:0.85rem;color:#555;border:1px solid #ffe0b2;
+                                     background:#fff3e0">
+                        <i class="fas fa-cube" style="color:#f57c00"></i>
+                        الحجم الذي ستشغله هذه الكمية:
+                        <strong id="volPreviewVal" style="color:#f57c00">0 م³</strong>
+                        @if (hasCapacity)
+                        {
+                            <span>
+                                — السعة المتبقية حالياً:
+                                <strong id="remCapDisplay"
+                                        style="color:@(remCap > 0 ? "#388e3c" : "#e53935")">
+                                    @remCap.ToString("N2") م³
+                                </strong>
+                            </span>
+                        }
                     </div>
-                    <div class="form-group" style="grid-column:1 / -1">
-                        <label>ملاحظات</label>
-                        <input type="text" name="notes" class="form-control" placeholder="أي ملاحظات..." />
+
+                    <!-- Inline warning when entered volume exceeds remaining capacity -->
+                    <div id="capacityWarnBox" style="display:none;margin-bottom:12px;padding:12px 16px;
+                                     background:#fdecea;border:2px solid #e53935;border-radius:8px;
+                                     font-size:0.88rem;color:#b71c1c;font-weight:600">
+                        <i class="fas fa-ban"></i>
+                        <span id="capacityWarnText"></span>
                     </div>
-                </div>
-                <!-- Volume preview -->
-                <div id="volPreview" style="display:none;margin-bottom:12px;padding:10px;background:#fff3e0;
-                         border-radius:8px;font-size:0.85rem;color:#555;border:1px solid #ffe0b2">
-                    <i class="fas fa-cube" style="color:#f57c00"></i>
-                    الحجم الذي ستشغله هذه الكمية:
-                    <strong id="volPreviewVal" style="color:#f57c00">0 م³</strong>
-                    @if (hasCapacity)
-                    {
-                        <span>
-                            — السعة المتبقية حالياً:
-                            <strong style="color:@(remCap > 0 ? "#388e3c" : "#e53935")">@remCap.ToString("N2") م³</strong>
-                        </span>
-                    }
-                </div>
-                <button type="submit" class="btn-bonyan-secondary">
-                    <i class="fas fa-plus"></i> إضافة للمخزن
-                </button>
-            </form>
-        </div>
+
+                    <button type="submit" id="addMaterialBtn" class="btn-bonyan-secondary">
+                        <i class="fas fa-plus"></i> إضافة للمخزن
+                    </button>
+                </form>
+            </div>
+        }
     }
 </div>
 
 <!-- Update Stock Modal -->
 @if (role == "Admin")
 {
-    <div id="updateStockOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center">
+    <div id="updateStockOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);
+             z-index:999;align-items:center;justify-content:center">
         <div style="background:#fff;border-radius:12px;padding:28px;max-width:420px;width:90%;direction:rtl">
             <h4 style="margin:0 0 18px;color:var(--primary);font-size:1rem">
                 <i class="fas fa-sync-alt" style="color:var(--secondary)"></i> تحديث الكمية
@@ -301,11 +401,27 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
                 <input type="hidden" name="materialId" id="updateMatId" />
+                <input type="hidden" id="updateMatFactor" value="0" />
                 <div class="form-group">
                     <label>الكمية الجديدة <span style="color:red">*</span></label>
                     <input type="number" name="newQuantity" id="updateNewQty"
-                           step="0.001" min="0" class="form-control" required />
+                           step="0.001" min="0" class="form-control" required
+                           oninput="checkUpdateCapacity()" />
                 </div>
+                <!-- Update capacity preview -->
+                @if (hasCapacity)
+                {
+                    <div id="updateVolPreview" style="display:none;margin-bottom:10px;padding:9px 12px;
+                                 background:#fff3e0;border-radius:7px;font-size:0.83rem;color:#555;border:1px solid #ffe0b2">
+                        <i class="fas fa-cube" style="color:#f57c00"></i>
+                        الحجم الجديد: <strong id="updateVolVal" style="color:#f57c00"></strong>
+                    </div>
+                    <div id="updateWarnBox" style="display:none;margin-bottom:10px;padding:10px 14px;
+                                 background:#fdecea;border:2px solid #e53935;border-radius:7px;
+                                 font-size:0.85rem;color:#b71c1c;font-weight:600">
+                        <i class="fas fa-ban"></i> <span id="updateWarnText"></span>
+                    </div>
+                }
                 <div class="form-group">
                     <label>ملاحظات</label>
                     <input type="text" name="notes" class="form-control" placeholder="سبب التعديل..." />
@@ -314,7 +430,7 @@
                     <button type="button" onclick="closeUpdateForm()" class="btn-bonyan-primary">
                         <i class="fas fa-times"></i> إلغاء
                     </button>
-                    <button type="submit" class="btn-bonyan-secondary">
+                    <button type="submit" id="updateSubmitBtn" class="btn-bonyan-secondary">
                         <i class="fas fa-save"></i> حفظ
                     </button>
                 </div>
@@ -325,27 +441,101 @@
 
 @section Scripts {
     <script>
-        function openUpdateForm(invId, matId, currentQty) {
+        // ── Constants passed from server ──────────────────────────
+        var REMAINING_CAP = @(hasCapacity? remCap.ToString("F4", System.Globalization.CultureInfo.InvariantCulture) : "-1");
+        var TOTAL_CAP = @(hasCapacity? Model.Capacity!.Value.ToString("F4", System.Globalization.CultureInfo.InvariantCulture) : "-1");
+        var USED_VOL = @usedVol.ToString("F4", System.Globalization.CultureInfo.InvariantCulture);
+
+        // ── Update modal ──────────────────────────────────────────
+        var updateMatOtherVolume = 0; // volume of ALL other materials (excluding current one being updated)
+
+        function openUpdateForm(invId, matId, currentQty, matFactor) {
             document.getElementById('updateMatId').value = matId;
             document.getElementById('updateNewQty').value = currentQty;
+            document.getElementById('updateMatFactor').value = matFactor;
+
+            // other volume = total used minus current material's volume
+            updateMatOtherVolume = USED_VOL - (parseFloat(currentQty) * parseFloat(matFactor));
+
             document.getElementById('updateStockOverlay').style.display = 'flex';
+            checkUpdateCapacity();
         }
+
         function closeUpdateForm() {
             document.getElementById('updateStockOverlay').style.display = 'none';
         }
 
+        function checkUpdateCapacity() {
+            if (TOTAL_CAP < 0) return;
+            var qty = parseFloat(document.getElementById('updateNewQty').value) || 0;
+            var factor = parseFloat(document.getElementById('updateMatFactor').value) || 0;
+            var newVol = qty * factor;
+            var totalAfter = updateMatOtherVolume + newVol;
+
+            var previewBox = document.getElementById('updateVolPreview');
+            var warnBox = document.getElementById('updateWarnBox');
+            var warnText = document.getElementById('updateWarnText');
+            var submitBtn = document.getElementById('updateSubmitBtn');
+            var volVal = document.getElementById('updateVolVal');
+
+            if (qty > 0 && factor > 0) {
+                previewBox.style.display = 'block';
+                volVal.textContent = newVol.toFixed(2) + ' م³';
+            } else {
+                previewBox.style.display = 'none';
+            }
+
+            if (totalAfter > TOTAL_CAP && TOTAL_CAP > 0) {
+                warnBox.style.display = 'block';
+                warnText.textContent = 'الكمية المدخلة (' + newVol.toFixed(2) + ' م³) ستتجاوز سعة المخزن! الحد الأقصى المتاح: ' + (TOTAL_CAP - updateMatOtherVolume).toFixed(2) + ' م³';
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.5';
+            } else {
+                warnBox.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            }
+        }
+
+        // ── Add Material form ─────────────────────────────────────
         function showVolPreview(matSel) {
             var sel = matSel || document.querySelector('select[name="materialId"]');
             var qty = parseFloat(document.getElementById('addQty')?.value) || 0;
             var opt = sel?.options[sel?.selectedIndex];
             var factor = parseFloat(opt?.dataset?.factor) || 0;
             var vol = qty * factor;
+
             var preview = document.getElementById('volPreview');
+            var warnBox = document.getElementById('capacityWarnBox');
+            var warnText = document.getElementById('capacityWarnText');
+            var addBtn = document.getElementById('addMaterialBtn');
+
             if (qty > 0 && factor > 0) {
                 preview.style.display = 'block';
                 document.getElementById('volPreviewVal').textContent = vol.toFixed(2) + ' م³';
             } else {
                 preview.style.display = 'none';
+            }
+
+            // Live capacity enforcement
+            if (REMAINING_CAP >= 0 && qty > 0 && factor > 0) {
+                if (vol > REMAINING_CAP) {
+                    var maxQty = REMAINING_CAP / factor;
+                    warnBox.style.display = 'block';
+                    warnText.textContent =
+                        'الحجم المطلوب (' + vol.toFixed(2) + ' م³) يتجاوز السعة المتبقية (' +
+                        REMAINING_CAP.toFixed(2) + ' م³). الحد الأقصى الذي يمكن إضافته: ' +
+                        maxQty.toFixed(3) + ' ' + (opt?.dataset?.unit || 'وحدة') + '.';
+                    addBtn.disabled = true;
+                    addBtn.style.opacity = '0.5';
+                } else {
+                    warnBox.style.display = 'none';
+                    addBtn.disabled = false;
+                    addBtn.style.opacity = '1';
+                }
+            } else {
+                warnBox.style.display = 'none';
+                if (addBtn) { addBtn.disabled = false; addBtn.style.opacity = '1'; }
             }
         }
     </script>

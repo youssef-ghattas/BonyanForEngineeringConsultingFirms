@@ -42,8 +42,6 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			if (inventory == null) return NotFound();
 
-			// ── VOLUME-BASED CAPACITY CALCULATION ─────────────────
-			// Each material has a VolumeFactorM3: how many m³ does 1 unit occupy
 			if (inventory.Capacity.HasValue && inventory.Capacity > 0)
 			{
 				decimal usedVolume = inventory.MaterialInventories
@@ -56,6 +54,12 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				ViewBag.RemainingCapacityM3 = Math.Round(remaining, 2);
 				ViewBag.FillRatePercent = fillRate;
 				ViewBag.ShowWarning = fillRate >= 85;
+				// ── NEW: flag when inventory is at or beyond 100% ──
+				ViewBag.IsFull = remaining <= 0;
+			}
+			else
+			{
+				ViewBag.IsFull = false;
 			}
 
 			if (IsAdmin())
@@ -65,6 +69,13 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				ViewBag.AvailableMaterials = await _context.Materials
 					.Where(m => !existingMaterialIds.Contains(m.MaterialID))
 					.OrderBy(m => m.MaterialName)
+					.ToListAsync();
+
+				// ── NEW: list other inventories that still have space ──
+				ViewBag.OtherInventories = await _context.Inventories
+					.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
+					.Where(i => i.InventoryID != id)
+					.OrderBy(i => i.InventoryName)
 					.ToListAsync();
 			}
 
@@ -155,51 +166,68 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		{
 			if (!IsAdmin()) return Forbid();
 
-			bool already = await _context.MaterialInventories
-				.AnyAsync(mi => mi.InventoryID == inventoryId && mi.MaterialID == materialId);
+			// Always load the inventory first
+			var inv = await _context.Inventories
+				.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
+				.FirstOrDefaultAsync(i => i.InventoryID == inventoryId);
 
-			if (!already)
+			if (inv == null) return NotFound();
+
+			bool already = inv.MaterialInventories.Any(mi => mi.MaterialID == materialId);
+
+			if (already)
 			{
-				// Check if adding this quantity would exceed capacity
-				var inv = await _context.Inventories
-					.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
-					.FirstOrDefaultAsync(i => i.InventoryID == inventoryId);
+				TempData["ErrorMessage"] = "هذه المادة موجودة مسبقاً في هذا المخزن.";
+				return RedirectToAction(nameof(Details), new { id = inventoryId });
+			}
 
-				var material = await _context.Materials.FindAsync(materialId);
+			var material = await _context.Materials.FindAsync(materialId);
+			if (material == null) return NotFound();
 
-				if (inv?.Capacity.HasValue == true && material != null)
+			// ── CAPACITY CHECK (always enforced when capacity is set) ──
+			if (inv.Capacity.HasValue && inv.Capacity.Value > 0)
+			{
+				decimal currentUsed = inv.MaterialInventories
+					.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+				decimal newVolume = quantityAvailable * material.VolumeFactorM3;
+				decimal remaining = inv.Capacity.Value - currentUsed;
+
+				// ── FULL: no space at all ──
+				if (remaining <= 0)
 				{
-					decimal currentUsed = inv.MaterialInventories
-						.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
-					decimal newVolume = quantityAvailable * material.VolumeFactorM3;
-					decimal fillRate = ((currentUsed + newVolume) / inv.Capacity.Value) * 100;
-
-					if (currentUsed + newVolume > inv.Capacity.Value)
-					{
-						TempData["ErrorMessage"] = $"لا يمكن إضافة هذه الكمية! الحجم المطلوب ({newVolume:N2} م³) يتجاوز السعة المتبقية ({(inv.Capacity.Value - currentUsed):N2} م³).";
-						return RedirectToAction(nameof(Details), new { id = inventoryId });
-					}
+					TempData["ErrorMessage"] =
+						$"⛔ المخزن \"{inv.InventoryName}\" وصل إلى طاقته الاستيعابية الكاملة " +
+						$"({inv.Capacity.Value:N2} م³). لا يمكن إضافة أي مواد جديدة. " +
+						$"يرجى اختيار مخزن آخر لديه مساحة كافية.";
+					TempData["ShowInventoryRedirect"] = true;
+					return RedirectToAction(nameof(Details), new { id = inventoryId });
 				}
 
-				_context.MaterialInventories.Add(new MaterialInventory
+				// ── EXCEEDS REMAINING SPACE ──
+				if (currentUsed + newVolume > inv.Capacity.Value)
 				{
-					InventoryID = inventoryId,
-					MaterialID = materialId,
-					QuantityAvailable = quantityAvailable,
-					StorageLocation = storageLocation ?? "",
-					Notes = notes ?? "",
-					TransactionDate = DateTime.Now,
-					TransactionQuantity = quantityAvailable
-				});
+					TempData["ErrorMessage"] =
+						$"⛔ لا يمكن إضافة هذه الكمية! الحجم المطلوب ({newVolume:N2} م³) " +
+						$"يتجاوز السعة المتبقية ({remaining:N2} م³). " +
+						$"الحد الأقصى الذي يمكن إضافته الآن هو {remaining / material.VolumeFactorM3:N3} {material.Unit ?? "وحدة"}.";
+					return RedirectToAction(nameof(Details), new { id = inventoryId });
+				}
+			}
 
-				if (inv != null) inv.LastUpdatedDate = DateTime.Now;
-				await _context.SaveChangesAsync();
-				TempData["SuccessMessage"] = "تمت إضافة المادة للمخزن بنجاح";
-			}
-			else
+			_context.MaterialInventories.Add(new MaterialInventory
 			{
-				TempData["ErrorMessage"] = "هذه المادة موجودة مسبقاً في هذا المخزن";
-			}
+				InventoryID = inventoryId,
+				MaterialID = materialId,
+				QuantityAvailable = quantityAvailable,
+				StorageLocation = storageLocation ?? "",
+				Notes = notes ?? "",
+				TransactionDate = DateTime.Now,
+				TransactionQuantity = quantityAvailable
+			});
+
+			inv.LastUpdatedDate = DateTime.Now;
+			await _context.SaveChangesAsync();
+			TempData["SuccessMessage"] = "تمت إضافة المادة للمخزن بنجاح";
 
 			return RedirectToAction(nameof(Details), new { id = inventoryId });
 		}
@@ -216,22 +244,25 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				.FirstOrDefaultAsync(mi => mi.InventoryID == inventoryId && mi.MaterialID == materialId);
 			if (entry == null) return NotFound();
 
-			// Volume check
 			var inv = await _context.Inventories
 				.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
 				.FirstOrDefaultAsync(i => i.InventoryID == inventoryId);
 			var material = await _context.Materials.FindAsync(materialId);
 
-			if (inv?.Capacity.HasValue == true && material != null)
+			if (inv?.Capacity.HasValue == true && inv.Capacity.Value > 0 && material != null)
 			{
 				decimal otherVolume = inv.MaterialInventories
 					.Where(mi => mi.MaterialID != materialId)
 					.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
 				decimal newVolume = newQuantity * material.VolumeFactorM3;
+				decimal maxAllowed = inv.Capacity.Value - otherVolume;
 
 				if (otherVolume + newVolume > inv.Capacity.Value)
 				{
-					TempData["ErrorMessage"] = $"لا يمكن تحديث الكمية! الحجم الكلي ({otherVolume + newVolume:N2} م³) يتجاوز سعة المخزن ({inv.Capacity.Value:N2} م³).";
+					TempData["ErrorMessage"] =
+						$"⛔ لا يمكن تحديث الكمية! الحجم الكلي ({otherVolume + newVolume:N2} م³) " +
+						$"يتجاوز سعة المخزن ({inv.Capacity.Value:N2} م³). " +
+						$"الحد الأقصى المسموح به لهذه المادة هو {maxAllowed / material.VolumeFactorM3:N3} {material.Unit ?? "وحدة"}.";
 					return RedirectToAction(nameof(Details), new { id = inventoryId });
 				}
 			}
