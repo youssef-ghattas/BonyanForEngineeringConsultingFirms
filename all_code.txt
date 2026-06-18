@@ -2220,146 +2220,245 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		}
 	}
 }=== File: ./BonyanForEngineeringConsultingFirms/Controllers/HomeController.cs ===
-﻿using Bonyan.DAL.Context;
+﻿// Controllers/HomeController.cs
+using Bonyan.DAL.Context;
 using Bonyan.DAL.Enums;
 using BonyanForEngineeringConsultingFirms.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 
 namespace BonyanForEngineeringConsultingFirms.Controllers
 {
-	public class HomeController : Controller
-	{
-		private readonly BonyanDbContext _context;
-
-		public HomeController(BonyanDbContext context)
-		{
-			_context = context;
-		}
-
-public async Task<IActionResult> Landing()
+    public class HomeController : Controller
     {
-        // ── Global system-wide counts ─────────────────────────────────────────────
-        int totalProjects = await _context.Projects.CountAsync();
-        int totalOffices = await _context.Admins.CountAsync();   // each Admin = one subscribed office
-        int completedProjects = await _context.Projects
-                                    .CountAsync(p => p.Status == ProjectStatus.Completed);
-        int totalDocuments = await _context.Documents.CountAsync()
-                             + await _context.Drawings.CountAsync(); // combined doc + drawing count
+        private readonly BonyanDbContext _context;
 
-        // ── Status breakdown for progress bars ───────────────────────────────────
-        int planningCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.Planning);
-        int inProgressCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.InProgress);
-        int onHoldCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.OnHold);
-
-        // ── Calculate percentages (guard against divide-by-zero) ─────────────────
-        double planningPct = totalProjects > 0 ? Math.Round((double)planningCount / totalProjects * 100, 1) : 0;
-        double inProgressPct = totalProjects > 0 ? Math.Round((double)inProgressCount / totalProjects * 100, 1) : 0;
-        double completedPct = totalProjects > 0 ? Math.Round((double)completedProjects / totalProjects * 100, 1) : 0;
-        double onHoldPct = totalProjects > 0 ? Math.Round((double)onHoldCount / totalProjects * 100, 1) : 0;
-
-        var vm = new LandingStatsViewModel
+        public HomeController(BonyanDbContext context)
         {
-            TotalSubscribedOffices = totalOffices,
-            TotalCompletedProjects = completedProjects,
-            TotalProjects = totalProjects,
-            TotalDocuments = totalDocuments,
-            PlanningPercent = planningPct,
-            InProgressPercent = inProgressPct,
-            CompletedPercent = completedPct,
-            OnHoldPercent = onHoldPct,
-            ProjectsPlanning = planningCount,
-            ProjectsInProgress = inProgressCount,
-            ProjectsOnHold = onHoldCount
-        };
+            _context = context;
+        }
 
-        return View(vm);
+        // ════════════════════════════════════════════════
+        //  HOME INDEX  (existing, unchanged)
+        // ════════════════════════════════════════════════
+        public IActionResult Index()
+        {
+            if (HttpContext.Session.GetString("Email") == null)
+                return RedirectToAction("Login", "Account");
+
+            var role = HttpContext.Session.GetString("Role");
+            var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+
+            ViewBag.EmployeeCount = _context.Employees.Count();
+            ViewBag.TaskCount = _context.Tasks.Count();
+            ViewBag.InvoiceCount = _context.Invoices.Count();
+            ViewBag.DocumentCount = _context.Documents.Count();
+            ViewBag.MaterialCount = _context.Materials.Count();
+            ViewBag.SupplierCount = _context.Suppliers.Count();
+            ViewBag.SiteVisitCount = _context.SiteVisits.Count();
+
+            if (role == "Admin")
+            {
+                ViewBag.ProjectCount = _context.Projects.Count();
+                ViewBag.ProjectsInProgress = _context.Projects.Count(p => p.Status == ProjectStatus.InProgress);
+                ViewBag.ProjectsCompleted = _context.Projects.Count(p => p.Status == ProjectStatus.Completed);
+                ViewBag.ProjectsPlanning = _context.Projects.Count(p => p.Status == ProjectStatus.Planning);
+                ViewBag.ProjectsOnHold = _context.Projects.Count(p => p.Status == ProjectStatus.OnHold);
+                ViewBag.RecentProjects = _context.Projects.OrderByDescending(p => p.StartDate).Take(5).ToList();
+            }
+            else
+            {
+                var myProjects = _context.EmployeeProjects
+                    .Where(ep => ep.EmployeeId == employeeId)
+                    .Include(ep => ep.Project)
+                    .Select(ep => ep.Project)
+                    .ToList();
+
+                ViewBag.ProjectCount = myProjects.Count;
+                ViewBag.ProjectsInProgress = myProjects.Count(p => p.Status == ProjectStatus.InProgress);
+                ViewBag.ProjectsCompleted = myProjects.Count(p => p.Status == ProjectStatus.Completed);
+                ViewBag.ProjectsPlanning = myProjects.Count(p => p.Status == ProjectStatus.Planning);
+                ViewBag.ProjectsOnHold = myProjects.Count(p => p.Status == ProjectStatus.OnHold);
+                ViewBag.RecentProjects = myProjects.OrderByDescending(p => p.StartDate).Take(5).ToList();
+            }
+
+            ViewBag.RecentTasks = _context.Tasks.OrderByDescending(t => t.CreatedAt).Take(5).ToList();
+            ViewBag.RecentEmployees = _context.Employees.OrderByDescending(e => e.HireDate).Take(5).ToList();
+            ViewBag.IsAdmin = role == "Admin";
+
+            return View();
+        }
+
+        // ════════════════════════════════════════════════
+        //  DASHBOARD  (new analytics page)
+        // ════════════════════════════════════════════════
+        public async Task<IActionResult> Dashboard()
+        {
+            if (HttpContext.Session.GetString("Email") == null)
+                return RedirectToAction("Login", "Account");
+
+            var role = HttpContext.Session.GetString("Role");
+            var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+            var now = DateTime.Now;
+
+            // ── Base queryables (scoped by role) ─────────────────────
+            IQueryable<Bonyan.DAL.Models.Project> projectQ = _context.Projects.AsNoTracking();
+            IQueryable<Bonyan.DAL.Models.Task> taskQ = _context.Tasks.AsNoTracking();
+
+            if (role != "Admin" && employeeId.HasValue)
+            {
+                var myProjectIds = _context.EmployeeProjects
+                    .AsNoTracking()
+                    .Where(ep => ep.EmployeeId == employeeId.Value)
+                    .Select(ep => ep.ProjectId);
+
+                projectQ = projectQ.Where(p => myProjectIds.Contains(p.ProjectId));
+                taskQ = taskQ.Where(t => myProjectIds.Contains(t.ProjectId));
+            }
+
+            // ── 1. Top metric cards ───────────────────────────────────
+            var totalProjects = await projectQ.CountAsync();
+            var activeTasks = await taskQ.CountAsync(t => t.Status == TasksStatus.InProgress);
+            var totalDocs = await _context.Documents.AsNoTracking().CountAsync()
+                              + await _context.Drawings.AsNoTracking().CountAsync();
+            var totalBudget = await projectQ.SumAsync(p => (decimal?)p.Budget) ?? 0m;
+
+            // Total distinct clients (Client_Name column on Project)
+            var totalClients = await projectQ
+                .Where(p => p.Client_Name != null && p.Client_Name != "")
+                .Select(p => p.Client_Name)
+                .Distinct()
+                .CountAsync();
+
+            // ── 2. Projects by status (bar chart) ────────────────────
+            var projectsByStatus = await projectQ
+                .GroupBy(p => p.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            int projPlanning = projectsByStatus.FirstOrDefault(x => x.Status == ProjectStatus.Planning)?.Count ?? 0;
+            int projInProgress = projectsByStatus.FirstOrDefault(x => x.Status == ProjectStatus.InProgress)?.Count ?? 0;
+            int projOnHold = projectsByStatus.FirstOrDefault(x => x.Status == ProjectStatus.OnHold)?.Count ?? 0;
+            int projCompleted = projectsByStatus.FirstOrDefault(x => x.Status == ProjectStatus.Completed)?.Count ?? 0;
+            int projCancelled = projectsByStatus.FirstOrDefault(x => x.Status == ProjectStatus.Cancelled)?.Count ?? 0;
+
+            // ── 3. Tasks by status (doughnut chart) ──────────────────
+            var tasksByStatus = await taskQ
+                .GroupBy(t => t.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            int taskPending = tasksByStatus.FirstOrDefault(x => x.Status == TasksStatus.Pending)?.Count ?? 0;
+            int taskInProgress = tasksByStatus.FirstOrDefault(x => x.Status == TasksStatus.InProgress)?.Count ?? 0;
+            int taskUnderReview = tasksByStatus.FirstOrDefault(x => x.Status == TasksStatus.UnderReview)?.Count ?? 0;
+            int taskCompleted = tasksByStatus.FirstOrDefault(x => x.Status == TasksStatus.Completed)?.Count ?? 0;
+            int taskCancelled = tasksByStatus.FirstOrDefault(x => x.Status == TasksStatus.Cancelled)?.Count ?? 0;
+
+            // ── 4. Recent projects table (projection only) ────────────
+            var recentProjects = await projectQ
+                .OrderByDescending(p => p.StartDate)
+                .Take(6)
+                .Select(p => new RecentProjectRow
+                {
+                    ProjectId = p.ProjectId,
+                    ProjectName = p.ProjectName,
+                    ClientName = p.Client_Name ?? "—",
+                    Status = p.Status,
+                    TaskCount = p.Tasks.Count()
+                })
+                .ToListAsync();
+
+            // ── 5. Overdue tasks (projection only) ───────────────────
+            var overdueTasks = await taskQ
+                .Where(t => t.DueDate != null
+                         && t.DueDate < now
+                         && t.Status != TasksStatus.Completed
+                         && t.Status != TasksStatus.Cancelled)
+                .OrderBy(t => t.DueDate)
+                .Take(6)
+                .Select(t => new OverdueTaskRow
+                {
+                    TaskId = t.TaskId,
+                    TaskName = t.Task_Name,
+                    ProjectName = t.Project != null ? t.Project.ProjectName : "—",
+                    DueDate = t.DueDate!.Value
+                })
+                .ToListAsync();
+
+            // ── Build ViewModel ───────────────────────────────────────
+            var vm = new DashboardViewModel
+            {
+                TotalProjects = totalProjects,
+                ActiveTasks = activeTasks,
+                TotalClients = totalClients,
+                TotalDocuments = totalDocs,
+                TotalBudget = totalBudget,
+
+                ProjPlanning = projPlanning,
+                ProjInProgress = projInProgress,
+                ProjOnHold = projOnHold,
+                ProjCompleted = projCompleted,
+                ProjCancelled = projCancelled,
+
+                TaskPending = taskPending,
+                TaskInProgress = taskInProgress,
+                TaskUnderReview = taskUnderReview,
+                TaskCompleted = taskCompleted,
+                TaskCancelled = taskCancelled,
+
+                RecentProjects = recentProjects,
+                OverdueTasks = overdueTasks,
+
+                IsAdmin = role == "Admin"
+            };
+
+            return View(vm);
+        }
+
+        // ── Landing & Error (unchanged) ───────────────────────────────
+        public async Task<IActionResult> Landing()
+        {
+            int totalProjects = await _context.Projects.CountAsync();
+            int totalOffices = await _context.Admins.CountAsync();
+            int completedProjects = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.Completed);
+            int totalDocuments = await _context.Documents.CountAsync() + await _context.Drawings.CountAsync();
+
+            int planningCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.Planning);
+            int inProgressCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.InProgress);
+            int onHoldCount = await _context.Projects.CountAsync(p => p.Status == ProjectStatus.OnHold);
+
+            double planningPct = totalProjects > 0 ? Math.Round((double)planningCount / totalProjects * 100, 1) : 0;
+            double inProgressPct = totalProjects > 0 ? Math.Round((double)inProgressCount / totalProjects * 100, 1) : 0;
+            double completedPct = totalProjects > 0 ? Math.Round((double)completedProjects / totalProjects * 100, 1) : 0;
+            double onHoldPct = totalProjects > 0 ? Math.Round((double)onHoldCount / totalProjects * 100, 1) : 0;
+
+            var vm = new LandingStatsViewModel
+            {
+                TotalSubscribedOffices = totalOffices,
+                TotalCompletedProjects = completedProjects,
+                TotalProjects = totalProjects,
+                TotalDocuments = totalDocuments,
+                PlanningPercent = planningPct,
+                InProgressPercent = inProgressPct,
+                CompletedPercent = completedPct,
+                OnHoldPercent = onHoldPct,
+                ProjectsPlanning = planningCount,
+                ProjectsInProgress = inProgressCount,
+                ProjectsOnHold = onHoldCount
+            };
+
+            return View(vm);
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new BonyanForEngineeringConsultingFirms.Models.ErrorViewModel
+            {
+                RequestId = System.Diagnostics.Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            });
+        }
     }
-    public IActionResult Index()
-		{
-			if (HttpContext.Session.GetString("Email") == null)
-				return RedirectToAction("Login", "Account");
-
-			var role = HttpContext.Session.GetString("Role");
-
-			// ── Counts (same for everyone) ────────────────
-			ViewBag.EmployeeCount = _context.Employees.Count();
-			ViewBag.TaskCount = _context.Tasks.Count();
-			ViewBag.InvoiceCount = _context.Invoices.Count();
-			ViewBag.DocumentCount = _context.Documents.Count();
-			ViewBag.MaterialCount = _context.Materials.Count();
-			ViewBag.SupplierCount = _context.Suppliers.Count();
-			ViewBag.SiteVisitCount = _context.SiteVisits.Count();
-
-			if (role == "Admin")
-			{
-				// Admin sees ALL projects
-				ViewBag.ProjectCount = _context.Projects.Count();
-
-				ViewBag.ProjectsInProgress = _context.Projects
-					.Count(p => p.Status == ProjectStatus.InProgress);
-				ViewBag.ProjectsCompleted = _context.Projects
-					.Count(p => p.Status == ProjectStatus.Completed);
-				ViewBag.ProjectsPlanning = _context.Projects
-					.Count(p => p.Status == ProjectStatus.Planning);
-				ViewBag.ProjectsOnHold = _context.Projects
-					.Count(p => p.Status == ProjectStatus.OnHold);
-
-				ViewBag.RecentProjects = _context.Projects
-					.OrderByDescending(p => p.StartDate)
-					.Take(5).ToList();
-			}
-			else
-			{
-				// Employee sees ONLY assigned projects
-				var employeeId = HttpContext.Session.GetInt32("EmployeeId");
-
-				var myProjects = _context.EmployeeProjects
-					.Where(ep => ep.EmployeeId == employeeId)
-					.Include(ep => ep.Project)
-					.Select(ep => ep.Project)
-					.ToList();
-
-				ViewBag.ProjectCount = myProjects.Count;
-
-				ViewBag.ProjectsInProgress = myProjects
-					.Count(p => p.Status == ProjectStatus.InProgress);
-				ViewBag.ProjectsCompleted = myProjects
-					.Count(p => p.Status == ProjectStatus.Completed);
-				ViewBag.ProjectsPlanning = myProjects
-					.Count(p => p.Status == ProjectStatus.Planning);
-				ViewBag.ProjectsOnHold = myProjects
-					.Count(p => p.Status == ProjectStatus.OnHold);
-
-				ViewBag.RecentProjects = myProjects
-					.OrderByDescending(p => p.StartDate)
-					.Take(5).ToList();
-			}
-
-			ViewBag.RecentTasks = _context.Tasks
-				.OrderByDescending(t => t.CreatedAt)
-				.Take(5).ToList();
-
-			ViewBag.RecentEmployees = _context.Employees
-				.OrderByDescending(e => e.HireDate)
-				.Take(5).ToList();
-
-			ViewBag.IsAdmin = role == "Admin";
-
-			return View();
-		}
-
-		[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-		public IActionResult Error()
-		{
-			return View(new BonyanForEngineeringConsultingFirms.Models.ErrorViewModel
-			{
-				RequestId = System.Diagnostics.Activity.Current?.Id
-							?? HttpContext.TraceIdentifier
-			});
-		}
-	}
 }=== File: ./BonyanForEngineeringConsultingFirms/Controllers/InventoryController.cs ===
 ﻿// Controllers/InventoryController.cs
 using Bonyan.DAL.Context;
@@ -4883,6 +4982,58 @@ namespace Bonyan.PL.ViewModels
 		[DataType(DataType.Password)]
 		public string ConfirmNewPassword { get; set; }
 	}
+}=== File: ./BonyanForEngineeringConsultingFirms/ViewModel/DashboardViewModel.cs ===
+﻿// ViewModels/DashboardViewModel.cs
+using Bonyan.DAL.Enums;
+
+namespace BonyanForEngineeringConsultingFirms.ViewModels
+{
+    public class DashboardViewModel
+    {
+        // ── Top cards ──────────────────────────────────
+        public int TotalProjects { get; set; }
+        public int ActiveTasks { get; set; }
+        public int TotalClients { get; set; }
+        public int TotalDocuments { get; set; }
+        public decimal TotalBudget { get; set; }
+
+        // ── Bar chart (projects by status) ─────────────
+        public int ProjPlanning { get; set; }
+        public int ProjInProgress { get; set; }
+        public int ProjOnHold { get; set; }
+        public int ProjCompleted { get; set; }
+        public int ProjCancelled { get; set; }
+
+        // ── Doughnut chart (tasks by status) ───────────
+        public int TaskPending { get; set; }
+        public int TaskInProgress { get; set; }
+        public int TaskUnderReview { get; set; }
+        public int TaskCompleted { get; set; }
+        public int TaskCancelled { get; set; }
+
+        // ── Tables ─────────────────────────────────────
+        public List<RecentProjectRow> RecentProjects { get; set; } = new();
+        public List<OverdueTaskRow> OverdueTasks { get; set; } = new();
+
+        public bool IsAdmin { get; set; }
+    }
+
+    public class RecentProjectRow
+    {
+        public int ProjectId { get; set; }
+        public string ProjectName { get; set; } = "";
+        public string ClientName { get; set; } = "";
+        public ProjectStatus Status { get; set; }
+        public int TaskCount { get; set; }
+    }
+
+    public class OverdueTaskRow
+    {
+        public int TaskId { get; set; }
+        public string TaskName { get; set; } = "";
+        public string ProjectName { get; set; } = "";
+        public DateTime DueDate { get; set; }
+    }
 }=== File: ./BonyanForEngineeringConsultingFirms/ViewModel/LandingStatsViewModel.cs ===
 ﻿namespace BonyanForEngineeringConsultingFirms.ViewModels
 {
@@ -7289,6 +7440,514 @@ namespace Bonyan.PL.ViewModels
             });
         }
     </script>
+}=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Dashboard.cshtml ===
+﻿@* Views/Home/Dashboard.cshtml *@
+@using Bonyan.DAL.Enums
+@model BonyanForEngineeringConsultingFirms.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+
+    // ── Status badge helpers ─────────────────────────
+    string ProjBadge(ProjectStatus s) => s switch
+    {
+        ProjectStatus.Planning => "badge-info",
+        ProjectStatus.InProgress => "badge-warning",
+        ProjectStatus.Completed => "badge-success",
+        ProjectStatus.OnHold => "badge-primary",
+        ProjectStatus.Cancelled => "badge-danger",
+        _ => "badge-info"
+    };
+    string ProjLabel(ProjectStatus s) => s switch
+    {
+        ProjectStatus.Planning => "تخطيط|Planning",
+        ProjectStatus.InProgress => "جاري|InProgress",
+        ProjectStatus.Completed => "مكتمل|Completed",
+        ProjectStatus.OnHold => "موقوف|OnHold",
+        ProjectStatus.Cancelled => "ملغي|Cancelled",
+        _ => s.ToString() + "|" + s.ToString()
+    };
+    // Split ar|en
+    string Ar(string s) => s.Split('|')[0];
+    string En(string s) => s.Split('|')[1];
+}
+
+<link rel="stylesheet" href="~/css/dashboard.css" />
+
+<!-- ════════════════════════════════════════════════════
+     PAGE HEADER
+════════════════════════════════════════════════════ -->
+<div class="db-page-header">
+    <div>
+        <h2 class="db-page-title">
+            <i class="fas fa-chart-line"></i>
+            <span data-lang="db_title">لوحة التحكم</span>
+        </h2>
+        <p class="db-page-sub" data-lang="db_subtitle">نظرة شاملة على أداء مكتبك الهندسي</p>
+    </div>
+    <a asp-controller="Home" asp-action="Index" class="btn-bonyan-secondary">
+        <i class="fas fa-home"></i>
+        <span data-lang="db_home">الرئيسية</span>
+    </a>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     ROW 1 — 5 METRIC CARDS
+════════════════════════════════════════════════════ -->
+<div class="db-metrics-grid">
+
+    <!-- Card 1: Total Projects -->
+    <div class="db-metric-card" style="--accent:#1B3A6B">
+        <div class="db-mc-top">
+            <div class="db-mc-icon" style="background:#1B3A6B">
+                <i class="fas fa-project-diagram"></i>
+            </div>
+            <div class="db-mc-info">
+                <span class="db-mc-number">@Model.TotalProjects</span>
+                <span class="db-mc-label" data-lang="db_total_projects">إجمالي المشاريع</span>
+            </div>
+        </div>
+        <div class="db-mc-bar-group">
+            <span class="db-mc-bar-seg" style="background:#3b82f6;flex:@Model.ProjPlanning"
+                  title="تخطيط / Planning"></span>
+            <span class="db-mc-bar-seg" style="background:#f59e0b;flex:@Model.ProjInProgress"
+                  title="جاري / In Progress"></span>
+            <span class="db-mc-bar-seg" style="background:#8b5cf6;flex:@Model.ProjOnHold"
+                  title="موقوف / On Hold"></span>
+            <span class="db-mc-bar-seg" style="background:#10b981;flex:@Model.ProjCompleted"
+                  title="مكتمل / Completed"></span>
+            <span class="db-mc-bar-seg" style="background:#ef4444;flex:@Model.ProjCancelled"
+                  title="ملغي / Cancelled"></span>
+        </div>
+        <div class="db-mc-mini-legend">
+            <span>
+                <em style="background:#3b82f6"></em>
+                <span class="l-ar">تخطيط</span><span class="l-en" style="display:none">Planning</span>
+                (@Model.ProjPlanning)
+            </span>
+            <span>
+                <em style="background:#f59e0b"></em>
+                <span class="l-ar">جاري</span><span class="l-en" style="display:none">Active</span>
+                (@Model.ProjInProgress)
+            </span>
+            <span>
+                <em style="background:#10b981"></em>
+                <span class="l-ar">مكتمل</span><span class="l-en" style="display:none">Done</span>
+                (@Model.ProjCompleted)
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 2: Active Tasks -->
+    <div class="db-metric-card" style="--accent:#C8922A">
+        <div class="db-mc-top">
+            <div class="db-mc-icon" style="background:#C8922A">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="db-mc-info">
+                <span class="db-mc-number">@Model.ActiveTasks</span>
+                <span class="db-mc-label" data-lang="db_active_tasks">المهام النشطة</span>
+            </div>
+        </div>
+        <div class="db-mc-footer">
+            <span class="db-mc-badge amber" data-lang="db_inprogress_label">جاري التنفيذ</span>
+            <span class="db-mc-total">
+                <span data-lang="db_of">من</span> @(Model.TaskPending + Model.TaskInProgress + Model.TaskUnderReview + Model.TaskCompleted + Model.TaskCancelled)
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 3: Total Clients -->
+    <div class="db-metric-card" style="--accent:#17a2b8">
+        <div class="db-mc-top">
+            <div class="db-mc-icon" style="background:#17a2b8">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <div class="db-mc-info">
+                <span class="db-mc-number">@Model.TotalClients</span>
+                <span class="db-mc-label" data-lang="db_total_clients">إجمالي العملاء</span>
+            </div>
+        </div>
+        <div class="db-mc-footer">
+            <span class="db-mc-badge teal" data-lang="db_unique_clients">عملاء فريدون</span>
+        </div>
+    </div>
+
+    <!-- Card 4: Documents + Drawings -->
+    <div class="db-metric-card" style="--accent:#6f42c1">
+        <div class="db-mc-top">
+            <div class="db-mc-icon" style="background:#6f42c1">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="db-mc-info">
+                <span class="db-mc-number">@Model.TotalDocuments</span>
+                <span class="db-mc-label" data-lang="db_total_docs">المستندات والرسومات</span>
+            </div>
+        </div>
+        <div class="db-mc-footer">
+            <span class="db-mc-badge purple" data-lang="db_files_label">ملفات مرفوعة</span>
+        </div>
+    </div>
+
+    <!-- Card 5: Total Budget -->
+    <div class="db-metric-card" style="--accent:#28A745">
+        <div class="db-mc-top">
+            <div class="db-mc-icon" style="background:#28A745">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="db-mc-info">
+                <span class="db-mc-number db-mc-budget">
+                    $@Model.TotalBudget.ToString("N0")
+                </span>
+                <span class="db-mc-label" data-lang="db_total_budget">إجمالي الميزانيات</span>
+            </div>
+        </div>
+        <div class="db-mc-footer">
+            <span class="db-mc-badge green" data-lang="db_all_projects_budget">عبر كل المشاريع</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     ROW 2 — CHARTS  (Bar + Doughnut)
+════════════════════════════════════════════════════ -->
+<div class="db-charts-grid">
+
+    <!-- Left: Projects by Status — Bar Chart -->
+    <div class="db-panel">
+        <div class="db-panel-header">
+            <h3 class="db-panel-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-lang="db_chart_projects">المشاريع حسب الحالة</span>
+            </h3>
+        </div>
+        <div class="db-chart-wrap">
+            <canvas id="chartProjectsStatus" height="260"></canvas>
+        </div>
+    </div>
+
+    <!-- Right: Tasks by Status — Doughnut -->
+    <div class="db-panel">
+        <div class="db-panel-header">
+            <h3 class="db-panel-title">
+                <i class="fas fa-chart-pie"></i>
+                <span data-lang="db_chart_tasks">المهام حسب الحالة</span>
+            </h3>
+        </div>
+        <div class="db-chart-wrap db-doughnut-wrap">
+            <canvas id="chartTasksStatus" height="260"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     ROW 3 — DATA TABLES  (Recent Projects + Overdue)
+════════════════════════════════════════════════════ -->
+<div class="db-tables-grid">
+
+    <!-- Left: Recent Projects table -->
+    <div class="db-panel">
+        <div class="db-panel-header">
+            <h3 class="db-panel-title">
+                <i class="fas fa-folder-open"></i>
+                <span data-lang="db_recent_projects">أحدث المشاريع</span>
+            </h3>
+            <a asp-controller="Project" asp-action="Index"
+               class="db-view-all" data-lang="view_all">عرض الكل</a>
+        </div>
+
+        @if (Model.RecentProjects.Any())
+        {
+            <div class="db-table-wrap">
+                <table class="bonyan-table db-table">
+                    <thead>
+                        <tr>
+                            <th data-lang="project_name">اسم المشروع</th>
+                            <th data-lang="client">العميل</th>
+                            <th data-lang="status">الحالة</th>
+                            <th data-lang="tasks">المهام</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.RecentProjects)
+                        {
+                            var lbl = ProjLabel(p.Status);
+                            <tr>
+                                <td>
+                                    <a asp-controller="Project" asp-action="Details"
+                                       asp-route-id="@p.ProjectId" class="db-proj-link">
+                                        @p.ProjectName
+                                    </a>
+                                </td>
+                                <td class="db-muted">@p.ClientName</td>
+                                <td>
+                                    <span class="badge-bonyan @ProjBadge(p.Status)">
+                                        <span class="l-ar">@Ar(lbl)</span>
+                                        <span class="l-en" style="display:none">@En(lbl)</span>
+                                    </span>
+                                </td>
+                                <td class="db-center">
+                                    <span class="db-task-count">@p.TaskCount</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="db-empty">
+                <i class="fas fa-folder-open"></i>
+                <span data-lang="no_projects">لا توجد مشاريع حتى الآن</span>
+            </div>
+        }
+    </div>
+
+    <!-- Right: Overdue Tasks panel -->
+    <div class="db-panel db-panel-overdue">
+        <div class="db-panel-header">
+            <h3 class="db-panel-title db-overdue-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span data-lang="db_overdue_tasks">المهام المتأخرة ⚠️</span>
+            </h3>
+            <a asp-controller="Task" asp-action="Index"
+               class="db-view-all" data-lang="view_all">عرض الكل</a>
+        </div>
+
+        @if (Model.OverdueTasks.Any())
+        {
+            <div class="db-overdue-list">
+                @foreach (var t in Model.OverdueTasks)
+                {
+                    int daysLate = (int)(DateTime.Now - t.DueDate).TotalDays;
+                    <div class="db-overdue-item">
+                        <div class="db-overdue-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="db-overdue-body">
+                            <p class="db-overdue-name">@t.TaskName</p>
+                            <p class="db-overdue-project">
+                                <i class="fas fa-project-diagram"></i>
+                                @t.ProjectName
+                            </p>
+                        </div>
+                        <div class="db-overdue-meta">
+                            <span class="db-overdue-date">
+                                @t.DueDate.ToString("dd/MM/yyyy")
+                            </span>
+                            <span class="db-overdue-late">
+                                +@daysLate
+                                <span class="l-ar">يوم</span>
+                                <span class="l-en" style="display:none">d</span>
+                            </span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="db-empty db-empty-good">
+                <i class="fas fa-check-circle"></i>
+                <span data-lang="db_no_overdue">لا توجد مهام متأخرة 🎉</span>
+            </div>
+        }
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // ════════════════════════════════════════════════════════
+        //  BONYAN DASHBOARD CHARTS
+        // ════════════════════════════════════════════════════════
+
+        // ── Read theme tokens from CSS ────────────────────────
+        function getCssVar(name) {
+            return getComputedStyle(document.documentElement)
+                .getPropertyValue(name).trim();
+        }
+
+        const isDark = () => document.body.classList.contains('dark-mode');
+
+        // ── Color palettes ────────────────────────────────────
+        const PROJECT_COLORS = {
+            bg:     ['#3b82f6','#f59e0b','#8b5cf6','#10b981','#ef4444'],
+            border: ['#2563eb','#d97706','#7c3aed','#059669','#dc2626']
+        };
+        const TASK_COLORS = {
+            bg:     ['#94a3b8','#f59e0b','#6366f1','#10b981','#ef4444'],
+            border: ['#64748b','#d97706','#4f46e5','#059669','#dc2626']
+        };
+
+        // ── Bilingual labels ──────────────────────────────────
+        const LANG = document.documentElement.getAttribute('lang') || 'ar';
+        const labels = {
+            proj: {
+                ar: ['تخطيط','جاري','موقوف','مكتمل','ملغي'],
+                en: ['Planning','In Progress','On Hold','Completed','Cancelled']
+            },
+            task: {
+                ar: ['معلق','جاري','مراجعة','مكتمل','ملغي'],
+                en: ['Pending','In Progress','Under Review','Completed','Cancelled']
+            }
+        };
+
+        // ── Server data injected from Razor ──────────────────
+        const projData = [
+            @Model.ProjPlanning,
+            @Model.ProjInProgress,
+            @Model.ProjOnHold,
+            @Model.ProjCompleted,
+            @Model.ProjCancelled
+        ];
+        const taskData = [
+            @Model.TaskPending,
+            @Model.TaskInProgress,
+            @Model.TaskUnderReview,
+            @Model.TaskCompleted,
+            @Model.TaskCancelled
+        ];
+
+        // ── Shared Chart.js defaults ──────────────────────────
+        function chartDefaults() {
+            const dark = isDark();
+            return {
+                gridColor:  dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
+                textColor:  dark ? '#94a3b8' : '#666',
+                tooltipBg:  dark ? '#1e293b' : '#fff',
+                tooltipTxt: dark ? '#e2e8f0' : '#1e293b'
+            };
+        }
+
+        // ── Build Bar Chart (Projects by Status) ─────────────
+        let barChart, doughnutChart;
+
+        function buildBarChart() {
+            const ctx  = document.getElementById('chartProjectsStatus').getContext('2d');
+            const d    = chartDefaults();
+            const lang = document.documentElement.getAttribute('lang') === 'en' ? 'en' : 'ar';
+
+            if (barChart) barChart.destroy();
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.proj[lang],
+                    datasets: [{
+                        label: lang === 'ar' ? 'عدد المشاريع' : 'Projects Count',
+                        data:  projData,
+                        backgroundColor: PROJECT_COLORS.bg,
+                        borderColor:     PROJECT_COLORS.border,
+                        borderWidth:     2,
+                        borderRadius:    8,
+                        borderSkipped:   false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: d.tooltipBg,
+                            titleColor:      d.tooltipTxt,
+                            bodyColor:       d.tooltipTxt,
+                            borderColor:     'rgba(200,146,42,0.3)',
+                            borderWidth:     1,
+                            padding:         12,
+                            cornerRadius:    8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid:  { display: false },
+                            ticks: { color: d.textColor, font: { family: 'Cairo, Poppins, sans-serif' } }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, color: d.textColor, font: { family: 'Cairo, Poppins, sans-serif' } },
+                            grid:  { color: d.gridColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ── Build Doughnut Chart (Tasks by Status) ────────────
+        function buildDoughnutChart() {
+            const ctx  = document.getElementById('chartTasksStatus').getContext('2d');
+            const d    = chartDefaults();
+            const lang = document.documentElement.getAttribute('lang') === 'en' ? 'en' : 'ar';
+
+            if (doughnutChart) doughnutChart.destroy();
+            doughnutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.task[lang],
+                    datasets: [{
+                        data:            taskData,
+                        backgroundColor: TASK_COLORS.bg,
+                        borderColor:     TASK_COLORS.border,
+                        borderWidth:     2,
+                        hoverOffset:     10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '62%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color:     d.textColor,
+                                padding:   16,
+                                font:      { size: 12, family: 'Cairo, Poppins, sans-serif' },
+                                usePointStyle: true,
+                                pointStyleWidth: 10
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: d.tooltipBg,
+                            titleColor:      d.tooltipTxt,
+                            bodyColor:       d.tooltipTxt,
+                            borderColor:     'rgba(200,146,42,0.3)',
+                            borderWidth:     1,
+                            padding:         12,
+                            cornerRadius:    8
+                        }
+                    }
+                }
+            });
+        }
+
+        // ── Init on DOM ready ─────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function () {
+            buildBarChart();
+            buildDoughnutChart();
+        });
+
+        // ── Rebuild charts on dark-mode toggle ───────────────
+        // Hook into the existing applyDarkMode in _Layout.cshtml
+        const _origApplyDarkMode = window.applyDarkMode;
+        window.applyDarkMode = function (on) {
+            if (_origApplyDarkMode) _origApplyDarkMode(on);
+            setTimeout(() => { buildBarChart(); buildDoughnutChart(); }, 80);
+        };
+
+        // ── Rebuild charts on language toggle ────────────────
+        document.addEventListener('bonyanLangChanged', function (e) {
+            const lang = e.detail;
+            // Swap l-ar / l-en spans
+            document.querySelectorAll('.l-ar').forEach(el => el.style.display = lang === 'ar' ? '' : 'none');
+            document.querySelectorAll('.l-en').forEach(el => el.style.display = lang === 'en' ? '' : 'none');
+            buildBarChart();
+            buildDoughnutChart();
+        });
+    </script>
 }=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Index.cshtml ===
 ﻿@using Bonyan.DAL.Enums
 @{
@@ -7297,6 +7956,8 @@ namespace Bonyan.PL.ViewModels
     var fullName = Context.Session.GetString("FullName") ?? "المستخدم";
     var email = Context.Session.GetString("Email") ?? "";
     var isAdmin = role == "Admin";
+    var isPM = role == "ProjectManager";
+    var isEngineer = role == "Engineer";
 
     int projectCount = ViewBag.ProjectCount ?? 0;
     int taskCount = ViewBag.TaskCount ?? 0;
@@ -7308,9 +7969,23 @@ namespace Bonyan.PL.ViewModels
     int onHold = ViewBag.ProjectsOnHold ?? 0;
 
     string today = DateTime.Now.ToString("dddd، d MMMM yyyy",
-                   new System.Globalization.CultureInfo("ar-SA"));
+                     new System.Globalization.CultureInfo("ar-SA"));
     string todayEn = DateTime.Now.ToString("dddd, MMMM d, yyyy",
                      System.Globalization.CultureInfo.InvariantCulture);
+
+    // ── Role display info ─────────────────────────────────────
+    string roleIconClass = isAdmin ? "fas fa-shield-alt"
+                         : isPM ? "fas fa-project-diagram"
+                         : "fas fa-hard-hat";
+    string roleColorClass = isAdmin ? "role-badge-admin"
+                          : isPM ? "role-badge-pm"
+                          : "role-badge-engineer";
+    string roleArLabel = isAdmin ? "مدير النظام"
+                       : isPM ? "مدير المشروع"
+                       : "مهندس";
+    string roleEnLabel = isAdmin ? "Admin"
+                       : isPM ? "Project Manager"
+                       : "Engineer";
 }
 
 <link rel="stylesheet" href="~/css/home.css" />
@@ -7329,6 +8004,14 @@ namespace Bonyan.PL.ViewModels
                 <span data-lang="greeting_hello">أهلاً،</span>
                 @fullName
             </h2>
+
+            <!-- ── Role Badge ─────────────────────────────── -->
+            <div class="role-badge @roleColorClass">
+                <i class="@roleIconClass"></i>
+                <span class="role-ar">@roleArLabel</span>
+                <span class="role-en" style="display:none">@roleEnLabel</span>
+            </div>
+
             <p class="greeting-sub">
                 <span data-lang="greeting_sub">إليك ملخص نشاط مكتبك الهندسي اليوم</span>
             </p>
@@ -7346,6 +8029,14 @@ namespace Bonyan.PL.ViewModels
                    class="btn-banner-outline">
                     <i class="fas fa-plus"></i>
                     <span data-lang="btn_new_project">مشروع جديد</span>
+                </a>
+            }
+            @if (isPM)
+            {
+                <a asp-controller="Task" asp-action="Create"
+                   class="btn-banner-outline">
+                    <i class="fas fa-plus"></i>
+                    <span data-lang="btn_new_task">مهمة جديدة</span>
                 </a>
             }
         </div>
@@ -7456,61 +8147,124 @@ namespace Bonyan.PL.ViewModels
 </div>
 
 <!-- ════════════════════════════════════════════════
-     QUICK ACTIONS
+     QUICK ACTIONS  —  Role-based
 ════════════════════════════════════════════════ -->
 <div class="home-section-header">
     <h3 class="home-section-title">
         <i class="fas fa-bolt"></i>
         <span data-lang="quick_actions">إجراءات سريعة ⚡</span>
     </h3>
+    <span class="qa-role-hint @roleColorClass">
+        <i class="@roleIconClass"></i>
+        <span class="role-ar">@roleArLabel</span>
+        <span class="role-en" style="display:none">@roleEnLabel</span>
+    </span>
 </div>
 
 <div class="quick-actions-grid">
 
-    <a class="qa-btn" asp-controller="Project" asp-action="Index">
-        <div class="qa-icon blue"><i class="fas fa-project-diagram"></i></div>
-        <span class="qa-label" data-lang="qa_projects">المشاريع</span>
-    </a>
+    <!-- ══ ADMIN — full access ═══════════════════════════════ -->
+    @if (isAdmin)
+    {
+        <a class="qa-btn" asp-controller="Employee" asp-action="Index">
+            <div class="qa-icon cyan"><i class="fas fa-users-cog"></i></div>
+            <span class="qa-label" data-lang="qa_hr">الموارد البشرية</span>
+        </a>
+        <a class="qa-btn" asp-controller="Project" asp-action="Index">
+            <div class="qa-icon blue"><i class="fas fa-project-diagram"></i></div>
+            <span class="qa-label" data-lang="qa_projects">المشاريع</span>
+        </a>
+        <a class="qa-btn" asp-controller="Task" asp-action="Index">
+            <div class="qa-icon gold"><i class="fas fa-tasks"></i></div>
+            <span class="qa-label" data-lang="qa_tasks">المهام</span>
+        </a>
+        <a class="qa-btn" asp-controller="Document" asp-action="Index">
+            <div class="qa-icon teal"><i class="fas fa-file-alt"></i></div>
+            <span class="qa-label" data-lang="qa_documents">المستندات</span>
+        </a>
+        <a class="qa-btn" asp-controller="Drawing" asp-action="Index">
+            <div class="qa-icon purple"><i class="fas fa-drafting-compass"></i></div>
+            <span class="qa-label" data-lang="qa_drawings">الرسومات</span>
+        </a>
+        <a class="qa-btn" asp-controller="Invoice" asp-action="Index">
+            <div class="qa-icon green"><i class="fas fa-file-invoice-dollar"></i></div>
+            <span class="qa-label" data-lang="qa_invoices">الفواتير</span>
+        </a>
+        <a class="qa-btn" asp-controller="Material" asp-action="Index">
+            <div class="qa-icon orange"><i class="fas fa-boxes"></i></div>
+            <span class="qa-label" data-lang="qa_materials">المواد</span>
+        </a>
+        <a class="qa-btn" asp-controller="Inventory" asp-action="Index">
+            <div class="qa-icon orange"><i class="fas fa-warehouse"></i></div>
+            <span class="qa-label" data-lang="qa_inventory">المخزون</span>
+        </a>
+        <a class="qa-btn" asp-controller="Supplier" asp-action="Index">
+            <div class="qa-icon indigo"><i class="fas fa-truck"></i></div>
+            <span class="qa-label" data-lang="qa_suppliers">الموردون</span>
+        </a>
+        <a class="qa-btn" asp-controller="SiteVisit" asp-action="Index">
+            <div class="qa-icon rose"><i class="fas fa-hard-hat"></i></div>
+            <span class="qa-label" data-lang="qa_sitevisits">حضور الموقع</span>
+        </a>
+        <a class="qa-btn" asp-controller="MaterialInvoice" asp-action="Index">
+            <div class="qa-icon green"><i class="fas fa-file-invoice"></i></div>
+            <span class="qa-label" data-lang="qa_material_invoices">فواتير المواد</span>
+        </a>
+    }
 
-    <a class="qa-btn" asp-controller="Task" asp-action="Index">
-        <div class="qa-icon gold"><i class="fas fa-tasks"></i></div>
-        <span class="qa-label" data-lang="qa_tasks">المهام</span>
-    </a>
+    <!-- ══ PROJECT MANAGER — project operations ══════════════ -->
+    @if (isPM)
+    {
+        <a class="qa-btn" asp-controller="Project" asp-action="Index">
+            <div class="qa-icon blue"><i class="fas fa-project-diagram"></i></div>
+            <span class="qa-label" data-lang="qa_projects">المشاريع</span>
+        </a>
+        <a class="qa-btn" asp-controller="Task" asp-action="Index">
+            <div class="qa-icon gold"><i class="fas fa-tasks"></i></div>
+            <span class="qa-label" data-lang="qa_tasks">المهام</span>
+        </a>
+        <a class="qa-btn" asp-controller="Document" asp-action="Index">
+            <div class="qa-icon teal"><i class="fas fa-file-alt"></i></div>
+            <span class="qa-label" data-lang="qa_documents">المستندات</span>
+        </a>
+        <a class="qa-btn" asp-controller="Drawing" asp-action="Index">
+            <div class="qa-icon purple"><i class="fas fa-drafting-compass"></i></div>
+            <span class="qa-label" data-lang="qa_drawings">الرسومات</span>
+        </a>
+        <a class="qa-btn" asp-controller="SiteVisit" asp-action="Index">
+            <div class="qa-icon rose"><i class="fas fa-hard-hat"></i></div>
+            <span class="qa-label" data-lang="qa_sitevisits">حضور الموقع</span>
+        </a>
+        <a class="qa-btn" asp-controller="Invoice" asp-action="Index">
+            <div class="qa-icon green"><i class="fas fa-file-invoice-dollar"></i></div>
+            <span class="qa-label" data-lang="qa_invoices">الفواتير</span>
+        </a>
+    }
 
-    <a class="qa-btn" asp-controller="Document" asp-action="Index">
-        <div class="qa-icon teal"><i class="fas fa-file-alt"></i></div>
-        <span class="qa-label" data-lang="qa_documents">المستندات</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="Drawing" asp-action="Index">
-        <div class="qa-icon purple"><i class="fas fa-drafting-compass"></i></div>
-        <span class="qa-label" data-lang="qa_drawings">الرسومات</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="Invoice" asp-action="Index">
-        <div class="qa-icon green"><i class="fas fa-file-invoice-dollar"></i></div>
-        <span class="qa-label" data-lang="qa_invoices">الفواتير</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="Inventory" asp-action="Index">
-        <div class="qa-icon orange"><i class="fas fa-warehouse"></i></div>
-        <span class="qa-label" data-lang="qa_inventory">المخزون</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="Supplier" asp-action="Index">
-        <div class="qa-icon indigo"><i class="fas fa-truck"></i></div>
-        <span class="qa-label" data-lang="qa_suppliers">الموردون</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="SiteVisit" asp-action="Index">
-        <div class="qa-icon rose"><i class="fas fa-hard-hat"></i></div>
-        <span class="qa-label" data-lang="qa_sitevisits">حضور الموقع</span>
-    </a>
-
-    <a class="qa-btn" asp-controller="Employee" asp-action="Index">
-        <div class="qa-icon cyan"><i class="fas fa-users-cog"></i></div>
-        <span class="qa-label" data-lang="qa_hr">الموارد البشرية</span>
-    </a>
+    <!-- ══ ENGINEER — personal work ══════════════════════════ -->
+    @if (isEngineer)
+    {
+        <a class="qa-btn" asp-controller="Project" asp-action="Index">
+            <div class="qa-icon blue"><i class="fas fa-project-diagram"></i></div>
+            <span class="qa-label" data-lang="qa_projects">المشاريع</span>
+        </a>
+        <a class="qa-btn" asp-controller="Task" asp-action="Index">
+            <div class="qa-icon gold"><i class="fas fa-tasks"></i></div>
+            <span class="qa-label" data-lang="qa_tasks">المهام</span>
+        </a>
+        <a class="qa-btn" asp-controller="Document" asp-action="Index">
+            <div class="qa-icon teal"><i class="fas fa-file-alt"></i></div>
+            <span class="qa-label" data-lang="qa_documents">المستندات</span>
+        </a>
+        <a class="qa-btn" asp-controller="Drawing" asp-action="Index">
+            <div class="qa-icon purple"><i class="fas fa-drafting-compass"></i></div>
+            <span class="qa-label" data-lang="qa_drawings">الرسومات</span>
+        </a>
+        <a class="qa-btn" asp-controller="SiteVisit" asp-action="Index">
+            <div class="qa-icon rose"><i class="fas fa-hard-hat"></i></div>
+            <span class="qa-label" data-lang="qa_sitevisits">حضور الموقع</span>
+        </a>
+    }
 
 </div>
 
@@ -7544,7 +8298,6 @@ namespace Bonyan.PL.ViewModels
                         ProjectStatus.Cancelled => "cancelled",
                         _ => "planning"
                     };
-                    string badgeClass = topClass;
                     string statusAr = p.Status switch
                     {
                         ProjectStatus.Planning => "تخطيط",
@@ -7572,7 +8325,7 @@ namespace Bonyan.PL.ViewModels
                                 @(p.Client_Name ?? "—")
                             </div>
 
-                            <span class="rp-status-badge @badgeClass"
+                            <span class="rp-status-badge @topClass"
                                   data-en="@statusEn" data-ar="@statusAr">
                                 @statusAr
                             </span>
@@ -7613,7 +8366,7 @@ namespace Bonyan.PL.ViewModels
         </div>
     </div>
 
-    <!-- Right: Recent Activity -->
+    <!-- Right: Recent Tasks -->
     <div class="home-panel">
         <div class="home-panel-header">
             <h3 class="home-section-title">
@@ -7671,15 +8424,26 @@ namespace Bonyan.PL.ViewModels
 
 @section Scripts {
     <script>
-        // ── Date pill: switch AR/EN on lang toggle ─────────
+        // ── Date pill + role badge: switch AR/EN on lang toggle ─────────
         document.addEventListener('bonyanLangChanged', function (e) {
             const lang = e.detail;
+
+            // Date pill
             document.querySelectorAll('[data-lang-text]').forEach(el => {
                 el.style.display = (el.getAttribute('data-lang-text') === lang) ? '' : 'none';
             });
+
+            // Role badge text
+            document.querySelectorAll('.role-ar').forEach(el => {
+                el.style.display = lang === 'ar' ? '' : 'none';
+            });
+            document.querySelectorAll('.role-en').forEach(el => {
+                el.style.display = lang === 'en' ? '' : 'none';
+            });
         });
     </script>
-}=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Landing.cshtml ===
+}
+=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Landing.cshtml ===
 ﻿@model BonyanForEngineeringConsultingFirms.ViewModels.LandingStatsViewModel
 @{
     Layout = null;
@@ -12631,6 +13395,14 @@ else
 
                 @if (role == "Admin")
                 {
+
+                    
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
                     <li class="sidebar-section-title">
                         <span data-lang="management">الإدارة</span>
                     </li>
@@ -12713,6 +13485,13 @@ else
 
                 @if (role == "ProjectManager")
                 {
+
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
                     <li class="sidebar-section-title">
                         <span data-lang="my_projects">مشاريعي</span>
                     </li>
@@ -12759,6 +13538,12 @@ else
 
                 @if (role == "Engineer")
                 {
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
                     <li class="sidebar-section-title">
                         <span data-lang="my_projects">مشاريعي</span>
                     </li>
@@ -14738,416 +15523,603 @@ button.accept-policy {
         margin-bottom: 4px;
     }
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/dashboard.css ===
-﻿/* ── Dashboard ───────────────────────────────────── */
-.page-header {
+﻿/* ══════════════════════════════════════════════════════
+   dashboard.css  —  Analytics Dashboard
+   Light / Dark · RTL / LTR · Responsive
+══════════════════════════════════════════════════════ */
+
+/* ── Extra dark-mode tokens ─────────────────────────── */
+body.dark-mode {
+    --db-card: #1a2535;
+    --db-border: rgba(255,255,255,0.07);
+    --db-muted: #8899aa;
+    --db-text: #e2e8f0;
+    --db-hover: rgba(255,255,255,0.03);
+    --db-sub: #0f1923;
+}
+
+body:not(.dark-mode) {
+    --db-card: #ffffff;
+    --db-border: rgba(0,0,0,0.07);
+    --db-muted: #888;
+    --db-text: #2d3748;
+    --db-hover: #f8f9ff;
+    --db-sub: #F4F6F9;
+}
+
+/* ════════════════════════════════════════════════════
+   PAGE HEADER
+════════════════════════════════════════════════════ */
+.db-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
     margin-bottom: 28px;
 }
 
-    .page-header h2 {
-        color: var(--primary);
-        font-size: 1.6rem;
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
-
-    .page-header p {
-        color: #888;
-        font-size: 0.92rem;
-    }
-
-/* ── Stat Cards ──────────────────────────────────── */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 28px;
-}
-
-.stat-card {
-    background: var(--white);
-    border-radius: 14px;
-    padding: 22px;
+.db-page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--primary);
     display: flex;
     align-items: center;
-    gap: 16px;
-    box-shadow: 0 2px 15px rgba(0,0,0,0.06);
-    transition: transform 0.3s, box-shadow 0.3s;
-    text-decoration: none;
-    color: inherit;
+    gap: 10px;
+    margin: 0 0 4px;
 }
 
-    .stat-card:hover {
+body.dark-mode .db-page-title {
+    color: #e2e8f0;
+}
+
+.db-page-title i {
+    color: var(--secondary);
+}
+
+.db-page-sub {
+    font-size: 0.85rem;
+    color: var(--db-muted);
+    margin: 0;
+}
+
+/* ════════════════════════════════════════════════════
+   METRIC CARDS  (5-column grid)
+════════════════════════════════════════════════════ */
+.db-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.db-metric-card {
+    background: var(--db-card);
+    border-radius: 16px;
+    padding: 20px 18px 16px;
+    border: 1px solid var(--db-border);
+    border-bottom: 4px solid var(--accent, #1B3A6B);
+    box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: transform 0.25s, box-shadow 0.25s;
+}
+
+    .db-metric-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-        color: inherit;
+        box-shadow: 0 8px 26px rgba(0,0,0,0.12);
     }
 
-.stat-icon {
-    width: 58px;
-    height: 58px;
-    border-radius: 14px;
+.db-mc-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.db-mc-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    color: var(--white);
+    font-size: 1.25rem;
+    color: #fff;
     flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
 }
 
-    .stat-icon.blue {
-        background: linear-gradient(135deg, #1B3A6B, #2a5298);
-    }
+.db-mc-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
 
-    .stat-icon.gold {
-        background: linear-gradient(135deg, #C8922A, #e6a832);
-    }
-
-    .stat-icon.green {
-        background: linear-gradient(135deg, #28A745, #34ce57);
-    }
-
-    .stat-icon.red {
-        background: linear-gradient(135deg, #DC3545, #e85563);
-    }
-
-    .stat-icon.purple {
-        background: linear-gradient(135deg, #6f42c1, #8e5cf7);
-    }
-
-    .stat-icon.teal {
-        background: linear-gradient(135deg, #17a2b8, #20c5de);
-    }
-
-    .stat-icon.orange {
-        background: linear-gradient(135deg, #fd7e14, #ff9a3c);
-    }
-
-    .stat-icon.dark {
-        background: linear-gradient(135deg, #343a40, #5a6268);
-    }
-
-.stat-info h3 {
+.db-mc-number {
     font-size: 1.7rem;
     font-weight: 700;
     color: var(--primary);
     line-height: 1;
-    margin-bottom: 4px;
 }
 
-.stat-info p {
-    font-size: 0.82rem;
-    color: #888;
-    margin: 0;
+body.dark-mode .db-mc-number {
+    color: #e2e8f0;
 }
 
-/* ── Dashboard Grid ──────────────────────────────── */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 22px;
-    margin-bottom: 22px;
+.db-mc-budget {
+    font-size: 1.25rem;
 }
 
-.dashboard-grid-3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
-    margin-bottom: 22px;
+.db-mc-label {
+    font-size: 0.76rem;
+    color: var(--db-muted);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* ── Bonyan Card ─────────────────────────────────── */
-.bonyan-card {
-    background: var(--white);
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+/* ── Multi-colored bar strip ─────────────────────────── */
+.db-mc-bar-group {
+    display: flex;
+    height: 5px;
+    border-radius: 4px;
+    overflow: hidden;
+    gap: 2px;
 }
 
-.bonyan-card-header {
+.db-mc-bar-seg {
+    border-radius: 4px;
+    min-width: 4px;
+    transition: flex 0.4s;
+}
+
+/* ── Mini legend below bar ────────────────────────────── */
+.db-mc-mini-legend {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+    .db-mc-mini-legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.68rem;
+        color: var(--db-muted);
+        font-weight: 600;
+    }
+
+    .db-mc-mini-legend em {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        font-style: normal;
+        flex-shrink: 0;
+    }
+
+/* ── Card footer row ─────────────────────────────────── */
+.db-mc-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
-    padding-bottom: 14px;
-    border-bottom: 2px solid #F4F6F9;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
-    .bonyan-card-header h5 {
-        font-size: 1rem;
-        font-weight: 700;
-        color: var(--primary);
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-        .bonyan-card-header h5 i {
-            color: var(--secondary);
-        }
-
-.view-all-link {
-    font-size: 0.82rem;
-    color: var(--secondary);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-    .view-all-link:hover {
-        text-decoration: underline;
-        color: var(--secondary);
-    }
-
-/* ── Recent Table ────────────────────────────────── */
-.recent-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-    .recent-table th {
-        font-size: 0.78rem;
-        color: #999;
-        font-weight: 600;
-        padding: 0 12px 10px;
-        text-align: right;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-[dir="ltr"] .recent-table th {
-    text-align: left;
-}
-
-.recent-table td {
-    padding: 11px 12px;
-    font-size: 0.88rem;
-    border-bottom: 1px solid #F4F6F9;
-    vertical-align: middle;
-}
-
-.recent-table tr:last-child td {
-    border-bottom: none;
-}
-
-.recent-table tr:hover td {
-    background: #FAFBFF;
-}
-
-/* ── Badges ──────────────────────────────────────── */
-.badge-status {
-    padding: 4px 12px;
-    border-radius: 20px;
+.db-mc-total {
     font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-block;
+    color: var(--db-muted);
 }
 
-.badge-planning {
-    background: #E3F2FD;
-    color: #1565C0;
+/* ── Footer badges ───────────────────────────────────── */
+.db-mc-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
 }
 
-.badge-inprogress {
-    background: #FFF8E1;
-    color: #F57F17;
+    .db-mc-badge.amber {
+        background: rgba(245,158,11,0.12);
+        color: #d97706;
+    }
+
+    .db-mc-badge.teal {
+        background: rgba(23,162,184,0.12);
+        color: #17a2b8;
+    }
+
+    .db-mc-badge.purple {
+        background: rgba(111,66,193,0.12);
+        color: #6f42c1;
+    }
+
+    .db-mc-badge.green {
+        background: rgba(40,167,69,0.12);
+        color: #28A745;
+    }
+
+body.dark-mode .db-mc-badge.amber {
+    background: rgba(245,158,11,0.18);
+    color: #fcd34d;
 }
 
-.badge-completed {
-    background: #E8F5E9;
-    color: #2E7D32;
+body.dark-mode .db-mc-badge.teal {
+    background: rgba(23,162,184,0.18);
+    color: #5ed4e4;
 }
 
-.badge-onhold {
-    background: #F3E5F5;
-    color: #6A1B9A;
+body.dark-mode .db-mc-badge.purple {
+    background: rgba(111,66,193,0.18);
+    color: #c4b5fd;
 }
 
-.badge-cancelled {
-    background: #FFEBEE;
-    color: #B71C1C;
+body.dark-mode .db-mc-badge.green {
+    background: rgba(40,167,69,0.18);
+    color: #68d391;
 }
 
-.badge-pending {
-    background: #FFF3E0;
-    color: #E65100;
+/* ════════════════════════════════════════════════════
+   CHARTS GRID (2 columns)
+════════════════════════════════════════════════════ */
+.db-charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
 }
 
-/* ── Activity List ───────────────────────────────── */
-.activity-list {
-    list-style: none;
-    padding: 0;
+/* ════════════════════════════════════════════════════
+   TABLES GRID (2 columns)
+════════════════════════════════════════════════════ */
+.db-tables-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+/* ════════════════════════════════════════════════════
+   SHARED PANEL
+════════════════════════════════════════════════════ */
+.db-panel {
+    background: var(--db-card);
+    border-radius: 16px;
+    border: 1px solid var(--db-border);
+    box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.db-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--db-border);
+    flex-shrink: 0;
+}
+
+.db-panel-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin: 0;
 }
 
-.activity-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid #F4F6F9;
+body.dark-mode .db-panel-title {
+    color: #e2e8f0;
 }
 
-    .activity-item:last-child {
+.db-panel-title i {
+    color: var(--secondary);
+}
+
+.db-view-all {
+    font-size: 0.78rem;
+    color: var(--secondary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+
+    .db-view-all:hover {
+        opacity: 0.7;
+        color: var(--secondary);
+    }
+
+/* ── Chart wrapper ────────────────────────────────────── */
+.db-chart-wrap {
+    padding: 18px 20px 14px;
+    flex: 1;
+    position: relative;
+    min-height: 280px;
+}
+
+.db-doughnut-wrap {
+    max-height: 320px;
+}
+
+/* ════════════════════════════════════════════════════
+   PROJECTS TABLE
+════════════════════════════════════════════════════ */
+.db-table-wrap {
+    overflow-x: auto;
+    flex: 1;
+}
+
+.db-table {
+    font-size: 0.86rem;
+}
+
+    .db-table thead th {
+        background: var(--primary);
+        color: #fff;
+        padding: 11px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+[dir="ltr"] .db-table thead th {
+    text-align: left;
+}
+
+.db-table tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--db-border);
+    vertical-align: middle;
+}
+
+.db-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.db-table tbody tr:hover {
+    background: var(--db-hover);
+}
+
+body.dark-mode .db-table thead th {
+    background: #0f1f3d;
+}
+
+body.dark-mode .db-table tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+.db-proj-link {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+body.dark-mode .db-proj-link {
+    color: #90b8e8;
+}
+
+.db-proj-link:hover {
+    text-decoration: underline;
+}
+
+.db-muted {
+    color: var(--db-muted);
+    font-size: 0.82rem;
+}
+
+.db-center {
+    text-align: center;
+}
+
+.db-task-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 24px;
+    border-radius: 8px;
+    background: rgba(27,58,107,0.1);
+    color: var(--primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0 6px;
+}
+
+body.dark-mode .db-task-count {
+    background: rgba(144,184,232,0.15);
+    color: #90b8e8;
+}
+
+/* ════════════════════════════════════════════════════
+   OVERDUE TASKS PANEL
+════════════════════════════════════════════════════ */
+.db-panel-overdue {
+    border-top: 3px solid #DC3545;
+}
+
+.db-overdue-title {
+    color: #DC3545 !important;
+}
+
+body.dark-mode .db-overdue-title {
+    color: #fc8181 !important;
+}
+
+.db-overdue-list {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.db-overdue-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--db-border);
+    transition: background 0.2s;
+}
+
+    .db-overdue-item:last-child {
         border-bottom: none;
     }
 
-.activity-dot {
+    .db-overdue-item:hover {
+        background: rgba(220,53,69,0.04);
+    }
+
+body.dark-mode .db-overdue-item:hover {
+    background: rgba(252,129,129,0.06);
+}
+
+.db-overdue-icon {
     width: 36px;
     height: 36px;
     border-radius: 10px;
+    background: rgba(220,53,69,0.1);
+    color: #DC3545;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.9rem;
-    color: white;
     flex-shrink: 0;
 }
 
-    .activity-dot.blue {
-        background: var(--primary);
-    }
-
-    .activity-dot.gold {
-        background: var(--secondary);
-    }
-
-    .activity-dot.green {
-        background: var(--success);
-    }
-
-    .activity-dot.red {
-        background: var(--danger);
-    }
-
-.activity-text p {
-    font-size: 0.86rem;
-    color: var(--text);
-    margin: 0 0 2px;
-    font-weight: 500;
+body.dark-mode .db-overdue-icon {
+    background: rgba(252,129,129,0.12);
+    color: #fc8181;
 }
 
-.activity-text span {
-    font-size: 0.78rem;
-    color: #aaa;
+.db-overdue-body {
+    flex: 1;
+    min-width: 0;
 }
 
-/* ── Quick Actions ───────────────────────────────── */
-.quick-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+.db-overdue-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--db-text);
+    margin: 0 0 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.quick-action-btn {
+.db-overdue-project {
+    font-size: 0.74rem;
+    color: var(--db-muted);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+    .db-overdue-project i {
+        font-size: 0.65rem;
+    }
+
+.db-overdue-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.db-overdue-date {
+    font-size: 0.74rem;
+    color: var(--db-muted);
+    white-space: nowrap;
+}
+
+.db-overdue-late {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #DC3545;
+    background: rgba(220,53,69,0.1);
+    padding: 2px 7px;
+    border-radius: 8px;
+}
+
+body.dark-mode .db-overdue-late {
+    color: #fc8181;
+    background: rgba(252,129,129,0.12);
+}
+
+/* ── Empty states ─────────────────────────────────────── */
+.db-empty {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 16px 10px;
-    border-radius: 12px;
-    text-decoration: none;
-    font-size: 0.82rem;
-    font-weight: 600;
-    transition: all 0.3s;
-    border: 2px solid transparent;
+    gap: 10px;
+    padding: 48px 20px;
+    color: var(--db-muted);
+    flex: 1;
 }
 
-    .quick-action-btn i {
-        font-size: 1.3rem;
+    .db-empty i {
+        font-size: 2.5rem;
+        opacity: 0.3;
     }
 
-    .quick-action-btn.blue {
-        background: #EEF2FF;
-        color: var(--primary);
-        border-color: #D0D9F5;
-    }
-
-    .quick-action-btn.gold {
-        background: #FFF8EE;
-        color: var(--secondary);
-        border-color: #F5E6CF;
-    }
-
-    .quick-action-btn.green {
-        background: #EEFAF2;
-        color: #28A745;
-        border-color: #C3EDD0;
-    }
-
-    .quick-action-btn.purple {
-        background: #F3EEFF;
-        color: #6f42c1;
-        border-color: #DDD0F8;
-    }
-
-    .quick-action-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-
-/* ── Progress Bar ────────────────────────────────── */
-.progress-item {
-    margin-bottom: 16px;
-}
-
-    .progress-item:last-child {
-        margin-bottom: 0;
-    }
-
-.progress-label {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 6px;
-    font-size: 0.85rem;
-}
-
-    .progress-label span:first-child {
+    .db-empty span {
+        font-size: 0.88rem;
         font-weight: 600;
-        color: var(--text);
     }
 
-    .progress-label span:last-child {
-        color: #888;
-    }
-
-.progress-bar-wrap {
-    height: 8px;
-    background: #F0F0F0;
-    border-radius: 10px;
-    overflow: hidden;
+.db-empty-good i {
+    color: #28A745;
+    opacity: 0.6;
 }
 
-.progress-bar-fill {
-    height: 100%;
-    border-radius: 10px;
-    transition: width 1s ease;
+.db-empty-good span {
+    color: #28A745;
 }
 
-/* ── Responsive ──────────────────────────────────── */
+/* ════════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════════ */
 @media (max-width: 1200px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .db-metrics-grid {
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
-@media (max-width: 992px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .dashboard-grid-3 {
+@media (max-width: 900px) {
+    .db-charts-grid,
+    .db-tables-grid {
         grid-template-columns: 1fr;
     }
 }
 
-@media (max-width: 576px) {
-    .stats-grid {
+@media (max-width: 640px) {
+    .db-metrics-grid {
         grid-template-columns: 1fr 1fr;
     }
 
-    .quick-actions {
-        grid-template-columns: 1fr 1fr;
+    .db-mc-number {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .db-metrics-grid {
+        grid-template-columns: 1fr;
     }
 }
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/DocumentAndDrawing.css ===
@@ -16090,24 +17062,106 @@ button.accept-policy {
 }
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/home.css ===
 ﻿/* ══════════════════════════════════════════════════════
-   home.css  —  Home Page (not dashboard)
+   home.css  —  Home Page (Dashboard)
    Supports: Light/Dark mode · RTL/LTR · Responsive
+   Roles: Admin · ProjectManager · Engineer
 ══════════════════════════════════════════════════════ */
+
+/* ── CSS Variables (Light Mode Defaults) ────────────── */
+:root {
+    --primary: #1B3A6B;
+    --secondary: #C8922A;
+    --bg: #F4F6F9;
+    --white: #ffffff;
+    --text: #2d3748;
+    --card-border: rgba(0, 0, 0, 0.06);
+    --muted: #888;
+    --input-bg: #f4f6f9;
+    --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 6px 22px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 36px rgba(0, 0, 0, 0.14);
+    --radius: 14px;
+    --transition: 0.25s ease;
+}
 
 /* ── Dark Mode Variables ────────────────────────────── */
 body.dark-mode {
     --bg: #0f1923;
     --white: #1a2535;
     --text: #e2e8f0;
-    --card-border: rgba(255,255,255,0.07);
+    --card-border: rgba(255, 255, 255, 0.07);
     --muted: #8899aa;
     --input-bg: #1e2d40;
+    --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 6px 22px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 36px rgba(0, 0, 0, 0.5);
 }
 
-body:not(.dark-mode) {
-    --card-border: rgba(0,0,0,0.06);
-    --muted: #888;
-    --input-bg: #f4f6f9;
+/* ════════════════════════════════════════════════════
+   ROLE BADGE
+════════════════════════════════════════════════════ */
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+    width: fit-content;
+}
+
+/* Admin — deep navy */
+.role-badge-admin {
+    background: rgba(27, 58, 107, 0.18);
+    color: #1B3A6B;
+    border: 1.5px solid rgba(27, 58, 107, 0.3);
+}
+
+/* Project Manager — amber */
+.role-badge-pm {
+    background: rgba(200, 146, 42, 0.15);
+    color: #a07020;
+    border: 1.5px solid rgba(200, 146, 42, 0.35);
+}
+
+/* Engineer — teal */
+.role-badge-engineer {
+    background: rgba(23, 162, 184, 0.12);
+    color: #0e7a8a;
+    border: 1.5px solid rgba(23, 162, 184, 0.3);
+}
+
+/* Dark-mode role badge adjustments */
+body.dark-mode .role-badge-admin {
+    background: rgba(80, 130, 200, 0.18);
+    color: #90b8e8;
+    border-color: rgba(80, 130, 200, 0.3);
+}
+
+body.dark-mode .role-badge-pm {
+    background: rgba(200, 146, 42, 0.2);
+    color: #e8b84b;
+    border-color: rgba(200, 146, 42, 0.4);
+}
+
+body.dark-mode .role-badge-engineer {
+    background: rgba(23, 162, 184, 0.18);
+    color: #5ed4e4;
+    border-color: rgba(23, 162, 184, 0.35);
+}
+
+/* Quick-actions role hint badge */
+.qa-role-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
 }
 
 /* ════════════════════════════════════════════════════
@@ -16115,11 +17169,12 @@ body:not(.dark-mode) {
 ════════════════════════════════════════════════════ */
 .home-banner {
     background: linear-gradient(135deg, #1B3A6B 0%, #112240 60%, #0d1c33 100%);
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 28px 32px;
     margin-bottom: 28px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 24px rgba(17, 34, 64, 0.35);
 }
 
     .home-banner::before {
@@ -16130,7 +17185,7 @@ body:not(.dark-mode) {
         width: 220px;
         height: 220px;
         border-radius: 50%;
-        background: rgba(200,146,42,0.08);
+        background: rgba(200, 146, 42, 0.08);
         pointer-events: none;
     }
 
@@ -16142,9 +17197,14 @@ body:not(.dark-mode) {
         width: 300px;
         height: 300px;
         border-radius: 50%;
-        background: rgba(200,146,42,0.05);
+        background: rgba(200, 146, 42, 0.05);
         pointer-events: none;
     }
+
+body.dark-mode .home-banner {
+    background: linear-gradient(135deg, #0f1f3d 0%, #0a1628 60%, #060e1c 100%);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
 
 .banner-top {
     display: flex;
@@ -16179,7 +17239,7 @@ body:not(.dark-mode) {
 
     .banner-greeting .greeting-sub {
         font-size: 0.85rem;
-        color: rgba(255,255,255,0.5);
+        color: rgba(255, 255, 255, 0.5);
         margin-top: 2px;
     }
 
@@ -16196,8 +17256,8 @@ body:not(.dark-mode) {
     background: var(--secondary);
     color: #fff;
     border: none;
-    padding: 9px 20px;
-    border-radius: 9px;
+    padding: 10px 22px;
+    border-radius: 10px;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
@@ -16205,22 +17265,24 @@ body:not(.dark-mode) {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    transition: all 0.25s;
+    transition: all var(--transition);
     white-space: nowrap;
+    box-shadow: 0 3px 12px rgba(200, 146, 42, 0.4);
 }
 
     .btn-banner-gold:hover {
         background: #a87520;
         color: #fff;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(200, 146, 42, 0.5);
     }
 
 .btn-banner-outline {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
-    border: 1px solid rgba(255,255,255,0.25);
-    padding: 9px 20px;
-    border-radius: 9px;
+    border: 1.5px solid rgba(255, 255, 255, 0.28);
+    padding: 10px 22px;
+    border-radius: 10px;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
@@ -16228,14 +17290,15 @@ body:not(.dark-mode) {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    transition: all 0.25s;
+    transition: all var(--transition);
     white-space: nowrap;
+    backdrop-filter: blur(4px);
 }
 
     .btn-banner-outline:hover {
-        background: rgba(255,255,255,0.18);
+        background: rgba(255, 255, 255, 0.2);
         color: #fff;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
     }
 
 /* ── Banner Mini Stats Row ──────────────────────────── */
@@ -16245,21 +17308,26 @@ body:not(.dark-mode) {
     gap: 10px;
     flex-wrap: wrap;
     padding-top: 18px;
-    border-top: 1px solid rgba(255,255,255,0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .banner-stat-pill {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 20px;
     padding: 5px 14px;
     font-size: 0.8rem;
-    color: rgba(255,255,255,0.85);
+    color: rgba(255, 255, 255, 0.85);
     white-space: nowrap;
+    transition: background var(--transition);
 }
+
+    .banner-stat-pill:hover {
+        background: rgba(255, 255, 255, 0.14);
+    }
 
     .banner-stat-pill i {
         color: var(--secondary);
@@ -16273,8 +17341,8 @@ body:not(.dark-mode) {
 
     .banner-stat-pill.date-pill {
         margin-right: auto;
-        background: rgba(200,146,42,0.15);
-        border-color: rgba(200,146,42,0.3);
+        background: rgba(200, 146, 42, 0.15);
+        border-color: rgba(200, 146, 42, 0.3);
         color: var(--secondary);
     }
 
@@ -16295,23 +17363,45 @@ body:not(.dark-mode) {
 
 .home-stat-card {
     background: var(--white);
-    border-radius: 14px;
+    border-radius: var(--radius);
     padding: 22px 20px 18px;
     border: 1px solid var(--card-border);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
     gap: 14px;
-    transition: transform 0.25s, box-shadow 0.25s;
+    transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
     text-decoration: none;
     color: inherit;
+    position: relative;
+    overflow: hidden;
 }
 
+    .home-stat-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: var(--radius);
+        opacity: 0;
+        transition: opacity var(--transition);
+        background: linear-gradient(135deg, rgba(200,146,42,0.04), transparent);
+        pointer-events: none;
+    }
+
     .home-stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.11);
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-md);
         color: inherit;
     }
+
+        .home-stat-card:hover::after {
+            opacity: 1;
+        }
+
+body.dark-mode .home-stat-card {
+    background: #1a2535;
+    border-color: rgba(255, 255, 255, 0.07);
+}
 
 .hsc-top {
     display: flex;
@@ -16320,8 +17410,8 @@ body:not(.dark-mode) {
 }
 
 .hsc-icon {
-    width: 46px;
-    height: 46px;
+    width: 48px;
+    height: 48px;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -16329,6 +17419,7 @@ body:not(.dark-mode) {
     font-size: 1.2rem;
     color: #fff;
     flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
 }
 
     .hsc-icon.blue {
@@ -16358,7 +17449,7 @@ body:not(.dark-mode) {
 .hsc-trend {
     font-size: 0.72rem;
     font-weight: 600;
-    padding: 3px 9px;
+    padding: 3px 10px;
     border-radius: 20px;
 }
 
@@ -16377,8 +17468,23 @@ body:not(.dark-mode) {
         color: #3730a3;
     }
 
+body.dark-mode .hsc-trend.up {
+    background: rgba(26,122,62,0.2);
+    color: #68d391;
+}
+
+body.dark-mode .hsc-trend.down {
+    background: rgba(139,0,0,0.2);
+    color: #fc8181;
+}
+
+body.dark-mode .hsc-trend.neu {
+    background: rgba(55,48,163,0.2);
+    color: #a5b4fc;
+}
+
 .hsc-number {
-    font-size: 2rem;
+    font-size: 2.1rem;
     font-weight: 700;
     color: var(--primary);
     line-height: 1;
@@ -16440,7 +17546,7 @@ body.dark-mode .home-section-title {
     color: var(--secondary);
     text-decoration: none;
     font-weight: 600;
-    transition: opacity 0.2s;
+    transition: opacity var(--transition);
 }
 
     .home-view-all:hover {
@@ -16448,9 +17554,10 @@ body.dark-mode .home-section-title {
         color: var(--secondary);
     }
 
+/* Dynamic grid: 9 cols for Admin, auto for others */
 .quick-actions-grid {
     display: grid;
-    grid-template-columns: repeat(9, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 12px;
     margin-bottom: 28px;
 }
@@ -16458,7 +17565,7 @@ body.dark-mode .home-section-title {
 .qa-btn {
     background: var(--white);
     border: 1px solid var(--card-border);
-    border-radius: 14px;
+    border-radius: var(--radius);
     padding: 18px 10px 14px;
     display: flex;
     flex-direction: column;
@@ -16467,67 +17574,97 @@ body.dark-mode .home-section-title {
     gap: 10px;
     text-decoration: none;
     color: var(--text);
-    transition: all 0.25s;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    transition: all var(--transition);
+    box-shadow: var(--shadow-sm);
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
 }
 
+    .qa-btn::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--secondary);
+        transform: scaleX(0);
+        transition: transform var(--transition);
+        border-radius: 0 0 var(--radius) var(--radius);
+    }
+
     .qa-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
         color: var(--text);
     }
 
+        .qa-btn:hover::before {
+            transform: scaleX(1);
+        }
+
+body.dark-mode .qa-btn {
+    background: #1a2535;
+    border-color: rgba(255, 255, 255, 0.07);
+}
+
 .qa-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 11px;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.1rem;
     color: #fff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    transition: transform var(--transition);
 }
 
-    .qa-icon.blue {
-        background: #1B3A6B;
-    }
+.qa-btn:hover .qa-icon {
+    transform: scale(1.08);
+}
 
-    .qa-icon.gold {
-        background: #C8922A;
-    }
+.qa-icon.blue {
+    background: #1B3A6B;
+}
 
-    .qa-icon.green {
-        background: #28A745;
-    }
+.qa-icon.gold {
+    background: #C8922A;
+}
 
-    .qa-icon.red {
-        background: #DC3545;
-    }
+.qa-icon.green {
+    background: #28A745;
+}
 
-    .qa-icon.purple {
-        background: #6f42c1;
-    }
+.qa-icon.red {
+    background: #DC3545;
+}
 
-    .qa-icon.teal {
-        background: #17a2b8;
-    }
+.qa-icon.purple {
+    background: #6f42c1;
+}
 
-    .qa-icon.orange {
-        background: #fd7e14;
-    }
+.qa-icon.teal {
+    background: #17a2b8;
+}
 
-    .qa-icon.indigo {
-        background: #4B0082;
-    }
+.qa-icon.orange {
+    background: #fd7e14;
+}
 
-    .qa-icon.rose {
-        background: #e91e63;
-    }
+.qa-icon.indigo {
+    background: #4B0082;
+}
 
-    .qa-icon.cyan {
-        background: #00acc1;
-    }
+.qa-icon.rose {
+    background: #e91e63;
+}
+
+.qa-icon.cyan {
+    background: #00acc1;
+}
 
 .qa-label {
     font-size: 0.72rem;
@@ -16542,7 +17679,7 @@ body.dark-mode .qa-label {
 }
 
 /* ════════════════════════════════════════════════════
-   RECENT PROJECTS CARDS
+   RECENT PROJECTS + ACTIVITY — two-column layout
 ════════════════════════════════════════════════════ */
 .home-two-col {
     display: grid;
@@ -16558,10 +17695,16 @@ body.dark-mode .qa-label {
 
 .home-panel {
     background: var(--white);
-    border-radius: 14px;
+    border-radius: var(--radius);
     padding: 22px;
     border: 1px solid var(--card-border);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    box-shadow: var(--shadow-sm);
+    transition: background var(--transition), border-color var(--transition);
+}
+
+body.dark-mode .home-panel {
+    background: #1a2535;
+    border-color: rgba(255, 255, 255, 0.07);
 }
 
 .home-panel-header {
@@ -16585,7 +17728,7 @@ body.dark-mode .qa-label {
     border: 1px solid var(--card-border);
     overflow: hidden;
     background: var(--white);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform var(--transition), box-shadow var(--transition);
     text-decoration: none;
     color: inherit;
     display: block;
@@ -16593,9 +17736,14 @@ body.dark-mode .qa-label {
 
     .rp-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.09);
+        box-shadow: var(--shadow-md);
         color: inherit;
     }
+
+body.dark-mode .rp-card {
+    background: #1e2d40;
+    border-color: rgba(255, 255, 255, 0.07);
+}
 
 .rp-card-top {
     height: 5px;
@@ -16636,7 +17784,7 @@ body.dark-mode .qa-label {
 }
 
 body.dark-mode .rp-card-name {
-    color: #e2e8f0;
+    color: #d0dce8;
 }
 
 .rp-card-client {
@@ -16681,6 +17829,31 @@ body.dark-mode .rp-card-name {
         color: #991B1B;
     }
 
+body.dark-mode .rp-status-badge.inprogress {
+    background: rgba(254,243,199,0.12);
+    color: #fcd34d;
+}
+
+body.dark-mode .rp-status-badge.planning {
+    background: rgba(219,234,254,0.12);
+    color: #93c5fd;
+}
+
+body.dark-mode .rp-status-badge.completed {
+    background: rgba(209,250,229,0.12);
+    color: #6ee7b7;
+}
+
+body.dark-mode .rp-status-badge.onhold {
+    background: rgba(237,233,254,0.12);
+    color: #c4b5fd;
+}
+
+body.dark-mode .rp-status-badge.cancelled {
+    background: rgba(254,226,226,0.12);
+    color: #fca5a5;
+}
+
 .rp-card-meta {
     display: flex;
     align-items: center;
@@ -16707,7 +17880,7 @@ body.dark-mode .rp-card-name {
     color: var(--secondary);
     padding: 2px 8px;
     border-radius: 8px;
-    background: rgba(200,146,42,0.1);
+    background: rgba(200, 146, 42, 0.1);
 }
 
 [dir="ltr"] .rp-days-left {
@@ -16716,7 +17889,7 @@ body.dark-mode .rp-card-name {
 }
 
 /* ════════════════════════════════════════════════════
-   RECENT ACTIVITY PANEL (right column)
+   ACTIVITY FEED (right column)
 ════════════════════════════════════════════════════ */
 .activity-feed {
     display: flex;
@@ -16730,11 +17903,23 @@ body.dark-mode .rp-card-name {
     gap: 12px;
     padding: 12px 0;
     border-bottom: 1px solid var(--card-border);
+    transition: background var(--transition);
+    border-radius: 8px;
+    padding-inline: 8px;
+    margin-inline: -8px;
 }
 
     .af-item:last-child {
         border-bottom: none;
     }
+
+    .af-item:hover {
+        background: rgba(200, 146, 42, 0.04);
+    }
+
+body.dark-mode .af-item:hover {
+    background: rgba(255,255,255,0.03);
+}
 
 .af-dot {
     width: 34px;
@@ -16781,110 +17966,29 @@ body.dark-mode .rp-card-name {
 }
 
 /* ════════════════════════════════════════════════════
-   DARK MODE — card adjustments
+   RESPONSIVE — Tablet / Mobile
 ════════════════════════════════════════════════════ */
-body.dark-mode .home-stat-card,
-body.dark-mode .home-panel,
-body.dark-mode .qa-btn,
-body.dark-mode .rp-card {
-    background: #1a2535;
-    border-color: rgba(255,255,255,0.07);
-}
-
-body.dark-mode .home-banner {
-    background: linear-gradient(135deg, #0f1f3d 0%, #0a1628 60%, #060e1c 100%);
-}
-
-body.dark-mode .rp-card-name {
-    color: #d0dce8;
-}
-
-body.dark-mode .af-text p {
-    color: #d0dce8;
-}
-
-/* ── Dark Mode Toggle Button ────────────────────────── */
-.dark-mode-btn {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.25);
-    color: #fff;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 0.95rem;
-    transition: all 0.25s;
-}
-
-    .dark-mode-btn:hover {
-        background: rgba(255,255,255,0.1);
-    }
-
-/* ── Sidebar Home button ─────────────────────────────── */
-.sidebar-home-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 20px;
-    color: #B0BEC5;
-    text-decoration: none;
-    font-size: 0.95rem;
-    transition: all 0.3s;
-    border-right: 3px solid transparent;
-    background: rgba(200,146,42,0.07);
-}
-
-[dir="ltr"] .sidebar-home-btn {
-    border-right: none;
-    border-left: 3px solid transparent;
-}
-
-.sidebar-home-btn:hover,
-.sidebar-home-btn.active {
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-    border-right-color: var(--secondary);
-}
-
-[dir="ltr"] .sidebar-home-btn:hover,
-[dir="ltr"] .sidebar-home-btn.active {
-    border-left-color: var(--secondary);
-    border-right-color: transparent;
-}
-
-.sidebar-home-btn i {
-    width: 20px;
-    color: var(--secondary);
-    font-size: 1rem;
-}
-
-/* ════════════════════════════════════════════════════
-   RESPONSIVE
-════════════════════════════════════════════════════ */
-@media (max-width: 1200px) {
+@media (max-width: 1100px) {
     .home-cards-grid {
         grid-template-columns: repeat(2, 1fr);
-    }
-
-    .quick-actions-grid {
-        grid-template-columns: repeat(5, 1fr);
     }
 
     .home-two-col {
         grid-template-columns: 1fr;
     }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
     .home-banner {
-        padding: 20px;
+        padding: 20px 18px;
     }
 
-    .banner-top {
-        flex-direction: column;
+    .banner-greeting h2 {
+        font-size: 1.25rem;
     }
 
     .banner-actions {
@@ -16892,26 +17996,31 @@ body.dark-mode .af-text p {
     }
 
     .home-cards-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr 1fr;
         gap: 12px;
-    }
-
-    .quick-actions-grid {
-        grid-template-columns: repeat(3, 1fr);
     }
 
     .recent-projects-grid {
         grid-template-columns: 1fr;
     }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .home-two-col {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 420px) {
     .home-cards-grid {
         grid-template-columns: 1fr;
     }
 
     .quick-actions-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/invoice.css ===

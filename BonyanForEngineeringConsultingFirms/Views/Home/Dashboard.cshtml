@@ -1,508 +1,332 @@
-﻿@* Views/Home/Dashboard.cshtml *@
-@using Bonyan.DAL.Enums
-@model BonyanForEngineeringConsultingFirms.ViewModels.DashboardViewModel
+﻿@model BonyanForEngineeringConsultingFirms.ViewModels.DashboardViewModel
 @{
-    ViewData["Title"] = "Dashboard";
-
-    // ── Status badge helpers ─────────────────────────
-    string ProjBadge(ProjectStatus s) => s switch
-    {
-        ProjectStatus.Planning => "badge-info",
-        ProjectStatus.InProgress => "badge-warning",
-        ProjectStatus.Completed => "badge-success",
-        ProjectStatus.OnHold => "badge-primary",
-        ProjectStatus.Cancelled => "badge-danger",
-        _ => "badge-info"
-    };
-    string ProjLabel(ProjectStatus s) => s switch
-    {
-        ProjectStatus.Planning => "تخطيط|Planning",
-        ProjectStatus.InProgress => "جاري|InProgress",
-        ProjectStatus.Completed => "مكتمل|Completed",
-        ProjectStatus.OnHold => "موقوف|OnHold",
-        ProjectStatus.Cancelled => "ملغي|Cancelled",
-        _ => s.ToString() + "|" + s.ToString()
-    };
-    // Split ar|en
-    string Ar(string s) => s.Split('|')[0];
-    string En(string s) => s.Split('|')[1];
+    ViewData["Title"] = "Dashboard - Analytics";
 }
 
 <link rel="stylesheet" href="~/css/dashboard.css" />
 
-<!-- ════════════════════════════════════════════════════
-     PAGE HEADER
-════════════════════════════════════════════════════ -->
-<div class="db-page-header">
-    <div>
-        <h2 class="db-page-title">
-            <i class="fas fa-chart-line"></i>
-            <span data-lang="db_title">لوحة التحكم</span>
-        </h2>
-        <p class="db-page-sub" data-lang="db_subtitle">نظرة شاملة على أداء مكتبك الهندسي</p>
-    </div>
-    <a asp-controller="Home" asp-action="Index" class="btn-bonyan-secondary">
-        <i class="fas fa-home"></i>
-        <span data-lang="db_home">الرئيسية</span>
-    </a>
-</div>
+<style>
+    .db-metrics-grid,
+    .db-charts-grid,
+    .db-tables-grid {
+        display: grid !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+    }
 
-<!-- ════════════════════════════════════════════════════
-     ROW 1 — 5 METRIC CARDS
-════════════════════════════════════════════════════ -->
-<div class="db-metrics-grid">
+    .db-metrics-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 16px !important;
+        margin-bottom: 24px !important;
+    }
 
-    <!-- Card 1: Total Projects -->
-    <div class="db-metric-card" style="--accent:#1B3A6B">
-        <div class="db-mc-top">
-            <div class="db-mc-icon" style="background:#1B3A6B">
-                <i class="fas fa-project-diagram"></i>
-            </div>
-            <div class="db-mc-info">
-                <span class="db-mc-number">@Model.TotalProjects</span>
-                <span class="db-mc-label" data-lang="db_total_projects">إجمالي المشاريع</span>
-            </div>
-        </div>
-        <div class="db-mc-bar-group">
-            <span class="db-mc-bar-seg" style="background:#3b82f6;flex:@Model.ProjPlanning"
-                  title="تخطيط / Planning"></span>
-            <span class="db-mc-bar-seg" style="background:#f59e0b;flex:@Model.ProjInProgress"
-                  title="جاري / In Progress"></span>
-            <span class="db-mc-bar-seg" style="background:#8b5cf6;flex:@Model.ProjOnHold"
-                  title="موقوف / On Hold"></span>
-            <span class="db-mc-bar-seg" style="background:#10b981;flex:@Model.ProjCompleted"
-                  title="مكتمل / Completed"></span>
-            <span class="db-mc-bar-seg" style="background:#ef4444;flex:@Model.ProjCancelled"
-                  title="ملغي / Cancelled"></span>
-        </div>
-        <div class="db-mc-mini-legend">
-            <span>
-                <em style="background:#3b82f6"></em>
-                <span class="l-ar">تخطيط</span><span class="l-en" style="display:none">Planning</span>
-                (@Model.ProjPlanning)
-            </span>
-            <span>
-                <em style="background:#f59e0b"></em>
-                <span class="l-ar">جاري</span><span class="l-en" style="display:none">Active</span>
-                (@Model.ProjInProgress)
-            </span>
-            <span>
-                <em style="background:#10b981"></em>
-                <span class="l-ar">مكتمل</span><span class="l-en" style="display:none">Done</span>
-                (@Model.ProjCompleted)
-            </span>
-        </div>
-    </div>
+    .db-charts-grid,
+    .db-tables-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+        gap: 20px !important;
+        margin-bottom: 24px !important;
+    }
 
-    <!-- Card 2: Active Tasks -->
-    <div class="db-metric-card" style="--accent:#C8922A">
-        <div class="db-mc-top">
-            <div class="db-mc-icon" style="background:#C8922A">
-                <i class="fas fa-tasks"></i>
-            </div>
-            <div class="db-mc-info">
-                <span class="db-mc-number">@Model.ActiveTasks</span>
-                <span class="db-mc-label" data-lang="db_active_tasks">المهام النشطة</span>
-            </div>
-        </div>
-        <div class="db-mc-footer">
-            <span class="db-mc-badge amber" data-lang="db_inprogress_label">جاري التنفيذ</span>
-            <span class="db-mc-total">
-                <span data-lang="db_of">من</span> @(Model.TaskPending + Model.TaskInProgress + Model.TaskUnderReview + Model.TaskCompleted + Model.TaskCancelled)
-            </span>
-        </div>
-    </div>
+    .db-metric-card,
+    .db-panel {
+        display: flex !important;
+        flex-direction: column !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+</style>
+<div class="bonyan-strict-wrapper container-fluid px-4 py-3">
 
-    <!-- Card 3: Total Clients -->
-    <div class="db-metric-card" style="--accent:#17a2b8">
-        <div class="db-mc-top">
-            <div class="db-mc-icon" style="background:#17a2b8">
-                <i class="fas fa-user-tie"></i>
-            </div>
-            <div class="db-mc-info">
-                <span class="db-mc-number">@Model.TotalClients</span>
-                <span class="db-mc-label" data-lang="db_total_clients">إجمالي العملاء</span>
-            </div>
-        </div>
-        <div class="db-mc-footer">
-            <span class="db-mc-badge teal" data-lang="db_unique_clients">عملاء فريدون</span>
-        </div>
-    </div>
-
-    <!-- Card 4: Documents + Drawings -->
-    <div class="db-metric-card" style="--accent:#6f42c1">
-        <div class="db-mc-top">
-            <div class="db-mc-icon" style="background:#6f42c1">
-                <i class="fas fa-file-alt"></i>
-            </div>
-            <div class="db-mc-info">
-                <span class="db-mc-number">@Model.TotalDocuments</span>
-                <span class="db-mc-label" data-lang="db_total_docs">المستندات والرسومات</span>
-            </div>
-        </div>
-        <div class="db-mc-footer">
-            <span class="db-mc-badge purple" data-lang="db_files_label">ملفات مرفوعة</span>
-        </div>
-    </div>
-
-    <!-- Card 5: Total Budget -->
-    <div class="db-metric-card" style="--accent:#28A745">
-        <div class="db-mc-top">
-            <div class="db-mc-icon" style="background:#28A745">
-                <i class="fas fa-dollar-sign"></i>
-            </div>
-            <div class="db-mc-info">
-                <span class="db-mc-number db-mc-budget">
-                    $@Model.TotalBudget.ToString("N0")
-                </span>
-                <span class="db-mc-label" data-lang="db_total_budget">إجمالي الميزانيات</span>
-            </div>
-        </div>
-        <div class="db-mc-footer">
-            <span class="db-mc-badge green" data-lang="db_all_projects_budget">عبر كل المشاريع</span>
-        </div>
-    </div>
-
-</div>
-
-<!-- ════════════════════════════════════════════════════
-     ROW 2 — CHARTS  (Bar + Doughnut)
-════════════════════════════════════════════════════ -->
-<div class="db-charts-grid">
-
-    <!-- Left: Projects by Status — Bar Chart -->
-    <div class="db-panel">
-        <div class="db-panel-header">
-            <h3 class="db-panel-title">
-                <i class="fas fa-chart-bar"></i>
-                <span data-lang="db_chart_projects">المشاريع حسب الحالة</span>
-            </h3>
-        </div>
-        <div class="db-chart-wrap">
-            <canvas id="chartProjectsStatus" height="260"></canvas>
-        </div>
-    </div>
-
-    <!-- Right: Tasks by Status — Doughnut -->
-    <div class="db-panel">
-        <div class="db-panel-header">
-            <h3 class="db-panel-title">
+    <div class="db-page-header">
+        <div>
+            <h2 class="db-page-title">
                 <i class="fas fa-chart-pie"></i>
-                <span data-lang="db_chart_tasks">المهام حسب الحالة</span>
-            </h3>
-        </div>
-        <div class="db-chart-wrap db-doughnut-wrap">
-            <canvas id="chartTasksStatus" height="260"></canvas>
+                <span>Dashboard</span>
+            </h2>
+            <p class="db-page-sub">Real-time engineering workspace performance & statistics</p>
         </div>
     </div>
 
-</div>
+    <div class="db-metrics-grid">
 
-<!-- ════════════════════════════════════════════════════
-     ROW 3 — DATA TABLES  (Recent Projects + Overdue)
-════════════════════════════════════════════════════ -->
-<div class="db-tables-grid">
-
-    <!-- Left: Recent Projects table -->
-    <div class="db-panel">
-        <div class="db-panel-header">
-            <h3 class="db-panel-title">
-                <i class="fas fa-folder-open"></i>
-                <span data-lang="db_recent_projects">أحدث المشاريع</span>
-            </h3>
-            <a asp-controller="Project" asp-action="Index"
-               class="db-view-all" data-lang="view_all">عرض الكل</a>
+        <div class="db-metric-card" style="--accent: #007bff;">
+            <div class="db-mc-top">
+                <div class="db-mc-icon" style="background: linear-gradient(135deg, #007bff, #0056b3);">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <div class="db-mc-info">
+                    <div class="db-mc-number">@Model.TotalProjects</div>
+                    <div class="db-mc-label">Total Projects</div>
+                </div>
+            </div>
+            <div class="db-mc-bar-group">
+                <div class="db-mc-bar-seg" style="background: #28a745; flex: @(Model.ProjCompleted + 1);"></div>
+                <div class="db-mc-bar-seg" style="background: #17a2b8; flex: @(Model.ProjInProgress + 1);"></div>
+                <div class="db-mc-bar-seg" style="background: #ffc107; flex: @(Model.ProjPlanning + 1);"></div>
+            </div>
+            <div class="db-mc-footer">
+                <span class="db-mc-total">All registered projects</span>
+            </div>
         </div>
 
-        @if (Model.RecentProjects.Any())
-        {
+        <div class="db-metric-card" style="--accent: #28a745;">
+            <div class="db-mc-top">
+                <div class="db-mc-icon" style="background: linear-gradient(135deg, #28a745, #1e7e34);">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="db-mc-info">
+                    <div class="db-mc-number">@Model.ActiveTasks</div>
+                    <div class="db-mc-label">Active Tasks</div>
+                </div>
+            </div>
+            <div class="db-mc-bar-group">
+                <div class="db-mc-bar-seg" style="background: #28a745; flex: 100;"></div>
+            </div>
+            <div class="db-mc-footer">
+                <span class="db-mc-badge green">In Progress</span>
+            </div>
+        </div>
+
+        <div class="db-metric-card" style="--accent: #ffc107;">
+            <div class="db-mc-top">
+                <div class="db-mc-icon" style="background: linear-gradient(135deg, #ffc107, #d39e00);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="db-mc-info">
+                    <div class="db-mc-number">@Model.TotalClients</div>
+                    <div class="db-mc-label">Total Clients</div>
+                </div>
+            </div>
+            <div class="db-mc-bar-group">
+                <div class="db-mc-bar-seg" style="background: #ffc107; flex: 100;"></div>
+            </div>
+            <div class="db-mc-footer">
+                <span class="db-mc-total">Distinct client base</span>
+            </div>
+        </div>
+
+        <div class="db-metric-card" style="--accent: #17a2b8;">
+            <div class="db-mc-top">
+                <div class="db-mc-icon" style="background: linear-gradient(135deg, #17a2b8, #117a8b);">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <div class="db-mc-info">
+                    <div class="db-mc-number">@Model.TotalDocuments</div>
+                    <div class="db-mc-label">Documents</div>
+                </div>
+            </div>
+            <div class="db-mc-bar-group">
+                <div class="db-mc-bar-seg" style="background: #17a2b8; flex: 100;"></div>
+            </div>
+            <div class="db-mc-footer">
+                <span class="db-mc-total">Files & Drawings</span>
+            </div>
+        </div>
+
+        <div class="db-metric-card" style="--accent: #dc3545;">
+            <div class="db-mc-top">
+                <div class="db-mc-icon" style="background: linear-gradient(135deg, #dc3545, #bd2130);">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="db-mc-info">
+                    <div class="db-mc-number db-mc-budget">@Model.TotalBudget.ToString("C0")</div>
+                    <div class="db-mc-label">Total Budget</div>
+                </div>
+            </div>
+            <div class="db-mc-bar-group">
+                <div class="db-mc-bar-seg" style="background: #dc3545; flex: 100;"></div>
+            </div>
+            <div class="db-mc-footer">
+                <span class="db-mc-total">Project Finances</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="db-charts-grid">
+
+        <div class="db-panel">
+            <div class="db-panel-header">
+                <h3 class="db-panel-title">
+                    <i class="fas fa-chart-bar"></i> Projects by Status
+                </h3>
+            </div>
+            <div class="db-chart-wrap" style="height: 300px; position: relative;">
+                <canvas id="projectsBarChart"></canvas>
+            </div>
+        </div>
+
+        <div class="db-panel">
+            <div class="db-panel-header">
+                <h3 class="db-panel-title">
+                    <i class="fas fa-chart-pie"></i> Tasks by Status
+                </h3>
+            </div>
+            <div class="db-chart-wrap db-doughnut-wrap" style="height: 300px; position: relative;">
+                <canvas id="tasksDoughnutChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="db-tables-grid">
+
+        <div class="db-panel">
+            <div class="db-panel-header">
+                <h3 class="db-panel-title">
+                    <i class="fas fa-folder-plus"></i> Recent Projects
+                </h3>
+                <a asp-controller="Project" asp-action="Index" class="db-view-all">View All</a>
+            </div>
             <div class="db-table-wrap">
-                <table class="bonyan-table db-table">
-                    <thead>
-                        <tr>
-                            <th data-lang="project_name">اسم المشروع</th>
-                            <th data-lang="client">العميل</th>
-                            <th data-lang="status">الحالة</th>
-                            <th data-lang="tasks">المهام</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var p in Model.RecentProjects)
-                        {
-                            var lbl = ProjLabel(p.Status);
-                            <tr>
-                                <td>
-                                    <a asp-controller="Project" asp-action="Details"
-                                       asp-route-id="@p.ProjectId" class="db-proj-link">
-                                        @p.ProjectName
-                                    </a>
-                                </td>
-                                <td class="db-muted">@p.ClientName</td>
-                                <td>
-                                    <span class="badge-bonyan @ProjBadge(p.Status)">
-                                        <span class="l-ar">@Ar(lbl)</span>
-                                        <span class="l-en" style="display:none">@En(lbl)</span>
-                                    </span>
-                                </td>
-                                <td class="db-center">
-                                    <span class="db-task-count">@p.TaskCount</span>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-        else
-        {
-            <div class="db-empty">
-                <i class="fas fa-folder-open"></i>
-                <span data-lang="no_projects">لا توجد مشاريع حتى الآن</span>
-            </div>
-        }
-    </div>
-
-    <!-- Right: Overdue Tasks panel -->
-    <div class="db-panel db-panel-overdue">
-        <div class="db-panel-header">
-            <h3 class="db-panel-title db-overdue-title">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span data-lang="db_overdue_tasks">المهام المتأخرة ⚠️</span>
-            </h3>
-            <a asp-controller="Task" asp-action="Index"
-               class="db-view-all" data-lang="view_all">عرض الكل</a>
-        </div>
-
-        @if (Model.OverdueTasks.Any())
-        {
-            <div class="db-overdue-list">
-                @foreach (var t in Model.OverdueTasks)
+                @if (Model.RecentProjects != null && Model.RecentProjects.Any())
                 {
-                    int daysLate = (int)(DateTime.Now - t.DueDate).TotalDays;
-                    <div class="db-overdue-item">
-                        <div class="db-overdue-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="db-overdue-body">
-                            <p class="db-overdue-name">@t.TaskName</p>
-                            <p class="db-overdue-project">
-                                <i class="fas fa-project-diagram"></i>
-                                @t.ProjectName
-                            </p>
-                        </div>
-                        <div class="db-overdue-meta">
-                            <span class="db-overdue-date">
-                                @t.DueDate.ToString("dd/MM/yyyy")
-                            </span>
-                            <span class="db-overdue-late">
-                                +@daysLate
-                                <span class="l-ar">يوم</span>
-                                <span class="l-en" style="display:none">d</span>
-                            </span>
-                        </div>
+                    <table class="db-table table m-0 table-hover">
+                        <thead>
+                            <tr>
+                                <th>PROJECT</th>
+                                <th>CLIENT</th>
+                                <th>STATUS</th>
+                                <th class="text-center">TASKS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var proj in Model.RecentProjects)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-controller="Project" asp-action="Details" asp-route-id="@proj.ProjectId" class="db-proj-link">
+                                            @proj.ProjectName
+                                        </a>
+                                    </td>
+                                    <td class="db-muted">@proj.ClientName</td>
+                                    <td>
+                                        <span class="db-mc-badge @(proj.Status == Bonyan.DAL.Enums.ProjectStatus.InProgress ? "teal" :
+                                                                                                                  proj.Status == Bonyan.DAL.Enums.ProjectStatus.Completed ? "green" :
+                                                                                                                  proj.Status == Bonyan.DAL.Enums.ProjectStatus.Planning ? "amber" : "purple")">
+                                    @proj.Status
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="db-task-count">@proj.TaskCount</span>
+                            </td>
+                        </tr>
+                                                }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="db-empty">
+                        <i class="fas fa-folder-open"></i>
+                        <span>No recent projects found</span>
                     </div>
                 }
             </div>
-        }
-        else
-        {
-            <div class="db-empty db-empty-good">
-                <i class="fas fa-check-circle"></i>
-                <span data-lang="db_no_overdue">لا توجد مهام متأخرة 🎉</span>
-            </div>
-        }
-    </div>
+        </div>
 
+        <div class="db-panel db-panel-overdue">
+            <div class="db-panel-header">
+                <h3 class="db-panel-title db-overdue-title">
+                    <i class="fas fa-exclamation-triangle"></i> Overdue Tasks
+                </h3>
+                <a asp-controller="Task" asp-action="Index" class="db-view-all">View All</a>
+            </div>
+            <div class="db-overdue-list">
+                @if (Model.OverdueTasks != null && Model.OverdueTasks.Any())
+                {
+                    @foreach (var task in Model.OverdueTasks)
+                    {
+                        <div class="db-overdue-item">
+                            <div class="db-overdue-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="db-overdue-body">
+                                <h4 class="db-overdue-name">@task.TaskName</h4>
+                                <p class="db-overdue-project">
+                                    <i class="fas fa-project-diagram"></i> @task.ProjectName
+                                </p>
+                            </div>
+                            <div class="db-overdue-meta">
+                                <span class="db-overdue-date">@task.DueDate.ToString("dd MMM yyyy")</span>
+                                <span class="db-overdue-late">
+                                    <i class="fas fa-hourglass-end"></i> Overdue
+                                </span>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="db-empty db-empty-good">
+                        <i class="fas fa-check-circle" style="color: #28a745; font-size: 2rem;"></i>
+                        <span style="color: #28a745; font-weight: bold; margin-top: 8px;">Great! No overdue tasks.</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // ════════════════════════════════════════════════════════
-        //  BONYAN DASHBOARD CHARTS
-        // ════════════════════════════════════════════════════════
+        document.addEventListener("DOMContentLoaded", function () {
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const textMutedColor = isDarkMode ? '#8899aa' : '#888888';
+            const gridBorderColor = isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
-        // ── Read theme tokens from CSS ────────────────────────
-        function getCssVar(name) {
-            return getComputedStyle(document.documentElement)
-                .getPropertyValue(name).trim();
-        }
-
-        const isDark = () => document.body.classList.contains('dark-mode');
-
-        // ── Color palettes ────────────────────────────────────
-        const PROJECT_COLORS = {
-            bg:     ['#3b82f6','#f59e0b','#8b5cf6','#10b981','#ef4444'],
-            border: ['#2563eb','#d97706','#7c3aed','#059669','#dc2626']
-        };
-        const TASK_COLORS = {
-            bg:     ['#94a3b8','#f59e0b','#6366f1','#10b981','#ef4444'],
-            border: ['#64748b','#d97706','#4f46e5','#059669','#dc2626']
-        };
-
-        // ── Bilingual labels ──────────────────────────────────
-        const LANG = document.documentElement.getAttribute('lang') || 'ar';
-        const labels = {
-            proj: {
-                ar: ['تخطيط','جاري','موقوف','مكتمل','ملغي'],
-                en: ['Planning','In Progress','On Hold','Completed','Cancelled']
-            },
-            task: {
-                ar: ['معلق','جاري','مراجعة','مكتمل','ملغي'],
-                en: ['Pending','In Progress','Under Review','Completed','Cancelled']
-            }
-        };
-
-        // ── Server data injected from Razor ──────────────────
-        const projData = [
-            @Model.ProjPlanning,
-            @Model.ProjInProgress,
-            @Model.ProjOnHold,
-            @Model.ProjCompleted,
-            @Model.ProjCancelled
-        ];
-        const taskData = [
-            @Model.TaskPending,
-            @Model.TaskInProgress,
-            @Model.TaskUnderReview,
-            @Model.TaskCompleted,
-            @Model.TaskCancelled
-        ];
-
-        // ── Shared Chart.js defaults ──────────────────────────
-        function chartDefaults() {
-            const dark = isDark();
-            return {
-                gridColor:  dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
-                textColor:  dark ? '#94a3b8' : '#666',
-                tooltipBg:  dark ? '#1e293b' : '#fff',
-                tooltipTxt: dark ? '#e2e8f0' : '#1e293b'
-            };
-        }
-
-        // ── Build Bar Chart (Projects by Status) ─────────────
-        let barChart, doughnutChart;
-
-        function buildBarChart() {
-            const ctx  = document.getElementById('chartProjectsStatus').getContext('2d');
-            const d    = chartDefaults();
-            const lang = document.documentElement.getAttribute('lang') === 'en' ? 'en' : 'ar';
-
-            if (barChart) barChart.destroy();
-            barChart = new Chart(ctx, {
+            // 1. Bar Chart
+            const ctxBar = document.getElementById('projectsBarChart').getContext('2d');
+            new Chart(ctxBar, {
                 type: 'bar',
                 data: {
-                    labels: labels.proj[lang],
+                    labels: ['Planning', 'InProgress', 'OnHold', 'Completed', 'Cancelled'],
                     datasets: [{
-                        label: lang === 'ar' ? 'عدد المشاريع' : 'Projects Count',
-                        data:  projData,
-                        backgroundColor: PROJECT_COLORS.bg,
-                        borderColor:     PROJECT_COLORS.border,
-                        borderWidth:     2,
-                        borderRadius:    8,
-                        borderSkipped:   false
+                        label: 'Projects',
+                        data: [@Model.ProjPlanning, @Model.ProjInProgress, @Model.ProjOnHold, @Model.ProjCompleted, @Model.ProjCancelled],
+                        backgroundColor: ['#4bc0c0', '#2ecc71', '#f1c40f', '#e74c3c', '#9b59b6'],
+                        borderRadius: 6,
+                        barThickness: 25
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: d.tooltipBg,
-                            titleColor:      d.tooltipTxt,
-                            bodyColor:       d.tooltipTxt,
-                            borderColor:     'rgba(200,146,42,0.3)',
-                            borderWidth:     1,
-                            padding:         12,
-                            cornerRadius:    8
-                        }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        x: {
-                            grid:  { display: false },
-                            ticks: { color: d.textColor, font: { family: 'Cairo, Poppins, sans-serif' } }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1, color: d.textColor, font: { family: 'Cairo, Poppins, sans-serif' } },
-                            grid:  { color: d.gridColor }
-                        }
+                        y: { grid: { color: gridBorderColor }, ticks: { color: textMutedColor, stepSize: 1 } },
+                        x: { grid: { display: false }, ticks: { color: textMutedColor } }
                     }
                 }
             });
-        }
 
-        // ── Build Doughnut Chart (Tasks by Status) ────────────
-        function buildDoughnutChart() {
-            const ctx  = document.getElementById('chartTasksStatus').getContext('2d');
-            const d    = chartDefaults();
-            const lang = document.documentElement.getAttribute('lang') === 'en' ? 'en' : 'ar';
-
-            if (doughnutChart) doughnutChart.destroy();
-            doughnutChart = new Chart(ctx, {
+            // 2. Doughnut Chart
+            const ctxDoughnut = document.getElementById('tasksDoughnutChart').getContext('2d');
+            new Chart(ctxDoughnut, {
                 type: 'doughnut',
                 data: {
-                    labels: labels.task[lang],
+                    labels: ['ToDo', 'InProgress', 'UnderReview', 'Completed', 'Cancelled'],
                     datasets: [{
-                        data:            taskData,
-                        backgroundColor: TASK_COLORS.bg,
-                        borderColor:     TASK_COLORS.border,
-                        borderWidth:     2,
-                        hoverOffset:     10
+                        data: [@Model.TaskPending, @Model.TaskInProgress, @Model.TaskUnderReview, @Model.TaskCompleted, @Model.TaskCancelled],
+                        backgroundColor: ['#3498db', '#f39c12', '#9b59b6', '#2ecc71', '#e74c3c'],
+                        borderWidth: isDarkMode ? 3 : 2,
+                        borderColor: isDarkMode ? '#1a2535' : '#ffffff'
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '62%',
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: {
-                                color:     d.textColor,
-                                padding:   16,
-                                font:      { size: 12, family: 'Cairo, Poppins, sans-serif' },
-                                usePointStyle: true,
-                                pointStyleWidth: 10
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: d.tooltipBg,
-                            titleColor:      d.tooltipTxt,
-                            bodyColor:       d.tooltipTxt,
-                            borderColor:     'rgba(200,146,42,0.3)',
-                            borderWidth:     1,
-                            padding:         12,
-                            cornerRadius:    8
+                            labels: { color: textMutedColor, padding: 10, font: { size: 11, weight: '600' }, usePointStyle: true, pointStyle: 'rectRounded' }
                         }
-                    }
+                    },
+                    cutout: '70%'
                 }
             });
-        }
-
-        // ── Init on DOM ready ─────────────────────────────────
-        document.addEventListener('DOMContentLoaded', function () {
-            buildBarChart();
-            buildDoughnutChart();
-        });
-
-        // ── Rebuild charts on dark-mode toggle ───────────────
-        // Hook into the existing applyDarkMode in _Layout.cshtml
-        const _origApplyDarkMode = window.applyDarkMode;
-        window.applyDarkMode = function (on) {
-            if (_origApplyDarkMode) _origApplyDarkMode(on);
-            setTimeout(() => { buildBarChart(); buildDoughnutChart(); }, 80);
-        };
-
-        // ── Rebuild charts on language toggle ────────────────
-        document.addEventListener('bonyanLangChanged', function (e) {
-            const lang = e.detail;
-            // Swap l-ar / l-en spans
-            document.querySelectorAll('.l-ar').forEach(el => el.style.display = lang === 'ar' ? '' : 'none');
-            document.querySelectorAll('.l-en').forEach(el => el.style.display = lang === 'en' ? '' : 'none');
-            buildBarChart();
-            buildDoughnutChart();
         });
     </script>
 }
