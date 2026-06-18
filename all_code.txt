@@ -2236,7 +2236,11 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context = context;
 		}
 
-		public IActionResult Index()
+        public IActionResult Landing()
+        {
+            return View();
+        }
+        public IActionResult Index()
 		{
 			if (HttpContext.Session.GetString("Email") == null)
 				return RedirectToAction("Login", "Account");
@@ -2365,8 +2369,6 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			if (inventory == null) return NotFound();
 
-			// ── VOLUME-BASED CAPACITY CALCULATION ─────────────────
-			// Each material has a VolumeFactorM3: how many m³ does 1 unit occupy
 			if (inventory.Capacity.HasValue && inventory.Capacity > 0)
 			{
 				decimal usedVolume = inventory.MaterialInventories
@@ -2379,6 +2381,12 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				ViewBag.RemainingCapacityM3 = Math.Round(remaining, 2);
 				ViewBag.FillRatePercent = fillRate;
 				ViewBag.ShowWarning = fillRate >= 85;
+				// ── NEW: flag when inventory is at or beyond 100% ──
+				ViewBag.IsFull = remaining <= 0;
+			}
+			else
+			{
+				ViewBag.IsFull = false;
 			}
 
 			if (IsAdmin())
@@ -2388,6 +2396,13 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				ViewBag.AvailableMaterials = await _context.Materials
 					.Where(m => !existingMaterialIds.Contains(m.MaterialID))
 					.OrderBy(m => m.MaterialName)
+					.ToListAsync();
+
+				// ── NEW: list other inventories that still have space ──
+				ViewBag.OtherInventories = await _context.Inventories
+					.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
+					.Where(i => i.InventoryID != id)
+					.OrderBy(i => i.InventoryName)
 					.ToListAsync();
 			}
 
@@ -2478,51 +2493,68 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		{
 			if (!IsAdmin()) return Forbid();
 
-			bool already = await _context.MaterialInventories
-				.AnyAsync(mi => mi.InventoryID == inventoryId && mi.MaterialID == materialId);
+			// Always load the inventory first
+			var inv = await _context.Inventories
+				.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
+				.FirstOrDefaultAsync(i => i.InventoryID == inventoryId);
 
-			if (!already)
+			if (inv == null) return NotFound();
+
+			bool already = inv.MaterialInventories.Any(mi => mi.MaterialID == materialId);
+
+			if (already)
 			{
-				// Check if adding this quantity would exceed capacity
-				var inv = await _context.Inventories
-					.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
-					.FirstOrDefaultAsync(i => i.InventoryID == inventoryId);
+				TempData["ErrorMessage"] = "هذه المادة موجودة مسبقاً في هذا المخزن.";
+				return RedirectToAction(nameof(Details), new { id = inventoryId });
+			}
 
-				var material = await _context.Materials.FindAsync(materialId);
+			var material = await _context.Materials.FindAsync(materialId);
+			if (material == null) return NotFound();
 
-				if (inv?.Capacity.HasValue == true && material != null)
+			// ── CAPACITY CHECK (always enforced when capacity is set) ──
+			if (inv.Capacity.HasValue && inv.Capacity.Value > 0)
+			{
+				decimal currentUsed = inv.MaterialInventories
+					.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+				decimal newVolume = quantityAvailable * material.VolumeFactorM3;
+				decimal remaining = inv.Capacity.Value - currentUsed;
+
+				// ── FULL: no space at all ──
+				if (remaining <= 0)
 				{
-					decimal currentUsed = inv.MaterialInventories
-						.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
-					decimal newVolume = quantityAvailable * material.VolumeFactorM3;
-					decimal fillRate = ((currentUsed + newVolume) / inv.Capacity.Value) * 100;
-
-					if (currentUsed + newVolume > inv.Capacity.Value)
-					{
-						TempData["ErrorMessage"] = $"لا يمكن إضافة هذه الكمية! الحجم المطلوب ({newVolume:N2} م³) يتجاوز السعة المتبقية ({(inv.Capacity.Value - currentUsed):N2} م³).";
-						return RedirectToAction(nameof(Details), new { id = inventoryId });
-					}
+					TempData["ErrorMessage"] =
+						$"⛔ المخزن \"{inv.InventoryName}\" وصل إلى طاقته الاستيعابية الكاملة " +
+						$"({inv.Capacity.Value:N2} م³). لا يمكن إضافة أي مواد جديدة. " +
+						$"يرجى اختيار مخزن آخر لديه مساحة كافية.";
+					TempData["ShowInventoryRedirect"] = true;
+					return RedirectToAction(nameof(Details), new { id = inventoryId });
 				}
 
-				_context.MaterialInventories.Add(new MaterialInventory
+				// ── EXCEEDS REMAINING SPACE ──
+				if (currentUsed + newVolume > inv.Capacity.Value)
 				{
-					InventoryID = inventoryId,
-					MaterialID = materialId,
-					QuantityAvailable = quantityAvailable,
-					StorageLocation = storageLocation ?? "",
-					Notes = notes ?? "",
-					TransactionDate = DateTime.Now,
-					TransactionQuantity = quantityAvailable
-				});
+					TempData["ErrorMessage"] =
+						$"⛔ لا يمكن إضافة هذه الكمية! الحجم المطلوب ({newVolume:N2} م³) " +
+						$"يتجاوز السعة المتبقية ({remaining:N2} م³). " +
+						$"الحد الأقصى الذي يمكن إضافته الآن هو {remaining / material.VolumeFactorM3:N3} {material.Unit ?? "وحدة"}.";
+					return RedirectToAction(nameof(Details), new { id = inventoryId });
+				}
+			}
 
-				if (inv != null) inv.LastUpdatedDate = DateTime.Now;
-				await _context.SaveChangesAsync();
-				TempData["SuccessMessage"] = "تمت إضافة المادة للمخزن بنجاح";
-			}
-			else
+			_context.MaterialInventories.Add(new MaterialInventory
 			{
-				TempData["ErrorMessage"] = "هذه المادة موجودة مسبقاً في هذا المخزن";
-			}
+				InventoryID = inventoryId,
+				MaterialID = materialId,
+				QuantityAvailable = quantityAvailable,
+				StorageLocation = storageLocation ?? "",
+				Notes = notes ?? "",
+				TransactionDate = DateTime.Now,
+				TransactionQuantity = quantityAvailable
+			});
+
+			inv.LastUpdatedDate = DateTime.Now;
+			await _context.SaveChangesAsync();
+			TempData["SuccessMessage"] = "تمت إضافة المادة للمخزن بنجاح";
 
 			return RedirectToAction(nameof(Details), new { id = inventoryId });
 		}
@@ -2539,22 +2571,25 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				.FirstOrDefaultAsync(mi => mi.InventoryID == inventoryId && mi.MaterialID == materialId);
 			if (entry == null) return NotFound();
 
-			// Volume check
 			var inv = await _context.Inventories
 				.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
 				.FirstOrDefaultAsync(i => i.InventoryID == inventoryId);
 			var material = await _context.Materials.FindAsync(materialId);
 
-			if (inv?.Capacity.HasValue == true && material != null)
+			if (inv?.Capacity.HasValue == true && inv.Capacity.Value > 0 && material != null)
 			{
 				decimal otherVolume = inv.MaterialInventories
 					.Where(mi => mi.MaterialID != materialId)
 					.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
 				decimal newVolume = newQuantity * material.VolumeFactorM3;
+				decimal maxAllowed = inv.Capacity.Value - otherVolume;
 
 				if (otherVolume + newVolume > inv.Capacity.Value)
 				{
-					TempData["ErrorMessage"] = $"لا يمكن تحديث الكمية! الحجم الكلي ({otherVolume + newVolume:N2} م³) يتجاوز سعة المخزن ({inv.Capacity.Value:N2} م³).";
+					TempData["ErrorMessage"] =
+						$"⛔ لا يمكن تحديث الكمية! الحجم الكلي ({otherVolume + newVolume:N2} م³) " +
+						$"يتجاوز سعة المخزن ({inv.Capacity.Value:N2} م³). " +
+						$"الحد الأقصى المسموح به لهذه المادة هو {maxAllowed / material.VolumeFactorM3:N3} {material.Unit ?? "وحدة"}.";
 					return RedirectToAction(nameof(Details), new { id = inventoryId });
 				}
 			}
@@ -2864,28 +2899,55 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context.Materials.Add(material);
 			await _context.SaveChangesAsync();
 
-			// ── AUTO-ADD TO INVENTORY ─────────────────────────────
+			// ── AUTO-ADD TO INVENTORY (with capacity check) ───────
 			if (material.TargetInventoryID.HasValue &&
 				material.Quantity.HasValue && material.Quantity > 0)
 			{
-				bool already = await _context.MaterialInventories
-					.AnyAsync(mi => mi.InventoryID == material.TargetInventoryID.Value &&
-									mi.MaterialID == material.MaterialID);
-				if (!already)
+				var targetInv = await _context.Inventories
+					.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
+					.FirstOrDefaultAsync(i => i.InventoryID == material.TargetInventoryID.Value);
+
+				bool already = targetInv?.MaterialInventories
+					.Any(mi => mi.MaterialID == material.MaterialID) ?? false;
+
+				if (!already && targetInv != null)
 				{
-					_context.MaterialInventories.Add(new MaterialInventory
+					decimal newVolume = material.Quantity.Value * material.VolumeFactorM3;
+
+					// Check capacity only when inventory has a defined capacity
+					bool capacityViolated = false;
+					if (targetInv.Capacity.HasValue && targetInv.Capacity.Value > 0)
 					{
-						InventoryID = material.TargetInventoryID.Value,
-						MaterialID = material.MaterialID,
-						QuantityAvailable = material.Quantity.Value,
-						TransactionQuantity = material.Quantity.Value,
-						TransactionDate = DateTime.Now,
-						StorageLocation = "غير محدد",
-						Notes = "إضافة تلقائية عند إنشاء المادة"
-					});
-					var inv = await _context.Inventories.FindAsync(material.TargetInventoryID.Value);
-					if (inv != null) inv.LastUpdatedDate = DateTime.Now;
-					await _context.SaveChangesAsync();
+						decimal currentUsed = targetInv.MaterialInventories
+							.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+
+						if (currentUsed + newVolume > targetInv.Capacity.Value)
+						{
+							capacityViolated = true;
+							decimal remaining = targetInv.Capacity.Value - currentUsed;
+							TempData["WarningMessage"] =
+								$"⚠️ تعذّر تخزين المادة \"{material.MaterialName}\" تلقائياً في المخزن " +
+								$"\"{targetInv.InventoryName}\" لأن الحجم المطلوب ({newVolume:N2} م³) " +
+								$"يتجاوز السعة المتبقية ({remaining:N2} م³). " +
+								$"يرجى إضافة المادة يدوياً من صفحة مخزن آخر لديه مساحة كافية.";
+						}
+					}
+
+					if (!capacityViolated)
+					{
+						_context.MaterialInventories.Add(new MaterialInventory
+						{
+							InventoryID = material.TargetInventoryID.Value,
+							MaterialID = material.MaterialID,
+							QuantityAvailable = material.Quantity.Value,
+							TransactionQuantity = material.Quantity.Value,
+							TransactionDate = DateTime.Now,
+							StorageLocation = "غير محدد",
+							Notes = "إضافة تلقائية عند إنشاء المادة"
+						});
+						targetInv.LastUpdatedDate = DateTime.Now;
+						await _context.SaveChangesAsync();
+					}
 				}
 			}
 
@@ -4386,11 +4448,11 @@ public class Program
 			app.UseSession();
 			app.UseAuthorization();
 
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+        app.MapControllerRoute(
+            name: "default",
+            pattern: "{controller=Home}/{action=Landing}/{id?}");
 
-            app.Run();
+        app.Run();
         }
     }
 === File: ./BonyanForEngineeringConsultingFirms/Services/EmailService.cs ===
@@ -7172,7 +7234,300 @@ namespace Bonyan.PL.ViewModels
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
-=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Privacy.cshtml ===
+=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Landing.cshtml ===
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>بنيان | Bonyan - منصة إدارة المكاتب الهندسية</title>
+
+    <!-- Bootstrap RTL -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" />
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Google Fonts Arabic + English -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@400;600;700&display=swap"
+          rel="stylesheet" />
+
+    <!-- Our Existing Tokens / Components -->
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+
+    <!-- Landing Page Specific Styles -->
+    <link rel="stylesheet" href="~/css/landing.css" />
+</head>
+<body class="landing-body">
+
+    <!-- ── Landing Navbar ─────────────────────────── -->
+    <nav class="landing-navbar">
+        <div class="navbar-logo landing-logo">
+            <i class="fas fa-building"></i>
+            <span>Bonyan</span>
+        </div>
+
+        <div class="navbar-right">
+            <button id="langBtn" class="lang-btn" onclick="toggleLanding()">English</button>
+            <a class="btn-bonyan-primary" asp-controller="Account" asp-action="Login">
+                <i class="fas fa-sign-in-alt"></i>
+                <span data-lang="nav_login">تسجيل الدخول</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- ── Hero Section ───────────────────────────── -->
+    <section class="hero-section">
+        <div class="hero-grid">
+
+            <!-- Left Column -->
+            <div class="hero-text">
+                <span class="hero-badge">
+                    <i class="fas fa-bolt"></i>
+                    <span data-lang="hero_badge">مميزات المنصة</span>
+                </span>
+
+                <h1 class="hero-title">
+                    <span data-lang="hero_title_1">مستقبل</span>
+                    <span class="text-gold" data-lang="hero_title_2">إدارة المكاتب الهندسية</span>
+                </h1>
+
+                <p class="hero-subtitle" data-lang="hero_subtitle">
+                    منصة رقمية متكاملة تُحدث نقلة في طريقة إدارة المكاتب الهندسية لمشاريعها ومخططاتها وعملائها وعقودها ومهامها وفرقها — كل ذلك من لوحة تحكم واحدة قوية.
+                </p>
+
+                <a class="btn-bonyan-primary hero-cta-btn" asp-controller="Account" asp-action="Login">
+                    <span data-lang="hero_cta">تسجيل دخول ←</span>
+                </a>
+            </div>
+
+            <!-- Right Column: Dashboard Preview Mockup -->
+            <div class="hero-mockup">
+                <div class="mockup-floating-badge">
+                    <i class="fas fa-sack-dollar"></i>
+                    <span data-lang="mockup_badge">إجمالي الميزانية 5.2 مليون $</span>
+                </div>
+
+                <div class="bonyan-card mockup-card">
+                    <div class="mockup-stats-grid">
+                        <div class="stat-card stat-card-mini">
+                            <div class="stat-icon blue"><i class="fas fa-diagram-project"></i></div>
+                            <div class="stat-info">
+                                <h3>24</h3>
+                                <p data-lang="stat_projects_label">مشروع نشط</p>
+                            </div>
+                        </div>
+                        <div class="stat-card stat-card-mini">
+                            <div class="stat-icon green"><i class="fas fa-list-check"></i></div>
+                            <div class="stat-info">
+                                <h3>128</h3>
+                                <p data-lang="stat_tasks_label">مهمة منجزة</p>
+                            </div>
+                        </div>
+                        <div class="stat-card stat-card-mini">
+                            <div class="stat-icon gold"><i class="fas fa-handshake"></i></div>
+                            <div class="stat-info">
+                                <h3>18</h3>
+                                <p data-lang="stat_clients_label">عميل</p>
+                            </div>
+                        </div>
+                        <div class="stat-card stat-card-mini">
+                            <div class="stat-icon red"><i class="fas fa-file-alt"></i></div>
+                            <div class="stat-info">
+                                <h3>342</h3>
+                                <p data-lang="stat_documents_label">مستند</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mockup-chart">
+                        <div class="chart-bar-row">
+                            <span class="chart-bar-label" data-lang="chart_planning">تخطيط</span>
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar-fill" style="width:30%; background:#1565C0;"></div>
+                            </div>
+                        </div>
+                        <div class="chart-bar-row">
+                            <span class="chart-bar-label" data-lang="chart_inprogress">قيد التنفيذ</span>
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar-fill" style="width:55%; background:#C8922A;"></div>
+                            </div>
+                        </div>
+                        <div class="chart-bar-row">
+                            <span class="chart-bar-label" data-lang="chart_completed">مكتمل</span>
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar-fill" style="width:80%; background:#28A745;"></div>
+                            </div>
+                        </div>
+                        <div class="chart-bar-row">
+                            <span class="chart-bar-label" data-lang="chart_onhold">متوقف</span>
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar-fill" style="width:15%; background:#6A1B9A;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ── Features Grid Section ─────────────────── -->
+    <section class="features-section">
+        <div class="section-header">
+            <h2 data-lang="features_title">كل ما يحتاجه مكتبك الهندسي</h2>
+            <p data-lang="features_subtitle">مجموعة متكاملة من الأدوات لإدارة مكتبك الهندسي بكفاءة وسهولة</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon blue"><i class="fas fa-diagram-project"></i></div>
+                <h3 data-lang="feat1_title">إدارة المشاريع</h3>
+                <p data-lang="feat1_desc">تتبع كل مشروع منذ البداية وحتى التسليم. راقب الحالة والميزانيات والجداول الزمنية والمعالم الرئيسية لحظة بلحظة.</p>
+            </div>
+
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon gold"><i class="fas fa-list-check"></i></div>
+                <h3 data-lang="feat2_title">إسناد المهام</h3>
+                <p data-lang="feat2_desc">أسند المهام للمهندسين، حدد المواعيد النهائية، وتابع التقدم والمهام المتأخرة بتنبيهات تلقائية.</p>
+            </div>
+
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon green"><i class="fas fa-folder-open"></i></div>
+                <h3 data-lang="feat3_title">إدارة المستندات</h3>
+                <p data-lang="feat3_desc">ارفع ونظّم وحمّل المخططات والرسومات والمستندات المرتبطة مباشرة بكل مشروع.</p>
+            </div>
+
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon red"><i class="fas fa-handshake"></i></div>
+                <h3 data-lang="feat4_title">إدارة العملاء والعقود</h3>
+                <p data-lang="feat4_desc">احتفظ بسجلات كاملة للعملاء والعقود والميزانيات. اربط العملاء مباشرة بمشاريعهم.</p>
+            </div>
+
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon purple"><i class="fas fa-users-gear"></i></div>
+                <h3 data-lang="feat5_title">الموارد البشرية</h3>
+                <p data-lang="feat5_desc">أدر فريق المهندسين والأدوار وصلاحيات الوصول. أضف أعضاء جدد ببيانات دخول تُنشأ تلقائياً.</p>
+            </div>
+
+            <div class="bonyan-card feature-card">
+                <div class="stat-icon teal"><i class="fas fa-language"></i></div>
+                <h3 data-lang="feat6_title">ثنائي اللغة (عربي/إنجليزي)</h3>
+                <p data-lang="feat6_desc">دعم كامل للغة العربية (RTL) والإنجليزية (LTR) مع تبديل فوري للغة عبر المنصة بالكامل.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Bottom CTA Banner ──────────────────────── -->
+    <section class="cta-banner">
+        <h2 data-lang="cta_title">هل أنت مستعد لتطوير مكتبك الهندسي؟</h2>
+        <p data-lang="cta_subtitle">سجّل الدخول للوصول إلى مساحة العمل المتكاملة لإدارة مكتبك الهندسي.</p>
+        <a class="btn-bonyan-secondary cta-btn" asp-controller="Account" asp-action="Login">
+            <span data-lang="cta_button">تسجيل دخول ←</span>
+        </a>
+    </section>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Landing Language Switch -->
+    <script>
+        const landingTranslations = {
+            ar: {
+                nav_login: "تسجيل الدخول",
+                hero_badge: "مميزات المنصة",
+                hero_title_1: "مستقبل",
+                hero_title_2: "إدارة المكاتب الهندسية",
+                hero_subtitle: "منصة رقمية متكاملة تُحدث نقلة في طريقة إدارة المكاتب الهندسية لمشاريعها ومخططاتها وعملائها وعقودها ومهامها وفرقها — كل ذلك من لوحة تحكم واحدة قوية.",
+                hero_cta: "تسجيل دخول ←",
+                mockup_badge: "إجمالي الميزانية 5.2 مليون $",
+                stat_projects_label: "مشروع نشط",
+                stat_tasks_label: "مهمة منجزة",
+                stat_clients_label: "عميل",
+                stat_documents_label: "مستند",
+                chart_planning: "تخطيط",
+                chart_inprogress: "قيد التنفيذ",
+                chart_completed: "مكتمل",
+                chart_onhold: "متوقف",
+                features_title: "كل ما يحتاجه مكتبك الهندسي",
+                features_subtitle: "مجموعة متكاملة من الأدوات لإدارة مكتبك الهندسي بكفاءة وسهولة",
+                feat1_title: "إدارة المشاريع",
+                feat1_desc: "تتبع كل مشروع منذ البداية وحتى التسليم. راقب الحالة والميزانيات والجداول الزمنية والمعالم الرئيسية لحظة بلحظة.",
+                feat2_title: "إسناد المهام",
+                feat2_desc: "أسند المهام للمهندسين، حدد المواعيد النهائية، وتابع التقدم والمهام المتأخرة بتنبيهات تلقائية.",
+                feat3_title: "إدارة المستندات",
+                feat3_desc: "ارفع ونظّم وحمّل المخططات والرسومات والمستندات المرتبطة مباشرة بكل مشروع.",
+                feat4_title: "إدارة العملاء والعقود",
+                feat4_desc: "احتفظ بسجلات كاملة للعملاء والعقود والميزانيات. اربط العملاء مباشرة بمشاريعهم.",
+                feat5_title: "الموارد البشرية",
+                feat5_desc: "أدر فريق المهندسين والأدوار وصلاحيات الوصول. أضف أعضاء جدد ببيانات دخول تُنشأ تلقائياً.",
+                feat6_title: "ثنائي اللغة (عربي/إنجليزي)",
+                feat6_desc: "دعم كامل للغة العربية (RTL) والإنجليزية (LTR) مع تبديل فوري للغة عبر المنصة بالكامل.",
+                cta_title: "هل أنت مستعد لتطوير مكتبك الهندسي؟",
+                cta_subtitle: "سجّل الدخول للوصول إلى مساحة العمل المتكاملة لإدارة مكتبك الهندسي.",
+                cta_button: " تسجيل دخول←"
+            },
+            en: {
+                nav_login: "Login",
+                hero_badge: "Platform Features",
+                hero_title_1: "The Future of",
+                hero_title_2: "Engineering Office Management",
+                hero_subtitle: "An integrated digital platform that transforms how engineering offices manage projects, blueprints, clients, contracts, tasks, and teams — all from one powerful dashboard.",
+                hero_cta: "Login →",
+                mockup_badge: "TOTAL BUDGET $5.2M",
+                stat_projects_label: "Active Projects",
+                stat_tasks_label: "Completed Tasks",
+                stat_clients_label: "Clients",
+                stat_documents_label: "Documents",
+                chart_planning: "Planning",
+                chart_inprogress: "In Progress",
+                chart_completed: "Completed",
+                chart_onhold: "On Hold",
+                features_title: "Everything Your Engineering Office Needs",
+                features_subtitle: "A complete suite of tools to manage every aspect of your engineering office efficiently.",
+                feat1_title: "Project Management",
+                feat1_desc: "Track every project from inception to delivery. Monitor status, budgets, timelines, and milestones in real-time.",
+                feat2_title: "Task Assignment",
+                feat2_desc: "Assign tasks to engineers, set deadlines, track progress and overdue items with automatic alerts.",
+                feat3_title: "Document Control",
+                feat3_desc: "Upload, organize, and download blueprints, drawings, and documents linked directly to each project.",
+                feat4_title: "Client & Contract Management",
+                feat4_desc: "Maintain complete client records, contracts, and budgets. Link clients directly to their projects.",
+                feat5_title: "Human Resources",
+                feat5_desc: "Manage engineering staff, roles, and access. Onboard new team members with auto-generated credentials.",
+                feat6_title: "Bilingual (AR / EN)",
+                feat6_desc: "Full Arabic RTL and English LTR support with one-click language switching across the entire platform.",
+                cta_title: "Ready to Transform Your Engineering Office?",
+                cta_subtitle: "Log in to access your complete engineering management workspace.",
+                cta_button: "Login →"
+            }
+        };
+
+        function toggleLanding() {
+            const html = document.documentElement;
+            const isAr = html.lang === "ar";
+            const newLang = isAr ? "en" : "ar";
+
+            html.lang = newLang;
+            html.dir = newLang === "ar" ? "rtl" : "ltr";
+            document.getElementById("langBtn").textContent = newLang === "ar" ? "English" : "العربية";
+
+            document.querySelectorAll("[data-lang]").forEach(el => {
+                const key = el.getAttribute("data-lang");
+                if (landingTranslations[newLang][key]) {
+                    el.textContent = landingTranslations[newLang][key];
+                }
+            });
+        }
+    </script>
+</body>
+</html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Home/Privacy.cshtml ===
 ﻿@{
     ViewData["Title"] = "Privacy Policy";
 }
@@ -7247,12 +7602,14 @@ namespace Bonyan.PL.ViewModels
     ViewData["Title"] = "تفاصيل المخزن";
     var role = Context.Session.GetString("Role");
     var availableMaterials = ViewBag.AvailableMaterials as List<Bonyan.DAL.Models.Material> ?? new();
+    var otherInventories = ViewBag.OtherInventories as List<Bonyan.DAL.Models.Inventory> ?? new();
     decimal usedVol = ViewBag.UsedVolumeM3 != null ? (decimal)ViewBag.UsedVolumeM3 : 0;
     decimal remCap = ViewBag.RemainingCapacityM3 != null ? (decimal)ViewBag.RemainingCapacityM3 : 0;
     decimal fillRate = ViewBag.FillRatePercent != null ? (decimal)ViewBag.FillRatePercent : 0;
     bool showWarning = ViewBag.ShowWarning != null && (bool)ViewBag.ShowWarning;
+    bool isFull = ViewBag.IsFull != null && (bool)ViewBag.IsFull;
     bool hasCapacity = Model.Capacity.HasValue && Model.Capacity > 0;
-    string barColor = fillRate >= 85 ? "#e53935" : fillRate >= 60 ? "#f57c00" : "#4caf50";
+    string barColor = fillRate >= 100 ? "#e53935" : fillRate >= 85 ? "#f57c00" : "#4caf50";
 }
 
 <link rel="stylesheet" href="~/css/material.css" />
@@ -7291,12 +7648,71 @@ namespace Bonyan.PL.ViewModels
 {
     <div class="alert-error-msg"><i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]</div>
 }
+@if (TempData["WarningMessage"] != null)
+{
+    <div style="background:#fff3e0;border:2px solid #ff9800;border-radius:10px;padding:14px 18px;
+                    margin-bottom:18px;display:flex;align-items:flex-start;gap:12px">
+        <i class="fas fa-exclamation-triangle" style="font-size:1.5rem;color:#ff9800;margin-top:2px"></i>
+        <div style="font-size:0.9rem;color:#555">@TempData["WarningMessage"]</div>
+    </div>
+}
+
+<!-- ══ FULL CAPACITY ALERT ════════════════════════════ -->
+@if (isFull && hasCapacity)
+{
+    <div style="background:#fdecea;border:2px solid #e53935;border-radius:12px;padding:20px 24px;
+                        margin-bottom:22px;display:flex;align-items:flex-start;gap:16px">
+        <i class="fas fa-ban" style="font-size:2.4rem;color:#e53935;margin-top:2px"></i>
+        <div>
+            <div style="font-weight:700;font-size:1.05rem;color:#b71c1c;margin-bottom:6px">
+                ⛔ المخزن وصل إلى طاقته الاستيعابية الكاملة!
+            </div>
+            <div style="font-size:0.9rem;color:#555;margin-bottom:10px">
+                لا توجد مساحة متاحة في هذا المخزن. لا يمكن إضافة أي مواد جديدة.
+                يرجى اختيار مخزن آخر لديه سعة كافية.
+            </div>
+            @if (otherInventories.Any())
+            {
+                <div style="font-weight:600;font-size:0.88rem;color:#333;margin-bottom:8px">
+                    <i class="fas fa-warehouse" style="color:#388e3c"></i> المخازن المتاحة:
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    @foreach (var oi in otherInventories)
+                    {
+                        decimal oiUsed = oi.MaterialInventories
+                        .Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+                        decimal oiRemaining = oi.Capacity.HasValue ? oi.Capacity.Value - oiUsed : -1;
+                        bool oiFull = oi.Capacity.HasValue && oiRemaining <= 0;
+
+                        if (!oiFull)
+                        {
+                            <a asp-action="Details" asp-route-id="@oi.InventoryID"
+                               style="display:inline-flex;align-items:center;gap:6px;
+                                                      background:#e8f5e9;border:1px solid #a5d6a7;border-radius:20px;
+                                                      padding:6px 14px;font-size:0.85rem;color:#2e7d32;
+                                                      text-decoration:none;font-weight:600">
+                                <i class="fas fa-warehouse"></i>
+                                @oi.InventoryName
+                                @if (oi.Capacity.HasValue)
+                                {
+                                    <span style="font-size:0.78rem;color:#555;font-weight:400">
+                                        (@oiRemaining.ToString("N1") م³ متبقية)
+                                    </span>
+                                }
+                            </a>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
 
 <!-- ══ 85% WARNING ALERT ══════════════════════════════ -->
-@if (showWarning)
+@if (showWarning && !isFull)
 {
     <div style="background:#fff3e0;border:2px solid #ff9800;border-radius:10px;padding:16px;
-                    margin-bottom:20px;display:flex;align-items:center;gap:14px">
+                        margin-bottom:20px;display:flex;align-items:center;gap:14px">
         <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:#ff9800"></i>
         <div>
             <div style="font-weight:700;font-size:1rem;color:#e65100">⚠️ تحذير: المخزن على وشك الامتلاء!</div>
@@ -7326,13 +7742,14 @@ namespace Bonyan.PL.ViewModels
             <div style="font-size:0.78rem;color:#888;margin-bottom:4px">الحجم المستخدم (م³)</div>
             <div style="font-size:1.4rem;font-weight:700;color:#f57c00">@usedVol.ToString("N2")</div>
         </div>
-        <div class="details-card" style="text-align:center;padding:18px;border:2px solid @(remCap < 0 ? "#e53935" : "#4caf50")">
+        <div class="details-card" style="text-align:center;padding:18px;
+                 border:2px solid @(isFull ? "#e53935" : "#4caf50")">
             <div style="font-size:0.78rem;color:#888;margin-bottom:4px">السعة المتبقية (م³)</div>
-            <div style="font-size:1.4rem;font-weight:700;color:@(remCap < 0 ? "#e53935" : "#388e3c")">
-                @remCap.ToString("N2")
-                @if (remCap < 0)
+            <div style="font-size:1.4rem;font-weight:700;color:@(isFull ? "#e53935" : "#388e3c")">
+                @(isFull ? "0.00" : remCap.ToString("N2"))
+                @if (isFull)
                 {
-                    <div style="font-size:0.7rem;color:#e53935">تجاوز السعة!</div>
+                    <div style="font-size:0.7rem;color:#e53935;font-weight:700">ممتلئ بالكامل!</div>
                 }
             </div>
         </div>
@@ -7351,26 +7768,22 @@ namespace Bonyan.PL.ViewModels
             <span style="font-weight:700;color:var(--primary)">
                 <i class="fas fa-tachometer-alt"></i> نسبة استخدام المخزن
             </span>
-            <span style="font-size:1.2rem;font-weight:700;color:@barColor">@fillRate%</span>
+            <span style="font-size:1.2rem;font-weight:700;color:@barColor">@(Math.Min(fillRate, 100))%</span>
         </div>
         <div style="background:#e0e0e0;border-radius:20px;height:18px;overflow:hidden;position:relative">
             <div style="width:@(Math.Min(fillRate, 100))%;background:@barColor;height:100%;
-                            border-radius:20px;transition:width 0.6s ease;
-                            box-shadow:0 2px 6px rgba(0,0,0,0.2)"></div>
-            @if (fillRate < 100)
-            {
-                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                                border-radius:20px;transition:width 0.6s ease;
+                                box-shadow:0 2px 6px rgba(0,0,0,0.2)"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
                                     font-size:0.72rem;font-weight:700;color:#555">
-                    @usedVol.ToString("N1") م³ / @Model.Capacity!.Value.ToString("N0") م³
-                </div>
-            }
+                @usedVol.ToString("N1") م³ / @Model.Capacity!.Value.ToString("N0") م³
+            </div>
         </div>
-        <!-- Scale markers -->
         <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#aaa;margin-top:4px">
             <span>0%</span><span>25%</span><span>50%</span>
-            <span style="color:#ff9800;font-weight:700">85%⚠</span><span>100%</span>
+            <span style="color:#ff9800;font-weight:700">85%⚠</span>
+            <span style="color:#e53935;font-weight:700">100%⛔</span>
         </div>
-        <!-- Legend -->
         <div style="display:flex;gap:16px;margin-top:10px;font-size:0.78rem;flex-wrap:wrap">
             @foreach (var mi in Model.MaterialInventories)
             {
@@ -7396,58 +7809,38 @@ namespace Bonyan.PL.ViewModels
 
     @if (Model.MaterialInventories != null && Model.MaterialInventories.Any())
     {
-        <table class="mat-table">
+        <table class="inv-table" style="width:100%;border-collapse:collapse;font-size:0.88rem">
             <thead>
-                <tr>
-                    <th>المادة</th>
-                    <th>الوحدة</th>
-                    <th>الكمية المتاحة</th>
-                    <th>الحجم المشغول (م³)</th>
-                    <th>معامل الحجم</th>
-                    <th>مكان التخزين</th>
-                    <th>آخر تحديث</th>
-                    <th>ملاحظات</th>
+                <tr style="background:#f8f9fc">
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">المادة</th>
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">الكمية</th>
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">الحجم (م³)</th>
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">مكان التخزين</th>
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">تاريخ الإدخال</th>
+                    <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">ملاحظات</th>
                     @if (role == "Admin")
                     {
-                        <th>إجراءات</th>
+                        <th style="padding:10px 12px;text-align:right;color:#666;font-size:0.78rem;border-bottom:2px solid #eee">إجراءات</th>
                     }
                 </tr>
             </thead>
             <tbody>
                 @foreach (var mi in Model.MaterialInventories)
                 {
-                    decimal occupied = Math.Round(mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1m), 2);
-                    <tr>
-                        <td>
-                            <a asp-controller="Material" asp-action="Details"
-                               asp-route-id="@mi.MaterialID"
-                               style="color:var(--primary);font-weight:600;text-decoration:none">
-                                @(mi.Material?.MaterialName ?? "—")
-                            </a>
-                        </td>
-                        <td>
-                            @if (mi.Material?.Unit != null)
-                            {
-                                <span class="unit-badge">@mi.Material.Unit</span>
-                            }
-                        </td>
-                        <td><strong style="color:var(--primary)">@mi.QuantityAvailable.ToString("N2")</strong></td>
-                        <td>
-                            <span style="font-weight:700;color:#f57c00">@occupied م³</span>
-                        </td>
-                        <td>
-                            <span style="font-size:0.82rem;color:#888">
-                                @((mi.Material?.VolumeFactorM3 ?? 1m).ToString("F4"))
-                            </span>
-                        </td>
-                        <td>@(mi.StorageLocation ?? "—")</td>
-                        <td>@mi.TransactionDate.ToString("yyyy-MM-dd")</td>
-                        <td style="font-size:0.8rem;color:#666">@(mi.Notes ?? "—")</td>
+                    if (mi.Material == null) continue;
+                    decimal rowVol = Math.Round(mi.QuantityAvailable * mi.Material.VolumeFactorM3, 2);
+                    <tr style="border-bottom:1px solid #f4f6f9">
+                        <td style="padding:10px 12px;color:#333;font-weight:600">@mi.Material.MaterialName</td>
+                        <td style="padding:10px 12px;color:#444">@mi.QuantityAvailable.ToString("N3") @(mi.Material.Unit ?? "")</td>
+                        <td style="padding:10px 12px;color:#f57c00;font-weight:600">@rowVol م³</td>
+                        <td style="padding:10px 12px;color:#555">@(mi.StorageLocation ?? "—")</td>
+                        <td style="padding:10px 12px;color:#777;font-size:0.82rem">@mi.TransactionDate.ToString("yyyy-MM-dd")</td>
+                        <td style="padding:10px 12px;font-size:0.8rem;color:#666">@(mi.Notes ?? "—")</td>
                         @if (role == "Admin")
                         {
-                            <td>
+                            <td style="padding:10px 12px">
                                 <button type="button" class="btn-action edit"
-                                        onclick="openUpdateForm(@mi.InventoryID, @mi.MaterialID, '@mi.QuantityAvailable.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)')"
+                                        onclick="openUpdateForm(@mi.InventoryID, @mi.MaterialID, '@mi.QuantityAvailable.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)', @mi.Material.VolumeFactorM3.ToString("F4", System.Globalization.CultureInfo.InvariantCulture))"
                                         title="تحديث الكمية">
                                     <i class="fas fa-sync-alt"></i>
                                 </button>
@@ -7472,70 +7865,132 @@ namespace Bonyan.PL.ViewModels
         <p style="color:#aaa;font-size:0.88rem;margin-bottom:16px">لا توجد مواد في هذا المخزن بعد</p>
     }
 
-    <!-- Add Material Form (Admin only) -->
-    @if (role == "Admin" && availableMaterials.Any())
+    <!-- Add Material Form (Admin only — hidden when inventory is full) -->
+    @if (role == "Admin")
     {
-        <div class="mat-add-form" style="margin-top:20px">
-            <div class="mat-add-title"><i class="fas fa-plus-circle"></i> إضافة مادة للمخزن</div>
-            <form asp-action="AddMaterial" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
-                <div class="form-grid-3">
-                    <div class="form-group">
-                        <label>المادة <span style="color:red">*</span></label>
-                        <select name="materialId" class="form-control" required onchange="showVolPreview(this)">
-                            <option value="">-- اختر مادة --</option>
-                            @foreach (var mat in availableMaterials)
+        @if (isFull)
+        {
+            <!-- FULL: show locked state instead of the form -->
+            <div style="margin-top:20px;padding:18px 20px;background:#fafafa;border:2px dashed #e53935;
+                                border-radius:10px;text-align:center;color:#b71c1c">
+                <i class="fas fa-lock" style="font-size:1.8rem;margin-bottom:8px;display:block"></i>
+                <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px">المخزن ممتلئ — لا يمكن إضافة مواد جديدة</div>
+                <div style="font-size:0.85rem;color:#555">
+                    لقد استُنفدت الطاقة الاستيعابية الكاملة للمخزن (@Model.Capacity!.Value.ToString("N0") م³).
+                    يرجى الانتقال إلى مخزن آخر لديه مساحة كافية.
+                </div>
+                @if (otherInventories.Any(oi =>
+                {
+                    decimal u = oi.MaterialInventories.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+                    return !oi.Capacity.HasValue || (oi.Capacity.Value - u) > 0;
+                }))
+                {
+                    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
+                        @foreach (var oi in otherInventories)
+                        {
+                            decimal oiUsed2 = oi.MaterialInventories.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+                            decimal oiRem2 = oi.Capacity.HasValue ? oi.Capacity.Value - oiUsed2 : 999999;
+                            if (oiRem2 > 0)
                             {
-                                <option value="@mat.MaterialID"
-                                        data-factor="@mat.VolumeFactorM3.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)"
-                                        data-unit="@(mat.Unit ?? "")">
-                                    @mat.MaterialName (@(mat.Unit ?? "—")) — معامل الحجم: @mat.VolumeFactorM3
-                                </option>
+                                <a asp-action="Details" asp-route-id="@oi.InventoryID"
+                                   style="display:inline-flex;align-items:center;gap:6px;
+                                                              background:#e8f5e9;border:1px solid #a5d6a7;border-radius:20px;
+                                                              padding:7px 16px;font-size:0.85rem;color:#2e7d32;
+                                                              text-decoration:none;font-weight:600">
+                                    <i class="fas fa-warehouse"></i> @oi.InventoryName
+                                    @if (oi.Capacity.HasValue)
+                                    {
+                                        <span style="font-size:0.78rem;color:#555;font-weight:400">
+                                            (@oiRem2.ToString("N1") م³)
+                                        </span>
+                                    }
+                                </a>
                             }
-                        </select>
+                        }
                     </div>
-                    <div class="form-group">
-                        <label>الكمية <span style="color:red">*</span></label>
-                        <input type="number" name="quantityAvailable" step="0.001" min="0"
-                               class="form-control" placeholder="0.000" required id="addQty"
-                               oninput="showVolPreview(null)" />
+                }
+            </div>
+        }
+        else if (availableMaterials.Any())
+        {
+            <div class="mat-add-form" style="margin-top:20px">
+                <div class="mat-add-title"><i class="fas fa-plus-circle"></i> إضافة مادة للمخزن</div>
+                <form asp-action="AddMaterial" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label>المادة <span style="color:red">*</span></label>
+                            <select name="materialId" class="form-control" required
+                                    onchange="showVolPreview(this)">
+                                <option value="">-- اختر مادة --</option>
+                                @foreach (var mat in availableMaterials)
+                                {
+                                    <option value="@mat.MaterialID"
+                                            data-factor="@mat.VolumeFactorM3.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-unit="@(mat.Unit ?? "")">
+                                        @mat.MaterialName (@(mat.Unit ?? "—")) — معامل الحجم: @mat.VolumeFactorM3
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>الكمية <span style="color:red">*</span></label>
+                            <input type="number" name="quantityAvailable" step="0.001" min="0"
+                                   class="form-control" placeholder="0.000" required id="addQty"
+                                   oninput="showVolPreview(null)" />
+                        </div>
+                        <div class="form-group">
+                            <label>مكان التخزين</label>
+                            <input type="text" name="storageLocation" class="form-control" placeholder="مثال: رف A-3" />
+                        </div>
+                        <div class="form-group" style="grid-column:1 / -1">
+                            <label>ملاحظات</label>
+                            <input type="text" name="notes" class="form-control" placeholder="أي ملاحظات..." />
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>مكان التخزين</label>
-                        <input type="text" name="storageLocation" class="form-control" placeholder="مثال: رف A-3" />
+
+                    <!-- Volume preview + live capacity warning -->
+                    <div id="volPreview" style="display:none;margin-bottom:12px;padding:10px;
+                                     border-radius:8px;font-size:0.85rem;color:#555;border:1px solid #ffe0b2;
+                                     background:#fff3e0">
+                        <i class="fas fa-cube" style="color:#f57c00"></i>
+                        الحجم الذي ستشغله هذه الكمية:
+                        <strong id="volPreviewVal" style="color:#f57c00">0 م³</strong>
+                        @if (hasCapacity)
+                        {
+                            <span>
+                                — السعة المتبقية حالياً:
+                                <strong id="remCapDisplay"
+                                        style="color:@(remCap > 0 ? "#388e3c" : "#e53935")">
+                                    @remCap.ToString("N2") م³
+                                </strong>
+                            </span>
+                        }
                     </div>
-                    <div class="form-group" style="grid-column:1 / -1">
-                        <label>ملاحظات</label>
-                        <input type="text" name="notes" class="form-control" placeholder="أي ملاحظات..." />
+
+                    <!-- Inline warning when entered volume exceeds remaining capacity -->
+                    <div id="capacityWarnBox" style="display:none;margin-bottom:12px;padding:12px 16px;
+                                     background:#fdecea;border:2px solid #e53935;border-radius:8px;
+                                     font-size:0.88rem;color:#b71c1c;font-weight:600">
+                        <i class="fas fa-ban"></i>
+                        <span id="capacityWarnText"></span>
                     </div>
-                </div>
-                <!-- Volume preview -->
-                <div id="volPreview" style="display:none;margin-bottom:12px;padding:10px;background:#fff3e0;
-                         border-radius:8px;font-size:0.85rem;color:#555;border:1px solid #ffe0b2">
-                    <i class="fas fa-cube" style="color:#f57c00"></i>
-                    الحجم الذي ستشغله هذه الكمية:
-                    <strong id="volPreviewVal" style="color:#f57c00">0 م³</strong>
-                    @if (hasCapacity)
-                    {
-                        <span>
-                            — السعة المتبقية حالياً:
-                            <strong style="color:@(remCap > 0 ? "#388e3c" : "#e53935")">@remCap.ToString("N2") م³</strong>
-                        </span>
-                    }
-                </div>
-                <button type="submit" class="btn-bonyan-secondary">
-                    <i class="fas fa-plus"></i> إضافة للمخزن
-                </button>
-            </form>
-        </div>
+
+                    <button type="submit" id="addMaterialBtn" class="btn-bonyan-secondary">
+                        <i class="fas fa-plus"></i> إضافة للمخزن
+                    </button>
+                </form>
+            </div>
+        }
     }
 </div>
 
 <!-- Update Stock Modal -->
 @if (role == "Admin")
 {
-    <div id="updateStockOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center">
+    <div id="updateStockOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);
+             z-index:999;align-items:center;justify-content:center">
         <div style="background:#fff;border-radius:12px;padding:28px;max-width:420px;width:90%;direction:rtl">
             <h4 style="margin:0 0 18px;color:var(--primary);font-size:1rem">
                 <i class="fas fa-sync-alt" style="color:var(--secondary)"></i> تحديث الكمية
@@ -7544,11 +7999,27 @@ namespace Bonyan.PL.ViewModels
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
                 <input type="hidden" name="materialId" id="updateMatId" />
+                <input type="hidden" id="updateMatFactor" value="0" />
                 <div class="form-group">
                     <label>الكمية الجديدة <span style="color:red">*</span></label>
                     <input type="number" name="newQuantity" id="updateNewQty"
-                           step="0.001" min="0" class="form-control" required />
+                           step="0.001" min="0" class="form-control" required
+                           oninput="checkUpdateCapacity()" />
                 </div>
+                <!-- Update capacity preview -->
+                @if (hasCapacity)
+                {
+                    <div id="updateVolPreview" style="display:none;margin-bottom:10px;padding:9px 12px;
+                                 background:#fff3e0;border-radius:7px;font-size:0.83rem;color:#555;border:1px solid #ffe0b2">
+                        <i class="fas fa-cube" style="color:#f57c00"></i>
+                        الحجم الجديد: <strong id="updateVolVal" style="color:#f57c00"></strong>
+                    </div>
+                    <div id="updateWarnBox" style="display:none;margin-bottom:10px;padding:10px 14px;
+                                 background:#fdecea;border:2px solid #e53935;border-radius:7px;
+                                 font-size:0.85rem;color:#b71c1c;font-weight:600">
+                        <i class="fas fa-ban"></i> <span id="updateWarnText"></span>
+                    </div>
+                }
                 <div class="form-group">
                     <label>ملاحظات</label>
                     <input type="text" name="notes" class="form-control" placeholder="سبب التعديل..." />
@@ -7557,7 +8028,7 @@ namespace Bonyan.PL.ViewModels
                     <button type="button" onclick="closeUpdateForm()" class="btn-bonyan-primary">
                         <i class="fas fa-times"></i> إلغاء
                     </button>
-                    <button type="submit" class="btn-bonyan-secondary">
+                    <button type="submit" id="updateSubmitBtn" class="btn-bonyan-secondary">
                         <i class="fas fa-save"></i> حفظ
                     </button>
                 </div>
@@ -7568,27 +8039,101 @@ namespace Bonyan.PL.ViewModels
 
 @section Scripts {
     <script>
-        function openUpdateForm(invId, matId, currentQty) {
+        // ── Constants passed from server ──────────────────────────
+        var REMAINING_CAP = @(hasCapacity? remCap.ToString("F4", System.Globalization.CultureInfo.InvariantCulture) : "-1");
+        var TOTAL_CAP = @(hasCapacity? Model.Capacity!.Value.ToString("F4", System.Globalization.CultureInfo.InvariantCulture) : "-1");
+        var USED_VOL = @usedVol.ToString("F4", System.Globalization.CultureInfo.InvariantCulture);
+
+        // ── Update modal ──────────────────────────────────────────
+        var updateMatOtherVolume = 0; // volume of ALL other materials (excluding current one being updated)
+
+        function openUpdateForm(invId, matId, currentQty, matFactor) {
             document.getElementById('updateMatId').value = matId;
             document.getElementById('updateNewQty').value = currentQty;
+            document.getElementById('updateMatFactor').value = matFactor;
+
+            // other volume = total used minus current material's volume
+            updateMatOtherVolume = USED_VOL - (parseFloat(currentQty) * parseFloat(matFactor));
+
             document.getElementById('updateStockOverlay').style.display = 'flex';
+            checkUpdateCapacity();
         }
+
         function closeUpdateForm() {
             document.getElementById('updateStockOverlay').style.display = 'none';
         }
 
+        function checkUpdateCapacity() {
+            if (TOTAL_CAP < 0) return;
+            var qty = parseFloat(document.getElementById('updateNewQty').value) || 0;
+            var factor = parseFloat(document.getElementById('updateMatFactor').value) || 0;
+            var newVol = qty * factor;
+            var totalAfter = updateMatOtherVolume + newVol;
+
+            var previewBox = document.getElementById('updateVolPreview');
+            var warnBox = document.getElementById('updateWarnBox');
+            var warnText = document.getElementById('updateWarnText');
+            var submitBtn = document.getElementById('updateSubmitBtn');
+            var volVal = document.getElementById('updateVolVal');
+
+            if (qty > 0 && factor > 0) {
+                previewBox.style.display = 'block';
+                volVal.textContent = newVol.toFixed(2) + ' م³';
+            } else {
+                previewBox.style.display = 'none';
+            }
+
+            if (totalAfter > TOTAL_CAP && TOTAL_CAP > 0) {
+                warnBox.style.display = 'block';
+                warnText.textContent = 'الكمية المدخلة (' + newVol.toFixed(2) + ' م³) ستتجاوز سعة المخزن! الحد الأقصى المتاح: ' + (TOTAL_CAP - updateMatOtherVolume).toFixed(2) + ' م³';
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.5';
+            } else {
+                warnBox.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            }
+        }
+
+        // ── Add Material form ─────────────────────────────────────
         function showVolPreview(matSel) {
             var sel = matSel || document.querySelector('select[name="materialId"]');
             var qty = parseFloat(document.getElementById('addQty')?.value) || 0;
             var opt = sel?.options[sel?.selectedIndex];
             var factor = parseFloat(opt?.dataset?.factor) || 0;
             var vol = qty * factor;
+
             var preview = document.getElementById('volPreview');
+            var warnBox = document.getElementById('capacityWarnBox');
+            var warnText = document.getElementById('capacityWarnText');
+            var addBtn = document.getElementById('addMaterialBtn');
+
             if (qty > 0 && factor > 0) {
                 preview.style.display = 'block';
                 document.getElementById('volPreviewVal').textContent = vol.toFixed(2) + ' م³';
             } else {
                 preview.style.display = 'none';
+            }
+
+            // Live capacity enforcement
+            if (REMAINING_CAP >= 0 && qty > 0 && factor > 0) {
+                if (vol > REMAINING_CAP) {
+                    var maxQty = REMAINING_CAP / factor;
+                    warnBox.style.display = 'block';
+                    warnText.textContent =
+                        'الحجم المطلوب (' + vol.toFixed(2) + ' م³) يتجاوز السعة المتبقية (' +
+                        REMAINING_CAP.toFixed(2) + ' م³). الحد الأقصى الذي يمكن إضافته: ' +
+                        maxQty.toFixed(3) + ' ' + (opt?.dataset?.unit || 'وحدة') + '.';
+                    addBtn.disabled = true;
+                    addBtn.style.opacity = '0.5';
+                } else {
+                    warnBox.style.display = 'none';
+                    addBtn.disabled = false;
+                    addBtn.style.opacity = '1';
+                }
+            } else {
+                warnBox.style.display = 'none';
+                if (addBtn) { addBtn.disabled = false; addBtn.style.opacity = '1'; }
             }
         }
     </script>
@@ -15661,7 +16206,290 @@ button.accept-policy {
 
     .btn-modal-confirm-delete:hover {
         background: #a93226;
-    }=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/Login.css ===
+    }=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/landing.css ===
+﻿/* ── Landing Page ─────────────────────────────────── */
+.landing-body {
+    background: var(--bg);
+}
+
+/* ── Landing Navbar (light variant of bonyan-navbar) ── */
+.landing-navbar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 40px;
+    background: var(--white);
+    box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+    z-index: 1000;
+}
+
+.landing-logo {
+    color: var(--primary);
+}
+
+    .landing-logo i {
+        color: var(--secondary);
+        font-size: 1.4rem;
+    }
+
+/* ── Hero Section ─────────────────────────────────── */
+.hero-section {
+    padding: 70px 40px;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #FFF8EE;
+    color: var(--secondary);
+    border: 1px solid #F5E6CF;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.hero-title {
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: var(--text);
+    margin-bottom: 20px;
+}
+
+    .hero-title .text-gold {
+        color: var(--secondary);
+        display: block;
+    }
+
+.hero-subtitle {
+    font-size: 1.05rem;
+    color: #666;
+    line-height: 1.8;
+    margin-bottom: 32px;
+    max-width: 540px;
+}
+
+.hero-cta-btn {
+    padding: 14px 30px;
+    font-size: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(27,58,107,0.25);
+}
+
+    .hero-cta-btn:hover {
+        transform: translateY(-2px);
+    }
+
+/* ── Hero Mockup ──────────────────────────────────── */
+.hero-mockup {
+    position: relative;
+}
+
+.mockup-card {
+    margin-bottom: 0;
+    padding-top: 34px;
+}
+
+.mockup-floating-badge {
+    position: absolute;
+    top: -16px;
+    inset-inline-start: 24px;
+    background: linear-gradient(135deg, var(--secondary), #e6a832);
+    color: var(--white);
+    padding: 9px 18px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    box-shadow: 0 8px 20px rgba(200,146,42,0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 5;
+    letter-spacing: 0.3px;
+}
+
+.mockup-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.stat-card-mini {
+    padding: 14px;
+    gap: 12px;
+}
+
+    .stat-card-mini .stat-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
+        border-radius: 10px;
+    }
+
+    .stat-card-mini .stat-info h3 {
+        font-size: 1.3rem;
+    }
+
+.mockup-chart {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 16px 18px;
+}
+
+.chart-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+    .chart-bar-row:last-child {
+        margin-bottom: 0;
+    }
+
+.chart-bar-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #777;
+    width: 80px;
+    flex-shrink: 0;
+}
+
+.chart-bar-row .progress-bar-wrap {
+    flex: 1;
+}
+
+/* ── Features Section ─────────────────────────────── */
+.features-section {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 50px 40px 80px;
+}
+
+.section-header {
+    text-align: center;
+    max-width: 620px;
+    margin: 0 auto 44px;
+}
+
+    .section-header h2 {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 10px;
+    }
+
+    .section-header p {
+        font-size: 1rem;
+        color: #888;
+    }
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.feature-card {
+    margin-bottom: 0;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .feature-card .stat-icon {
+        margin-bottom: 18px;
+    }
+
+    .feature-card h3 {
+        font-size: 1.08rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 10px;
+    }
+
+    .feature-card p {
+        font-size: 0.9rem;
+        color: #777;
+        line-height: 1.75;
+        margin: 0;
+    }
+
+/* ── Bottom CTA Banner ─────────────────────────────── */
+.cta-banner {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--sidebar) 100%);
+    text-align: center;
+    padding: 70px 40px;
+}
+
+    .cta-banner h2 {
+        color: var(--white);
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+
+    .cta-banner p {
+        color: rgba(255,255,255,0.75);
+        font-size: 1rem;
+        margin-bottom: 28px;
+    }
+
+.cta-btn {
+    padding: 14px 32px;
+    font-size: 1rem;
+    border-radius: 10px;
+}
+
+/* ── Responsive ────────────────────────────────────── */
+@media (max-width: 992px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-title {
+        font-size: 2.1rem;
+    }
+
+    .hero-mockup {
+        margin-top: 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .landing-navbar {
+        padding: 14px 20px;
+    }
+
+    .hero-section,
+    .features-section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}
+=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/Login.css ===
 ﻿/* ── Login Page ──────────────────────────────────── */
 * {
     margin: 0;
