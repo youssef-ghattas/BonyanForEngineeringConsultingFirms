@@ -118,28 +118,55 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context.Materials.Add(material);
 			await _context.SaveChangesAsync();
 
-			// ── AUTO-ADD TO INVENTORY ─────────────────────────────
+			// ── AUTO-ADD TO INVENTORY (with capacity check) ───────
 			if (material.TargetInventoryID.HasValue &&
 				material.Quantity.HasValue && material.Quantity > 0)
 			{
-				bool already = await _context.MaterialInventories
-					.AnyAsync(mi => mi.InventoryID == material.TargetInventoryID.Value &&
-									mi.MaterialID == material.MaterialID);
-				if (!already)
+				var targetInv = await _context.Inventories
+					.Include(i => i.MaterialInventories).ThenInclude(mi => mi.Material)
+					.FirstOrDefaultAsync(i => i.InventoryID == material.TargetInventoryID.Value);
+
+				bool already = targetInv?.MaterialInventories
+					.Any(mi => mi.MaterialID == material.MaterialID) ?? false;
+
+				if (!already && targetInv != null)
 				{
-					_context.MaterialInventories.Add(new MaterialInventory
+					decimal newVolume = material.Quantity.Value * material.VolumeFactorM3;
+
+					// Check capacity only when inventory has a defined capacity
+					bool capacityViolated = false;
+					if (targetInv.Capacity.HasValue && targetInv.Capacity.Value > 0)
 					{
-						InventoryID = material.TargetInventoryID.Value,
-						MaterialID = material.MaterialID,
-						QuantityAvailable = material.Quantity.Value,
-						TransactionQuantity = material.Quantity.Value,
-						TransactionDate = DateTime.Now,
-						StorageLocation = "غير محدد",
-						Notes = "إضافة تلقائية عند إنشاء المادة"
-					});
-					var inv = await _context.Inventories.FindAsync(material.TargetInventoryID.Value);
-					if (inv != null) inv.LastUpdatedDate = DateTime.Now;
-					await _context.SaveChangesAsync();
+						decimal currentUsed = targetInv.MaterialInventories
+							.Sum(mi => mi.QuantityAvailable * (mi.Material?.VolumeFactorM3 ?? 1.0m));
+
+						if (currentUsed + newVolume > targetInv.Capacity.Value)
+						{
+							capacityViolated = true;
+							decimal remaining = targetInv.Capacity.Value - currentUsed;
+							TempData["WarningMessage"] =
+								$"⚠️ تعذّر تخزين المادة \"{material.MaterialName}\" تلقائياً في المخزن " +
+								$"\"{targetInv.InventoryName}\" لأن الحجم المطلوب ({newVolume:N2} م³) " +
+								$"يتجاوز السعة المتبقية ({remaining:N2} م³). " +
+								$"يرجى إضافة المادة يدوياً من صفحة مخزن آخر لديه مساحة كافية.";
+						}
+					}
+
+					if (!capacityViolated)
+					{
+						_context.MaterialInventories.Add(new MaterialInventory
+						{
+							InventoryID = material.TargetInventoryID.Value,
+							MaterialID = material.MaterialID,
+							QuantityAvailable = material.Quantity.Value,
+							TransactionQuantity = material.Quantity.Value,
+							TransactionDate = DateTime.Now,
+							StorageLocation = "غير محدد",
+							Notes = "إضافة تلقائية عند إنشاء المادة"
+						});
+						targetInv.LastUpdatedDate = DateTime.Now;
+						await _context.SaveChangesAsync();
+					}
 				}
 			}
 
