@@ -1,5 +1,16 @@
-﻿@{
+﻿@model BonyanForEngineeringConsultingFirms.ViewModels.LandingStatsViewModel
+@{
     Layout = null;
+
+    // Safe helpers so view never crashes if model is null (e.g. during design-time)
+    int offices = Model?.TotalSubscribedOffices ?? 0;
+    int completed = Model?.TotalCompletedProjects ?? 0;
+    int total = Model?.TotalProjects ?? 0;
+    int docs = Model?.TotalDocuments ?? 0;
+    double planPct = Model?.PlanningPercent ?? 30;
+    double progPct = Model?.InProgressPercent ?? 55;
+    double compPct = Model?.CompletedPercent ?? 80;
+    double holdPct = Model?.OnHoldPercent ?? 15;
 }
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -70,75 +81,125 @@
                 </a>
             </div>
 
-            <!-- Right Column: Dashboard Preview Mockup -->
-            <div class="hero-mockup">
-                <div class="mockup-floating-badge">
-                    <i class="fas fa-sack-dollar"></i>
-                    <span data-lang="mockup_badge">إجمالي الميزانية 5.2 مليون $</span>
+            <div class="bonyan-card mockup-card" style="padding: 18px;">
+
+               
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:18px;">
+
+                   
+                    <div style="padding:14px 14px 12px; border-radius:8px; border:0.5px solid rgba(0,0,0,0.08); background:#f8f9fc; display:flex; flex-direction:column; gap:10px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                            <div style="width:34px;height:34px;border-radius:8px;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                                <i class="fas fa-building-columns"></i>
+                            </div>
+                            <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:99px;background:#E6F1FB;color:#185FA5;letter-spacing:.04em;">OFFICES</span>
+                        </div>
+                        <span style="font-size:26px;font-weight:600;color:#1a1a2e;line-height:1;">+@offices</span>
+                        <div style="border-top:0.5px solid rgba(0,0,0,0.08);padding-top:8px;display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-size:11px;color:#1a1a2e;font-weight:600;" data-lang="stat_offices_label">مكتب هندسي مشترك</span>
+                            <span style="font-size:10px;color:#888;line-height:1.4;">Subscribed engineering offices across the platform</span>
+                        </div>
+                    </div>
+
+                    
+                    <div style="padding:14px 14px 12px; border-radius:8px; border:0.5px solid rgba(0,0,0,0.08); background:#f8f9fc; display:flex; flex-direction:column; gap:10px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                            <div style="width:34px;height:34px;border-radius:8px;background:#EAF3DE;color:#3B6D11;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                                <i class="fas fa-circle-check"></i>
+                            </div>
+                            <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:99px;background:#EAF3DE;color:#3B6D11;letter-spacing:.04em;">DELIVERED</span>
+                        </div>
+                        <span style="font-size:26px;font-weight:600;color:#1a1a2e;line-height:1;">@completed</span>
+                        <div style="border-top:0.5px solid rgba(0,0,0,0.08);padding-top:8px;display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-size:11px;color:#1a1a2e;font-weight:600;" data-lang="stat_completed_label">مشروع مُسلَّم بنجاح</span>
+                            <span style="font-size:10px;color:#888;line-height:1.4;">Projects completed and handed over to clients</span>
+                        </div>
+                    </div>
+
+                    
+                    <div style="padding:14px 14px 12px; border-radius:8px; border:0.5px solid rgba(0,0,0,0.08); background:#f8f9fc; display:flex; flex-direction:column; gap:10px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                            <div style="width:34px;height:34px;border-radius:8px;background:#FAEEDA;color:#854F0B;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                                <i class="fas fa-table-cells-large"></i>
+                            </div>
+                            <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:99px;background:#FAEEDA;color:#854F0B;letter-spacing:.04em;">PROJECTS</span>
+                        </div>
+                        <span style="font-size:26px;font-weight:600;color:#1a1a2e;line-height:1;">@total</span>
+                        <div style="border-top:0.5px solid rgba(0,0,0,0.08);padding-top:8px;display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-size:11px;color:#1a1a2e;font-weight:600;" data-lang="stat_projects_label">إجمالي المشاريع المسجّلة</span>
+                            <span style="font-size:10px;color:#888;line-height:1.4;">All projects registered system-wide</span>
+                        </div>
+                    </div>
+
+                   
+                    <div style="padding:14px 14px 12px; border-radius:8px; border:0.5px solid rgba(0,0,0,0.08); background:#f8f9fc; display:flex; flex-direction:column; gap:10px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                            <div style="width:34px;height:34px;border-radius:8px;background:#FCEBEB;color:#A32D2D;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                                <i class="fas fa-file-lines"></i>
+                            </div>
+                            <span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:99px;background:#FCEBEB;color:#A32D2D;letter-spacing:.04em;">DOCUMENTS</span>
+                        </div>
+                        <span style="font-size:26px;font-weight:600;color:#1a1a2e;line-height:1;">@docs.ToString("N0")</span>
+                        <div style="border-top:0.5px solid rgba(0,0,0,0.08);padding-top:8px;display:flex;flex-direction:column;gap:2px;">
+                            <span style="font-size:11px;color:#1a1a2e;font-weight:600;" data-lang="stat_documents_label">مستند ومخطط هندسي</span>
+                            <span style="font-size:10px;color:#888;line-height:1.4;">Technical docs &amp; drawings uploaded</span>
+                        </div>
+                    </div>
+
                 </div>
 
-                <div class="bonyan-card mockup-card">
-                    <div class="mockup-stats-grid">
-                        <div class="stat-card stat-card-mini">
-                            <div class="stat-icon blue"><i class="fas fa-diagram-project"></i></div>
-                            <div class="stat-info">
-                                <h3>24</h3>
-                                <p data-lang="stat_projects_label">مشروع نشط</p>
-                            </div>
+               
+                <div style="height:0.5px;background:rgba(0,0,0,0.08);margin:0 0 14px;"></div>
+
+                
+                <div style="display:flex;flex-direction:column;gap:9px;">
+
+                    <div style="display:grid;grid-template-columns:110px 1fr 34px;align-items:center;gap:10px;">
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666;">
+                            <span style="width:7px;height:7px;border-radius:50%;background:#1565C0;flex-shrink:0;"></span>
+                            <span data-lang="chart_planning">تخطيط · Planning</span>
+                        </span>
+                        <div style="height:5px;background:#eee;border-radius:99px;overflow:hidden;">
+                            <div style="height:100%;width:@(planPct)%;background:#1565C0;border-radius:99px;"></div>
                         </div>
-                        <div class="stat-card stat-card-mini">
-                            <div class="stat-icon green"><i class="fas fa-list-check"></i></div>
-                            <div class="stat-info">
-                                <h3>128</h3>
-                                <p data-lang="stat_tasks_label">مهمة منجزة</p>
-                            </div>
-                        </div>
-                        <div class="stat-card stat-card-mini">
-                            <div class="stat-icon gold"><i class="fas fa-handshake"></i></div>
-                            <div class="stat-info">
-                                <h3>18</h3>
-                                <p data-lang="stat_clients_label">عميل</p>
-                            </div>
-                        </div>
-                        <div class="stat-card stat-card-mini">
-                            <div class="stat-icon red"><i class="fas fa-file-alt"></i></div>
-                            <div class="stat-info">
-                                <h3>342</h3>
-                                <p data-lang="stat_documents_label">مستند</p>
-                            </div>
-                        </div>
+                        <span style="font-size:10px;color:#999;text-align:right;font-weight:500;">@(planPct)%</span>
                     </div>
 
-                    <div class="mockup-chart">
-                        <div class="chart-bar-row">
-                            <span class="chart-bar-label" data-lang="chart_planning">تخطيط</span>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:30%; background:#1565C0;"></div>
-                            </div>
+                    <div style="display:grid;grid-template-columns:110px 1fr 34px;align-items:center;gap:10px;">
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666;">
+                            <span style="width:7px;height:7px;border-radius:50%;background:#C8922A;flex-shrink:0;"></span>
+                            <span data-lang="chart_inprogress">قيد التنفيذ · Active</span>
+                        </span>
+                        <div style="height:5px;background:#eee;border-radius:99px;overflow:hidden;">
+                            <div style="height:100%;width:@(progPct)%;background:#C8922A;border-radius:99px;"></div>
                         </div>
-                        <div class="chart-bar-row">
-                            <span class="chart-bar-label" data-lang="chart_inprogress">قيد التنفيذ</span>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:55%; background:#C8922A;"></div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-row">
-                            <span class="chart-bar-label" data-lang="chart_completed">مكتمل</span>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:80%; background:#28A745;"></div>
-                            </div>
-                        </div>
-                        <div class="chart-bar-row">
-                            <span class="chart-bar-label" data-lang="chart_onhold">متوقف</span>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width:15%; background:#6A1B9A;"></div>
-                            </div>
-                        </div>
+                        <span style="font-size:10px;color:#999;text-align:right;font-weight:500;">@(progPct)%</span>
                     </div>
+
+                    <div style="display:grid;grid-template-columns:110px 1fr 34px;align-items:center;gap:10px;">
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666;">
+                            <span style="width:7px;height:7px;border-radius:50%;background:#28A745;flex-shrink:0;"></span>
+                            <span data-lang="chart_completed">مكتمل · Delivered</span>
+                        </span>
+                        <div style="height:5px;background:#eee;border-radius:99px;overflow:hidden;">
+                            <div style="height:100%;width:@(compPct)%;background:#28A745;border-radius:99px;"></div>
+                        </div>
+                        <span style="font-size:10px;color:#999;text-align:right;font-weight:500;">@(compPct)%</span>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:110px 1fr 34px;align-items:center;gap:10px;">
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666;">
+                            <span style="width:7px;height:7px;border-radius:50%;background:#A32D2D;flex-shrink:0;"></span>
+                            <span data-lang="chart_onhold">متوقف · On Hold</span>
+                        </span>
+                        <div style="height:5px;background:#eee;border-radius:99px;overflow:hidden;">
+                            <div style="height:100%;width:@(holdPct)%;background:#A32D2D;border-radius:99px;"></div>
+                        </div>
+                        <span style="font-size:10px;color:#999;text-align:right;font-weight:500;">@(holdPct)%</span>
+                    </div>
+
                 </div>
             </div>
-
-        </div>
     </section>
 
     <!-- ── Features Grid Section ─────────────────── -->
@@ -201,7 +262,7 @@
 
     <!-- Landing Language Switch -->
     <script>
-        const landingTranslations = {
+               const landingTranslations = {
             ar: {
                 nav_login: "تسجيل الدخول",
                 hero_badge: "مميزات المنصة",
@@ -209,33 +270,42 @@
                 hero_title_2: "إدارة المكاتب الهندسية",
                 hero_subtitle: "منصة رقمية متكاملة تُحدث نقلة في طريقة إدارة المكاتب الهندسية لمشاريعها ومخططاتها وعملائها وعقودها ومهامها وفرقها — كل ذلك من لوحة تحكم واحدة قوية.",
                 hero_cta: "تسجيل دخول ←",
-                mockup_badge: "إجمالي الميزانية 5.2 مليون $",
-                stat_projects_label: "مشروع نشط",
-                stat_tasks_label: "مهمة منجزة",
-                stat_clients_label: "عميل",
-                stat_documents_label: "مستند",
-                chart_planning: "تخطيط",
-                chart_inprogress: "قيد التنفيذ",
-                chart_completed: "مكتمل",
-                chart_onhold: "متوقف",
-                features_title: "كل ما يحتاجه مكتبك الهندسي",
+                mockup_badge: "مشروع مسجّل في المنصة",
+
+                // ── Stat cards ──────────────────────────────
+                stat_offices_label:   "مكتب هندسي مشترك",
+                stat_completed_label: "مشروع مُسلَّم بنجاح",
+                stat_projects_label:  "إجمالي المشاريع المسجّلة",
+                stat_documents_label: "مستند ومخطط هندسي",
+
+                // ── Progress bars ────────────────────────────
+                chart_planning:   "تخطيط · Planning",
+                chart_inprogress: "قيد التنفيذ · Active",
+                chart_completed:  "مكتمل · Delivered",
+                chart_onhold:     "متوقف · On Hold",
+
+                // ── Features section ─────────────────────────
+                features_title:    "كل ما يحتاجه مكتبك الهندسي",
                 features_subtitle: "مجموعة متكاملة من الأدوات لإدارة مكتبك الهندسي بكفاءة وسهولة",
                 feat1_title: "إدارة المشاريع",
-                feat1_desc: "تتبع كل مشروع منذ البداية وحتى التسليم. راقب الحالة والميزانيات والجداول الزمنية والمعالم الرئيسية لحظة بلحظة.",
+                feat1_desc:  "تتبع كل مشروع منذ البداية وحتى التسليم. راقب الحالة والميزانيات والجداول الزمنية والمعالم الرئيسية لحظة بلحظة.",
                 feat2_title: "إسناد المهام",
-                feat2_desc: "أسند المهام للمهندسين، حدد المواعيد النهائية، وتابع التقدم والمهام المتأخرة بتنبيهات تلقائية.",
+                feat2_desc:  "أسند المهام للمهندسين، حدد المواعيد النهائية، وتابع التقدم والمهام المتأخرة بتنبيهات تلقائية.",
                 feat3_title: "إدارة المستندات",
-                feat3_desc: "ارفع ونظّم وحمّل المخططات والرسومات والمستندات المرتبطة مباشرة بكل مشروع.",
+                feat3_desc:  "ارفع ونظّم وحمّل المخططات والرسومات والمستندات المرتبطة مباشرة بكل مشروع.",
                 feat4_title: "إدارة العملاء والعقود",
-                feat4_desc: "احتفظ بسجلات كاملة للعملاء والعقود والميزانيات. اربط العملاء مباشرة بمشاريعهم.",
+                feat4_desc:  "احتفظ بسجلات كاملة للعملاء والعقود والميزانيات. اربط العملاء مباشرة بمشاريعهم.",
                 feat5_title: "الموارد البشرية",
-                feat5_desc: "أدر فريق المهندسين والأدوار وصلاحيات الوصول. أضف أعضاء جدد ببيانات دخول تُنشأ تلقائياً.",
+                feat5_desc:  "أدر فريق المهندسين والأدوار وصلاحيات الوصول. أضف أعضاء جدد ببيانات دخول تُنشأ تلقائياً.",
                 feat6_title: "ثنائي اللغة (عربي/إنجليزي)",
-                feat6_desc: "دعم كامل للغة العربية (RTL) والإنجليزية (LTR) مع تبديل فوري للغة عبر المنصة بالكامل.",
-                cta_title: "هل أنت مستعد لتطوير مكتبك الهندسي؟",
+                feat6_desc:  "دعم كامل للغة العربية (RTL) والإنجليزية (LTR) مع تبديل فوري للغة عبر المنصة بالكامل.",
+
+                // ── CTA banner ───────────────────────────────
+                cta_title:    "هل أنت مستعد لتطوير مكتبك الهندسي؟",
                 cta_subtitle: "سجّل الدخول للوصول إلى مساحة العمل المتكاملة لإدارة مكتبك الهندسي.",
-                cta_button: " تسجيل دخول←"
+                cta_button:   "تسجيل دخول ←"
             },
+
             en: {
                 nav_login: "Login",
                 hero_badge: "Platform Features",
@@ -243,32 +313,40 @@
                 hero_title_2: "Engineering Office Management",
                 hero_subtitle: "An integrated digital platform that transforms how engineering offices manage projects, blueprints, clients, contracts, tasks, and teams — all from one powerful dashboard.",
                 hero_cta: "Login →",
-                mockup_badge: "TOTAL BUDGET $5.2M",
-                stat_projects_label: "Active Projects",
-                stat_tasks_label: "Completed Tasks",
-                stat_clients_label: "Clients",
-                stat_documents_label: "Documents",
-                chart_planning: "Planning",
-                chart_inprogress: "In Progress",
-                chart_completed: "Completed",
-                chart_onhold: "On Hold",
-                features_title: "Everything Your Engineering Office Needs",
+                mockup_badge: "Projects registered on the platform",
+
+                // ── Stat cards ──────────────────────────────
+                stat_offices_label:   "Subscribed engineering offices",
+                stat_completed_label: "Successfully delivered projects",
+                stat_projects_label:  "Total registered projects",
+                stat_documents_label: "Technical docs & drawings",
+
+                // ── Progress bars ────────────────────────────
+                chart_planning:   "Planning · تخطيط",
+                chart_inprogress: "Active · قيد التنفيذ",
+                chart_completed:  "Delivered · مكتمل",
+                chart_onhold:     "On Hold · متوقف",
+
+                // ── Features section ─────────────────────────
+                features_title:    "Everything Your Engineering Office Needs",
                 features_subtitle: "A complete suite of tools to manage every aspect of your engineering office efficiently.",
                 feat1_title: "Project Management",
-                feat1_desc: "Track every project from inception to delivery. Monitor status, budgets, timelines, and milestones in real-time.",
+                feat1_desc:  "Track every project from inception to delivery. Monitor status, budgets, timelines, and milestones in real-time.",
                 feat2_title: "Task Assignment",
-                feat2_desc: "Assign tasks to engineers, set deadlines, track progress and overdue items with automatic alerts.",
+                feat2_desc:  "Assign tasks to engineers, set deadlines, track progress and overdue items with automatic alerts.",
                 feat3_title: "Document Control",
-                feat3_desc: "Upload, organize, and download blueprints, drawings, and documents linked directly to each project.",
+                feat3_desc:  "Upload, organize, and download blueprints, drawings, and documents linked directly to each project.",
                 feat4_title: "Client & Contract Management",
-                feat4_desc: "Maintain complete client records, contracts, and budgets. Link clients directly to their projects.",
+                feat4_desc:  "Maintain complete client records, contracts, and budgets. Link clients directly to their projects.",
                 feat5_title: "Human Resources",
-                feat5_desc: "Manage engineering staff, roles, and access. Onboard new team members with auto-generated credentials.",
+                feat5_desc:  "Manage engineering staff, roles, and access. Onboard new team members with auto-generated credentials.",
                 feat6_title: "Bilingual (AR / EN)",
-                feat6_desc: "Full Arabic RTL and English LTR support with one-click language switching across the entire platform.",
-                cta_title: "Ready to Transform Your Engineering Office?",
+                feat6_desc:  "Full Arabic RTL and English LTR support with one-click language switching across the entire platform.",
+
+                // ── CTA banner ───────────────────────────────
+                cta_title:    "Ready to Transform Your Engineering Office?",
                 cta_subtitle: "Log in to access your complete engineering management workspace.",
-                cta_button: "Login →"
+                cta_button:   "Login →"
             }
         };
 

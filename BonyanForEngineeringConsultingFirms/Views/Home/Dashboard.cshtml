@@ -1,0 +1,508 @@
+﻿@* Views/Home/Dashboard.cshtml *@
+@using Bonyan.DAL.Enums
+@model BonyanForEngineeringConsultingFirms.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+
+    // ── Status badge helpers ─────────────────────────
+    string ProjBadge(ProjectStatus s) => s switch
+    {
+        ProjectStatus.Planning => "badge-info",
+        ProjectStatus.InProgress => "badge-warning",
+        ProjectStatus.Completed => "badge-success",
+        ProjectStatus.OnHold => "badge-primary",
+        ProjectStatus.Cancelled => "badge-danger",
+        _ => "badge-info"
+    };
+    string ProjLabel(ProjectStatus s) => s switch
+    {
+        ProjectStatus.Planning => "تخطيط|Planning",
+        ProjectStatus.InProgress => "جاري|InProgress",
+        ProjectStatus.Completed => "مكتمل|Completed",
+        ProjectStatus.OnHold => "موقوف|OnHold",
+        ProjectStatus.Cancelled => "ملغي|Cancelled",
+        _ => s.ToString() + "|" + s.ToString()
+    };
+    // Split ar|en
+    string Ar(string s) => s.Split('|')[0];
+    string En(string s) => s.Split('|')[1];
+}
+
+<link rel="stylesheet" href="~/css/dashboard.css" />
+
+<!-- ════════════════════════════════════════════════════
+     PAGE HEADER
+════════════════════════════════════════════════════ -->
+<div class="db-page-header">
+    <div>
+        <h2 class="db-page-title">
+            <i class="fas fa-chart-line"></i>
+            <span data-lang="db_title">لوحة التحكم</span>
+        </h2>
+        <p class="db-page-sub" data-lang="db_subtitle">نظرة شاملة على أداء مكتبك الهندسي</p>
+    </div>
+    <a asp-controller="Home" asp-action="Index" class="btn-bonyan-secondary">
+        <i class="fas fa-home"></i>
+        <span data-lang="db_home">الرئيسية</span>
+    </a>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     ROW 1 — 5 METRIC CARDS
+════════════════════════════════════════════════════ -->
+<div class="db-metrics-grid">
+
+    <!-- Card 1: Total Projects -->
+    <div class="db-metric-card" style="--accent:#1B3A6B">
+        <div class="db-mc-top">
+            <div class="db-mc-icon" style="background:#1B3A6B">
+                <i class="fas fa-project-diagram"></i>
+            </div>
+            <div class="db-mc-info">
+                <span class="db-mc-number">@Model.TotalProjects</span>
+                <span class="db-mc-label" data-lang="db_total_projects">إجمالي المشاريع</span>
+            </div>
+        </div>
+        <div class="db-mc-bar-group">
+            <span class="db-mc-bar-seg" style="background:#3b82f6;flex:@Model.ProjPlanning"
+                  title="تخطيط / Planning"></span>
+            <span class="db-mc-bar-seg" style="background:#f59e0b;flex:@Model.ProjInProgress"
+                  title="جاري / In Progress"></span>
+            <span class="db-mc-bar-seg" style="background:#8b5cf6;flex:@Model.ProjOnHold"
+                  title="موقوف / On Hold"></span>
+            <span class="db-mc-bar-seg" style="background:#10b981;flex:@Model.ProjCompleted"
+                  title="مكتمل / Completed"></span>
+            <span class="db-mc-bar-seg" style="background:#ef4444;flex:@Model.ProjCancelled"
+                  title="ملغي / Cancelled"></span>
+        </div>
+        <div class="db-mc-mini-legend">
+            <span>
+                <em style="background:#3b82f6"></em>
+                <span class="l-ar">تخطيط</span><span class="l-en" style="display:none">Planning</span>
+                (@Model.ProjPlanning)
+            </span>
+            <span>
+                <em style="background:#f59e0b"></em>
+                <span class="l-ar">جاري</span><span class="l-en" style="display:none">Active</span>
+                (@Model.ProjInProgress)
+            </span>
+            <span>
+                <em style="background:#10b981"></em>
+                <span class="l-ar">مكتمل</span><span class="l-en" style="display:none">Done</span>
+                (@Model.ProjCompleted)
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 2: Active Tasks -->
+    <div class="db-metric-card" style="--accent:#C8922A">
+        <div class="db-mc-top">
+            <div class="db-mc-icon" style="background:#C8922A">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="db-mc-info">
+                <span class="db-mc-number">@Model.ActiveTasks</span>
+                <span class="db-mc-label" data-lang="db_active_tasks">المهام النشطة</span>
+            </div>
+        </div>
+        <div class="db-mc-footer">
+            <span class="db-mc-badge amber" data-lang="db_inprogress_label">جاري التنفيذ</span>
+            <span class="db-mc-total">
+                <span data-lang="db_of">من</span> @(Model.TaskPending + Model.TaskInProgress + Model.TaskUnderReview + Model.TaskCompleted + Model.TaskCancelled)
+            </span>
+        </div>
+    </div>
+
+    <!-- Card 3: Total Clients -->
+    <div class="db-metric-card" style="--accent:#17a2b8">
+        <div class="db-mc-top">
+            <div class="db-mc-icon" style="background:#17a2b8">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <div class="db-mc-info">
+                <span class="db-mc-number">@Model.TotalClients</span>
+                <span class="db-mc-label" data-lang="db_total_clients">إجمالي العملاء</span>
+            </div>
+        </div>
+        <div class="db-mc-footer">
+            <span class="db-mc-badge teal" data-lang="db_unique_clients">عملاء فريدون</span>
+        </div>
+    </div>
+
+    <!-- Card 4: Documents + Drawings -->
+    <div class="db-metric-card" style="--accent:#6f42c1">
+        <div class="db-mc-top">
+            <div class="db-mc-icon" style="background:#6f42c1">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="db-mc-info">
+                <span class="db-mc-number">@Model.TotalDocuments</span>
+                <span class="db-mc-label" data-lang="db_total_docs">المستندات والرسومات</span>
+            </div>
+        </div>
+        <div class="db-mc-footer">
+            <span class="db-mc-badge purple" data-lang="db_files_label">ملفات مرفوعة</span>
+        </div>
+    </div>
+
+    <!-- Card 5: Total Budget -->
+    <div class="db-metric-card" style="--accent:#28A745">
+        <div class="db-mc-top">
+            <div class="db-mc-icon" style="background:#28A745">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="db-mc-info">
+                <span class="db-mc-number db-mc-budget">
+                    $@Model.TotalBudget.ToString("N0")
+                </span>
+                <span class="db-mc-label" data-lang="db_total_budget">إجمالي الميزانيات</span>
+            </div>
+        </div>
+        <div class="db-mc-footer">
+            <span class="db-mc-badge green" data-lang="db_all_projects_budget">عبر كل المشاريع</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     ROW 2 — CHARTS  (Bar + Doughnut)
+════════════════════════════════════════════════════ -->
+<div class="db-charts-grid">
+
+    <!-- Left: Projects by Status — Bar Chart -->
+    <div class="db-panel">
+        <div class="db-panel-header">
+            <h3 class="db-panel-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-lang="db_chart_projects">المشاريع حسب الحالة</span>
+            </h3>
+        </div>
+        <div class="db-chart-wrap">
+            <canvas id="chartProjectsStatus" height="260"></canvas>
+        </div>
+    </div>
+
+    <!-- Right: Tasks by Status — Doughnut -->
+    <div class="db-panel">
+        <div class="db-panel-header">
+            <h3 class="db-panel-title">
+                <i class="fas fa-chart-pie"></i>
+                <span data-lang="db_chart_tasks">المهام حسب الحالة</span>
+            </h3>
+        </div>
+        <div class="db-chart-wrap db-doughnut-wrap">
+            <canvas id="chartTasksStatus" height="260"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     ROW 3 — DATA TABLES  (Recent Projects + Overdue)
+════════════════════════════════════════════════════ -->
+<div class="db-tables-grid">
+
+    <!-- Left: Recent Projects table -->
+    <div class="db-panel">
+        <div class="db-panel-header">
+            <h3 class="db-panel-title">
+                <i class="fas fa-folder-open"></i>
+                <span data-lang="db_recent_projects">أحدث المشاريع</span>
+            </h3>
+            <a asp-controller="Project" asp-action="Index"
+               class="db-view-all" data-lang="view_all">عرض الكل</a>
+        </div>
+
+        @if (Model.RecentProjects.Any())
+        {
+            <div class="db-table-wrap">
+                <table class="bonyan-table db-table">
+                    <thead>
+                        <tr>
+                            <th data-lang="project_name">اسم المشروع</th>
+                            <th data-lang="client">العميل</th>
+                            <th data-lang="status">الحالة</th>
+                            <th data-lang="tasks">المهام</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.RecentProjects)
+                        {
+                            var lbl = ProjLabel(p.Status);
+                            <tr>
+                                <td>
+                                    <a asp-controller="Project" asp-action="Details"
+                                       asp-route-id="@p.ProjectId" class="db-proj-link">
+                                        @p.ProjectName
+                                    </a>
+                                </td>
+                                <td class="db-muted">@p.ClientName</td>
+                                <td>
+                                    <span class="badge-bonyan @ProjBadge(p.Status)">
+                                        <span class="l-ar">@Ar(lbl)</span>
+                                        <span class="l-en" style="display:none">@En(lbl)</span>
+                                    </span>
+                                </td>
+                                <td class="db-center">
+                                    <span class="db-task-count">@p.TaskCount</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="db-empty">
+                <i class="fas fa-folder-open"></i>
+                <span data-lang="no_projects">لا توجد مشاريع حتى الآن</span>
+            </div>
+        }
+    </div>
+
+    <!-- Right: Overdue Tasks panel -->
+    <div class="db-panel db-panel-overdue">
+        <div class="db-panel-header">
+            <h3 class="db-panel-title db-overdue-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span data-lang="db_overdue_tasks">المهام المتأخرة ⚠️</span>
+            </h3>
+            <a asp-controller="Task" asp-action="Index"
+               class="db-view-all" data-lang="view_all">عرض الكل</a>
+        </div>
+
+        @if (Model.OverdueTasks.Any())
+        {
+            <div class="db-overdue-list">
+                @foreach (var t in Model.OverdueTasks)
+                {
+                    int daysLate = (int)(DateTime.Now - t.DueDate).TotalDays;
+                    <div class="db-overdue-item">
+                        <div class="db-overdue-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="db-overdue-body">
+                            <p class="db-overdue-name">@t.TaskName</p>
+                            <p class="db-overdue-project">
+                                <i class="fas fa-project-diagram"></i>
+                                @t.ProjectName
+                            </p>
+                        </div>
+                        <div class="db-overdue-meta">
+                            <span class="db-overdue-date">
+                                @t.DueDate.ToString("dd/MM/yyyy")
+                            </span>
+                            <span class="db-overdue-late">
+                                +@daysLate
+                                <span class="l-ar">يوم</span>
+                                <span class="l-en" style="display:none">d</span>
+                            </span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="db-empty db-empty-good">
+                <i class="fas fa-check-circle"></i>
+                <span data-lang="db_no_overdue">لا توجد مهام متأخرة 🎉</span>
+            </div>
+        }
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // ════════════════════════════════════════════════════════
+        //  BONYAN DASHBOARD CHARTS
+        // ════════════════════════════════════════════════════════
+
+        // ── Read theme tokens from CSS ────────────────────────
+        function getCssVar(name) {
+            return getComputedStyle(document.documentElement)
+                .getPropertyValue(name).trim();
+        }
+
+        const isDark = () => document.body.classList.contains('dark-mode');
+
+        // ── Color palettes ────────────────────────────────────
+        const PROJECT_COLORS = {
+            bg:     ['#3b82f6','#f59e0b','#8b5cf6','#10b981','#ef4444'],
+            border: ['#2563eb','#d97706','#7c3aed','#059669','#dc2626']
+        };
+        const TASK_COLORS = {
+            bg:     ['#94a3b8','#f59e0b','#6366f1','#10b981','#ef4444'],
+            border: ['#64748b','#d97706','#4f46e5','#059669','#dc2626']
+        };
+
+        // ── Bilingual labels ──────────────────────────────────
+        const LANG = document.documentElement.getAttribute('lang') || 'ar';
+        const labels = {
+            proj: {
+                ar: ['تخطيط','جاري','موقوف','مكتمل','ملغي'],
+                en: ['Planning','In Progress','On Hold','Completed','Cancelled']
+            },
+            task: {
+                ar: ['معلق','جاري','مراجعة','مكتمل','ملغي'],
+                en: ['Pending','In Progress','Under Review','Completed','Cancelled']
+            }
+        };
+
+        // ── Server data injected from Razor ──────────────────
+        const projData = [
+            @Model.ProjPlanning,
+            @Model.ProjInProgress,
+            @Model.ProjOnHold,
+            @Model.ProjCompleted,
+            @Model.ProjCancelled
+        ];
+        const taskData = [
+            @Model.TaskPending,
+            @Model.TaskInProgress,
+            @Model.TaskUnderReview,
+            @Model.TaskCompleted,
+            @Model.TaskCancelled
+        ];
+
+        // ── Shared Chart.js defaults ──────────────────────────
+        function chartDefaults() {
+            const dark = isDark();
+            return {
+                gridColor:  dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
+                textColor:  dark ? '#94a3b8' : '#666',
+                tooltipBg:  dark ? '#1e293b' : '#fff',
+                tooltipTxt: dark ? '#e2e8f0' : '#1e293b'
+            };
+        }
+
+        // ── Build Bar Chart (Projects by Status) ─────────────
+        let barChart, doughnutChart;
+
+        function buildBarChart() {
+            const ctx  = document.getElementById('chartProjectsStatus').getContext('2d');
+            const d    = chartDefaults();
+            const lang = document.documentElement.getAttribute('lang') === 'en' ? 'en' : 'ar';
+
+            if (barChart) barChart.destroy();
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.proj[lang],
+                    datasets: [{
+                        label: lang === 'ar' ? 'عدد المشاريع' : 'Projects Count',
+                        data:  projData,
+                        backgroundColor: PROJECT_COLORS.bg,
+                        borderColor:     PROJECT_COLORS.border,
+                        borderWidth:     2,
+                        borderRadius:    8,
+                        borderSkipped:   false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: d.tooltipBg,
+                            titleColor:      d.tooltipTxt,
+                            bodyColor:       d.tooltipTxt,
+                            borderColor:     'rgba(200,146,42,0.3)',
+                            borderWidth:     1,
+                            padding:         12,
+                            cornerRadius:    8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid:  { display: false },
+                            ticks: { color: d.textColor, font: { family: 'Cairo, Poppins, sans-serif' } }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, color: d.textColor, font: { family: 'Cairo, Poppins, sans-serif' } },
+                            grid:  { color: d.gridColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ── Build Doughnut Chart (Tasks by Status) ────────────
+        function buildDoughnutChart() {
+            const ctx  = document.getElementById('chartTasksStatus').getContext('2d');
+            const d    = chartDefaults();
+            const lang = document.documentElement.getAttribute('lang') === 'en' ? 'en' : 'ar';
+
+            if (doughnutChart) doughnutChart.destroy();
+            doughnutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.task[lang],
+                    datasets: [{
+                        data:            taskData,
+                        backgroundColor: TASK_COLORS.bg,
+                        borderColor:     TASK_COLORS.border,
+                        borderWidth:     2,
+                        hoverOffset:     10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '62%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color:     d.textColor,
+                                padding:   16,
+                                font:      { size: 12, family: 'Cairo, Poppins, sans-serif' },
+                                usePointStyle: true,
+                                pointStyleWidth: 10
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: d.tooltipBg,
+                            titleColor:      d.tooltipTxt,
+                            bodyColor:       d.tooltipTxt,
+                            borderColor:     'rgba(200,146,42,0.3)',
+                            borderWidth:     1,
+                            padding:         12,
+                            cornerRadius:    8
+                        }
+                    }
+                }
+            });
+        }
+
+        // ── Init on DOM ready ─────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function () {
+            buildBarChart();
+            buildDoughnutChart();
+        });
+
+        // ── Rebuild charts on dark-mode toggle ───────────────
+        // Hook into the existing applyDarkMode in _Layout.cshtml
+        const _origApplyDarkMode = window.applyDarkMode;
+        window.applyDarkMode = function (on) {
+            if (_origApplyDarkMode) _origApplyDarkMode(on);
+            setTimeout(() => { buildBarChart(); buildDoughnutChart(); }, 80);
+        };
+
+        // ── Rebuild charts on language toggle ────────────────
+        document.addEventListener('bonyanLangChanged', function (e) {
+            const lang = e.detail;
+            // Swap l-ar / l-en spans
+            document.querySelectorAll('.l-ar').forEach(el => el.style.display = lang === 'ar' ? '' : 'none');
+            document.querySelectorAll('.l-en').forEach(el => el.style.display = lang === 'en' ? '' : 'none');
+            buildBarChart();
+            buildDoughnutChart();
+        });
+    </script>
+}

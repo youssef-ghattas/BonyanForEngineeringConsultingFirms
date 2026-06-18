@@ -5,50 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bonyan - بنيان</title>
 
-    <!-- Bootstrap RTL -->
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" />
-
-    <!-- Font Awesome Icons -->
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
-    <!-- Google Fonts Arabic + English -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap"
           rel="stylesheet" />
 
-    <!-- Our Custom CSS -->
     <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/home.css" />
 </head>
 <body>
 
-    <!-- ── Top Navbar ────────────────────────────── -->
+    <!-- ── Top Navbar ─────────────────────────────── -->
     <nav class="bonyan-navbar">
-        <!-- Sidebar Toggle Button -->
+
         <button class="sidebar-toggle" onclick="toggleSidebar()">
             <i class="fas fa-bars"></i>
         </button>
 
-        <!-- Logo -->
         <div class="navbar-logo">
             <i class="fas fa-building"></i>
             <span>Bonyan | بنيان</span>
         </div>
 
-        <!-- Right Side -->
         <div class="navbar-right">
-            <!-- Language Switch Button -->
-            <button id="langBtn"
-                    class="lang-btn"
-                    onclick="toggleLanguage()">
+
+            <!-- Dark Mode Toggle -->
+            <button class="dark-mode-btn" id="darkModeBtn" onclick="toggleDarkMode()" title="Dark / Light">
+                <i class="fas fa-moon" id="darkModeIcon"></i>
+            </button>
+
+            <!-- Language Switch -->
+            <button id="langBtn" class="lang-btn" onclick="toggleLanguage()">
                 English
             </button>
 
-            <!-- User Info -->
+            <!-- User Dropdown -->
             <div class="navbar-user dropdown">
-                <div class="user-info-btn"
-                     data-bs-toggle="dropdown"
-                     style="cursor:pointer">
+                <div class="user-info-btn" data-bs-toggle="dropdown" style="cursor:pointer">
                     <i class="fas fa-user-circle fa-lg"></i>
                     <div class="user-details">
                         <span class="user-name">
@@ -70,29 +65,30 @@
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <a class="dropdown-item text-danger"
-                           asp-controller="Account"
-                           asp-action="Logout">
+                           asp-controller="Account" asp-action="Logout">
                             <i class="fas fa-sign-out-alt me-2"></i>
                             <span data-lang="logout">تسجيل الخروج</span>
                         </a>
                     </li>
                 </ul>
             </div>
+
         </div>
     </nav>
 
-    <!-- ── Wrapper ───────────────────────────────── -->
+    <!-- ── Wrapper ────────────────────────────────── -->
     <div class="bonyan-wrapper">
 
-        <!-- ── Sidebar ───────────────────────────── -->
+        <!-- ── Sidebar ────────────────────────────── -->
         <aside class="bonyan-sidebar" id="sidebar">
             <ul class="sidebar-menu">
 
-                <!-- ── Everyone sees Dashboard ────────────── -->
+                <!-- HOME button — always visible for everyone -->
                 <li>
-                    <a asp-controller="Home" asp-action="Index">
-                        <i class="fas fa-chart-line"></i>
-                        <span data-lang="dashboard">لوحة التحكم</span>
+                    <a asp-controller="Home" asp-action="Index"
+                       class="sidebar-home-btn @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                        <i class="fas fa-home"></i>
+                        <span data-lang="home">الرئيسية</span>
                     </a>
                 </li>
 
@@ -102,7 +98,14 @@
 
                 @if (role == "Admin")
                 {
-                    <!-- Admin sees everything -->
+
+                    
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
                     <li class="sidebar-section-title">
                         <span data-lang="management">الإدارة</span>
                     </li>
@@ -185,7 +188,13 @@
 
                 @if (role == "ProjectManager")
                 {
-                    <!-- Project Manager sees his projects + task management -->
+
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
                     <li class="sidebar-section-title">
                         <span data-lang="my_projects">مشاريعي</span>
                     </li>
@@ -232,7 +241,12 @@
 
                 @if (role == "Engineer")
                 {
-                    <!-- Engineer sees his projects + can add everything -->
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
                     <li class="sidebar-section-title">
                         <span data-lang="my_projects">مشاريعي</span>
                     </li>
@@ -280,24 +294,40 @@
             </ul>
         </aside>
 
-        <!-- ── Main Content ──────────────────────── -->
+        <!-- ── Main Content ───────────────────────── -->
         <main class="bonyan-content">
             @RenderBody()
         </main>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-    </script>
-
-    <!-- Language Switch JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/lang-switch.js"></script>
 
-    <!-- Sidebar Toggle JS -->
     <script>
+        // ── Sidebar toggle ─────────────────────────
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('collapsed');
         }
+
+        // ── Dark Mode ──────────────────────────────
+        const darkBtn  = document.getElementById('darkModeBtn');
+        const darkIcon = document.getElementById('darkModeIcon');
+
+        function applyDarkMode(on) {
+            document.body.classList.toggle('dark-mode', on);
+            darkIcon.className = on ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('bonyan-dark', on ? '1' : '0');
+        }
+
+        function toggleDarkMode() {
+            applyDarkMode(!document.body.classList.contains('dark-mode'));
+        }
+
+        // Restore preference on load
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            if (saved === '1') applyDarkMode(true);
+        })();
     </script>
 
     @RenderSection("Scripts", required: false)
