@@ -1,8 +1,8 @@
 ﻿/* ══════════════════════════════════════════════════════════
    navbar.css
-   Extends .bonyan-navbar from site.css with the new toggles:
-   search, notifications, quick actions, clock, chatbot, avatar.
-   Depends on variables already defined in site.css:
+   Top bar: logo, primary nav links, clock, quick actions,
+   notifications (live system data), status, chatbot, avatar.
+   Depends on variables in site.css:
    --primary, --secondary, --white, --bg, --text
 ══════════════════════════════════════════════════════════ */
 
@@ -12,6 +12,20 @@
     align-items: center;
     gap: 14px;
     min-width: 0;
+}
+
+.navbar-logo-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--secondary), #e7b65c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.05rem;
+    box-shadow: 0 3px 10px rgba(200, 146, 42, 0.35);
+    flex-shrink: 0;
 }
 
 .navbar-logo-text {
@@ -32,8 +46,8 @@
     white-space: nowrap;
 }
 
-/* ── Generic round icon button (reused by quick actions,
-       notifications, chatbot, dark mode) ───────────────────── */
+/* ── Generic round icon button (quick actions, notifications,
+       chatbot, dark mode) ───────────────────────────────────── */
 .navbar-icon-btn {
     position: relative;
     background: rgba(255, 255, 255, 0.08);
@@ -84,140 +98,68 @@
     left: -4px;
 }
 
-/* ── Global Search (desktop, centered) ───────────────────── */
-.navbar-search {
-    position: relative;
+/* ── Primary Nav Links (replaces global search) ──────────── */
+.navbar-main-links {
     align-items: center;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 10px;
-    padding: 0 10px;
-    width: 320px;
-    max-width: 30vw;
-    height: 38px;
-    transition: border-color 0.25s, background 0.25s;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 5px;
 }
 
-    .navbar-search:focus-within {
-        border-color: var(--secondary);
-        background: rgba(255, 255, 255, 0.14);
-    }
-
-.navbar-search-icon {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.85rem;
-}
-
-.navbar-search-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--white);
-    font-size: 0.85rem;
-    padding: 0 8px;
-    min-width: 0;
-}
-
-    .navbar-search-input::placeholder {
-        color: rgba(255, 255, 255, 0.55);
-    }
-
-.navbar-search-kbd {
-    font-size: 0.68rem;
-    color: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 5px;
-    padding: 1px 6px;
-    flex-shrink: 0;
-}
-
-.navbar-search-results {
-    display: none;
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    right: 0;
-    background: var(--white);
-    color: var(--text);
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    max-height: 360px;
-    overflow-y: auto;
-    z-index: 1100;
-}
-
-    .navbar-search-results.show {
-        display: block;
-    }
-
-.navbar-search-result-item {
+.navbar-nav-link {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    text-decoration: none;
-    color: var(--text);
-    font-size: 0.88rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-    .navbar-search-result-item:hover {
-        background: #F0F4FF;
-    }
-
-    .navbar-search-result-item i {
-        color: var(--primary);
-        width: 18px;
-        text-align: center;
-    }
-
-.navbar-search-empty {
-    padding: 16px;
-    text-align: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 9px;
+    color: rgba(255, 255, 255, 0.75);
+    font-family: inherit;
     font-size: 0.85rem;
-    color: #999;
+    font-weight: 600;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s;
 }
 
-/* Mobile search overlay */
-.navbar-mobile-search {
-    display: none;
-    position: fixed;
-    top: var(--navbar-h);
-    left: 0;
-    right: 0;
-    background: var(--primary);
-    padding: 10px 16px;
-    align-items: center;
-    gap: 10px;
-    z-index: 998;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-    .navbar-mobile-search.show {
-        display: flex;
+    .navbar-nav-link i {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.55);
+        transition: color 0.25s;
     }
 
-    .navbar-mobile-search i {
-        color: rgba(255, 255, 255, 0.7);
+    .navbar-nav-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--white);
     }
 
-    .navbar-mobile-search input {
-        flex: 1;
-        background: rgba(255, 255, 255, 0.12);
-        border: none;
-        border-radius: 8px;
+        .navbar-nav-link:hover i {
+            color: var(--secondary);
+        }
+
+    .navbar-nav-link.active {
+        background: var(--secondary);
+        color: var(--primary);
+    }
+
+        .navbar-nav-link.active i {
+            color: var(--primary);
+        }
+
+@media (max-width: 1100px) {
+    .navbar-nav-link span {
+        display: none;
+    }
+
+    .navbar-nav-link {
         padding: 8px 12px;
-        color: var(--white);
-        outline: none;
     }
-
-    .navbar-mobile-search button {
-        background: transparent;
-        border: none;
-        color: var(--white);
-        font-size: 1.1rem;
-    }
+}
 
 /* ── Live Clock ───────────────────────────────────────────── */
 .navbar-clock {
@@ -432,13 +374,13 @@
     left: -2px;
 }
 
-/* ── Avatar ───────────────────────────────────────────────── */
+/* ── Avatar (trigger) ────────────────────────────────────── */
 .navbar-avatar {
     position: relative;
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--secondary), #e0ab47);
+    background: linear-gradient(135deg, var(--secondary), #e7b65c);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -446,6 +388,13 @@
     font-weight: 800;
     font-size: 0.85rem;
     flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 3px 10px rgba(0, 0, 0, 0.25);
+    transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.user-info-btn:hover .navbar-avatar {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 .navbar-avatar-status {
@@ -457,11 +406,202 @@
     border-radius: 50%;
     background: #28A745;
     border: 2px solid var(--primary);
+    animation: navbarPulse 2s infinite;
 }
 
 [dir="ltr"] .navbar-avatar-status {
     right: auto;
     left: -2px;
+}
+
+.navbar-chevron {
+    transition: transform 0.25s;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.user-info-btn[aria-expanded="true"] .navbar-chevron {
+    transform: rotate(180deg);
+    color: var(--white);
+}
+
+.user-info-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+    .user-info-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+/* ── Profile Dropdown (rich card) ─────────────────────────── */
+.bonyan-profile-dropdown {
+    width: 280px;
+    max-width: 90vw;
+    padding: 0;
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.profile-dropdown-header {
+    background: linear-gradient(135deg, var(--primary), #2a5298);
+    padding: 20px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.profile-dropdown-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--secondary), #e7b65c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
+
+.profile-dropdown-info {
+    min-width: 0;
+}
+
+.profile-dropdown-name {
+    color: var(--white);
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-dropdown-email {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.72rem;
+    margin: 2px 0 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    padding: 3px 11px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--white);
+}
+
+    .profile-chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ced4da;
+    }
+
+.chip-admin .dot {
+    background: #ff6b6b;
+}
+
+.chip-pm .dot {
+    background: #4dabf7;
+}
+
+.chip-engineer .dot {
+    background: #51cf66;
+}
+
+.profile-dropdown-body {
+    background: var(--white);
+    padding: 8px;
+}
+
+.profile-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 9px;
+    text-decoration: none;
+    color: var(--text, #2D2D2D);
+    font-size: 0.86rem;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+    .profile-dropdown-item:hover {
+        background: #F0F4FF;
+        color: var(--primary);
+    }
+
+    .profile-dropdown-item.item-danger:hover {
+        background: #FFF0F0;
+        color: var(--danger, #DC3545);
+    }
+
+.item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.icon-blue {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.icon-gold {
+    background: #FFF8E1;
+    color: #C8922A;
+}
+
+.icon-red {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.profile-dropdown-divider {
+    height: 1px;
+    background: #F0F0F0;
+    margin: 6px 4px;
+}
+
+/* ── Dropdown open animation (shared) ────────────────────── */
+.bonyan-dropdown.show,
+.bonyan-profile-dropdown.show {
+    animation: navbarDropdownPop 0.18s ease;
+}
+
+@keyframes navbarDropdownPop {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* ── Chatbot Panel (slide-in widget) ─────────────────────── */
@@ -603,22 +743,8 @@
     }
 
 /* ══════════════════════════════════════════════════════════
-   DARK MODE overrides for new components
+   DARK MODE overrides
 ══════════════════════════════════════════════════════════ */
-body.dark-mode .navbar-search-results {
-    background: #1a2535;
-    color: #e2e8f0;
-}
-
-body.dark-mode .navbar-search-result-item {
-    color: #e2e8f0;
-    border-bottom-color: rgba(255, 255, 255, 0.06);
-}
-
-    body.dark-mode .navbar-search-result-item:hover {
-        background: rgba(255, 255, 255, 0.06);
-    }
-
 body.dark-mode .navbar-notif-item {
     color: #e2e8f0;
     border-bottom-color: rgba(255, 255, 255, 0.06);
@@ -631,6 +757,22 @@ body.dark-mode .navbar-notif-item {
 
 body.dark-mode .navbar-notif-footer {
     border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .profile-dropdown-body {
+    background: #1a2535;
+}
+
+body.dark-mode .profile-dropdown-item {
+    color: #e2e8f0;
+}
+
+    body.dark-mode .profile-dropdown-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+body.dark-mode .profile-dropdown-divider {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 body.dark-mode .chatbot-panel {
@@ -655,8 +797,8 @@ body.dark-mode .chatbot-panel-footer {
    RESPONSIVE
 ══════════════════════════════════════════════════════════ */
 @media (max-width: 992px) {
-    .navbar-search {
-        width: 220px;
+    .navbar-main-links {
+        gap: 2px;
     }
 }
 

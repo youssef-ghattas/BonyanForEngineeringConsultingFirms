@@ -1,10 +1,12 @@
 ﻿namespace BonyanForEngineeringConsultingFirms;
+using Bonyan.BLL.Services;
 using Bonyan.DAL.Context;
-using Microsoft.EntityFrameworkCore;
 using Bonyan.DAL.Models;
 using Bonyan.DAL.Repositories;
-using Bonyan.BLL.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
 using Task = Bonyan.DAL.Models.Task;
+
 public class Program
     {
         public static void Main(string[] args)
@@ -70,7 +72,7 @@ public class Program
 		// Add services to the container.
 		builder.Services.AddControllersWithViews();
 
-            var app = builder.Build();
+        var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
