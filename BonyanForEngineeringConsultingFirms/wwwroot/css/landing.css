@@ -608,6 +608,14 @@ body.dark-mode .pricing-cta-btn {
         color: #fff;
     }
 
+body.dark-mode .landing-logo {
+    color: #FFFFFF;
+}
+
+    body.dark-mode .landing-logo i {
+        color: var(--secondary);
+    }
+
 /* ── Dark Mode Overrides (extended) ──────────────── */
 body.dark-mode .hero-subtitle,
 body.dark-mode .features-subtitle,
