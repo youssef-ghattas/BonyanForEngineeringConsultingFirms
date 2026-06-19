@@ -40,11 +40,24 @@
 </head>
 <body class="landing-body">
 
+    <div class="bonyan-bg-tools" aria-hidden="true">
+        <i class="fas fa-wrench bg-tool tool-1"></i>
+        <i class="fas fa-gear bg-tool tool-2"></i>
+        <i class="fas fa-compass-drafting bg-tool tool-3"></i>
+        <i class="fas fa-ruler-combined bg-tool tool-4"></i>
+        <i class="fas fa-hammer bg-tool tool-5"></i>
+        <i class="fas fa-screwdriver-wrench bg-tool tool-6"></i>
+        <i class="fas fa-helmet-safety bg-tool tool-7"></i>
+        <i class="fas fa-trowel bg-tool tool-8"></i>
+        <i class="fas fa-gear bg-tool tool-9"></i>
+        <i class="fas fa-ruler bg-tool tool-10"></i>
+    </div>
+
     <!-- ── Landing Navbar ─────────────────────────── -->
     <nav class="landing-navbar">
         <div class="navbar-logo landing-logo">
             <i class="fas fa-building"></i>
-            <span>Bonyan</span>
+            <span data-lang="brand_name">Bonyan</span>
         </div>
 
         <div class="navbar-right">
@@ -457,9 +470,12 @@
 
     <!-- Landing Language Switch -->
     <script>
-               const landingTranslations = {
+                       const landingTranslations = {
             ar: {
+                brand_name: "بنيان",
                 nav_login: "تسجيل الدخول",
+                nav_login: "تسجيل الدخول",
+                nav_subscribe: "الاشتراك",
                 hero_badge: "مميزات المنصة",
                 hero_title_1: "مستقبل",
                 hero_title_2: "إدارة المكاتب الهندسية",
@@ -467,19 +483,16 @@
                 hero_cta: "تسجيل دخول ←",
                 mockup_badge: "مشروع مسجّل في المنصة",
 
-                // ── Stat cards ──────────────────────────────
                 stat_offices_label:   "مكتب هندسي مشترك",
                 stat_completed_label: "مشروع مُسلَّم بنجاح",
                 stat_projects_label:  "إجمالي المشاريع المسجّلة",
                 stat_documents_label: "مستند ومخطط هندسي",
 
-                // ── Progress bars ────────────────────────────
                 chart_planning:   "تخطيط · Planning",
                 chart_inprogress: "قيد التنفيذ · Active",
                 chart_completed:  "مكتمل · Delivered",
                 chart_onhold:     "متوقف · On Hold",
 
-                // ── Features section ─────────────────────────
                 features_title:    "كل ما يحتاجه مكتبك الهندسي",
                 features_subtitle: "مجموعة متكاملة من الأدوات لإدارة مكتبك الهندسي بكفاءة وسهولة",
                 feat1_title: "إدارة المشاريع",
@@ -495,14 +508,46 @@
                 feat6_title: "ثنائي اللغة (عربي/إنجليزي)",
                 feat6_desc:  "دعم كامل للغة العربية (RTL) والإنجليزية (LTR) مع تبديل فوري للغة عبر المنصة بالكامل.",
 
-                // ── CTA banner ───────────────────────────────
+                // ── Pricing section (previously missing) ──────
+                pricing_badge:    "خطط الأسعار",
+                pricing_title:    "اختر الخطة المناسبة لمكتبك",
+                pricing_subtitle: "جميع الخطط تتضمن كافة مميزات المنصة كاملةً — الفرق الوحيد هو حجم الاستخدام المسموح.",
+                popular_badge:    "الأكثر طلباً · Most Popular",
+
+                plan1_name: "Startup", plan1_name_ar: "الباقة الناشئة",
+                plan1_price: "٤,٠٠٠", plan1_currency: "ج.م / شهرياً",
+                plan1_desc: "مثالية للمكاتب الناشئة والفرق الصغيرة التي تبدأ رحلتها الرقمية.",
+
+                plan2_name: "Growth", plan2_name_ar: "باقة النمو",
+                plan2_price: "٨,٠٠٠", plan2_currency: "ج.م / شهرياً",
+                plan2_desc: "للمكاتب المتوسطة التي تدير عدداً أكبر من المشاريع والفرق.",
+
+                plan3_name: "Scale", plan3_name_ar: "باقة المؤسسات",
+                plan3_price: "١٦,٠٠٠", plan3_currency: "ج.م / شهرياً",
+                plan3_desc: "للمؤسسات الكبرى التي تحتاج إلى أعلى سقف من المهندسين والمشاريع.",
+
+                limit_engineers: "مهندس",
+                limit_projects:  "مشاريع نشطة",
+
+                feat_kanban:  "لوحة إدارة وتكليف المهام",
+                feat_archive: "الأرشيف السحابي الآمن للمخططات",
+                feat_hr:      "إدارة الموارد البشرية وتتبع الإنتاجية",
+                feat_finance: "النظام المالي وإصدار الفواتير",
+                feat_portal:  "بوابة ملاك المشاريع الرقمية",
+
+                pricing_cta:  "ابدأ الآن",
+                pricing_note: "جميع الخطط تشمل كافة المميزات دون قيود — الفرق فقط في عدد المهندسين والمشاريع المسموح بها.",
+
                 cta_title:    "هل أنت مستعد لتطوير مكتبك الهندسي؟",
                 cta_subtitle: "سجّل الدخول للوصول إلى مساحة العمل المتكاملة لإدارة مكتبك الهندسي.",
                 cta_button:   "تسجيل دخول ←"
             },
 
             en: {
+                brand_name: "Bonyan",
                 nav_login: "Login",
+                nav_login: "Login",
+                nav_subscribe: "Subscribe",
                 hero_badge: "Platform Features",
                 hero_title_1: "The Future of",
                 hero_title_2: "Engineering Office Management",
@@ -510,19 +555,16 @@
                 hero_cta: "Login →",
                 mockup_badge: "Projects registered on the platform",
 
-                // ── Stat cards ──────────────────────────────
                 stat_offices_label:   "Subscribed engineering offices",
                 stat_completed_label: "Successfully delivered projects",
                 stat_projects_label:  "Total registered projects",
                 stat_documents_label: "Technical docs & drawings",
 
-                // ── Progress bars ────────────────────────────
                 chart_planning:   "Planning · تخطيط",
                 chart_inprogress: "Active · قيد التنفيذ",
                 chart_completed:  "Delivered · مكتمل",
                 chart_onhold:     "On Hold · متوقف",
 
-                // ── Features section ─────────────────────────
                 features_title:    "Everything Your Engineering Office Needs",
                 features_subtitle: "A complete suite of tools to manage every aspect of your engineering office efficiently.",
                 feat1_title: "Project Management",
@@ -538,7 +580,35 @@
                 feat6_title: "Bilingual (AR / EN)",
                 feat6_desc:  "Full Arabic RTL and English LTR support with one-click language switching across the entire platform.",
 
-                // ── CTA banner ───────────────────────────────
+                pricing_badge:    "Pricing Plans",
+                pricing_title:    "Choose the Plan That Fits Your Office",
+                pricing_subtitle: "All plans include the full platform feature set — the only difference is your usage limits.",
+                popular_badge:    "Most Popular · الأكثر طلباً",
+
+                plan1_name: "Startup", plan1_name_ar: "Startup Plan",
+                plan1_price: "4,000", plan1_currency: "EGP / month",
+                plan1_desc: "Ideal for new offices and small teams starting their digital journey.",
+
+                plan2_name: "Growth", plan2_name_ar: "Growth Plan",
+                plan2_price: "8,000", plan2_currency: "EGP / month",
+                plan2_desc: "For mid-sized offices managing a larger number of projects and teams.",
+
+                plan3_name: "Scale", plan3_name_ar: "Enterprise Plan",
+                plan3_price: "16,000", plan3_currency: "EGP / month",
+                plan3_desc: "For large organizations needing the highest limits on engineers and projects.",
+
+                limit_engineers: "Engineers",
+                limit_projects:  "Active Projects",
+
+                feat_kanban:  "Task management & assignment board",
+                feat_archive: "Secure cloud archive for drawings",
+                feat_hr:      "HR management & productivity tracking",
+                feat_finance: "Financial system & invoicing",
+                feat_portal:  "Digital client/owner portal",
+
+                pricing_cta:  "Get Started",
+                pricing_note: "All plans include every feature with no restrictions — the only difference is the number of engineers and projects allowed.",
+
                 cta_title:    "Ready to Transform Your Engineering Office?",
                 cta_subtitle: "Log in to access your complete engineering management workspace.",
                 cta_button:   "Login →"

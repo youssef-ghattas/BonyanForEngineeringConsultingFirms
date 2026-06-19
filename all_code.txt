@@ -2503,6 +2503,114 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             return View(vm);
         }
 
+        // ════════════════════════════════════════════════
+        //  NAVBAR NOTIFICATIONS  (real system data)
+        //  Surfaces: overdue tasks, overdue unpaid invoices,
+        //  and critical site-visit safety alerts.
+        // ════════════════════════════════════════════════
+        [HttpGet]
+        public async Task<IActionResult> GetNotifications()
+        {
+            if (HttpContext.Session.GetString("Email") == null)
+                return Json(new List<object>());
+
+            var role = HttpContext.Session.GetString("Role");
+            var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+            var now = DateTime.Now;
+
+            IQueryable<Bonyan.DAL.Models.Task> taskQ = _context.Tasks.AsNoTracking();
+            IQueryable<Bonyan.DAL.Models.Invoice> invoiceQ = _context.Invoices.AsNoTracking();
+            IQueryable<Bonyan.DAL.Models.SiteVisit> visitQ = _context.SiteVisits.AsNoTracking();
+
+            if (role != "Admin" && employeeId.HasValue)
+            {
+                var myProjectIds = _context.EmployeeProjects
+                    .AsNoTracking()
+                    .Where(ep => ep.EmployeeId == employeeId.Value)
+                    .Select(ep => ep.ProjectId);
+
+                taskQ = taskQ.Where(t => myProjectIds.Contains(t.ProjectId));
+                invoiceQ = invoiceQ.Where(i => myProjectIds.Contains(i.ProjectId));
+                visitQ = visitQ.Where(v => myProjectIds.Contains(v.ProjId));
+            }
+
+            string TimeAgo(DateTime dt)
+            {
+                var span = now - dt;
+                if (span.TotalDays >= 1) return $"منذ {(int)span.TotalDays} يوم";
+                if (span.TotalHours >= 1) return $"منذ {(int)span.TotalHours} ساعة";
+                if (span.TotalMinutes >= 1) return $"منذ {(int)span.TotalMinutes} دقيقة";
+                return "الآن";
+            }
+
+            var overdueTasks = await taskQ
+                .Where(t => t.DueDate != null && t.DueDate < now
+                         && t.Status != TasksStatus.Completed
+                         && t.Status != TasksStatus.Cancelled)
+                .OrderBy(t => t.DueDate)
+                .Take(5)
+                .Select(t => new
+                {
+                    id = "task-" + t.TaskId,
+                    type = "danger",
+                    title = "مهمة متأخرة: " + t.Task_Name,
+                    sub = t.Project != null ? t.Project.ProjectName : "—",
+                    due = t.DueDate,
+                    url = Url.Action("Details", "Task", new { id = t.TaskId })
+                })
+                .ToListAsync();
+
+            var overdueInvoices = await invoiceQ
+                .Where(i => i.Due_Date != null && i.Due_Date < now
+                         && i.Invoice_Status == InvoiceStatus.Unpaid)
+                .OrderBy(i => i.Due_Date)
+                .Take(5)
+                .Select(i => new
+                {
+                    id = "invoice-" + i.Invoice_ID,
+                    type = "warning",
+                    title = "فاتورة متأخرة السداد",
+                    sub = i.Project != null ? i.Project.ProjectName : "—",
+                    due = i.Due_Date,
+                    url = Url.Action("Details", "Invoice", new { id = i.Invoice_ID })
+                })
+                .ToListAsync();
+
+            var criticalVisits = await visitQ
+                .Where(v => v.SafetyStatus == SafetyStatus.Critical)
+                .OrderByDescending(v => v.VisitDate)
+                .Take(3)
+                .Select(v => new
+                {
+                    id = "visit-" + v.VisitId,
+                    type = "danger",
+                    title = "تنبيه سلامة حرج في زيارة موقع",
+                    sub = v.Project != null ? v.Project.ProjectName : "—",
+                    due = (DateTime?)v.VisitDate,
+                    url = Url.Action("Details", "SiteVisit", new { id = v.VisitId })
+                })
+                .ToListAsync();
+
+            var all = overdueTasks
+                .Concat(overdueInvoices)
+                .Concat(criticalVisits)
+                .Select(n => new
+                {
+                    n.id,
+                    n.type,
+                    n.title,
+                    n.sub,
+                    time = n.due.HasValue ? TimeAgo(n.due.Value) : "الآن",
+                    n.url,
+                    isRead = false
+                })
+                .OrderByDescending(n => n.type == "danger")
+                .Take(12)
+                .ToList();
+
+            return Json(all);
+        }
+
         // ── Landing & Error (unchanged) ───────────────────────────────
         public async Task<IActionResult> Landing()
         {
@@ -4748,12 +4856,14 @@ namespace Bonyan.PL.Helpers
 	}
 }=== File: ./BonyanForEngineeringConsultingFirms/Program.cs ===
 ﻿namespace BonyanForEngineeringConsultingFirms;
+using Bonyan.BLL.Services;
 using Bonyan.DAL.Context;
-using Microsoft.EntityFrameworkCore;
 using Bonyan.DAL.Models;
 using Bonyan.DAL.Repositories;
-using Bonyan.BLL.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
 using Task = Bonyan.DAL.Models.Task;
+
 public class Program
     {
         public static void Main(string[] args)
@@ -4819,7 +4929,7 @@ public class Program
 		// Add services to the container.
 		builder.Services.AddControllersWithViews();
 
-            var app = builder.Build();
+        var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
@@ -14098,13 +14208,9 @@ else
 
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="~/css/home.css" />
+    <link rel="stylesheet" href="~/css/navbar.css" />
 </head>
 <body>
-
-    <!-- ════════════════════════════════════════════════════════
-         BONYAN NAVBAR — Top App Bar
-         Replaces the previous <nav class="bonyan-navbar"> block
-    ════════════════════════════════════════════════════════ -->
     <nav class="bonyan-navbar">
 
         <!-- ── Left Cluster: Sidebar Toggle + Logo + Breadcrumb ── -->
@@ -14114,40 +14220,31 @@ else
             </button>
 
             <div class="navbar-logo">
-                <i class="fas fa-building"></i>
-                <span data-lang="Landing_Badge" class="navbar-logo-text">Bonyan Engineering Platform</span>
+                <span class="navbar-logo-mark"><i class="fas fa-building-columns"></i></span>
+                <span data-lang="Landing_Badge" class="navbar-logo-text">Bonyan</span>
             </div>
-
-            <!-- Page context breadcrumb — tells the user where they are without leaving the navbar -->
-            <span class="navbar-divider d-none d-lg-block"></span>
-            <span class="navbar-breadcrumb d-none d-lg-flex">
-                <i class="fas @ViewData["PageIcon"]" style="@(ViewData["PageIcon"] == null ? "display:none" : "")"></i>
-                @(ViewData["PageTitle"] ?? ViewContext.RouteData.Values["controller"])
-            </span>
         </div>
 
-        <!-- ── Center: Global Search ── -->
-        <div class="navbar-search d-none d-md-flex">
-            <i class="fas fa-search navbar-search-icon"></i>
-            <input type="text"
-                   id="globalSearchInput"
-                   class="navbar-search-input"
-                   data-lang-placeholder="search_placeholder"
-                   placeholder="بحث عن مشروع، مهمة، موظف..."
-                   autocomplete="off" />
-            <span class="navbar-search-kbd">Ctrl K</span>
-
-            <!-- Results panel — populated by navbar.js via fetch() to a search endpoint -->
-            <div class="navbar-search-results" id="globalSearchResults"></div>
+        <!-- ── Center: Primary Nav Links (replaces global search) ── -->
+        <div class="navbar-main-links d-none d-md-flex">
+            <a asp-controller="Home" asp-action="Dashboard"
+               class="navbar-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")">
+                <i class="fas fa-gauge-high"></i>
+                <span data-lang="dashboard">لوحة التحكم</span>
+            </a>
+            <a asp-controller="SiteVisit" asp-action="Index"
+               class="navbar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SiteVisit" ? "active" : "")">
+                <i class="fas fa-hard-hat"></i>
+                <span data-lang="sitevisits">زيارات الموقع</span>
+            </a>
+            <a asp-controller="Home" asp-action="Landing" class="navbar-nav-link">
+                <i class="fas fa-circle-info"></i>
+                <span data-lang="about">من نحن</span>
+            </a>
         </div>
 
         <!-- ── Right Cluster: Actions ── -->
         <div class="navbar-right">
-
-            <!-- Mobile-only search trigger (search bar collapses below md) -->
-            <button class="navbar-icon-btn d-flex d-md-none" id="mobileSearchBtn" title="Search" aria-label="Search">
-                <i class="fas fa-search"></i>
-            </button>
 
             <!-- Live Date / Time -->
             <div class="navbar-clock d-none d-lg-flex" id="navbarClock" title="System time">
@@ -14170,14 +14267,9 @@ else
                     @{
                         var qaRole = Context.Session.GetString("Role");
                     }
-                    @if (qaRole == "Admin" || qaRole == "ProjectManager")
+
+                    @if (qaRole == "Admin")
                     {
-                        <li>
-                            <a class="dropdown-item" asp-controller="Task" asp-action="Create">
-                                <i class="fas fa-plus-circle text-success me-2"></i>
-                                <span data-lang="qa_new_task">مهمة جديدة</span>
-                            </a>
-                        </li>
                         <li>
                             <a class="dropdown-item" asp-controller="Project" asp-action="Create">
                                 <i class="fas fa-project-diagram text-primary me-2"></i>
@@ -14185,22 +14277,48 @@ else
                             </a>
                         </li>
                     }
-                    <li>
-                        <a class="dropdown-item" asp-controller="SiteVisit" asp-action="Create">
-                            <i class="fas fa-hard-hat text-warning me-2"></i>
-                            <span data-lang="qa_new_visit">زيارة موقع جديدة</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" asp-controller="Document" asp-action="Index">
-                            <i class="fas fa-file-upload text-secondary me-2"></i>
-                            <span data-lang="qa_upload_doc">رفع مستند</span>
-                        </a>
-                    </li>
+
+                    @if (qaRole == "ProjectManager")
+                    {
+                        <li>
+                            <a class="dropdown-item" asp-controller="Task" asp-action="Index">
+                                <i class="fas fa-plus-circle text-success me-2"></i>
+                                <span data-lang="qa_new_task">جميع المهام</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="SiteVisit" asp-action="Index">
+                                <i class="fas fa-hard-hat text-warning me-2"></i>
+                                <span data-lang="qa_new_visit">زيارات الموقع</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="Document" asp-action="Index">
+                                <i class="fas fa-file-upload text-secondary me-2"></i>
+                                <span data-lang="qa_upload_doc"> جميع المستندات</span>
+                            </a>
+                        </li>
+                    }
+
+                    @if (qaRole == "Engineer")
+                    {
+                        <li>
+                            <a class="dropdown-item" asp-controller="Drawing" asp-action="Index">
+                                <i class="fas fa-camera text-info me-2"></i>
+                                <span data-lang="qa_upload_photos">جميع الصور</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="Document" asp-action="Index">
+                                <i class="fas fa-file-upload text-secondary me-2"></i>
+                                <span data-lang="qa_upload_doc">جميع المستندات</span>
+                            </a>
+                        </li>
+                    }
                 </ul>
             </div>
 
-            <!-- Notification Center — driven by real overdue-task / system data -->
+            <!-- Notification Center — driven by real system data (GetNotifications) -->
             <div class="navbar-notifications dropdown">
                 <button class="navbar-icon-btn" id="notifBtn" data-bs-toggle="dropdown" title="Notifications" aria-label="Notifications">
                     <i class="fas fa-bell"></i>
@@ -14212,7 +14330,6 @@ else
                         <a href="#" class="navbar-notif-clear" id="notifClearBtn" data-lang="mark_all_read">تعليم الكل كمقروء</a>
                     </div>
                     <div class="navbar-notif-list" id="notifList">
-                        <!-- Populated dynamically by navbar.js -> fetchNotifications() -->
                         <div class="navbar-notif-empty" data-lang="loading_notifications">
                             جاري تحميل الإشعارات...
                         </div>
@@ -14251,51 +14368,55 @@ else
             <span class="navbar-divider d-none d-sm-block"></span>
 
             <!-- User Profile -->
+            @{
+                var fullName = Context.Session.GetString("FullName") ?? "المستخدم";
+                var initials = string.Concat(fullName.Split(' ').Where(w => w.Length > 0).Take(2).Select(w => w[0]));
+                var roleRaw = Context.Session.GetString("Role") ?? "";
+                var roleClass = roleRaw switch
+                {
+                    "Admin" => "chip-admin",
+                    "ProjectManager" => "chip-pm",
+                    "Engineer" => "chip-engineer",
+                    _ => "chip-default"
+                };
+            }
             <div class="navbar-user dropdown">
-                <div class="user-info-btn" data-bs-toggle="dropdown" style="cursor:pointer" aria-label="User menu">
+                <div class="user-info-btn" data-bs-toggle="dropdown" aria-label="User menu">
                     <div class="navbar-avatar">
-                        @{
-                            var fullName = Context.Session.GetString("FullName") ?? "المستخدم";
-                            var initials = string.Concat(fullName.Split(' ').Where(w => w.Length > 0).Take(2).Select(w => w[0]));
-                        }
                         <span>@(initials.Length > 0 ? initials.ToUpper() : "U")</span>
                         <span class="navbar-avatar-status"></span>
                     </div>
                     <div class="user-details d-none d-md-flex">
                         <span class="user-name">@fullName</span>
-                        <span class="user-role">@(Context.Session.GetString("Role") ?? "")</span>
+                        <span class="user-role">@roleRaw</span>
                     </div>
-                    <i class="fas fa-chevron-down fa-xs d-none d-md-inline"></i>
+                    <i class="fas fa-chevron-down navbar-chevron d-none d-md-inline"></i>
                 </div>
-                <ul class="dropdown-menu dropdown-menu-end bonyan-dropdown">
-                    <li>
-                        <span class="dropdown-item-text">
-                            <i class="fas fa-user me-2"></i>
-                            @fullName
-                            <small class="d-block text-muted">@(Context.Session.GetString("Email") ?? "")</small>
-                        </span>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
-                            <i class="fas fa-id-card me-2"></i>
+
+                <div class="dropdown-menu dropdown-menu-end bonyan-profile-dropdown">
+                    <div class="profile-dropdown-header">
+                        <div class="profile-dropdown-avatar">
+                            <span>@(initials.Length > 0 ? initials.ToUpper() : "U")</span>
+                        </div>
+                        <div class="profile-dropdown-info">
+                            <div class="profile-dropdown-name">@fullName</div>
+                            <div class="profile-dropdown-email">@(Context.Session.GetString("Email") ?? "")</div>
+                            <span class="profile-chip @roleClass"><span class="dot"></span>@roleRaw</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-dropdown-body">
+                        <a class="profile-dropdown-item" asp-controller="Account" asp-action="Profile">
+                            <span class="item-icon icon-blue"><i class="fas fa-id-card"></i></span>
                             <span data-lang="my_profile">ملف شخصي</span>
                         </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">
-                            <i class="fas fa-cog me-2"></i>
-                            <span data-lang="settings">الإعدادات</span>
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout">
-                            <i class="fas fa-sign-out-alt me-2"></i>
+                        <div class="profile-dropdown-divider"></div>
+                        <a class="profile-dropdown-item item-danger" asp-controller="Account" asp-action="Logout">
+                            <span class="item-icon icon-red"><i class="fas fa-sign-out-alt"></i></span>
                             <span data-lang="logout">تسجيل الخروج</span>
                         </a>
-                    </li>
-                </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -14581,7 +14702,6 @@ else
         </div>
     </div>
 
-    <link rel="stylesheet" href="~/css/navbar.css" />
     <script src="~/js/navbar.js"></script>
 </body>
 </html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Shared/_Layout.cshtml.css ===
@@ -21265,9 +21385,9 @@ body {
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/navbar.css ===
 ﻿/* ══════════════════════════════════════════════════════════
    navbar.css
-   Extends .bonyan-navbar from site.css with the new toggles:
-   search, notifications, quick actions, clock, chatbot, avatar.
-   Depends on variables already defined in site.css:
+   Top bar: logo, primary nav links, clock, quick actions,
+   notifications (live system data), status, chatbot, avatar.
+   Depends on variables in site.css:
    --primary, --secondary, --white, --bg, --text
 ══════════════════════════════════════════════════════════ */
 
@@ -21277,6 +21397,20 @@ body {
     align-items: center;
     gap: 14px;
     min-width: 0;
+}
+
+.navbar-logo-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--secondary), #e7b65c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.05rem;
+    box-shadow: 0 3px 10px rgba(200, 146, 42, 0.35);
+    flex-shrink: 0;
 }
 
 .navbar-logo-text {
@@ -21297,8 +21431,8 @@ body {
     white-space: nowrap;
 }
 
-/* ── Generic round icon button (reused by quick actions,
-       notifications, chatbot, dark mode) ───────────────────── */
+/* ── Generic round icon button (quick actions, notifications,
+       chatbot, dark mode) ───────────────────────────────────── */
 .navbar-icon-btn {
     position: relative;
     background: rgba(255, 255, 255, 0.08);
@@ -21349,140 +21483,68 @@ body {
     left: -4px;
 }
 
-/* ── Global Search (desktop, centered) ───────────────────── */
-.navbar-search {
-    position: relative;
+/* ── Primary Nav Links (replaces global search) ──────────── */
+.navbar-main-links {
     align-items: center;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 10px;
-    padding: 0 10px;
-    width: 320px;
-    max-width: 30vw;
-    height: 38px;
-    transition: border-color 0.25s, background 0.25s;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 5px;
 }
 
-    .navbar-search:focus-within {
-        border-color: var(--secondary);
-        background: rgba(255, 255, 255, 0.14);
-    }
-
-.navbar-search-icon {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.85rem;
-}
-
-.navbar-search-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--white);
-    font-size: 0.85rem;
-    padding: 0 8px;
-    min-width: 0;
-}
-
-    .navbar-search-input::placeholder {
-        color: rgba(255, 255, 255, 0.55);
-    }
-
-.navbar-search-kbd {
-    font-size: 0.68rem;
-    color: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 5px;
-    padding: 1px 6px;
-    flex-shrink: 0;
-}
-
-.navbar-search-results {
-    display: none;
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    right: 0;
-    background: var(--white);
-    color: var(--text);
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    max-height: 360px;
-    overflow-y: auto;
-    z-index: 1100;
-}
-
-    .navbar-search-results.show {
-        display: block;
-    }
-
-.navbar-search-result-item {
+.navbar-nav-link {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    text-decoration: none;
-    color: var(--text);
-    font-size: 0.88rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-    .navbar-search-result-item:hover {
-        background: #F0F4FF;
-    }
-
-    .navbar-search-result-item i {
-        color: var(--primary);
-        width: 18px;
-        text-align: center;
-    }
-
-.navbar-search-empty {
-    padding: 16px;
-    text-align: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 9px;
+    color: rgba(255, 255, 255, 0.75);
+    font-family: inherit;
     font-size: 0.85rem;
-    color: #999;
+    font-weight: 600;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s;
 }
 
-/* Mobile search overlay */
-.navbar-mobile-search {
-    display: none;
-    position: fixed;
-    top: var(--navbar-h);
-    left: 0;
-    right: 0;
-    background: var(--primary);
-    padding: 10px 16px;
-    align-items: center;
-    gap: 10px;
-    z-index: 998;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-    .navbar-mobile-search.show {
-        display: flex;
+    .navbar-nav-link i {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.55);
+        transition: color 0.25s;
     }
 
-    .navbar-mobile-search i {
-        color: rgba(255, 255, 255, 0.7);
+    .navbar-nav-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--white);
     }
 
-    .navbar-mobile-search input {
-        flex: 1;
-        background: rgba(255, 255, 255, 0.12);
-        border: none;
-        border-radius: 8px;
+        .navbar-nav-link:hover i {
+            color: var(--secondary);
+        }
+
+    .navbar-nav-link.active {
+        background: var(--secondary);
+        color: var(--primary);
+    }
+
+        .navbar-nav-link.active i {
+            color: var(--primary);
+        }
+
+@media (max-width: 1100px) {
+    .navbar-nav-link span {
+        display: none;
+    }
+
+    .navbar-nav-link {
         padding: 8px 12px;
-        color: var(--white);
-        outline: none;
     }
-
-    .navbar-mobile-search button {
-        background: transparent;
-        border: none;
-        color: var(--white);
-        font-size: 1.1rem;
-    }
+}
 
 /* ── Live Clock ───────────────────────────────────────────── */
 .navbar-clock {
@@ -21697,13 +21759,13 @@ body {
     left: -2px;
 }
 
-/* ── Avatar ───────────────────────────────────────────────── */
+/* ── Avatar (trigger) ────────────────────────────────────── */
 .navbar-avatar {
     position: relative;
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--secondary), #e0ab47);
+    background: linear-gradient(135deg, var(--secondary), #e7b65c);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -21711,6 +21773,13 @@ body {
     font-weight: 800;
     font-size: 0.85rem;
     flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 3px 10px rgba(0, 0, 0, 0.25);
+    transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.user-info-btn:hover .navbar-avatar {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 .navbar-avatar-status {
@@ -21722,11 +21791,202 @@ body {
     border-radius: 50%;
     background: #28A745;
     border: 2px solid var(--primary);
+    animation: navbarPulse 2s infinite;
 }
 
 [dir="ltr"] .navbar-avatar-status {
     right: auto;
     left: -2px;
+}
+
+.navbar-chevron {
+    transition: transform 0.25s;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.user-info-btn[aria-expanded="true"] .navbar-chevron {
+    transform: rotate(180deg);
+    color: var(--white);
+}
+
+.user-info-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+    .user-info-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+/* ── Profile Dropdown (rich card) ─────────────────────────── */
+.bonyan-profile-dropdown {
+    width: 280px;
+    max-width: 90vw;
+    padding: 0;
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.profile-dropdown-header {
+    background: linear-gradient(135deg, var(--primary), #2a5298);
+    padding: 20px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.profile-dropdown-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--secondary), #e7b65c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
+
+.profile-dropdown-info {
+    min-width: 0;
+}
+
+.profile-dropdown-name {
+    color: var(--white);
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-dropdown-email {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.72rem;
+    margin: 2px 0 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    padding: 3px 11px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--white);
+}
+
+    .profile-chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ced4da;
+    }
+
+.chip-admin .dot {
+    background: #ff6b6b;
+}
+
+.chip-pm .dot {
+    background: #4dabf7;
+}
+
+.chip-engineer .dot {
+    background: #51cf66;
+}
+
+.profile-dropdown-body {
+    background: var(--white);
+    padding: 8px;
+}
+
+.profile-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 9px;
+    text-decoration: none;
+    color: var(--text, #2D2D2D);
+    font-size: 0.86rem;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+    .profile-dropdown-item:hover {
+        background: #F0F4FF;
+        color: var(--primary);
+    }
+
+    .profile-dropdown-item.item-danger:hover {
+        background: #FFF0F0;
+        color: var(--danger, #DC3545);
+    }
+
+.item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.icon-blue {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.icon-gold {
+    background: #FFF8E1;
+    color: #C8922A;
+}
+
+.icon-red {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.profile-dropdown-divider {
+    height: 1px;
+    background: #F0F0F0;
+    margin: 6px 4px;
+}
+
+/* ── Dropdown open animation (shared) ────────────────────── */
+.bonyan-dropdown.show,
+.bonyan-profile-dropdown.show {
+    animation: navbarDropdownPop 0.18s ease;
+}
+
+@keyframes navbarDropdownPop {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* ── Chatbot Panel (slide-in widget) ─────────────────────── */
@@ -21868,22 +22128,8 @@ body {
     }
 
 /* ══════════════════════════════════════════════════════════
-   DARK MODE overrides for new components
+   DARK MODE overrides
 ══════════════════════════════════════════════════════════ */
-body.dark-mode .navbar-search-results {
-    background: #1a2535;
-    color: #e2e8f0;
-}
-
-body.dark-mode .navbar-search-result-item {
-    color: #e2e8f0;
-    border-bottom-color: rgba(255, 255, 255, 0.06);
-}
-
-    body.dark-mode .navbar-search-result-item:hover {
-        background: rgba(255, 255, 255, 0.06);
-    }
-
 body.dark-mode .navbar-notif-item {
     color: #e2e8f0;
     border-bottom-color: rgba(255, 255, 255, 0.06);
@@ -21896,6 +22142,22 @@ body.dark-mode .navbar-notif-item {
 
 body.dark-mode .navbar-notif-footer {
     border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .profile-dropdown-body {
+    background: #1a2535;
+}
+
+body.dark-mode .profile-dropdown-item {
+    color: #e2e8f0;
+}
+
+    body.dark-mode .profile-dropdown-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+body.dark-mode .profile-dropdown-divider {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 body.dark-mode .chatbot-panel {
@@ -21920,8 +22182,8 @@ body.dark-mode .chatbot-panel-footer {
    RESPONSIVE
 ══════════════════════════════════════════════════════════ */
 @media (max-width: 992px) {
-    .navbar-search {
-        width: 220px;
+    .navbar-main-links {
+        gap: 2px;
     }
 }
 
@@ -24457,16 +24719,14 @@ document.addEventListener("DOMContentLoaded", function () {
 });=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/js/navbar.js ===
 ﻿/* ══════════════════════════════════════════════════════════
    navbar.js
-   Behavior for: live clock, global search, notification center,
-   chatbot panel, quick actions, and language-button label sync.
+   Behavior for: live clock, notification center (real system
+   data), chatbot panel, and language-button label sync.
    Dark mode + sidebar toggle stay in _Layout.cshtml as-is.
 ══════════════════════════════════════════════════════════ */
 
 document.addEventListener("DOMContentLoaded", function () {
 
-    /* ── 1. LIVE DATE / TIME ────────────────────────────────
-       Updates every second. Locale follows the active <html lang>
-       so it automatically reads in Arabic or English digits/format. */
+    /* ── 1. LIVE DATE / TIME ─────────────────────────────── */
     function updateClock() {
         const timeEl = document.getElementById("navbarTime");
         const dateEl = document.getElementById("navbarDate");
@@ -24487,103 +24747,12 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     updateClock();
-    setInterval(updateClock, 1000 * 30); // refresh every 30s is enough for a clock without a seconds display
+    setInterval(updateClock, 1000 * 30);
 
-    /* ── 2. GLOBAL SEARCH ────────────────────────────────────
-       Placeholder client logic. Wire this to a real endpoint,
-       e.g. GET /api/search?q=... returning JSON:
-       [{ type: "project", id, name, url, icon }, ...]
-       Suggested controller: SearchController.Global(string q) */
-    const searchInput = document.getElementById("globalSearchInput");
-    const searchResults = document.getElementById("globalSearchResults");
-    let searchDebounce = null;
-
-    if (searchInput) {
-        searchInput.addEventListener("input", function () {
-            clearTimeout(searchDebounce);
-            const query = this.value.trim();
-
-            if (query.length < 2) {
-                searchResults.classList.remove("show");
-                searchResults.innerHTML = "";
-                return;
-            }
-
-            // Debounce to avoid firing a request on every keystroke
-            searchDebounce = setTimeout(() => runGlobalSearch(query), 300);
-        });
-
-        searchInput.addEventListener("focus", function () {
-            if (this.value.trim().length >= 2) searchResults.classList.add("show");
-        });
-
-        document.addEventListener("click", function (e) {
-            if (!e.target.closest(".navbar-search")) {
-                searchResults.classList.remove("show");
-            }
-        });
-    }
-
-    function runGlobalSearch(query) {
-        // ── TODO: replace with real fetch() call ──
-        // fetch(`/Search/Global?q=${encodeURIComponent(query)}`)
-        //     .then(r => r.json())
-        //     .then(renderSearchResults)
-        //     .catch(() => renderSearchResults([]));
-
-        // Demo placeholder so the UI is visibly functional out of the box:
-        const demoMatches = [
-            { type: "project", name: `Project matching "${query}"`, icon: "fa-project-diagram", url: "#" },
-            { type: "task", name: `Task matching "${query}"`, icon: "fa-tasks", url: "#" }
-        ];
-        renderSearchResults(demoMatches);
-    }
-
-    function renderSearchResults(items) {
-        if (!items || items.length === 0) {
-            searchResults.innerHTML = `<div class="navbar-search-empty">لا توجد نتائج</div>`;
-        } else {
-            searchResults.innerHTML = items.map(item => `
-                <a href="${item.url}" class="navbar-search-result-item">
-                    <i class="fas ${item.icon}"></i>
-                    <span>${item.name}</span>
-                </a>
-            `).join("");
-        }
-        searchResults.classList.add("show");
-    }
-
-    // Ctrl+K / Cmd+K focuses the search box (common power-user shortcut)
-    document.addEventListener("keydown", function (e) {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-            e.preventDefault();
-            if (searchInput) searchInput.focus();
-        }
-    });
-
-    // Mobile search bar open/close
-    const mobileSearchBtn = document.getElementById("mobileSearchBtn");
-    const mobileSearchBar = document.getElementById("mobileSearchBar");
-    const mobileSearchClose = document.getElementById("mobileSearchClose");
-
-    if (mobileSearchBtn && mobileSearchBar) {
-        mobileSearchBtn.addEventListener("click", function () {
-            mobileSearchBar.classList.add("show");
-            document.getElementById("mobileSearchInput")?.focus();
-        });
-        mobileSearchClose?.addEventListener("click", function () {
-            mobileSearchBar.classList.remove("show");
-        });
-    }
-
-    /* ── 3. NOTIFICATION CENTER ─────────────────────────────
-       Placeholder data shaped exactly like your dashboard's
-       OverdueTaskRow + a couple of system-level alert types,
-       so swapping in a real endpoint is a drop-in replacement.
-
-       Suggested real endpoint: GET /Home/GetNotifications
-       returning JSON: [{ id, type, title, sub, time, isRead }]
-       where `type` is one of: warning | danger | info | success */
+    /* ── 2. NOTIFICATION CENTER ──────────────────────────────
+       Live data from GET /Home/GetNotifications, built from
+       real overdue tasks, overdue invoices, and site-visit
+       safety alerts (see HomeController.GetNotifications). */
     const notifBadge = document.getElementById("notifBadge");
     const notifList = document.getElementById("notifList");
     const notifClear = document.getElementById("notifClearBtn");
@@ -24596,19 +24765,15 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     function fetchNotifications() {
-        // ── TODO: replace with real fetch() call ──
-        // fetch("/Home/GetNotifications")
-        //     .then(r => r.json())
-        //     .then(renderNotifications)
-        //     .catch(() => renderNotifications([]));
-
-        // Demo data — mirrors the real "overdue tasks" the dashboard already tracks
-        const demoNotifications = [
-            { id: 1, type: "danger", title: "مهمة متأخرة: تركيب الأساسات", sub: "مشروع برج النيل", time: "منذ 2 ساعة", isRead: false },
-            { id: 2, type: "warning", title: "فاتورة غير مدفوعة", sub: "مشروع كومباوند الواحة", time: "منذ 5 ساعات", isRead: false },
-            { id: 3, type: "info", title: "زيارة موقع جديدة مجدولة", sub: "غدًا 9:00 صباحًا", time: "منذ يوم", isRead: true }
-        ];
-        renderNotifications(demoNotifications);
+        fetch("/Home/GetNotifications", {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+            .then(r => {
+                if (!r.ok) throw new Error("Failed to load notifications");
+                return r.json();
+            })
+            .then(renderNotifications)
+            .catch(() => renderNotifications([]));
     }
 
     function renderNotifications(items) {
@@ -24626,7 +24791,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         notifList.innerHTML = items.map(n => `
-            <a href="#" class="navbar-notif-item ${n.isRead ? "" : "unread"}" data-id="${n.id}">
+            <a href="${n.url || "#"}" class="navbar-notif-item ${n.isRead ? "" : "unread"}" data-id="${n.id}">
                 <div class="navbar-notif-icon ${n.type}">
                     <i class="fas ${notifIcons[n.type] || "fa-bell"}"></i>
                 </div>
@@ -24644,17 +24809,13 @@ document.addEventListener("DOMContentLoaded", function () {
             e.preventDefault();
             document.querySelectorAll(".navbar-notif-item.unread").forEach(el => el.classList.remove("unread"));
             if (notifBadge) notifBadge.style.display = "none";
-            // TODO: POST /Home/MarkNotificationsRead to persist server-side
         });
     }
 
     fetchNotifications();
-    // Optional: poll every 2 minutes for new alerts without a full page reload
-    setInterval(fetchNotifications, 120000);
+    setInterval(fetchNotifications, 120000); // poll every 2 minutes
 
-    /* ── 4. CHATBOT PANEL ────────────────────────────────────
-       Toggle + minimal send handler. Wire chatbotInput's reply
-       to your real bot endpoint, e.g. POST /Chatbot/Ask { message } */
+    /* ── 3. CHATBOT PANEL ────────────────────────────────── */
     const chatbotToggleBtn = document.getElementById("chatbotToggleBtn");
     const chatbotPanel = document.getElementById("chatbotPanel");
     const chatbotCloseBtn = document.getElementById("chatbotCloseBtn");
@@ -24709,10 +24870,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (e.key === "Enter") sendChatMessage();
     });
 
-    /* ── 5. LANGUAGE BUTTON LABEL SYNC ───────────────────────
-       Keeps the visible "English" / "العربية" label in sync with
-       whatever language is currently active, without touching
-       your existing toggleLanguage()/langswitch.js logic. */
+    /* ── 4. LANGUAGE BUTTON LABEL SYNC ───────────────────── */
     function syncLangButtonLabel() {
         const langBtnText = document.getElementById("langBtnText");
         if (!langBtnText) return;
@@ -24720,11 +24878,6 @@ document.addEventListener("DOMContentLoaded", function () {
         langBtnText.textContent = current === "ar" ? "English" : "العربية";
     }
     syncLangButtonLabel();
-
-    // If your langswitch.js calls toggleLanguage() and reloads/re-renders,
-    // this re-sync runs again on DOMContentLoaded automatically.
-    // If it swaps language WITHOUT a reload, also call syncLangButtonLabel()
-    // and updateClock() at the end of your toggleLanguage() function.
 });=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/js/show-password.js ===
 ﻿// Show/Hide password toggle — works for all password fields
 document.addEventListener('DOMContentLoaded', function () {
