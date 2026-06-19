@@ -59,14 +59,21 @@
                 <ul class="dropdown-menu dropdown-menu-end bonyan-dropdown">
                     <li>
                         <span class="dropdown-item-text">
-                            <i class="fas fa-user class=" me-2""></i>
+                            <i class="fas fa-user me-2"></i>
                             @(Context.Session.GetString("FullName") ?? "")
                         </span>
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
+                        <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
+                            <i class="fas fa-id-card me-2"></i>
+                            <span data-lang="my_profile">ملف شخصي</span>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
                         <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout">
-                            <i class="fas fa-sign-out-alt class=" me-2""></i>
+                            <i class="fas fa-sign-out-alt me-2"></i>
                             <span data-lang="logout">تسجيل الخروج</span>
                         </a>
                     </li>

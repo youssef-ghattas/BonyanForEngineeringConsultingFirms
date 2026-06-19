@@ -351,5 +351,84 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			TempData["Success"] = $"تم إعادة تعيين كلمة مرور {targetName} وإرسالها إليه بنجاح";
 			return RedirectToAction("Index", "Employee");
 		}
+		// ════════════════════════════════════════════════
+		//  PROFILE
+		// ════════════════════════════════════════════════
+
+		public IActionResult Profile()
+		{
+			var email = HttpContext.Session.GetString("Email");
+			if (email == null) return RedirectToAction("Login");
+
+			var role = HttpContext.Session.GetString("Role");
+			var vm = new Bonyan.PL.ViewModels.ProfileViewModel
+			{
+				Role = role
+			};
+
+			if (role == "Admin")
+			{
+				var admin = _context.Admins.FirstOrDefault(a => a.Email == email);
+				if (admin == null) return RedirectToAction("Login");
+
+				vm.FullName = admin.FirstName + " " + admin.LastName;
+				vm.Email = admin.Email;
+				vm.PhoneNum = admin.PhoneNum;
+				vm.IsEmployee = false;
+			}
+			else
+			{
+				var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+				var employee = _context.Employees
+					.Include(e => e.EmployeeProjects)
+						.ThenInclude(ep => ep.Project)
+							.ThenInclude(p => p.Tasks)
+					.FirstOrDefault(e => e.EmployeeId == employeeId);
+
+				if (employee == null) return RedirectToAction("Login");
+
+				vm.IsEmployee = true;
+				vm.FullName = employee.FirstName + " " + employee.LastName;
+				vm.Email = employee.Email;
+				vm.PhoneNum = employee.PhoneNum;
+				vm.SSN = employee.SSN;
+				vm.Specialization = employee.Specialization;
+				vm.Gender = employee.Gender;
+				vm.HireDate = employee.HireDate;
+				vm.Salary = employee.Salary;
+
+				// Projects
+				vm.Projects = employee.EmployeeProjects.Select(ep => new Bonyan.PL.ViewModels.ProfileProjectSummary
+				{
+					ProjectName = ep.Project.ProjectName,
+					Location = ep.Project.Location,
+					ClientName = ep.Project.Client_Name,
+					StartDate = ep.Project.StartDate,
+					EndDate = ep.Project.EndDate,
+					Status = ep.Project.Status.ToString(),
+					StatusClass = ep.Project.Status switch
+					{
+						Bonyan.DAL.Enums.ProjectStatus.Completed => "status-completed",
+						Bonyan.DAL.Enums.ProjectStatus.InProgress => "status-inprogress",
+						Bonyan.DAL.Enums.ProjectStatus.OnHold => "status-onhold",
+						Bonyan.DAL.Enums.ProjectStatus.Cancelled => "status-cancelled",
+						_ => "status-planning"
+					}
+				}).ToList();
+
+				// Task stats across all assigned projects
+				var allTasks = employee.EmployeeProjects
+					.SelectMany(ep => ep.Project.Tasks)
+					.Where(t => t.AssignedToEmployeeId == employee.EmployeeId)
+					.ToList();
+
+				vm.TotalTasks = allTasks.Count;
+				vm.CompletedTasks = allTasks.Count(t => t.Status == Bonyan.DAL.Enums.TasksStatus.Completed);
+				vm.InProgressTasks = allTasks.Count(t => t.Status == Bonyan.DAL.Enums.TasksStatus.InProgress);
+				vm.PendingTasks = allTasks.Count(t => t.Status == Bonyan.DAL.Enums.TasksStatus.Pending);
+			}
+
+			return View(vm);
+		}
 	}
 }
