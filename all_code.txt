@@ -1697,6 +1697,85 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			TempData["Success"] = $"تم إعادة تعيين كلمة مرور {targetName} وإرسالها إليه بنجاح";
 			return RedirectToAction("Index", "Employee");
 		}
+		// ════════════════════════════════════════════════
+		//  PROFILE
+		// ════════════════════════════════════════════════
+
+		public IActionResult Profile()
+		{
+			var email = HttpContext.Session.GetString("Email");
+			if (email == null) return RedirectToAction("Login");
+
+			var role = HttpContext.Session.GetString("Role");
+			var vm = new Bonyan.PL.ViewModels.ProfileViewModel
+			{
+				Role = role
+			};
+
+			if (role == "Admin")
+			{
+				var admin = _context.Admins.FirstOrDefault(a => a.Email == email);
+				if (admin == null) return RedirectToAction("Login");
+
+				vm.FullName = admin.FirstName + " " + admin.LastName;
+				vm.Email = admin.Email;
+				vm.PhoneNum = admin.PhoneNum;
+				vm.IsEmployee = false;
+			}
+			else
+			{
+				var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+				var employee = _context.Employees
+					.Include(e => e.EmployeeProjects)
+						.ThenInclude(ep => ep.Project)
+							.ThenInclude(p => p.Tasks)
+					.FirstOrDefault(e => e.EmployeeId == employeeId);
+
+				if (employee == null) return RedirectToAction("Login");
+
+				vm.IsEmployee = true;
+				vm.FullName = employee.FirstName + " " + employee.LastName;
+				vm.Email = employee.Email;
+				vm.PhoneNum = employee.PhoneNum;
+				vm.SSN = employee.SSN;
+				vm.Specialization = employee.Specialization;
+				vm.Gender = employee.Gender;
+				vm.HireDate = employee.HireDate;
+				vm.Salary = employee.Salary;
+
+				// Projects
+				vm.Projects = employee.EmployeeProjects.Select(ep => new Bonyan.PL.ViewModels.ProfileProjectSummary
+				{
+					ProjectName = ep.Project.ProjectName,
+					Location = ep.Project.Location,
+					ClientName = ep.Project.Client_Name,
+					StartDate = ep.Project.StartDate,
+					EndDate = ep.Project.EndDate,
+					Status = ep.Project.Status.ToString(),
+					StatusClass = ep.Project.Status switch
+					{
+						Bonyan.DAL.Enums.ProjectStatus.Completed => "status-completed",
+						Bonyan.DAL.Enums.ProjectStatus.InProgress => "status-inprogress",
+						Bonyan.DAL.Enums.ProjectStatus.OnHold => "status-onhold",
+						Bonyan.DAL.Enums.ProjectStatus.Cancelled => "status-cancelled",
+						_ => "status-planning"
+					}
+				}).ToList();
+
+				// Task stats across all assigned projects
+				var allTasks = employee.EmployeeProjects
+					.SelectMany(ep => ep.Project.Tasks)
+					.Where(t => t.AssignedToEmployeeId == employee.EmployeeId)
+					.ToList();
+
+				vm.TotalTasks = allTasks.Count;
+				vm.CompletedTasks = allTasks.Count(t => t.Status == Bonyan.DAL.Enums.TasksStatus.Completed);
+				vm.InProgressTasks = allTasks.Count(t => t.Status == Bonyan.DAL.Enums.TasksStatus.InProgress);
+				vm.PendingTasks = allTasks.Count(t => t.Status == Bonyan.DAL.Enums.TasksStatus.Pending);
+			}
+
+			return View(vm);
+		}
 	}
 }=== File: ./BonyanForEngineeringConsultingFirms/Controllers/DocumentController.cs ===
 ﻿// Controllers/DocumentController.cs
@@ -5236,6 +5315,47 @@ namespace BonyanForEngineeringConsultingFirms.ViewModels
         public int ProjectsInProgress { get; set; }
         public int ProjectsOnHold { get; set; }
     }
+}=== File: ./BonyanForEngineeringConsultingFirms/ViewModel/ProfileViewModel.cs ===
+﻿using Bonyan.DAL.Enums;
+
+namespace Bonyan.PL.ViewModels
+{
+	public class ProfileViewModel
+	{
+		// ── Common ─────────────────────────────────────────
+		public string FullName { get; set; }
+		public string Email { get; set; }
+		public string PhoneNum { get; set; }
+		public string Role { get; set; }
+
+		// ── Employee only ──────────────────────────────────
+		public bool IsEmployee { get; set; }
+		public string SSN { get; set; }
+		public Specialization? Specialization { get; set; }
+		public Gender? Gender { get; set; }
+		public DateTime? HireDate { get; set; }
+		public decimal? Salary { get; set; }
+
+		// ── Project summary ────────────────────────────────
+		public List<ProfileProjectSummary> Projects { get; set; } = new();
+
+		// ── Task stats ─────────────────────────────────────
+		public int TotalTasks { get; set; }
+		public int CompletedTasks { get; set; }
+		public int InProgressTasks { get; set; }
+		public int PendingTasks { get; set; }
+	}
+
+	public class ProfileProjectSummary
+	{
+		public string ProjectName { get; set; }
+		public string Location { get; set; }
+		public string Status { get; set; }
+		public string StatusClass { get; set; }
+		public DateTime? StartDate { get; set; }
+		public DateTime? EndDate { get; set; }
+		public string ClientName { get; set; }
+	}
 }=== File: ./BonyanForEngineeringConsultingFirms/Views/Account/AdminRegister.cshtml ===
 ﻿@{
     ViewData["Title"] = "إنشاء حساب أدمن";
@@ -6066,7 +6186,224 @@ namespace BonyanForEngineeringConsultingFirms.ViewModels
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/show-password.js"></script>
 </body>
-</html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Account/Register.cshtml ===
+</html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Account/Profile.cshtml ===
+﻿@model Bonyan.PL.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "الملف الشخصي";
+}
+
+<link rel="stylesheet" href="~/css/profile.css" />
+
+<div class="profile-page">
+
+    <!-- ── Header Card ─────────────────────────── -->
+    <div class="profile-header-card">
+        <div class="profile-avatar">
+            <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="profile-header-info">
+            <h1 class="profile-name">@Model.FullName</h1>
+            <span class="profile-role-badge role-@Model.Role.ToLower()">
+                @(Model.Role == "Admin" ? "مدير النظام" :
+                  Model.Role == "ProjectManager" ? "مدير مشروع" : "مهندس")
+            </span>
+            <div class="profile-contact-row">
+                <span><i class="fas fa-envelope me-1"></i> @Model.Email</span>
+                @if (!string.IsNullOrEmpty(Model.PhoneNum))
+                {
+                    <span><i class="fas fa-phone me-1"></i> @Model.PhoneNum</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Model.IsEmployee)
+    {
+        <!-- ── Info Grid ────────────────────────────── -->
+        <div class="profile-section">
+            <h2 class="profile-section-title">
+                <i class="fas fa-info-circle me-2"></i>
+                <span data-lang="personal_info">المعلومات الشخصية</span>
+            </h2>
+            <div class="profile-info-grid">
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-id-card me-2"></i>الرقم القومي</div>
+                    <div class="info-value">@Model.SSN</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-venus-mars me-2"></i>الجنس</div>
+                    <div class="info-value">@(Model.Gender?.ToString() == "Male" ? "ذكر" : "أنثى")</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-hard-hat me-2"></i>التخصص</div>
+                    <div class="info-value">
+                        @(Model.Specialization?.ToString() switch {
+                            "Civil"         => "هندسة مدنية",
+                            "Mechanical"    => "هندسة ميكانيكية",
+                            "Electrical"    => "هندسة كهربائية",
+                            "Architectural" => "هندسة معمارية",
+                            _               => Model.Specialization?.ToString()
+                        })
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-calendar-alt me-2"></i>تاريخ التعيين</div>
+                    <div class="info-value">@Model.HireDate?.ToString("dd/MM/yyyy")</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-briefcase me-2"></i>المسمى الوظيفي</div>
+                    <div class="info-value">
+                        @(Model.Role == "ProjectManager" ? "مدير مشروع" : "مهندس")
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-project-diagram me-2"></i>عدد المشاريع</div>
+                    <div class="info-value">@Model.Projects.Count</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Task Stats ───────────────────────────── -->
+        <div class="profile-section">
+            <h2 class="profile-section-title">
+                <i class="fas fa-tasks me-2"></i>
+                <span>ملخص المهام</span>
+            </h2>
+            <div class="task-stats-grid">
+                <div class="stat-card stat-total">
+                    <div class="stat-number">@Model.TotalTasks</div>
+                    <div class="stat-label">إجمالي المهام</div>
+                    <i class="fas fa-list stat-icon"></i>
+                </div>
+                <div class="stat-card stat-completed">
+                    <div class="stat-number">@Model.CompletedTasks</div>
+                    <div class="stat-label">مكتملة</div>
+                    <i class="fas fa-check-circle stat-icon"></i>
+                </div>
+                <div class="stat-card stat-inprogress">
+                    <div class="stat-number">@Model.InProgressTasks</div>
+                    <div class="stat-label">قيد التنفيذ</div>
+                    <i class="fas fa-spinner stat-icon"></i>
+                </div>
+                <div class="stat-card stat-pending">
+                    <div class="stat-number">@Model.PendingTasks</div>
+                    <div class="stat-label">معلقة</div>
+                    <i class="fas fa-clock stat-icon"></i>
+                </div>
+            </div>
+
+            @if (Model.TotalTasks > 0)
+            {
+                <div class="task-progress-bar-wrap">
+                    <div class="task-progress-label">
+                        <span>نسبة الإنجاز</span>
+                        <span>@((int)((double)Model.CompletedTasks / Model.TotalTasks * 100))%</span>
+                    </div>
+                    <div class="task-progress-bar">
+                        <div class="task-progress-fill"
+                             style="width: @((int)((double)Model.CompletedTasks / Model.TotalTasks * 100))%">
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- ── Projects Table ──────────────────────── -->
+        <div class="profile-section">
+            <h2 class="profile-section-title">
+                <i class="fas fa-project-diagram me-2"></i>
+                <span>المشاريع المُسندة</span>
+            </h2>
+            @if (Model.Projects.Any())
+            {
+                <div class="projects-table-wrap">
+                    <table class="profile-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>اسم المشروع</th>
+                                <th>الموقع</th>
+                                <th>العميل</th>
+                                <th>تاريخ البدء</th>
+                                <th>تاريخ الانتهاء</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Projects.Count; i++)
+                            {
+                                var p = Model.Projects[i];
+                                <tr>
+                                    <td>@(i + 1)</td>
+                                    <td><strong>@p.ProjectName</strong></td>
+                                    <td>@(p.Location ?? "—")</td>
+                                    <td>@(p.ClientName ?? "—")</td>
+                                    <td>@(p.StartDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>@(p.EndDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>
+                                        <span class="project-status-badge @p.StatusClass">
+                                            @(p.Status switch {
+                                                "Completed"  => "مكتمل",
+                                                "InProgress" => "قيد التنفيذ",
+                                                "OnHold"     => "معلق",
+                                                "Cancelled"  => "ملغي",
+                                                _            => "تخطيط"
+                                            })
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="no-projects">
+                    <i class="fas fa-folder-open fa-3x mb-3"></i>
+                    <p>لا توجد مشاريع مُسندة بعد</p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- ── Admin Info ───────────────────────────── -->
+        <div class="profile-section">
+            <h2 class="profile-section-title">
+                <i class="fas fa-shield-alt me-2"></i>
+                معلومات المدير
+            </h2>
+            <div class="profile-info-grid">
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-envelope me-2"></i>البريد الإلكتروني</div>
+                    <div class="info-value">@Model.Email</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-phone me-2"></i>رقم الهاتف</div>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.PhoneNum) ? "—" : Model.PhoneNum)</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-user-shield me-2"></i>الصلاحية</div>
+                    <div class="info-value">مدير النظام الكامل</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ── Quick Actions ────────────────────────── -->
+    <div class="profile-section profile-actions-row">
+        <a asp-controller="Account" asp-action="ChangePassword" class="btn-profile-action">
+            <i class="fas fa-lock me-2"></i>
+            تغيير كلمة المرور
+        </a>
+        <a asp-controller="Home" asp-action="Index" class="btn-profile-action btn-secondary-action">
+            <i class="fas fa-home me-2"></i>
+            الرئيسية
+        </a>
+    </div>
+
+</div>=== File: ./BonyanForEngineeringConsultingFirms/Views/Account/Register.cshtml ===
 ﻿@{
     Layout = null;
 }
@@ -8493,6 +8830,18 @@ namespace BonyanForEngineeringConsultingFirms.ViewModels
 
         <div class="navbar-right">
             <button id="langBtn" class="lang-btn" onclick="toggleLanding()">English</button>
+
+            <!-- Dark / Light Toggle -->
+            <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="تبديل الوضع">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </button>
+
+            <!-- Subscription CTA -->
+            <a class="btn-bonyan-secondary nav-subscribe-btn" href="#pricing">
+                <i class="fas fa-credit-card"></i>
+                <span data-lang="nav_subscribe">الاشتراك</span>
+            </a>
+
             <a class="btn-bonyan-primary" asp-controller="Account" asp-action="Login">
                 <i class="fas fa-sign-in-alt"></i>
                 <span data-lang="nav_login">تسجيل الدخول</span>
@@ -8692,6 +9041,189 @@ namespace BonyanForEngineeringConsultingFirms.ViewModels
         </div>
     </section>
 
+
+    <!-- ── Pricing Section ────────────────────────────── -->
+    <section class="pricing-section" id="pricing">
+        <div class="section-header">
+            <span class="hero-badge" style="margin-bottom:16px;">
+                <i class="fas fa-layer-group"></i>
+                <span data-lang="pricing_badge">خطط الأسعار</span>
+            </span>
+            <h2 data-lang="pricing_title">اختر الخطة المناسبة لمكتبك</h2>
+            <p data-lang="pricing_subtitle">جميع الخطط تتضمن كافة مميزات المنصة كاملةً — الفرق الوحيد هو حجم الاستخدام المسموح.</p>
+        </div>
+
+        <div class="pricing-grid">
+
+            <!-- ── Startup Plan ── -->
+            <div class="pricing-card">
+                <div class="pricing-card-header">
+                    <div class="pricing-plan-icon blue">
+                        <i class="fas fa-seedling"></i>
+                    </div>
+                    <div>
+                        <h3 class="pricing-plan-name" data-lang="plan1_name">Startup</h3>
+                        <p class="pricing-plan-name-ar" data-lang="plan1_name_ar">الباقة الناشئة</p>
+                    </div>
+                </div>
+
+                <div class="pricing-price-block">
+                    <span class="pricing-price" data-lang="plan1_price">٤,٠٠٠</span>
+                    <span class="pricing-currency" data-lang="plan1_currency">ج.م / شهرياً</span>
+                </div>
+
+                <div class="pricing-limits">
+                    <div class="pricing-limit-item">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <span class="limit-number">20</span>
+                            <span class="limit-label" data-lang="limit_engineers">مهندس</span>
+                        </div>
+                    </div>
+                    <div class="pricing-limit-divider"></div>
+                    <div class="pricing-limit-item">
+                        <i class="fas fa-folder-open"></i>
+                        <div>
+                            <span class="limit-number">5</span>
+                            <span class="limit-label" data-lang="limit_projects">مشاريع نشطة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="pricing-desc" data-lang="plan1_desc">
+                    كافة مميزات المنصة القوية، مهيأة للمكاتب الناشئة وفرق العمل الصغيرة لتنظيم مشاريعها الرقمية الأولى.
+                </p>
+
+                <ul class="pricing-features-list">
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_kanban">لوحة إدارة وتكليف المهام</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_archive">الأرشيف السحابي الآمن للمخططات</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_hr">إدارة الموارد البشرية وتتبع الإنتاجية</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_finance">النظام المالي وإصدار الفواتير</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_portal">بوابة ملاك المشاريع الرقمية</span></li>
+                </ul>
+
+                <a class="pricing-cta-btn" asp-controller="Account" asp-action="Login">
+                    <span data-lang="pricing_cta">ابدأ الآن</span>
+                </a>
+            </div>
+
+            <!-- ── Growth Plan (Popular) ── -->
+            <div class="pricing-card pricing-card--popular">
+                <div class="pricing-popular-badge">
+                    <i class="fas fa-star"></i>
+                    <span data-lang="popular_badge">الأكثر طلباً · Most Popular</span>
+                </div>
+
+                <div class="pricing-card-header">
+                    <div class="pricing-plan-icon gold">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h3 class="pricing-plan-name" data-lang="plan2_name">Growth</h3>
+                        <p class="pricing-plan-name-ar" data-lang="plan2_name_ar">باقة النمو</p>
+                    </div>
+                </div>
+
+                <div class="pricing-price-block">
+                    <span class="pricing-price" data-lang="plan2_price">٨,٠٠٠</span>
+                    <span class="pricing-currency" data-lang="plan2_currency">ج.م / شهرياً</span>
+                </div>
+
+                <div class="pricing-limits">
+                    <div class="pricing-limit-item">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <span class="limit-number">50</span>
+                            <span class="limit-label" data-lang="limit_engineers">مهندس</span>
+                        </div>
+                    </div>
+                    <div class="pricing-limit-divider"></div>
+                    <div class="pricing-limit-item">
+                        <i class="fas fa-folder-open"></i>
+                        <div>
+                            <span class="limit-number">15</span>
+                            <span class="limit-label" data-lang="limit_projects">مشاريع نشطة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="pricing-desc" data-lang="plan2_desc">
+                    الخيار المثالي للمكاتب الهندسية المتوسطة والمتنامية التي تدير مشاريع متعددة وفرق عمل أكبر بكامل الصلاحيات.
+                </p>
+
+                <ul class="pricing-features-list">
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_kanban">لوحة إدارة وتكليف المهام</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_archive">الأرشيف السحابي الآمن للمخططات</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_hr">إدارة الموارد البشرية وتتبع الإنتاجية</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_finance">النظام المالي وإصدار الفواتير</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_portal">بوابة ملاك المشاريع الرقمية</span></li>
+                </ul>
+
+                <a class="pricing-cta-btn pricing-cta-btn--popular" asp-controller="Account" asp-action="Login">
+                    <span data-lang="pricing_cta">ابدأ الآن</span>
+                </a>
+            </div>
+
+            <!-- ── Scale Plan ── -->
+            <div class="pricing-card">
+                <div class="pricing-card-header">
+                    <div class="pricing-plan-icon purple">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div>
+                        <h3 class="pricing-plan-name" data-lang="plan3_name">Scale</h3>
+                        <p class="pricing-plan-name-ar" data-lang="plan3_name_ar">باقة المؤسسات</p>
+                    </div>
+                </div>
+
+                <div class="pricing-price-block">
+                    <span class="pricing-price" data-lang="plan3_price">١٦,٠٠٠</span>
+                    <span class="pricing-currency" data-lang="plan3_currency">ج.م / شهرياً</span>
+                </div>
+
+                <div class="pricing-limits">
+                    <div class="pricing-limit-item">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <span class="limit-number">100</span>
+                            <span class="limit-label" data-lang="limit_engineers">مهندس</span>
+                        </div>
+                    </div>
+                    <div class="pricing-limit-divider"></div>
+                    <div class="pricing-limit-item">
+                        <i class="fas fa-folder-open"></i>
+                        <div>
+                            <span class="limit-number">40</span>
+                            <span class="limit-label" data-lang="limit_projects">مشاريع نشطة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="pricing-desc" data-lang="plan3_desc">
+                    مصممة للشركات والمكاتب الاستشارية الكبرى وبيوت الخبرة التي تدير حجم أعمال ضخم ومتعدد الفروع.
+                </p>
+
+                <ul class="pricing-features-list">
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_kanban">لوحة إدارة وتكليف المهام</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_archive">الأرشيف السحابي الآمن للمخططات</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_hr">إدارة الموارد البشرية وتتبع الإنتاجية</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_finance">النظام المالي وإصدار الفواتير</span></li>
+                    <li><i class="fas fa-check"></i> <span data-lang="feat_portal">بوابة ملاك المشاريع الرقمية</span></li>
+                </ul>
+
+                <a class="pricing-cta-btn" asp-controller="Account" asp-action="Login">
+                    <span data-lang="pricing_cta">ابدأ الآن</span>
+                </a>
+            </div>
+
+        </div><!-- /pricing-grid -->
+
+        <p class="pricing-all-features-note">
+            <i class="fas fa-infinity"></i>
+            <span data-lang="pricing_note">جميع الخطط تشمل كافة المميزات دون قيود — الفرق فقط في عدد المهندسين والمشاريع المسموح بها.</span>
+        </p>
+    </section>
+
     <!-- ── Bottom CTA Banner ──────────────────────── -->
     <section class="cta-banner">
         <h2 data-lang="cta_title">هل أنت مستعد لتطوير مكتبك الهندسي؟</h2>
@@ -8794,6 +9326,26 @@ namespace BonyanForEngineeringConsultingFirms.ViewModels
             }
         };
 
+                function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('themeIcon');
+            const isDark = body.classList.toggle('dark-mode');
+
+            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+
+            // Persist preference across page refreshes
+            localStorage.setItem('bonyan-theme', isDark ? 'dark' : 'light');
+        }
+
+        // Apply saved theme on page load
+        (function () {
+            const saved = localStorage.getItem('bonyan-theme');
+            if (saved === 'dark') {
+                document.body.classList.add('dark-mode');
+                const icon = document.getElementById('themeIcon');
+                if (icon) icon.className = 'fas fa-sun';
+            }
+        })();
         function toggleLanding() {
             const html = document.documentElement;
             const isAr = html.lang === "ar";
@@ -13586,14 +14138,21 @@ else
                 <ul class="dropdown-menu dropdown-menu-end bonyan-dropdown">
                     <li>
                         <span class="dropdown-item-text">
-                            <i class="fas fa-user class=" me-2""></i>
+                            <i class="fas fa-user me-2"></i>
                             @(Context.Session.GetString("FullName") ?? "")
                         </span>
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
+                        <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
+                            <i class="fas fa-id-card me-2"></i>
+                            <span data-lang="my_profile">ملف شخصي</span>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
                         <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout">
-                            <i class="fas fa-sign-out-alt class=" me-2""></i>
+                            <i class="fas fa-sign-out-alt me-2"></i>
                             <span data-lang="logout">تسجيل الخروج</span>
                         </a>
                     </li>
@@ -19230,6 +19789,418 @@ body.dark-mode .af-item:hover {
         padding-right: 20px;
     }
 }
+/* ══════════════════════════════════════════════════════
+   PRICING SECTION
+══════════════════════════════════════════════════════ */
+.pricing-section {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 60px 40px 80px;
+}
+
+.pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+/* ── Base Card ─────────────────────────────────────── */
+.pricing-card {
+    background: var(--white);
+    border: 1.5px solid var(--card-border);
+    border-radius: 16px;
+    padding: 30px 26px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+}
+
+    .pricing-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+
+/* ── Popular Card ──────────────────────────────────── */
+.pricing-card--popular {
+    border-color: var(--secondary);
+    border-width: 2px;
+    box-shadow: 0 8px 30px rgba(200, 146, 42, 0.18);
+    transform: scale(1.03);
+    z-index: 2;
+}
+
+    .pricing-card--popular:hover {
+        transform: scale(1.03) translateY(-4px);
+        box-shadow: 0 14px 40px rgba(200, 146, 42, 0.25);
+    }
+
+.pricing-popular-badge {
+    position: absolute;
+    top: -16px;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--secondary), #e6a832);
+    color: #fff;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 6px 18px rgba(200, 146, 42, 0.4);
+    letter-spacing: 0.3px;
+}
+
+/* ── Card Header ───────────────────────────────────── */
+.pricing-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.pricing-plan-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+    .pricing-plan-icon.blue {
+        background: #E6F1FB;
+        color: #185FA5;
+    }
+
+    .pricing-plan-icon.gold {
+        background: #FFF3DC;
+        color: #A07020;
+    }
+
+    .pricing-plan-icon.purple {
+        background: #F0EAFF;
+        color: #6B3FA0;
+    }
+
+body.dark-mode .pricing-plan-icon.blue {
+    background: rgba(24,95,165,0.2);
+    color: #7ab5e8;
+}
+
+body.dark-mode .pricing-plan-icon.gold {
+    background: rgba(200,146,42,0.2);
+    color: #e6a832;
+}
+
+body.dark-mode .pricing-plan-icon.purple {
+    background: rgba(107,63,160,0.2);
+    color: #b48fe0;
+}
+
+.pricing-plan-name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.pricing-plan-name-ar {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin: 3px 0 0;
+    font-weight: 600;
+}
+
+/* ── Price Block ───────────────────────────────────── */
+.pricing-price-block {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--card-border);
+    padding-top: 18px;
+}
+
+.pricing-price {
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+
+.pricing-card--popular .pricing-price {
+    color: var(--secondary);
+}
+
+.pricing-currency {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+/* ── Limits Block ──────────────────────────────────── */
+.pricing-limits {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 16px 14px;
+    border: 1px solid var(--card-border);
+}
+
+.pricing-limit-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .pricing-limit-item > i {
+        font-size: 1.1rem;
+        color: var(--muted);
+        flex-shrink: 0;
+    }
+
+.pricing-card--popular .pricing-limit-item > i {
+    color: var(--secondary);
+}
+
+.pricing-limit-item > div {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.limit-number {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+}
+
+.pricing-card--popular .limit-number {
+    color: var(--secondary);
+}
+
+.limit-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    line-height: 1.3;
+}
+
+.pricing-limit-divider {
+    width: 1px;
+    height: 44px;
+    background: var(--card-border);
+    margin: 0 14px;
+    flex-shrink: 0;
+}
+
+/* ── Description ───────────────────────────────────── */
+.pricing-desc {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.75;
+    margin: 0;
+}
+
+/* ── Feature List ──────────────────────────────────── */
+.pricing-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+}
+
+    .pricing-features-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 0.86rem;
+        color: var(--text);
+        line-height: 1.5;
+    }
+
+        .pricing-features-list li i {
+            color: #28A745;
+            font-size: 0.8rem;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+
+.pricing-card--popular .pricing-features-list li i {
+    color: var(--secondary);
+}
+
+/* ── CTA Button ────────────────────────────────────── */
+.pricing-cta-btn {
+    display: block;
+    text-align: center;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: 'Cairo', sans-serif;
+    text-decoration: none;
+    transition: all 0.25s;
+    background: var(--bg);
+    color: var(--primary);
+    border: 1.5px solid var(--card-border);
+    margin-top: auto;
+}
+
+    .pricing-cta-btn:hover {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+.pricing-cta-btn--popular {
+    background: linear-gradient(135deg, var(--secondary), #e6a832);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 6px 18px rgba(200, 146, 42, 0.35);
+}
+
+    .pricing-cta-btn--popular:hover {
+        background: linear-gradient(135deg, #b07820, var(--secondary));
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 10px 25px rgba(200, 146, 42, 0.45);
+    }
+
+/* ── All-features note ─────────────────────────────── */
+.pricing-all-features-note {
+    text-align: center;
+    margin-top: 36px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+    .pricing-all-features-note i {
+        color: var(--secondary);
+    }
+
+/* ── Dark Mode Overrides ───────────────────────────── */
+body.dark-mode .pricing-limits {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .pricing-cta-btn {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+    border-color: var(--card-border);
+}
+
+    body.dark-mode .pricing-cta-btn:hover {
+        background: var(--primary);
+        color: #fff;
+    }
+
+/* ── Responsive ────────────────────────────────────── */
+@media (max-width: 992px) {
+    .pricing-grid {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+        margin: 0 auto;
+    }
+
+    .pricing-card--popular {
+        transform: scale(1);
+        order: -1;
+    }
+
+        .pricing-card--popular:hover {
+            transform: translateY(-4px);
+        }
+}
+
+@media (max-width: 768px) {
+    .pricing-section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}
+
+/* ── Theme Toggle Button ───────────────────────────── */
+.theme-toggle-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1.5px solid var(--card-border);
+    background: var(--bg);
+    color: var(--primary);
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s;
+    flex-shrink: 0;
+}
+
+    .theme-toggle-btn:hover {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+        transform: translateY(-1px);
+    }
+
+body.dark-mode .theme-toggle-btn {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #e2e8f0;
+}
+
+    body.dark-mode .theme-toggle-btn:hover {
+        background: var(--secondary);
+        border-color: var(--secondary);
+        color: #fff;
+    }
+
+/* ── Navbar Subscribe Button ───────────────────────── */
+.nav-subscribe-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.25s;
+    white-space: nowrap;
+}
+
+    .nav-subscribe-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(200, 146, 42, 0.35);
+    }
+
+/* ── Smooth scroll for anchor ──────────────────────── */
+html {
+    scroll-behavior: smooth;
+}
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/Login.css ===
 ﻿/* ── Login Page ──────────────────────────────────── */
 * {
@@ -20120,6 +21091,410 @@ body {
         font-size: 0.95rem;
         color: #999;
     }
+=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/profile.css ===
+﻿/* ══════════════════════════════════════════════════════
+   profile.css  –  Employee / Admin Profile Page
+   ══════════════════════════════════════════════════════ */
+
+/* ── Page wrapper ─────────────────────────────────── */
+.profile-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+}
+
+/* ── Header card ──────────────────────────────────── */
+.profile-header-card {
+    background: var(--bonyan-card, #fff);
+    border-radius: 16px;
+    padding: 2rem 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+}
+
+.profile-avatar {
+    font-size: 5rem;
+    color: var(--bonyan-primary, #1e4db7);
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.profile-header-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 .5rem;
+    color: var(--bonyan-text, #111827);
+}
+
+.profile-role-badge {
+    display: inline-block;
+    padding: .3rem 1rem;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .4px;
+    margin-bottom: .8rem;
+}
+
+.role-admin {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.role-projectmanager {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.role-engineer {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.profile-contact-row {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: .9rem;
+    color: var(--bonyan-muted, #6b7280);
+}
+
+/* ── Section ──────────────────────────────────────── */
+.profile-section {
+    background: var(--bonyan-card, #fff);
+    border-radius: 14px;
+    padding: 1.8rem 2rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+}
+
+.profile-section-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--bonyan-primary, #1e4db7);
+    margin-bottom: 1.4rem;
+    padding-bottom: .6rem;
+    border-bottom: 2px solid var(--bonyan-primary, #1e4db7);
+    display: flex;
+    align-items: center;
+}
+
+/* ── Info grid ────────────────────────────────────── */
+.profile-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.info-card {
+    background: var(--bonyan-bg, #f9fafb);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+    transition: box-shadow .2s;
+}
+
+    .info-card:hover {
+        box-shadow: 0 4px 12px rgba(30, 77, 183, .12);
+    }
+
+.info-label {
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--bonyan-muted, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: .4rem;
+}
+
+.info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--bonyan-text, #111827);
+}
+
+/* ── Task stat cards ──────────────────────────────── */
+.task-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.4rem;
+}
+
+.stat-card {
+    border-radius: 12px;
+    padding: 1.3rem 1.2rem;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+}
+
+.stat-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: .82rem;
+    margin-top: .3rem;
+    opacity: .9;
+}
+
+.stat-icon {
+    position: absolute;
+    bottom: .6rem;
+    right: 1rem;
+    font-size: 2.5rem;
+    opacity: .18;
+}
+
+.stat-total {
+    background: linear-gradient(135deg, #1e4db7, #3b82f6);
+}
+
+.stat-completed {
+    background: linear-gradient(135deg, #065f46, #10b981);
+}
+
+.stat-inprogress {
+    background: linear-gradient(135deg, #92400e, #f59e0b);
+}
+
+.stat-pending {
+    background: linear-gradient(135deg, #4c1d95, #8b5cf6);
+}
+
+/* ── Progress bar ─────────────────────────────────── */
+.task-progress-bar-wrap {
+    margin-top: .5rem;
+}
+
+.task-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--bonyan-text, #111827);
+    margin-bottom: .4rem;
+}
+
+.task-progress-bar {
+    height: 10px;
+    background: var(--bonyan-border, #e5e7eb);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.task-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1e4db7, #10b981);
+    border-radius: 999px;
+    transition: width .6s ease;
+}
+
+/* ── Projects table ───────────────────────────────── */
+.projects-table-wrap {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+}
+
+.profile-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .88rem;
+}
+
+    .profile-table thead {
+        background: var(--bonyan-primary, #1e4db7);
+        color: #fff;
+    }
+
+    .profile-table th {
+        padding: .85rem 1rem;
+        text-align: right;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .profile-table td {
+        padding: .75rem 1rem;
+        border-bottom: 1px solid var(--bonyan-border, #e5e7eb);
+        color: var(--bonyan-text, #111827);
+        vertical-align: middle;
+    }
+
+    .profile-table tbody tr:hover {
+        background: var(--bonyan-bg, #f9fafb);
+    }
+
+    .profile-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+/* ── Status badges ────────────────────────────────── */
+.project-status-badge {
+    display: inline-block;
+    padding: .25rem .75rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-inprogress {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-onhold {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-cancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.status-planning {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+/* ── No projects placeholder ──────────────────────── */
+.no-projects {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--bonyan-muted, #6b7280);
+}
+
+/* ── Action buttons row ───────────────────────────── */
+.profile-actions-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1.2rem 2rem;
+}
+
+.btn-profile-action {
+    display: inline-flex;
+    align-items: center;
+    padding: .65rem 1.6rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: .9rem;
+    text-decoration: none;
+    transition: opacity .2s, transform .15s;
+    background: var(--bonyan-primary, #1e4db7);
+    color: #fff;
+}
+
+    .btn-profile-action:hover {
+        opacity: .88;
+        transform: translateY(-1px);
+        color: #fff;
+    }
+
+.btn-secondary-action {
+    background: var(--bonyan-bg, #f3f4f6);
+    color: var(--bonyan-text, #374151);
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+}
+
+    .btn-secondary-action:hover {
+        color: var(--bonyan-text, #374151);
+        background: #e5e7eb;
+    }
+
+/* ── Dark mode overrides ──────────────────────────── */
+body.dark-mode .profile-header-card,
+body.dark-mode .profile-section {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+body.dark-mode .info-card {
+    background: #111827;
+    border-color: #374151;
+}
+
+body.dark-mode .info-value,
+body.dark-mode .profile-name {
+    color: #f9fafb;
+}
+
+body.dark-mode .info-label,
+body.dark-mode .profile-contact-row {
+    color: #9ca3af;
+}
+
+body.dark-mode .profile-table td {
+    color: #f3f4f6;
+    border-color: #374151;
+}
+
+body.dark-mode .profile-table tbody tr:hover {
+    background: #111827;
+}
+
+body.dark-mode .task-progress-bar {
+    background: #374151;
+}
+
+body.dark-mode .btn-secondary-action {
+    background: #374151;
+    color: #f3f4f6;
+    border-color: #4b5563;
+}
+
+/* ── RTL fixes ────────────────────────────────────── */
+[dir="rtl"] .stat-icon {
+    right: auto;
+    left: 1rem;
+}
+
+[dir="rtl"] .profile-table th,
+[dir="rtl"] .profile-table td {
+    text-align: right;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 640px) {
+    .profile-header-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem 1rem;
+    }
+
+    .profile-contact-row {
+        justify-content: center;
+    }
+
+    .task-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .profile-actions-row {
+        padding: 1rem;
+    }
+}
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/project.css ===
 ﻿/* ── Project Page ────────────────────────────────── */
 .page-header {
