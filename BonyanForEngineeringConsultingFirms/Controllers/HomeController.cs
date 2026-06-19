@@ -193,6 +193,114 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             return View(vm);
         }
 
+        // ════════════════════════════════════════════════
+        //  NAVBAR NOTIFICATIONS  (real system data)
+        //  Surfaces: overdue tasks, overdue unpaid invoices,
+        //  and critical site-visit safety alerts.
+        // ════════════════════════════════════════════════
+        [HttpGet]
+        public async Task<IActionResult> GetNotifications()
+        {
+            if (HttpContext.Session.GetString("Email") == null)
+                return Json(new List<object>());
+
+            var role = HttpContext.Session.GetString("Role");
+            var employeeId = HttpContext.Session.GetInt32("EmployeeId");
+            var now = DateTime.Now;
+
+            IQueryable<Bonyan.DAL.Models.Task> taskQ = _context.Tasks.AsNoTracking();
+            IQueryable<Bonyan.DAL.Models.Invoice> invoiceQ = _context.Invoices.AsNoTracking();
+            IQueryable<Bonyan.DAL.Models.SiteVisit> visitQ = _context.SiteVisits.AsNoTracking();
+
+            if (role != "Admin" && employeeId.HasValue)
+            {
+                var myProjectIds = _context.EmployeeProjects
+                    .AsNoTracking()
+                    .Where(ep => ep.EmployeeId == employeeId.Value)
+                    .Select(ep => ep.ProjectId);
+
+                taskQ = taskQ.Where(t => myProjectIds.Contains(t.ProjectId));
+                invoiceQ = invoiceQ.Where(i => myProjectIds.Contains(i.ProjectId));
+                visitQ = visitQ.Where(v => myProjectIds.Contains(v.ProjId));
+            }
+
+            string TimeAgo(DateTime dt)
+            {
+                var span = now - dt;
+                if (span.TotalDays >= 1) return $"منذ {(int)span.TotalDays} يوم";
+                if (span.TotalHours >= 1) return $"منذ {(int)span.TotalHours} ساعة";
+                if (span.TotalMinutes >= 1) return $"منذ {(int)span.TotalMinutes} دقيقة";
+                return "الآن";
+            }
+
+            var overdueTasks = await taskQ
+                .Where(t => t.DueDate != null && t.DueDate < now
+                         && t.Status != TasksStatus.Completed
+                         && t.Status != TasksStatus.Cancelled)
+                .OrderBy(t => t.DueDate)
+                .Take(5)
+                .Select(t => new
+                {
+                    id = "task-" + t.TaskId,
+                    type = "danger",
+                    title = "مهمة متأخرة: " + t.Task_Name,
+                    sub = t.Project != null ? t.Project.ProjectName : "—",
+                    due = t.DueDate,
+                    url = Url.Action("Details", "Task", new { id = t.TaskId })
+                })
+                .ToListAsync();
+
+            var overdueInvoices = await invoiceQ
+                .Where(i => i.Due_Date != null && i.Due_Date < now
+                         && i.Invoice_Status == InvoiceStatus.Unpaid)
+                .OrderBy(i => i.Due_Date)
+                .Take(5)
+                .Select(i => new
+                {
+                    id = "invoice-" + i.Invoice_ID,
+                    type = "warning",
+                    title = "فاتورة متأخرة السداد",
+                    sub = i.Project != null ? i.Project.ProjectName : "—",
+                    due = i.Due_Date,
+                    url = Url.Action("Details", "Invoice", new { id = i.Invoice_ID })
+                })
+                .ToListAsync();
+
+            var criticalVisits = await visitQ
+                .Where(v => v.SafetyStatus == SafetyStatus.Critical)
+                .OrderByDescending(v => v.VisitDate)
+                .Take(3)
+                .Select(v => new
+                {
+                    id = "visit-" + v.VisitId,
+                    type = "danger",
+                    title = "تنبيه سلامة حرج في زيارة موقع",
+                    sub = v.Project != null ? v.Project.ProjectName : "—",
+                    due = (DateTime?)v.VisitDate,
+                    url = Url.Action("Details", "SiteVisit", new { id = v.VisitId })
+                })
+                .ToListAsync();
+
+            var all = overdueTasks
+                .Concat(overdueInvoices)
+                .Concat(criticalVisits)
+                .Select(n => new
+                {
+                    n.id,
+                    n.type,
+                    n.title,
+                    n.sub,
+                    time = n.due.HasValue ? TimeAgo(n.due.Value) : "الآن",
+                    n.url,
+                    isRead = false
+                })
+                .OrderByDescending(n => n.type == "danger")
+                .Take(12)
+                .ToList();
+
+            return Json(all);
+        }
+
         // ── Landing & Error (unchanged) ───────────────────────────────
         public async Task<IActionResult> Landing()
         {

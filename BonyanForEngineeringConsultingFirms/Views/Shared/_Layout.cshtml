@@ -19,13 +19,9 @@
 
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="~/css/home.css" />
+    <link rel="stylesheet" href="~/css/navbar.css" />
 </head>
 <body>
-
-    <!-- ════════════════════════════════════════════════════════
-         BONYAN NAVBAR — Top App Bar
-         Replaces the previous <nav class="bonyan-navbar"> block
-    ════════════════════════════════════════════════════════ -->
     <nav class="bonyan-navbar">
 
         <!-- ── Left Cluster: Sidebar Toggle + Logo + Breadcrumb ── -->
@@ -35,40 +31,31 @@
             </button>
 
             <div class="navbar-logo">
-                <i class="fas fa-building"></i>
-                <span data-lang="Landing_Badge" class="navbar-logo-text">Bonyan Engineering Platform</span>
+                <span class="navbar-logo-mark"><i class="fas fa-building-columns"></i></span>
+                <span data-lang="Landing_Badge" class="navbar-logo-text">Bonyan</span>
             </div>
-
-            <!-- Page context breadcrumb — tells the user where they are without leaving the navbar -->
-            <span class="navbar-divider d-none d-lg-block"></span>
-            <span class="navbar-breadcrumb d-none d-lg-flex">
-                <i class="fas @ViewData["PageIcon"]" style="@(ViewData["PageIcon"] == null ? "display:none" : "")"></i>
-                @(ViewData["PageTitle"] ?? ViewContext.RouteData.Values["controller"])
-            </span>
         </div>
 
-        <!-- ── Center: Global Search ── -->
-        <div class="navbar-search d-none d-md-flex">
-            <i class="fas fa-search navbar-search-icon"></i>
-            <input type="text"
-                   id="globalSearchInput"
-                   class="navbar-search-input"
-                   data-lang-placeholder="search_placeholder"
-                   placeholder="بحث عن مشروع، مهمة، موظف..."
-                   autocomplete="off" />
-            <span class="navbar-search-kbd">Ctrl K</span>
-
-            <!-- Results panel — populated by navbar.js via fetch() to a search endpoint -->
-            <div class="navbar-search-results" id="globalSearchResults"></div>
+        <!-- ── Center: Primary Nav Links (replaces global search) ── -->
+        <div class="navbar-main-links d-none d-md-flex">
+            <a asp-controller="Home" asp-action="Dashboard"
+               class="navbar-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")">
+                <i class="fas fa-gauge-high"></i>
+                <span data-lang="dashboard">لوحة التحكم</span>
+            </a>
+            <a asp-controller="SiteVisit" asp-action="Index"
+               class="navbar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SiteVisit" ? "active" : "")">
+                <i class="fas fa-hard-hat"></i>
+                <span data-lang="sitevisits">زيارات الموقع</span>
+            </a>
+            <a asp-controller="Home" asp-action="Landing" class="navbar-nav-link">
+                <i class="fas fa-circle-info"></i>
+                <span data-lang="about">من نحن</span>
+            </a>
         </div>
 
         <!-- ── Right Cluster: Actions ── -->
         <div class="navbar-right">
-
-            <!-- Mobile-only search trigger (search bar collapses below md) -->
-            <button class="navbar-icon-btn d-flex d-md-none" id="mobileSearchBtn" title="Search" aria-label="Search">
-                <i class="fas fa-search"></i>
-            </button>
 
             <!-- Live Date / Time -->
             <div class="navbar-clock d-none d-lg-flex" id="navbarClock" title="System time">
@@ -91,14 +78,9 @@
                     @{
                         var qaRole = Context.Session.GetString("Role");
                     }
-                    @if (qaRole == "Admin" || qaRole == "ProjectManager")
+
+                    @if (qaRole == "Admin")
                     {
-                        <li>
-                            <a class="dropdown-item" asp-controller="Task" asp-action="Create">
-                                <i class="fas fa-plus-circle text-success me-2"></i>
-                                <span data-lang="qa_new_task">مهمة جديدة</span>
-                            </a>
-                        </li>
                         <li>
                             <a class="dropdown-item" asp-controller="Project" asp-action="Create">
                                 <i class="fas fa-project-diagram text-primary me-2"></i>
@@ -106,22 +88,48 @@
                             </a>
                         </li>
                     }
-                    <li>
-                        <a class="dropdown-item" asp-controller="SiteVisit" asp-action="Create">
-                            <i class="fas fa-hard-hat text-warning me-2"></i>
-                            <span data-lang="qa_new_visit">زيارة موقع جديدة</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" asp-controller="Document" asp-action="Index">
-                            <i class="fas fa-file-upload text-secondary me-2"></i>
-                            <span data-lang="qa_upload_doc">رفع مستند</span>
-                        </a>
-                    </li>
+
+                    @if (qaRole == "ProjectManager")
+                    {
+                        <li>
+                            <a class="dropdown-item" asp-controller="Task" asp-action="Index">
+                                <i class="fas fa-plus-circle text-success me-2"></i>
+                                <span data-lang="qa_new_task">جميع المهام</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="SiteVisit" asp-action="Index">
+                                <i class="fas fa-hard-hat text-warning me-2"></i>
+                                <span data-lang="qa_new_visit">زيارات الموقع</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="Document" asp-action="Index">
+                                <i class="fas fa-file-upload text-secondary me-2"></i>
+                                <span data-lang="qa_upload_doc"> جميع المستندات</span>
+                            </a>
+                        </li>
+                    }
+
+                    @if (qaRole == "Engineer")
+                    {
+                        <li>
+                            <a class="dropdown-item" asp-controller="Drawing" asp-action="Index">
+                                <i class="fas fa-camera text-info me-2"></i>
+                                <span data-lang="qa_upload_photos">جميع الصور</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="Document" asp-action="Index">
+                                <i class="fas fa-file-upload text-secondary me-2"></i>
+                                <span data-lang="qa_upload_doc">جميع المستندات</span>
+                            </a>
+                        </li>
+                    }
                 </ul>
             </div>
 
-            <!-- Notification Center — driven by real overdue-task / system data -->
+            <!-- Notification Center — driven by real system data (GetNotifications) -->
             <div class="navbar-notifications dropdown">
                 <button class="navbar-icon-btn" id="notifBtn" data-bs-toggle="dropdown" title="Notifications" aria-label="Notifications">
                     <i class="fas fa-bell"></i>
@@ -133,7 +141,6 @@
                         <a href="#" class="navbar-notif-clear" id="notifClearBtn" data-lang="mark_all_read">تعليم الكل كمقروء</a>
                     </div>
                     <div class="navbar-notif-list" id="notifList">
-                        <!-- Populated dynamically by navbar.js -> fetchNotifications() -->
                         <div class="navbar-notif-empty" data-lang="loading_notifications">
                             جاري تحميل الإشعارات...
                         </div>
@@ -172,51 +179,55 @@
             <span class="navbar-divider d-none d-sm-block"></span>
 
             <!-- User Profile -->
+            @{
+                var fullName = Context.Session.GetString("FullName") ?? "المستخدم";
+                var initials = string.Concat(fullName.Split(' ').Where(w => w.Length > 0).Take(2).Select(w => w[0]));
+                var roleRaw = Context.Session.GetString("Role") ?? "";
+                var roleClass = roleRaw switch
+                {
+                    "Admin" => "chip-admin",
+                    "ProjectManager" => "chip-pm",
+                    "Engineer" => "chip-engineer",
+                    _ => "chip-default"
+                };
+            }
             <div class="navbar-user dropdown">
-                <div class="user-info-btn" data-bs-toggle="dropdown" style="cursor:pointer" aria-label="User menu">
+                <div class="user-info-btn" data-bs-toggle="dropdown" aria-label="User menu">
                     <div class="navbar-avatar">
-                        @{
-                            var fullName = Context.Session.GetString("FullName") ?? "المستخدم";
-                            var initials = string.Concat(fullName.Split(' ').Where(w => w.Length > 0).Take(2).Select(w => w[0]));
-                        }
                         <span>@(initials.Length > 0 ? initials.ToUpper() : "U")</span>
                         <span class="navbar-avatar-status"></span>
                     </div>
                     <div class="user-details d-none d-md-flex">
                         <span class="user-name">@fullName</span>
-                        <span class="user-role">@(Context.Session.GetString("Role") ?? "")</span>
+                        <span class="user-role">@roleRaw</span>
                     </div>
-                    <i class="fas fa-chevron-down fa-xs d-none d-md-inline"></i>
+                    <i class="fas fa-chevron-down navbar-chevron d-none d-md-inline"></i>
                 </div>
-                <ul class="dropdown-menu dropdown-menu-end bonyan-dropdown">
-                    <li>
-                        <span class="dropdown-item-text">
-                            <i class="fas fa-user me-2"></i>
-                            @fullName
-                            <small class="d-block text-muted">@(Context.Session.GetString("Email") ?? "")</small>
-                        </span>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
-                            <i class="fas fa-id-card me-2"></i>
+
+                <div class="dropdown-menu dropdown-menu-end bonyan-profile-dropdown">
+                    <div class="profile-dropdown-header">
+                        <div class="profile-dropdown-avatar">
+                            <span>@(initials.Length > 0 ? initials.ToUpper() : "U")</span>
+                        </div>
+                        <div class="profile-dropdown-info">
+                            <div class="profile-dropdown-name">@fullName</div>
+                            <div class="profile-dropdown-email">@(Context.Session.GetString("Email") ?? "")</div>
+                            <span class="profile-chip @roleClass"><span class="dot"></span>@roleRaw</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-dropdown-body">
+                        <a class="profile-dropdown-item" asp-controller="Account" asp-action="Profile">
+                            <span class="item-icon icon-blue"><i class="fas fa-id-card"></i></span>
                             <span data-lang="my_profile">ملف شخصي</span>
                         </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">
-                            <i class="fas fa-cog me-2"></i>
-                            <span data-lang="settings">الإعدادات</span>
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout">
-                            <i class="fas fa-sign-out-alt me-2"></i>
+                        <div class="profile-dropdown-divider"></div>
+                        <a class="profile-dropdown-item item-danger" asp-controller="Account" asp-action="Logout">
+                            <span class="item-icon icon-red"><i class="fas fa-sign-out-alt"></i></span>
                             <span data-lang="logout">تسجيل الخروج</span>
                         </a>
-                    </li>
-                </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -502,7 +513,6 @@
         </div>
     </div>
 
-    <link rel="stylesheet" href="~/css/navbar.css" />
     <script src="~/js/navbar.js"></script>
 </body>
 </html>
