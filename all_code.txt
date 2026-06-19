@@ -14101,45 +14101,178 @@ else
 </head>
 <body>
 
+    <!-- ════════════════════════════════════════════════════════
+         BONYAN NAVBAR — Top App Bar
+         Replaces the previous <nav class="bonyan-navbar"> block
+    ════════════════════════════════════════════════════════ -->
     <nav class="bonyan-navbar">
 
-        <button class="sidebar-toggle" onclick="toggleSidebar()">
-            <i class="fas fa-bars"></i>
-        </button>
+        <!-- ── Left Cluster: Sidebar Toggle + Logo + Breadcrumb ── -->
+        <div class="navbar-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Menu" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
 
-        <div class="navbar-logo">
-            <i class="fas fa-building"></i>
-            <span data-lang="Landing_Badge">Bonyan Engineering Platform</span>
+            <div class="navbar-logo">
+                <i class="fas fa-building"></i>
+                <span data-lang="Landing_Badge" class="navbar-logo-text">Bonyan Engineering Platform</span>
+            </div>
+
+            <!-- Page context breadcrumb — tells the user where they are without leaving the navbar -->
+            <span class="navbar-divider d-none d-lg-block"></span>
+            <span class="navbar-breadcrumb d-none d-lg-flex">
+                <i class="fas @ViewData["PageIcon"]" style="@(ViewData["PageIcon"] == null ? "display:none" : "")"></i>
+                @(ViewData["PageTitle"] ?? ViewContext.RouteData.Values["controller"])
+            </span>
         </div>
 
+        <!-- ── Center: Global Search ── -->
+        <div class="navbar-search d-none d-md-flex">
+            <i class="fas fa-search navbar-search-icon"></i>
+            <input type="text"
+                   id="globalSearchInput"
+                   class="navbar-search-input"
+                   data-lang-placeholder="search_placeholder"
+                   placeholder="بحث عن مشروع، مهمة، موظف..."
+                   autocomplete="off" />
+            <span class="navbar-search-kbd">Ctrl K</span>
+
+            <!-- Results panel — populated by navbar.js via fetch() to a search endpoint -->
+            <div class="navbar-search-results" id="globalSearchResults"></div>
+        </div>
+
+        <!-- ── Right Cluster: Actions ── -->
         <div class="navbar-right">
 
-            <button class="dark-mode-btn" id="darkModeBtn" onclick="toggleDarkMode()" title="Dark / Light">
+            <!-- Mobile-only search trigger (search bar collapses below md) -->
+            <button class="navbar-icon-btn d-flex d-md-none" id="mobileSearchBtn" title="Search" aria-label="Search">
+                <i class="fas fa-search"></i>
+            </button>
+
+            <!-- Live Date / Time -->
+            <div class="navbar-clock d-none d-lg-flex" id="navbarClock" title="System time">
+                <i class="fas fa-clock"></i>
+                <div class="navbar-clock-text">
+                    <span id="navbarTime">--:--</span>
+                    <span id="navbarDate">----</span>
+                </div>
+            </div>
+
+            <span class="navbar-divider d-none d-sm-block"></span>
+
+            <!-- Quick Actions (role-aware shortcut menu) -->
+            <div class="navbar-quick-actions dropdown d-none d-sm-flex">
+                <button class="navbar-icon-btn" data-bs-toggle="dropdown" title="Quick Actions" aria-label="Quick actions">
+                    <i class="fas fa-bolt"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end bonyan-dropdown navbar-quick-menu">
+                    <li class="dropdown-header" data-lang="quick_actions">إجراءات سريعة</li>
+                    @{
+                        var qaRole = Context.Session.GetString("Role");
+                    }
+                    @if (qaRole == "Admin" || qaRole == "ProjectManager")
+                    {
+                        <li>
+                            <a class="dropdown-item" asp-controller="Task" asp-action="Create">
+                                <i class="fas fa-plus-circle text-success me-2"></i>
+                                <span data-lang="qa_new_task">مهمة جديدة</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="Project" asp-action="Create">
+                                <i class="fas fa-project-diagram text-primary me-2"></i>
+                                <span data-lang="qa_new_project">مشروع جديد</span>
+                            </a>
+                        </li>
+                    }
+                    <li>
+                        <a class="dropdown-item" asp-controller="SiteVisit" asp-action="Create">
+                            <i class="fas fa-hard-hat text-warning me-2"></i>
+                            <span data-lang="qa_new_visit">زيارة موقع جديدة</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Document" asp-action="Index">
+                            <i class="fas fa-file-upload text-secondary me-2"></i>
+                            <span data-lang="qa_upload_doc">رفع مستند</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Notification Center — driven by real overdue-task / system data -->
+            <div class="navbar-notifications dropdown">
+                <button class="navbar-icon-btn" id="notifBtn" data-bs-toggle="dropdown" title="Notifications" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="navbar-badge" id="notifBadge" style="display:none">0</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end bonyan-dropdown navbar-notif-menu">
+                    <div class="navbar-notif-header">
+                        <span data-lang="notifications">الإشعارات</span>
+                        <a href="#" class="navbar-notif-clear" id="notifClearBtn" data-lang="mark_all_read">تعليم الكل كمقروء</a>
+                    </div>
+                    <div class="navbar-notif-list" id="notifList">
+                        <!-- Populated dynamically by navbar.js -> fetchNotifications() -->
+                        <div class="navbar-notif-empty" data-lang="loading_notifications">
+                            جاري تحميل الإشعارات...
+                        </div>
+                    </div>
+                    <div class="navbar-notif-footer">
+                        <a asp-controller="Home" asp-action="Dashboard" data-lang="view_all">عرض الكل</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status Indicator -->
+            <span class="navbar-status d-none d-md-flex" title="All systems operational">
+                <span class="navbar-status-dot"></span>
+                <span data-lang="status_online">متصل</span>
+            </span>
+
+            <span class="navbar-divider d-none d-sm-block"></span>
+
+            <!-- Chatbot Toggle -->
+            <button class="navbar-icon-btn navbar-chatbot-btn" id="chatbotToggleBtn" title="Bonyan Assistant" aria-label="Open assistant">
+                <i class="fas fa-robot"></i>
+                <span class="navbar-chatbot-pulse"></span>
+            </button>
+
+            <!-- Dark / Light Mode -->
+            <button class="navbar-icon-btn" id="darkModeBtn" onclick="toggleDarkMode()" title="Dark / Light" aria-label="Toggle theme">
                 <i class="fas fa-moon" id="darkModeIcon"></i>
             </button>
 
+            <!-- Language Switcher -->
             <button id="langBtn" class="lang-btn" onclick="toggleLanguage()">
-                English
+                <i class="fas fa-globe me-1"></i>
+                <span id="langBtnText">English</span>
             </button>
 
+            <span class="navbar-divider d-none d-sm-block"></span>
+
+            <!-- User Profile -->
             <div class="navbar-user dropdown">
-                <div class="user-info-btn" data-bs-toggle="dropdown" style="cursor:pointer">
-                    <i class="fas fa-user-circle fa-lg"></i>
-                    <div class="user-details">
-                        <span class="user-name">
-                            @(Context.Session.GetString("FullName") ?? "المستخدم")
-                        </span>
-                        <span class="user-role">
-                            @(Context.Session.GetString("Role") ?? "")
-                        </span>
+                <div class="user-info-btn" data-bs-toggle="dropdown" style="cursor:pointer" aria-label="User menu">
+                    <div class="navbar-avatar">
+                        @{
+                            var fullName = Context.Session.GetString("FullName") ?? "المستخدم";
+                            var initials = string.Concat(fullName.Split(' ').Where(w => w.Length > 0).Take(2).Select(w => w[0]));
+                        }
+                        <span>@(initials.Length > 0 ? initials.ToUpper() : "U")</span>
+                        <span class="navbar-avatar-status"></span>
                     </div>
-                    <i class="fas fa-chevron-down fa-xs"></i>
+                    <div class="user-details d-none d-md-flex">
+                        <span class="user-name">@fullName</span>
+                        <span class="user-role">@(Context.Session.GetString("Role") ?? "")</span>
+                    </div>
+                    <i class="fas fa-chevron-down fa-xs d-none d-md-inline"></i>
                 </div>
                 <ul class="dropdown-menu dropdown-menu-end bonyan-dropdown">
                     <li>
                         <span class="dropdown-item-text">
                             <i class="fas fa-user me-2"></i>
-                            @(Context.Session.GetString("FullName") ?? "")
+                            @fullName
+                            <small class="d-block text-muted">@(Context.Session.GetString("Email") ?? "")</small>
                         </span>
                     </li>
                     <li><hr class="dropdown-divider"></li>
@@ -14147,6 +14280,12 @@ else
                         <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
                             <i class="fas fa-id-card me-2"></i>
                             <span data-lang="my_profile">ملف شخصي</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">
+                            <i class="fas fa-cog me-2"></i>
+                            <span data-lang="settings">الإعدادات</span>
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
@@ -14158,9 +14297,15 @@ else
                     </li>
                 </ul>
             </div>
-
         </div>
     </nav>
+
+    <!-- Mobile search overlay (shown only when mobileSearchBtn is tapped) -->
+    <div class="navbar-mobile-search d-md-none" id="mobileSearchBar">
+        <i class="fas fa-search"></i>
+        <input type="text" id="mobileSearchInput" data-lang-placeholder="search_placeholder" placeholder="بحث..." autocomplete="off" />
+        <button id="mobileSearchClose"><i class="fas fa-times"></i></button>
+    </div>
 
     <div class="bonyan-wrapper">
 
@@ -14412,6 +14557,32 @@ else
     </script>
 
     @RenderSection("Scripts", required: false)
+
+    <!-- ════════════════════════════════════════════════════════
+         CHATBOT WIDGET — minimal shell, wire your real bot into
+         navbar.js -> openChatbot() / the #chatbotPanel below
+    ════════════════════════════════════════════════════════ -->
+    <div class="chatbot-panel" id="chatbotPanel">
+        <div class="chatbot-panel-header">
+            <div class="chatbot-panel-title">
+                <i class="fas fa-robot"></i>
+                <span data-lang="assistant_name">مساعد بنيان</span>
+            </div>
+            <button id="chatbotCloseBtn" aria-label="Close assistant"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="chatbot-panel-body" id="chatbotBody">
+            <div class="chatbot-msg chatbot-msg-bot">
+                <span data-lang="assistant_greeting">مرحبًا! كيف يمكنني مساعدتك اليوم؟</span>
+            </div>
+        </div>
+        <div class="chatbot-panel-footer">
+            <input type="text" id="chatbotInput" data-lang-placeholder="type_message" placeholder="اكتب رسالتك..." autocomplete="off" />
+            <button id="chatbotSendBtn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="~/css/navbar.css" />
+    <script src="~/js/navbar.js"></script>
 </body>
 </html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Shared/_Layout.cshtml.css ===
 ﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
@@ -21091,6 +21262,704 @@ body {
         font-size: 0.95rem;
         color: #999;
     }
+=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/navbar.css ===
+﻿/* ══════════════════════════════════════════════════════════
+   navbar.css
+   Extends .bonyan-navbar from site.css with the new toggles:
+   search, notifications, quick actions, clock, chatbot, avatar.
+   Depends on variables already defined in site.css:
+   --primary, --secondary, --white, --bg, --text
+══════════════════════════════════════════════════════════ */
+
+/* ── Layout clusters ─────────────────────────────────────── */
+.navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.navbar-logo-text {
+    white-space: nowrap;
+}
+
+.navbar-divider {
+    width: 1px;
+    height: 26px;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.navbar-breadcrumb {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.85rem;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+/* ── Generic round icon button (reused by quick actions,
+       notifications, chatbot, dark mode) ───────────────────── */
+.navbar-icon-btn {
+    position: relative;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: var(--white);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.25s, transform 0.2s;
+}
+
+    .navbar-icon-btn:hover {
+        background: rgba(255, 255, 255, 0.18);
+        transform: translateY(-1px);
+    }
+
+    .navbar-icon-btn:active {
+        transform: translateY(0);
+    }
+
+/* ── Notification badge ──────────────────────────────────── */
+.navbar-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--danger, #DC3545);
+    color: var(--white);
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--primary);
+    line-height: 1;
+}
+
+[dir="ltr"] .navbar-badge {
+    right: auto;
+    left: -4px;
+}
+
+/* ── Global Search (desktop, centered) ───────────────────── */
+.navbar-search {
+    position: relative;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 0 10px;
+    width: 320px;
+    max-width: 30vw;
+    height: 38px;
+    transition: border-color 0.25s, background 0.25s;
+}
+
+    .navbar-search:focus-within {
+        border-color: var(--secondary);
+        background: rgba(255, 255, 255, 0.14);
+    }
+
+.navbar-search-icon {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+}
+
+.navbar-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--white);
+    font-size: 0.85rem;
+    padding: 0 8px;
+    min-width: 0;
+}
+
+    .navbar-search-input::placeholder {
+        color: rgba(255, 255, 255, 0.55);
+    }
+
+.navbar-search-kbd {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 5px;
+    padding: 1px 6px;
+    flex-shrink: 0;
+}
+
+.navbar-search-results {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--white);
+    color: var(--text);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    max-height: 360px;
+    overflow-y: auto;
+    z-index: 1100;
+}
+
+    .navbar-search-results.show {
+        display: block;
+    }
+
+.navbar-search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 0.88rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+    .navbar-search-result-item:hover {
+        background: #F0F4FF;
+    }
+
+    .navbar-search-result-item i {
+        color: var(--primary);
+        width: 18px;
+        text-align: center;
+    }
+
+.navbar-search-empty {
+    padding: 16px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #999;
+}
+
+/* Mobile search overlay */
+.navbar-mobile-search {
+    display: none;
+    position: fixed;
+    top: var(--navbar-h);
+    left: 0;
+    right: 0;
+    background: var(--primary);
+    padding: 10px 16px;
+    align-items: center;
+    gap: 10px;
+    z-index: 998;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+    .navbar-mobile-search.show {
+        display: flex;
+    }
+
+    .navbar-mobile-search i {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .navbar-mobile-search input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.12);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: var(--white);
+        outline: none;
+    }
+
+    .navbar-mobile-search button {
+        background: transparent;
+        border: none;
+        color: var(--white);
+        font-size: 1.1rem;
+    }
+
+/* ── Live Clock ───────────────────────────────────────────── */
+.navbar-clock {
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.78rem;
+}
+
+    .navbar-clock i {
+        color: var(--secondary);
+    }
+
+.navbar-clock-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+    .navbar-clock-text span:first-child {
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    .navbar-clock-text span:last-child {
+        opacity: 0.75;
+        font-size: 0.68rem;
+    }
+
+/* ── Quick Actions Dropdown ──────────────────────────────── */
+.navbar-quick-menu {
+    min-width: 230px;
+}
+
+/* ── Notification Dropdown ───────────────────────────────── */
+.navbar-notif-menu {
+    width: 340px;
+    max-width: 90vw;
+    padding: 0;
+    overflow: hidden;
+}
+
+.navbar-notif-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--primary);
+    color: var(--white);
+    font-weight: 700;
+    font-size: 0.92rem;
+}
+
+.navbar-notif-clear {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--secondary);
+    text-decoration: none;
+}
+
+    .navbar-notif-clear:hover {
+        text-decoration: underline;
+    }
+
+.navbar-notif-list {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.navbar-notif-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    text-decoration: none;
+    color: var(--text, #2D2D2D);
+    transition: background 0.2s;
+}
+
+    .navbar-notif-item:hover {
+        background: #F8FAFF;
+    }
+
+    .navbar-notif-item.unread {
+        background: #F0F4FF;
+    }
+
+.navbar-notif-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    color: var(--white);
+}
+
+    .navbar-notif-icon.warning {
+        background: #ffc107;
+    }
+
+    .navbar-notif-icon.danger {
+        background: var(--danger, #DC3545);
+    }
+
+    .navbar-notif-icon.info {
+        background: #17a2b8;
+    }
+
+    .navbar-notif-icon.success {
+        background: var(--success, #28A745);
+    }
+
+.navbar-notif-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.navbar-notif-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.navbar-notif-sub {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.navbar-notif-time {
+    font-size: 0.68rem;
+    color: #aaa;
+    margin-top: 3px;
+}
+
+.navbar-notif-empty {
+    padding: 28px 16px;
+    text-align: center;
+    color: #999;
+    font-size: 0.85rem;
+}
+
+.navbar-notif-footer {
+    text-align: center;
+    padding: 10px;
+    border-top: 1px solid #eee;
+}
+
+    .navbar-notif-footer a {
+        color: var(--primary);
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+/* ── System Status Indicator ─────────────────────────────── */
+.navbar-status {
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.navbar-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success, #28A745);
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.6);
+    animation: navbarPulse 2s infinite;
+}
+
+@keyframes navbarPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.5);
+    }
+
+    70% {
+        box-shadow: 0 0 0 6px rgba(40, 167, 69, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+/* ── Chatbot Toggle Button ───────────────────────────────── */
+.navbar-chatbot-btn {
+    background: var(--secondary);
+}
+
+    .navbar-chatbot-btn:hover {
+        background: var(--secondary);
+        opacity: 0.9;
+    }
+
+.navbar-chatbot-pulse {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 9px;
+    height: 9px;
+    background: #28A745;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+}
+
+[dir="ltr"] .navbar-chatbot-pulse {
+    right: auto;
+    left: -2px;
+}
+
+/* ── Avatar ───────────────────────────────────────────────── */
+.navbar-avatar {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--secondary), #e0ab47);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.navbar-avatar-status {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #28A745;
+    border: 2px solid var(--primary);
+}
+
+[dir="ltr"] .navbar-avatar-status {
+    right: auto;
+    left: -2px;
+}
+
+/* ── Chatbot Panel (slide-in widget) ─────────────────────── */
+.chatbot-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 340px;
+    max-width: calc(100vw - 32px);
+    height: 460px;
+    max-height: calc(100vh - 100px);
+    background: var(--white, #fff);
+    border-radius: 16px;
+    box-shadow: 0 14px 50px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    z-index: 1200;
+    transform: translateY(20px) scale(0.96);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+}
+
+[dir="ltr"] .chatbot-panel {
+    right: auto;
+    left: 20px;
+}
+
+.chatbot-panel.open {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.chatbot-panel-header {
+    background: var(--primary);
+    color: var(--white);
+    padding: 14px 16px;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chatbot-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+    .chatbot-panel-title i {
+        color: var(--secondary);
+    }
+
+#chatbotCloseBtn {
+    background: transparent;
+    border: none;
+    color: var(--white);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.chatbot-panel-body {
+    flex: 1;
+    padding: 14px;
+    overflow-y: auto;
+    background: var(--bg, #F4F6F9);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chatbot-msg {
+    max-width: 85%;
+    padding: 9px 13px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.chatbot-msg-bot {
+    background: var(--white, #fff);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    align-self: flex-start;
+    border-bottom-left-radius: 3px;
+}
+
+[dir="rtl"] .chatbot-msg-bot {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 3px;
+}
+
+.chatbot-msg-user {
+    background: var(--primary);
+    color: var(--white);
+    align-self: flex-end;
+    border-bottom-right-radius: 3px;
+}
+
+[dir="rtl"] .chatbot-msg-user {
+    border-bottom-right-radius: 12px;
+    border-bottom-left-radius: 3px;
+}
+
+.chatbot-panel-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+    .chatbot-panel-footer input {
+        flex: 1;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        padding: 8px 14px;
+        outline: none;
+        font-size: 0.85rem;
+        background: var(--input-bg, #f4f6f9);
+        color: var(--text);
+    }
+
+#chatbotSendBtn {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+    #chatbotSendBtn:hover {
+        background: #142d55;
+    }
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE overrides for new components
+══════════════════════════════════════════════════════════ */
+body.dark-mode .navbar-search-results {
+    background: #1a2535;
+    color: #e2e8f0;
+}
+
+body.dark-mode .navbar-search-result-item {
+    color: #e2e8f0;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+    body.dark-mode .navbar-search-result-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+body.dark-mode .navbar-notif-item {
+    color: #e2e8f0;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+    body.dark-mode .navbar-notif-item:hover,
+    body.dark-mode .navbar-notif-item.unread {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+body.dark-mode .navbar-notif-footer {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .chatbot-panel {
+    background: #1a2535;
+}
+
+body.dark-mode .chatbot-panel-body {
+    background: #0f1923;
+}
+
+body.dark-mode .chatbot-msg-bot {
+    background: #1a2535;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+}
+
+body.dark-mode .chatbot-panel-footer {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════ */
+@media (max-width: 992px) {
+    .navbar-search {
+        width: 220px;
+    }
+}
+
+@media (max-width: 768px) {
+    .bonyan-navbar {
+        padding: 0 12px;
+        gap: 8px;
+    }
+
+    .navbar-logo-text {
+        display: none;
+    }
+
+    .navbar-right {
+        gap: 8px;
+    }
+
+    .user-details {
+        display: none;
+    }
+
+    .chatbot-panel {
+        right: 10px;
+        left: 10px;
+        width: auto;
+        bottom: 10px;
+    }
+}
+
+@media (max-width: 420px) {
+    .lang-btn span {
+        display: none;
+    }
+
+    .lang-btn {
+        padding: 8px 10px;
+    }
+}
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/profile.css ===
 ﻿/* ══════════════════════════════════════════════════════
    profile.css  –  Employee / Admin Profile Page
@@ -23541,3 +24410,848 @@ textarea.form-control {
     .alert-success-msg i {
         margin-left: 8px;
     }
+=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/js/lang-switch.js ===
+﻿// langswitch.js
+
+function applyLanguage(lang) {
+    // 1. Fallback security check
+    const data = TRANSLATIONS[lang];
+    if (!data) return;
+
+    // 2. Set structural HTML document settings
+    document.documentElement.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+    document.documentElement.setAttribute("lang", lang);
+    localStorage.setItem("lang", lang);
+
+    // 3. Scan and translate standard text elements AND placeholders
+    document.querySelectorAll("[data-lang]").forEach(el => {
+        const key = el.getAttribute("data-lang");
+        if (data[key]) {
+            // Update standard element inner text
+            el.innerText = data[key];
+
+            // Support text placeholders on inputs/text areas
+            if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+                el.setAttribute("placeholder", data[key]);
+            }
+        }
+    });
+
+    // 4. Update the trigger button text safely
+    const btn = document.getElementById("langBtn");
+    if (btn) btn.innerText = lang === "ar" ? "English" : "عربي";
+
+    // 5. Fire custom app events if needed
+    document.dispatchEvent(new CustomEvent("languageChanged", { detail: { lang } }));
+}
+
+function toggleLanguage() {
+    const current = localStorage.getItem("lang") || "ar";
+    applyLanguage(current === "ar" ? "en" : "ar");
+}
+
+// Run immediately as soon as DOM environment parses
+document.addEventListener("DOMContentLoaded", function () {
+    const saved = localStorage.getItem("lang") || "ar";
+    applyLanguage(saved);
+});=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/js/navbar.js ===
+﻿/* ══════════════════════════════════════════════════════════
+   navbar.js
+   Behavior for: live clock, global search, notification center,
+   chatbot panel, quick actions, and language-button label sync.
+   Dark mode + sidebar toggle stay in _Layout.cshtml as-is.
+══════════════════════════════════════════════════════════ */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* ── 1. LIVE DATE / TIME ────────────────────────────────
+       Updates every second. Locale follows the active <html lang>
+       so it automatically reads in Arabic or English digits/format. */
+    function updateClock() {
+        const timeEl = document.getElementById("navbarTime");
+        const dateEl = document.getElementById("navbarDate");
+        if (!timeEl || !dateEl) return;
+
+        const lang = document.documentElement.getAttribute("lang") || "ar";
+        const locale = lang === "ar" ? "ar-EG" : "en-US";
+        const now = new Date();
+
+        timeEl.textContent = now.toLocaleTimeString(locale, {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+        dateEl.textContent = now.toLocaleDateString(locale, {
+            weekday: "short",
+            day: "numeric",
+            month: "short"
+        });
+    }
+    updateClock();
+    setInterval(updateClock, 1000 * 30); // refresh every 30s is enough for a clock without a seconds display
+
+    /* ── 2. GLOBAL SEARCH ────────────────────────────────────
+       Placeholder client logic. Wire this to a real endpoint,
+       e.g. GET /api/search?q=... returning JSON:
+       [{ type: "project", id, name, url, icon }, ...]
+       Suggested controller: SearchController.Global(string q) */
+    const searchInput = document.getElementById("globalSearchInput");
+    const searchResults = document.getElementById("globalSearchResults");
+    let searchDebounce = null;
+
+    if (searchInput) {
+        searchInput.addEventListener("input", function () {
+            clearTimeout(searchDebounce);
+            const query = this.value.trim();
+
+            if (query.length < 2) {
+                searchResults.classList.remove("show");
+                searchResults.innerHTML = "";
+                return;
+            }
+
+            // Debounce to avoid firing a request on every keystroke
+            searchDebounce = setTimeout(() => runGlobalSearch(query), 300);
+        });
+
+        searchInput.addEventListener("focus", function () {
+            if (this.value.trim().length >= 2) searchResults.classList.add("show");
+        });
+
+        document.addEventListener("click", function (e) {
+            if (!e.target.closest(".navbar-search")) {
+                searchResults.classList.remove("show");
+            }
+        });
+    }
+
+    function runGlobalSearch(query) {
+        // ── TODO: replace with real fetch() call ──
+        // fetch(`/Search/Global?q=${encodeURIComponent(query)}`)
+        //     .then(r => r.json())
+        //     .then(renderSearchResults)
+        //     .catch(() => renderSearchResults([]));
+
+        // Demo placeholder so the UI is visibly functional out of the box:
+        const demoMatches = [
+            { type: "project", name: `Project matching "${query}"`, icon: "fa-project-diagram", url: "#" },
+            { type: "task", name: `Task matching "${query}"`, icon: "fa-tasks", url: "#" }
+        ];
+        renderSearchResults(demoMatches);
+    }
+
+    function renderSearchResults(items) {
+        if (!items || items.length === 0) {
+            searchResults.innerHTML = `<div class="navbar-search-empty">لا توجد نتائج</div>`;
+        } else {
+            searchResults.innerHTML = items.map(item => `
+                <a href="${item.url}" class="navbar-search-result-item">
+                    <i class="fas ${item.icon}"></i>
+                    <span>${item.name}</span>
+                </a>
+            `).join("");
+        }
+        searchResults.classList.add("show");
+    }
+
+    // Ctrl+K / Cmd+K focuses the search box (common power-user shortcut)
+    document.addEventListener("keydown", function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+            e.preventDefault();
+            if (searchInput) searchInput.focus();
+        }
+    });
+
+    // Mobile search bar open/close
+    const mobileSearchBtn = document.getElementById("mobileSearchBtn");
+    const mobileSearchBar = document.getElementById("mobileSearchBar");
+    const mobileSearchClose = document.getElementById("mobileSearchClose");
+
+    if (mobileSearchBtn && mobileSearchBar) {
+        mobileSearchBtn.addEventListener("click", function () {
+            mobileSearchBar.classList.add("show");
+            document.getElementById("mobileSearchInput")?.focus();
+        });
+        mobileSearchClose?.addEventListener("click", function () {
+            mobileSearchBar.classList.remove("show");
+        });
+    }
+
+    /* ── 3. NOTIFICATION CENTER ─────────────────────────────
+       Placeholder data shaped exactly like your dashboard's
+       OverdueTaskRow + a couple of system-level alert types,
+       so swapping in a real endpoint is a drop-in replacement.
+
+       Suggested real endpoint: GET /Home/GetNotifications
+       returning JSON: [{ id, type, title, sub, time, isRead }]
+       where `type` is one of: warning | danger | info | success */
+    const notifBadge = document.getElementById("notifBadge");
+    const notifList = document.getElementById("notifList");
+    const notifClear = document.getElementById("notifClearBtn");
+
+    const notifIcons = {
+        warning: "fa-exclamation-triangle",
+        danger: "fa-clock",
+        info: "fa-info-circle",
+        success: "fa-check-circle"
+    };
+
+    function fetchNotifications() {
+        // ── TODO: replace with real fetch() call ──
+        // fetch("/Home/GetNotifications")
+        //     .then(r => r.json())
+        //     .then(renderNotifications)
+        //     .catch(() => renderNotifications([]));
+
+        // Demo data — mirrors the real "overdue tasks" the dashboard already tracks
+        const demoNotifications = [
+            { id: 1, type: "danger", title: "مهمة متأخرة: تركيب الأساسات", sub: "مشروع برج النيل", time: "منذ 2 ساعة", isRead: false },
+            { id: 2, type: "warning", title: "فاتورة غير مدفوعة", sub: "مشروع كومباوند الواحة", time: "منذ 5 ساعات", isRead: false },
+            { id: 3, type: "info", title: "زيارة موقع جديدة مجدولة", sub: "غدًا 9:00 صباحًا", time: "منذ يوم", isRead: true }
+        ];
+        renderNotifications(demoNotifications);
+    }
+
+    function renderNotifications(items) {
+        if (!notifList) return;
+
+        const unreadCount = items.filter(n => !n.isRead).length;
+        if (notifBadge) {
+            notifBadge.style.display = unreadCount > 0 ? "flex" : "none";
+            notifBadge.textContent = unreadCount > 9 ? "9+" : unreadCount;
+        }
+
+        if (items.length === 0) {
+            notifList.innerHTML = `<div class="navbar-notif-empty">لا توجد إشعارات جديدة</div>`;
+            return;
+        }
+
+        notifList.innerHTML = items.map(n => `
+            <a href="#" class="navbar-notif-item ${n.isRead ? "" : "unread"}" data-id="${n.id}">
+                <div class="navbar-notif-icon ${n.type}">
+                    <i class="fas ${notifIcons[n.type] || "fa-bell"}"></i>
+                </div>
+                <div class="navbar-notif-text">
+                    <div class="navbar-notif-title">${n.title}</div>
+                    <div class="navbar-notif-sub">${n.sub}</div>
+                    <div class="navbar-notif-time">${n.time}</div>
+                </div>
+            </a>
+        `).join("");
+    }
+
+    if (notifClear) {
+        notifClear.addEventListener("click", function (e) {
+            e.preventDefault();
+            document.querySelectorAll(".navbar-notif-item.unread").forEach(el => el.classList.remove("unread"));
+            if (notifBadge) notifBadge.style.display = "none";
+            // TODO: POST /Home/MarkNotificationsRead to persist server-side
+        });
+    }
+
+    fetchNotifications();
+    // Optional: poll every 2 minutes for new alerts without a full page reload
+    setInterval(fetchNotifications, 120000);
+
+    /* ── 4. CHATBOT PANEL ────────────────────────────────────
+       Toggle + minimal send handler. Wire chatbotInput's reply
+       to your real bot endpoint, e.g. POST /Chatbot/Ask { message } */
+    const chatbotToggleBtn = document.getElementById("chatbotToggleBtn");
+    const chatbotPanel = document.getElementById("chatbotPanel");
+    const chatbotCloseBtn = document.getElementById("chatbotCloseBtn");
+    const chatbotInput = document.getElementById("chatbotInput");
+    const chatbotSendBtn = document.getElementById("chatbotSendBtn");
+    const chatbotBody = document.getElementById("chatbotBody");
+
+    function openChatbot() {
+        chatbotPanel?.classList.add("open");
+        chatbotInput?.focus();
+    }
+    function closeChatbot() {
+        chatbotPanel?.classList.remove("open");
+    }
+
+    chatbotToggleBtn?.addEventListener("click", function () {
+        chatbotPanel?.classList.contains("open") ? closeChatbot() : openChatbot();
+    });
+    chatbotCloseBtn?.addEventListener("click", closeChatbot);
+
+    function appendChatMessage(text, sender) {
+        if (!chatbotBody) return;
+        const msg = document.createElement("div");
+        msg.className = `chatbot-msg chatbot-msg-${sender}`;
+        msg.textContent = text;
+        chatbotBody.appendChild(msg);
+        chatbotBody.scrollTop = chatbotBody.scrollHeight;
+    }
+
+    function sendChatMessage() {
+        const text = chatbotInput.value.trim();
+        if (!text) return;
+        appendChatMessage(text, "user");
+        chatbotInput.value = "";
+
+        // ── TODO: replace with real fetch() call to your bot ──
+        // fetch("/Chatbot/Ask", {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({ message: text })
+        // })
+        //     .then(r => r.json())
+        //     .then(data => appendChatMessage(data.reply, "bot"));
+
+        setTimeout(() => {
+            appendChatMessage("هذه استجابة تجريبية — اربط هذا الجزء بخدمة الشات بوت الفعلية.", "bot");
+        }, 500);
+    }
+
+    chatbotSendBtn?.addEventListener("click", sendChatMessage);
+    chatbotInput?.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") sendChatMessage();
+    });
+
+    /* ── 5. LANGUAGE BUTTON LABEL SYNC ───────────────────────
+       Keeps the visible "English" / "العربية" label in sync with
+       whatever language is currently active, without touching
+       your existing toggleLanguage()/langswitch.js logic. */
+    function syncLangButtonLabel() {
+        const langBtnText = document.getElementById("langBtnText");
+        if (!langBtnText) return;
+        const current = document.documentElement.getAttribute("lang") || "ar";
+        langBtnText.textContent = current === "ar" ? "English" : "العربية";
+    }
+    syncLangButtonLabel();
+
+    // If your langswitch.js calls toggleLanguage() and reloads/re-renders,
+    // this re-sync runs again on DOMContentLoaded automatically.
+    // If it swaps language WITHOUT a reload, also call syncLangButtonLabel()
+    // and updateClock() at the end of your toggleLanguage() function.
+});=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/js/show-password.js ===
+﻿// Show/Hide password toggle — works for all password fields
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.toggle-password').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var targetId = this.getAttribute('data-target');
+            var input = document.getElementById(targetId);
+            if (!input) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.classList.remove('fa-eye');
+                this.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                this.classList.remove('fa-eye-slash');
+                this.classList.add('fa-eye');
+            }
+        });
+    });
+});=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/js/translations.js ===
+﻿// translations.js
+const TRANSLATIONS = {
+    ar: {
+        "home": "الرئيسية",
+        "dashboard": "لوحة التحكم",
+        "logout": "تسجيل الخروج",
+        "management": "الإدارة",
+        "operations": "العمليات",
+        "finance": "المالية",
+        "inventory_section": "المخزون والموردون",
+        "my_projects": "مشاريعي",
+        "my_work": "عملي",
+        "employees": "الموظفون",
+        "projects": "المشاريع",
+        "tasks": "المهام",
+        "documents": "المستندات",
+        "drawings": "الرسومات",
+        "sitevisits": "زيارات الموقع",
+        "invoices": "الفواتير",
+        "material_invoices": "فواتير المواد",
+        "materials": "المواد",
+        "suppliers": "الموردون",
+        "inventory": "المخزون",
+        "add": "إضافة",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "details": "التفاصيل",
+        "save": "حفظ",
+        "cancel": "إلغاء",
+        "search": "بحث",
+        "actions": "الإجراءات",
+        "status": "الحالة",
+        "name": "الاسم",
+        "email": "البريد الإلكتروني",
+        "phone": "الهاتف",
+        "salary": "الراتب",
+        "gender": "الجنس",
+        "specialization": "التخصص",
+        "hiredate": "تاريخ التعيين",
+        "welcome": "مرحباً بك في بنيان",
+        "recent_projects": "أحدث المشاريع",
+        "recent_tasks": "أحدث المهام",
+        "recent_employees": "أحدث الموظفين",
+        "quick_actions": "إجراءات سريعة",
+        "add_employee": "إضافة موظف",
+        "add_project": "إضافة مشروع",
+        "add_task": "إضافة مهمة",
+        "add_invoice": "إضافة فاتورة",
+        "project_name": "اسم المشروع",
+        "client": "العميل",
+        "budget": "الميزانية",
+        "project_status": "حالة المشاريع",
+        "status_inprogress": "جاري التنفيذ",
+        "status_completed": "مكتمل",
+        "status_planning": "تخطيط",
+        "status_onhold": "موقوف",
+        "status_cancelled": "ملغي",
+        "no_data": "لا توجد بيانات",
+        "view_all": "عرض الكل",
+        "employees_sub": "إدارة بيانات الموظفين",
+        "employee_list": "قائمة الموظفين",
+        "employee": "الموظف",
+        "total": "الإجمالي",
+        "all_genders": "كل الأجناس",
+        "all_specs": "كل التخصصات",
+        "male": "ذكر",
+        "female": "أنثى",
+        "no_employees": "لا يوجد موظفون حتى الآن",
+        "add_employee_sub": "أدخل بيانات الموظف الجديد",
+        "personal_info": "المعلومات الشخصية",
+        "professional_info": "المعلومات المهنية",
+        "first_name": "الاسم الأول",
+        "last_name": "الاسم الأخير",
+        "ssn": "الرقم القومي",
+        "back": "رجوع",
+        "select": "-- اختر --",
+        "edit_employee": "تعديل بيانات الموظف",
+        "employee_details": "تفاصيل الموظف",
+        "delete_employee": "حذف موظف",
+        "delete_confirm": "هل أنت متأكد من الحذف؟",
+        "delete_warning": "لا يمكن التراجع عن هذا الإجراء بعد تأكيده",
+        "delete_confirm_btn": "نعم، احذف",
+        "projects_sub": "إدارة وتتبع المشاريع الهندسية",
+        "all_statuses": "كل الحالات",
+        "no_projects": "لا توجد مشاريع حتى الآن",
+        "add_project_sub": "أدخل بيانات المشروع الجديد",
+        "project_info": "بيانات المشروع",
+        "basic_info": "المعلومات الأساسية",
+        "dates_budget": "التواريخ والميزانية",
+        "start_date": "تاريخ البدء",
+        "end_date": "تاريخ الانتهاء",
+        "location": "الموقع",
+        "members": "عضو",
+        "edit_project": "تعديل المشروع",
+        "project_details": "تفاصيل المشروع",
+        "assign_employees": "تعيين الموظفين",
+        "select_employee": "اختر موظف",
+        "role_in_project": "الدور في المشروع",
+        "assign": "تعيين",
+        "no_assigned": "لم يتم تعيين موظفين بعد",
+        "project_team": "فريق المشروع",
+        "no_tasks": "لا توجد مهام لهذا المشروع",
+        "task_name": "المهمة",
+        "due_date": "الموعد النهائي",
+        "delete_project": "حذف مشروع",
+        "SearchProjectPlaceholder": "بحث عن مشروع...",
+        "role": "الدور الوظيفي",
+        "new_password": "كلمة مرور جديدة",
+        "add_admin": "إضافة أدمن",
+        "create_admin": "إنشاء حساب أدمن جديد",
+        "create_admin_sub": "أدخل بيانات الأدمن الجديد",
+        "admin_info": "بيانات الأدمن",
+        "personal_info_section": "المعلومات الشخصية",
+        "account_info_section": "بيانات الحساب",
+        "create_admin_btn": "إنشاء حساب أدمن",
+        "admin_first_login_hint": "سيُطلب من الأدمن تغيير كلمة المرور عند أول تسجيل دخول",
+        "change_password": "تغيير كلمة المرور",
+        "change_password_sub": "أدخل كلمة المرور الحالية ثم اختر كلمة مرور جديدة",
+        "current_password": "كلمة المرور الحالية",
+        "new_password_label": "كلمة المرور الجديدة",
+        "confirm_new_password": "تأكيد كلمة المرور الجديدة",
+        "save_new_password": "حفظ كلمة المرور الجديدة",
+        "change_password_required": "تغيير كلمة المرور إلزامي عند أول تسجيل دخول لحماية حسابك",
+        "step_enter_current": "أدخل كلمة المرور الحالية",
+        "step_choose_new": "اختر كلمة مرور جديدة قوية",
+        "step_confirm_new": "تأكيد كلمة المرور الجديدة",
+        "md5_hint": "كلمة المرور محمية بتشفير MD5",
+        "forgot_password": "نسيت كلمة المرور؟",
+        "forgot_password_sub": "أدخل بريدك الإلكتروني المسجل في النظام",
+        "forgot_password_info": "ستصلك كلمة المرور الجديدة على بريدك الإلكتروني بعد موافقة المدير",
+        "forgot_email_label": "البريد الإلكتروني",
+        "forgot_submit_btn": "إرسال طلب استعادة كلمة المرور",
+        "forgot_remember": "تذكرت كلمة المرور؟",
+        "forgot_login_link": "تسجيل الدخول",
+        "forgot_left_title": "أدخل بريدك الإلكتروني وسنُرسل طلبك إلى المدير ليُعيد تعيين كلمة المرور",
+        "reset_password": "إعادة تعيين كلمة المرور",
+        "reset_password_info": "ستصل كلمة المرور الجديدة إلى المستخدم تلقائياً على بريده الإلكتروني",
+        "reset_new_password": "كلمة المرور الجديدة",
+        "reset_confirm_password": "تأكيد كلمة المرور",
+        "reset_submit_btn": "حفظ وإرسال كلمة المرور",
+        "reset_card_title": "تعيين كلمة مرور جديدة",
+        "Landing_Title": "بنيان للاستشارات الهندسية",
+        "Landing_Badge": "منصة بنيان الهندسية",
+        "Landing_Heading_Part1": "المستقبل الرقمي لإدارة",
+        "Landing_Heading_Gradient": "مكاتب الاستشارات الهندسية",
+        "Landing_Description": "منصة رقمية متكاملة لإدارة المشاريع، المخططات الهندسية، تكليفات المهندسين، ومتابعة العقود والمستندات بذكاء وسهولة ومن شاشة واحدة.",
+        "Landing_CTA_Button": "الدخول إلى لوحة التحكم ←",
+        "Landing_Stats_Title": "إحصائيات النظام الفورية",
+        "Landing_Stat_ActiveProjects": "المشاريع الجارية",
+        "Landing_Stat_TotalTasks": "المهام الموكلة",
+        "Landing_Stat_TotalEmployees": "طاقم المهندسين",
+        "Landing_Stat_TotalDocuments": "المخططات والمستندات",
+        "Landing_Progress_Label": "مؤشر الإنجاز العام للمشاريع",
+        "Landing_Features_Title": "كل ما يحتاجه مكتبك الهندسي في مكان واحد",
+        "Landing_Features_Subtitle": "من تتبع المخططات إلى إدارة مستحقات العملاء، ننظم دورتك المستندية بالكامل.",
+        "Landing_Feat1_Title": "📁 إدارة المشاريع",
+        "Landing_Feat1_Desc": "متابعة دقيقة للمشاريع الهندسية منذ استلام الموقع وحتى التسليم النهائي مع مراقبة الميزانيات والخطط الزمنية.",
+        "Landing_Feat2_Title": "📋 توزيع المهام",
+        "Landing_Feat2_Desc": "إسناد المهام والزيارات الميدانية للمهندسين المختصين، مع تحديد المواعيد النهائية وإرسال تنبيهات المتابعة التلقائية.",
+        "Landing_Feat3_Title": "📐 مراقبة المخططات والوثائق",
+        "Landing_Feat3_Desc": "رفع وتنظيم وتنزيل الرسومات الهندسية والملفات الإنشائية والمعمارية بشكل آمن وربطها مباشرة بالمشروع الخاص بها.",
+        "Landing_Bottom_CTA_Title": "هل أنت جاهز لتطوير أسلوب عملك؟",
+        "Landing_Bottom_CTA_Desc": "قم بتسجيل الدخول الآن لتلتحق ببيئة العمل المشتركة ومزامنة مهامك مع الإدارة وباقي طاقم العمل فوراً.",
+        "Landing_Bottom_CTA_Button": "ابدأ الآن وسجل دخولك ←",
+        "greeting_label": "مرحباً بعودتك 👋",
+        "greeting_hello": "أهلاً،",
+        "greeting_sub": "إليك ملخص نشاط مكتبك الهندسي اليوم",
+        "btn_all_projects": "كل المشاريع",
+        "btn_new_project": "مشروع جديد",
+        "btn_new_task": "مهمة جديدة",
+        "pill_active": "مشروع نشط",
+        "pill_tasks": "مهمة",
+        "pill_engineers": "مهندس",
+        "pill_invoices": "فاتورة",
+        "trend_total": "الإجمالي",
+        "trend_tasks": "المهام",
+        "trend_invoices": "الفواتير",
+        "trend_engineers": "الفريق",
+        "card_projects": "إجمالي المشاريع",
+        "card_projects_sub": "نشط · ",
+        "card_projects_sub2": "مكتمل",
+        "card_tasks": "إجمالي المهام",
+        "card_tasks_sub": "عبر جميع المشاريع",
+        "card_invoices": "الفواتير",
+        "card_invoices_sub": "إجمالي الفواتير المسجّلة",
+        "card_engineers": "المهندسون",
+        "card_engineers_sub": "أعضاء الفريق المسجّلون",
+        "meta_tasks": "مهمة",
+        "meta_docs": "مستند",
+        "meta_days": "يوم متبقٍّ",
+        "qa_projects": "المشاريع",
+        "qa_tasks": "المهام",
+        "qa_documents": "المستندات",
+        "qa_drawings": "الرسومات",
+        "qa_invoices": "الفواتير",
+        "qa_inventory": "المخزون",
+        "qa_suppliers": "الموردون",
+        "qa_sitevisits": "حضور الموقع",
+        "qa_hr": "الموارد البشرية",
+        "qa_materials": "المواد",
+        "qa_material_invoices": "فواتير المواد",
+        "db_title": "لوحة التحكم",
+        "db_subtitle": "نظرة شاملة على أداء مكتبك الهندسي",
+        "db_home": "الرئيسية",
+        "db_total_projects": "إجمالي المشاريع",
+        "db_active_tasks": "المهام النشطة",
+        "db_total_clients": "إجمالي العملاء",
+        "db_total_docs": "المستندات والرسومات",
+        "db_total_budget": "إجمالي الميزانيات",
+        "db_inprogress_label": "جاري التنفيذ",
+        "db_unique_clients": "عملاء فريدون",
+        "db_files_label": "ملفات مرفوعة",
+        "db_all_projects_budget": "عبر كل المشاريع",
+        "db_of": "من",
+        "db_planning": "تخطيط",
+        "db_active": "جاري",
+        "db_done": "مكتمل",
+        "db_chart_projects": "المشاريع حسب الحالة",
+        "db_chart_tasks": "المهام حسب الحالة",
+        "db_chart_label_projects": "عدد المشاريع",
+        "db_recent_projects": "أحدث المشاريع",
+        "db_overdue_tasks": "المهام المتأخرة",
+        "tasks_col": "المهام",
+        "no_overdue": "لا توجد مهام متأخرة 🎉",
+        "day": "يوم",
+        pricing_badge: "خطط الأسعار",
+        pricing_title: "اختر الخطة المناسبة لمكتبك",
+        pricing_subtitle: "جميع الخطط تتضمن كافة مميزات المنصة كاملةً — الفرق الوحيد هو حجم الاستخدام المسموح.",
+        popular_badge: "الأكثر طلباً · Most Popular",
+        plan1_name: "Startup",
+        plan1_name_ar: "الباقة الناشئة",
+        plan1_price: "٤,٠٠٠",
+        plan1_currency: "ج.م / شهرياً",
+        plan1_desc: "كافة مميزات المنصة القوية، مهيأة للمكاتب الناشئة وفرق العمل الصغيرة لتنظيم مشاريعها الرقمية الأولى.",
+        plan2_name: "Growth",
+        plan2_name_ar: "باقة النمو",
+        plan2_price: "٨,٠٠٠",
+        plan2_currency: "ج.م / شهرياً",
+        plan2_desc: "الخيار المثالي للمكاتب الهندسية المتوسطة والمتنامية التي تدير مشاريع متعددة وفرق عمل أكبر بكامل الصلاحيات.",
+        plan3_name: "Scale",
+        plan3_name_ar: "باقة المؤسسات",
+        plan3_price: "١٦,٠٠٠",
+        plan3_currency: "ج.م / شهرياً",
+        plan3_desc: "مصممة للشركات والمكاتب الاستشارية الكبرى وبيوت الخبرة التي تدير حجم أعمال ضخم ومتعدد الفروع.",
+        limit_engineers: "مهندس",
+        limit_projects: "مشاريع نشطة",
+        feat_kanban: "لوحة إدارة وتكليف المهام",
+        feat_archive: "الأرشيف السحابي الآمن للمخططات",
+        feat_hr: "إدارة الموارد البشرية وتتبع الإنتاجية",
+        feat_finance: "النظام المالي وإصدار الفواتير",
+        feat_portal: "بوابة ملاك المشاريع الرقمية",
+        pricing_cta: "ابدأ الآن",
+        pricing_note: "جميع الخطط تشمل كافة المميزات دون قيود — الفرق فقط في عدد المهندسين والمشاريع المسموح بها.",
+        nav_subscribe: "الاشتراك",
+    },
+    en: {
+        "home": "Home",
+        "dashboard": "Dashboard",
+        "logout": "Logout",
+        "management": "Management",
+        "operations": "Operations",
+        "finance": "Finance",
+        "inventory_section": "Inventory & Suppliers",
+        "my_projects": "My Projects",
+        "my_work": "My Work",
+        "employees": "Employees",
+        "projects": "Projects",
+        "tasks": "Tasks",
+        "documents": "Documents",
+        "drawings": "Drawings",
+        "sitevisits": "Site Visits",
+        "invoices": "Invoices",
+        "material_invoices": "Material Invoices",
+        "materials": "Materials",
+        "suppliers": "Suppliers",
+        "inventory": "Inventory",
+        "add": "Add",
+        "edit": "Edit",
+        "delete": "Delete",
+        "details": "Details",
+        "save": "Save",
+        "cancel": "Cancel",
+        "search": "Search",
+        "actions": "Actions",
+        "status": "Status",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "salary": "Salary",
+        "gender": "Gender",
+        "specialization": "Specialization",
+        "hiredate": "Hire Date",
+        "welcome": "Welcome to Bonyan",
+        "recent_projects": "Recent Projects",
+        "recent_tasks": "Recent Tasks",
+        "recent_employees": "Recent Employees",
+        "quick_actions": "Quick Actions",
+        "add_employee": "Add Employee",
+        "add_project": "Add Project",
+        "add_task": "Add Task",
+        "add_invoice": "Add Invoice",
+        "project_name": "Project Name",
+        "client": "Client",
+        "budget": "Budget",
+        "project_status": "Project Status",
+        "status_inprogress": "In Progress",
+        "status_completed": "Completed",
+        "status_planning": "Planning",
+        "status_onhold": "On Hold",
+        "status_cancelled": "Cancelled",
+        "no_data": "No data available",
+        "view_all": "View All",
+        "employees_sub": "Manage employee data",
+        "employee_list": "Employee List",
+        "employee": "Employee",
+        "total": "Total",
+        "all_genders": "All Genders",
+        "all_specs": "All Specializations",
+        "male": "Male",
+        "female": "Female",
+        "no_employees": "No employees yet",
+        "add_employee_sub": "Enter new employee data",
+        "personal_info": "Personal Information",
+        "professional_info": "Professional Information",
+        "first_name": "First Name",
+        "last_name": "Last Name",
+        "ssn": "SSN",
+        "back": "Back",
+        "select": "-- Select --",
+        "edit_employee": "Edit Employee",
+        "employee_details": "Employee Details",
+        "delete_employee": "Delete Employee",
+        "delete_confirm": "Are you sure you want to delete?",
+        "delete_warning": "This action cannot be undone",
+        "delete_confirm_btn": "Yes, Delete",
+        "projects_sub": "Manage and track engineering projects",
+        "all_statuses": "All Statuses",
+        "no_projects": "No projects yet",
+        "add_project_sub": "Enter new project data",
+        "project_info": "Project Information",
+        "basic_info": "Basic Information",
+        "dates_budget": "Dates & Budget",
+        "start_date": "Start Date",
+        "end_date": "End Date",
+        "location": "Location",
+        "members": "Members",
+        "edit_project": "Edit Project",
+        "project_details": "Project Details",
+        "assign_employees": "Assign Employees",
+        "select_employee": "Select Employee",
+        "role_in_project": "Role in Project",
+        "assign": "Assign",
+        "no_assigned": "No employees assigned yet",
+        "project_team": "Project Team",
+        "no_tasks": "No tasks for this project",
+        "task_name": "Task",
+        "due_date": "Due Date",
+        "delete_project": "Delete Project",
+        "SearchProjectPlaceholder": "Search for a project...",
+        "role": "Job Role",
+        "new_password": "New Password",
+        "add_admin": "Add Admin",
+        "create_admin": "Create New Admin Account",
+        "create_admin_sub": "Enter the new admin details",
+        "admin_info": "Admin Details",
+        "personal_info_section": "Personal Information",
+        "account_info_section": "Account Information",
+        "create_admin_btn": "Create Admin Account",
+        "admin_first_login_hint": "The admin will be required to change their password on first login",
+        "change_password": "Change Password",
+        "change_password_sub": "Enter your current password then choose a new one",
+        "current_password": "Current Password",
+        "new_password_label": "New Password",
+        "confirm_new_password": "Confirm New Password",
+        "save_new_password": "Save New Password",
+        "change_password_required": "Changing your password is required on first login to protect your account",
+        "step_enter_current": "Enter your current password",
+        "step_choose_new": "Choose a strong new password",
+        "step_confirm_new": "Confirm the new password",
+        "md5_hint": "Password is protected with MD5 encryption",
+        "forgot_password": "Forgot Password?",
+        "forgot_password_sub": "Enter your registered email address",
+        "forgot_password_info": "Your new password will be sent to your email after the admin approves",
+        "forgot_email_label": "Email Address",
+        "forgot_submit_btn": "Send Password Reset Request",
+        "forgot_remember": "Remembered your password?",
+        "forgot_login_link": "Sign In",
+        "forgot_left_title": "Enter your email and we will send your request to the admin to reset your password",
+        "reset_password": "Reset Password",
+        "reset_password_info": "The new password will be sent to the user automatically by email",
+        "reset_new_password": "New Password",
+        "reset_confirm_password": "Confirm Password",
+        "reset_submit_btn": "Save and Send Password",
+        "reset_card_title": "Set New Password",
+        "Landing_Title": "Bonyan for Engineering Consulting",
+        "Landing_Badge": "Bonyan Engineering Platform",
+        "Landing_Heading_Part1": "The Future of",
+        "Landing_Heading_Gradient": "Engineering Office Management",
+        "Landing_Description": "An integrated digital platform that transforms how engineering offices manage projects, blueprints, clients, contracts, tasks, and teams from one powerful dashboard.",
+        "Landing_CTA_Button": "Enter Your Dashboard →",
+        "Landing_Stats_Title": "Live System Stats",
+        "Landing_Stat_ActiveProjects": "Active Projects",
+        "Landing_Stat_TotalTasks": "Assigned Tasks",
+        "Landing_Stat_TotalEmployees": "Engineers & Staff",
+        "Landing_Stat_TotalDocuments": "Blueprints & Docs",
+        "Landing_Progress_Label": "Overall Project Status Overview",
+        "Landing_Features_Title": "Everything Your Engineering Office Needs",
+        "Landing_Features_Subtitle": "From blueprint management to client contracts, manage your entire workflow in one unified platform.",
+        "Landing_Feat1_Title": "📁 Project Management",
+        "Landing_Feat1_Desc": "Track every project from inception to delivery. Monitor status, budgets, timelines, and milestones in real-time.",
+        "Landing_Feat2_Title": "📋 Task Assignment",
+        "Landing_Feat2_Desc": "Assign tasks to engineers, set deadlines, track progress and overdue items with automatic alerts.",
+        "Landing_Feat3_Title": "📐 Document Control",
+        "Landing_Feat3_Desc": "Upload, organize, and download blueprints, drawings, and documents linked directly to each project.",
+        "Landing_Bottom_CTA_Title": "Ready to Transform Your Engineering Office?",
+        "Landing_Bottom_CTA_Desc": "Log in to access your complete engineering management workspace and synchronize with your team instantly.",
+        "Landing_Bottom_CTA_Button": "Access Dashboard Now →",
+        "greeting_label": "Welcome back 👋",
+        "greeting_hello": "Hello,",
+        "greeting_sub": "Here is your engineering office summary for today",
+        "btn_all_projects": "All Projects",
+        "btn_new_project": "New Project",
+        "btn_new_task": "New Task",
+        "pill_active": "Active",
+        "pill_tasks": "Tasks",
+        "pill_engineers": "Engineers",
+        "pill_invoices": "Invoices",
+        "trend_total": "Total",
+        "trend_tasks": "Tasks",
+        "trend_invoices": "Invoices",
+        "trend_engineers": "Team",
+        "card_projects": "Total Projects",
+        "card_projects_sub": "Active · ",
+        "card_projects_sub2": "Completed",
+        "card_tasks": "Total Tasks",
+        "card_tasks_sub": "Across all projects",
+        "card_invoices": "Invoices",
+        "card_invoices_sub": "Total registered invoices",
+        "card_engineers": "Engineers",
+        "card_engineers_sub": "Registered team members",
+        "meta_tasks": "tasks",
+        "meta_docs": "docs",
+        "meta_days": "days left",
+        "qa_projects": "Projects",
+        "qa_tasks": "Tasks",
+        "qa_documents": "Documents",
+        "qa_drawings": "Drawings",
+        "qa_invoices": "Invoices",
+        "qa_inventory": "Inventory",
+        "qa_suppliers": "Suppliers",
+        "qa_sitevisits": "Site Visits",
+        "qa_hr": "HR",
+        "qa_materials": "Materials",
+        "qa_material_invoices": "Material Invoices",
+        "db_title": "Dashboard",
+        "db_subtitle": "A full overview of your engineering office performance",
+        "db_home": "Home",
+        "db_total_projects": "Total Projects",
+        "db_active_tasks": "Active Tasks",
+        "db_total_clients": "Total Clients",
+        "db_total_docs": "Documents & Drawings",
+        "db_total_budget": "Total Budget",
+        "db_inprogress_label": "In Progress",
+        "db_unique_clients": "Unique Clients",
+        "db_files_label": "Uploaded Files",
+        "db_all_projects_budget": "Across All Projects",
+        "db_of": "of",
+        "db_planning": "Planning",
+        "db_active": "Active",
+        "db_done": "Done",
+        "db_chart_projects": "Projects by Status",
+        "db_chart_tasks": "Tasks by Status",
+        "db_chart_label_projects": "Projects",
+        "db_recent_projects": "Recent Projects",
+        "db_overdue_tasks": "Overdue Tasks",
+        "tasks_col": "Tasks",
+        "no_overdue": "No overdue tasks 🎉",
+        "day": "d",
+        pricing_badge: "Pricing Plans",
+        pricing_title: "Choose the Right Plan for Your Office",
+        pricing_subtitle: "All plans include every platform feature — the only difference is usage capacity.",
+        popular_badge: "Most Popular · الأكثر طلباً",
+        plan1_name: "Startup",
+        plan1_name_ar: "الباقة الناشئة",
+        plan1_price: "4,000",
+        plan1_currency: "EGP / Month",
+        plan1_desc: "All powerful platform features, tailored for emerging consulting offices and small teams initiating their digital workflow.",
+        plan2_name: "Growth",
+        plan2_name_ar: "باقة النمو",
+        plan2_price: "8,000",
+        plan2_currency: "EGP / Month",
+        plan2_desc: "The ideal choice for growing engineering firms managing multiple projects and expanding teams with full platform capabilities.",
+        plan3_name: "Scale",
+        plan3_name_ar: "باقة المؤسسات",
+        plan3_price: "16,000",
+        plan3_currency: "EGP / Month",
+        plan3_desc: "Built for large engineering enterprises, consultancies, and institutions handling high-volume workloads and multi-branch operations.",
+        limit_engineers: "Engineers",
+        limit_projects: "Active Projects",
+        feat_kanban: "Task Management & Kanban Boards",
+        feat_archive: "Secure Cloud Archiving for Blueprints",
+        feat_hr: "HR Management & Productivity Tracking",
+        feat_finance: "Financial Tracking & Invoicing",
+        feat_portal: "Real-time Client/Project Owner Portal",
+        pricing_cta: "Get Started",
+        pricing_note: "All plans include every feature with no restrictions — capacity limits are the only differentiator.",
+        nav_subscribe: "Subscribe",
+    }
+};
