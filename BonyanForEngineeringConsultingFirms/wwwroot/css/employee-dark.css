@@ -1,0 +1,274 @@
+﻿/* ═══════════════════════════════════════════════════════
+   employee-dark.css
+   Dark Mode overrides for Employee pages — Bonyan System
+   Add <link rel="stylesheet" href="~/css/employee-dark.css" />
+   in Views/Employee/Index.cshtml (after employee.css)
+═══════════════════════════════════════════════════════ */
+
+body.dark-mode .emp-page {
+    color: #c8d4e8;
+}
+
+/* ── Header ───────────────────────────────────────── */
+body.dark-mode .emp-header-title h2 {
+    color: #e0e8f8;
+}
+
+body.dark-mode .emp-header-title p {
+    color: #6a7d9a;
+}
+
+/* ── Buttons ──────────────────────────────────────── */
+body.dark-mode .btn-emp-outline {
+    background: rgba(255, 255, 255, 0.05);
+    color: #a8bcd8;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+    body.dark-mode .btn-emp-outline:hover {
+        background: rgba(255, 255, 255, 0.09);
+        border-color: rgba(255, 255, 255, 0.22);
+        color: #d0dff0;
+    }
+
+/* ── KPI Cards ────────────────────────────────────── */
+body.dark-mode .emp-kpi.navy {
+    background: linear-gradient(135deg, #152038, #101828);
+}
+
+body.dark-mode .emp-kpi.blue {
+    background: linear-gradient(135deg, #0e1d35, #0b1728);
+}
+
+body.dark-mode .emp-kpi.gold {
+    background: linear-gradient(135deg, #231808, #2e2008);
+}
+
+body.dark-mode .emp-kpi.green {
+    background: linear-gradient(135deg, #0a2010, #081a0c);
+}
+
+body.dark-mode .emp-kpi-label {
+    color: #6a7d9a;
+}
+
+body.dark-mode .emp-kpi-value {
+    color: #dce8f8;
+}
+
+/* ── Filter Bar ───────────────────────────────────── */
+body.dark-mode .filter-bar {
+    background: #131f30;
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-mode .filter-search input {
+    background: #0d1724;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #c8d4e8;
+}
+
+    body.dark-mode .filter-search input::placeholder {
+        color: #3d5070;
+    }
+
+    body.dark-mode .filter-search input:focus {
+        background: #0f1e30;
+        border-color: var(--secondary, #C8922A);
+        box-shadow: 0 0 0 3px rgba(200, 146, 42, 0.15);
+    }
+
+body.dark-mode .filter-search i {
+    color: #3d5070;
+}
+
+body.dark-mode .filter-select {
+    background: #0d1724;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #c8d4e8;
+}
+
+    body.dark-mode .filter-select:focus {
+        background: #0f1e30;
+        border-color: var(--secondary, #C8922A);
+    }
+
+body.dark-mode .filter-reset {
+    background: #1a2840;
+    color: #7a90b0;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+    body.dark-mode .filter-reset:hover {
+        background: #1f3050;
+        color: #a8c0d8;
+    }
+
+/* ── Table Card ───────────────────────────────────── */
+body.dark-mode .table-card {
+    background: #131f30;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .table-card-header {
+    background: linear-gradient(135deg, #162035, #101828);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+    body.dark-mode .table-card-header h5 {
+        color: #c0d0e8;
+    }
+
+/* ── Table ────────────────────────────────────────── */
+body.dark-mode .emp-table thead th {
+    background: #0f1c2c;
+    color: #5a7090;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .emp-table tbody td {
+    color: #a8bcd8;
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .emp-table tbody tr:hover td {
+    background: #1a2840;
+}
+
+/* ── Employee Identity ────────────────────────────── */
+body.dark-mode .emp-info p {
+    color: #d0e0f0;
+}
+
+body.dark-mode .emp-info span {
+    color: #4a6080;
+}
+
+/* ── Contact Cell ─────────────────────────────────── */
+body.dark-mode .emp-contact-cell span {
+    color: #7a90b0;
+}
+
+/* ── Salary ───────────────────────────────────────── */
+body.dark-mode .emp-salary {
+    color: #a0c8e8;
+}
+
+body.dark-mode .emp-salary-currency {
+    color: #4a6080;
+}
+
+/* ── Specialization Badges ────────────────────────── */
+body.dark-mode .spec-civil {
+    background: rgba(94, 53, 177, 0.18);
+    color: #a088e0;
+}
+
+body.dark-mode .spec-mechanical {
+    background: rgba(230, 81, 0, 0.15);
+    color: #e89050;
+}
+
+body.dark-mode .spec-electrical {
+    background: rgba(200, 146, 42, 0.15);
+    color: #c8922a;
+}
+
+body.dark-mode .spec-architectural {
+    background: rgba(0, 105, 92, 0.18);
+    color: #40a090;
+}
+
+/* ── Gender Badges ────────────────────────────────── */
+body.dark-mode .badge-male {
+    background: rgba(21, 101, 192, 0.18);
+    color: #5090d8;
+}
+
+body.dark-mode .badge-female {
+    background: rgba(173, 20, 87, 0.15);
+    color: #d05090;
+}
+
+/* ── Role Pill ────────────────────────────────────── */
+body.dark-mode .role-pill {
+    background: rgba(100, 140, 200, 0.12);
+    color: #7090c0;
+}
+
+    body.dark-mode .role-pill.pm {
+        background: rgba(200, 146, 42, 0.15);
+        color: #c8922a;
+    }
+
+/* ── Action Buttons ───────────────────────────────── */
+body.dark-mode .btn-action {
+    background: #1a2840;
+    color: #6080a0;
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+    body.dark-mode .btn-action.view:hover {
+        background: #1a73e8;
+        color: #fff;
+        border-color: transparent;
+    }
+
+    body.dark-mode .btn-action.edit:hover {
+        background: var(--secondary, #C8922A);
+        color: #fff;
+        border-color: transparent;
+    }
+
+    body.dark-mode .btn-action.delete:hover {
+        background: #d93025;
+        color: #fff;
+        border-color: transparent;
+    }
+
+/* ── Alerts ───────────────────────────────────────── */
+body.dark-mode .emp-alert-success {
+    background: linear-gradient(90deg, #0d2010, #0f2814);
+    border-color: #1e5028;
+    color: #50c070;
+}
+
+body.dark-mode .emp-alert-error {
+    background: linear-gradient(90deg, #200d0d, #280f0f);
+    border-color: #501818;
+    color: #e05050;
+}
+
+/* ── Empty State ──────────────────────────────────── */
+body.dark-mode .empty-state {
+    color: #3d5070;
+}
+
+    body.dark-mode .empty-state h6 {
+        color: #4a6080;
+    }
+
+    body.dark-mode .empty-state p {
+        color: #364a60;
+    }
+
+/* ── Hire date cell ───────────────────────────────── */
+body.dark-mode .emp-table tbody td:nth-child(6) {
+    color: #5a7090;
+}
+
+/* ── Scrollbar ────────────────────────────────────── */
+body.dark-mode .table-responsive::-webkit-scrollbar {
+    height: 5px;
+}
+
+body.dark-mode .table-responsive::-webkit-scrollbar-track {
+    background: #0d1724;
+}
+
+body.dark-mode .table-responsive::-webkit-scrollbar-thumb {
+    background: #2a3f5a;
+    border-radius: 999px;
+}

@@ -1,0 +1,575 @@
+﻿/* ══════════════════════════════════════════════════════════
+   drawing-gallery.css — innovative card-based gallery
+   for the "الرسومات" (Drawings) page
+═══════════════════════════════════════════════════════════ */
+
+.dg-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ── Page header ─────────────────────────────────────────── */
+.dg-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+    .dg-header h2 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.4rem;
+        color: var(--text);
+        margin: 0 0 4px;
+    }
+
+    .dg-header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+    }
+
+/* ── Stat cards row ──────────────────────────────────────── */
+.dg-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.dg-stat-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    padding: 18px 20px;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+    text-align: right;
+    font-family: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+    .dg-stat-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 85% 20%, rgba(255,255,255,0.18), transparent 60%);
+        pointer-events: none;
+    }
+
+    .dg-stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+    }
+
+    .dg-stat-card.is-active {
+        box-shadow: 0 0 0 3px rgba(255,255,255,0.55), 0 10px 24px rgba(0,0,0,0.25);
+    }
+
+    .dg-stat-card.brown {
+        background: linear-gradient(135deg, #8B5E3C, #6b4528);
+    }
+
+    .dg-stat-card.blue {
+        background: linear-gradient(135deg, #1d6fd1, #154f97);
+    }
+
+    .dg-stat-card.red {
+        background: linear-gradient(135deg, #c0392b, #8e2a20);
+    }
+
+    .dg-stat-card.navy {
+        background: linear-gradient(135deg, #1B3A6B, #112240);
+    }
+
+.dg-stat-num {
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.dg-stat-label {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin-top: 6px;
+}
+
+.dg-stat-icon {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+
+/* ── Filter bar ──────────────────────────────────────────── */
+.dg-filter-bar {
+    background: var(--surface);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.dg-count-pill {
+    background: var(--bg);
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 7px 14px;
+    border-radius: 30px;
+    white-space: nowrap;
+}
+
+.dg-select {
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    background: var(--surface);
+    color: var(--text);
+    min-width: 150px;
+    cursor: pointer;
+}
+
+    .dg-select:focus {
+        outline: none;
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px rgba(200,146,42,0.15);
+    }
+
+.dg-search {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+}
+
+    .dg-search i {
+        position: absolute;
+        top: 50%;
+        right: 13px;
+        transform: translateY(-50%);
+        color: var(--muted);
+        font-size: 0.85rem;
+    }
+
+    .dg-search input {
+        width: 100%;
+        padding: 8px 38px 8px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--card-border);
+        background: var(--bg);
+        color: var(--text);
+        font-size: 0.85rem;
+    }
+
+        .dg-search input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(200,146,42,0.15);
+        }
+
+.dg-clear-btn {
+    border: 1px solid var(--card-border);
+    background: var(--bg);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+}
+
+    .dg-clear-btn:hover {
+        color: #c0392b;
+        border-color: #c0392b;
+    }
+
+/* ── Card grid ───────────────────────────────────────────── */
+.dg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 18px;
+}
+
+.dg-card {
+    background: var(--surface);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+
+    .dg-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 26px rgba(0,0,0,0.14);
+    }
+
+.dg-card-thumb {
+    position: relative;
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 16px 0;
+}
+
+.dg-ext-badge {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    padding: 3px 9px;
+    border-radius: 999px;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.dg-ext-png, .dg-ext-jpg, .dg-ext-jpeg, .dg-ext-bmp, .dg-ext-webp,
+.dg-ext-gif {
+    background: #7B3FA0;
+}
+
+.dg-ext-svg {
+    background: #1d6fd1;
+}
+
+.dg-ext-pdf {
+    background: #c0392b;
+}
+
+.dg-ext-other {
+    background: #555;
+}
+
+.dg-version-badge {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(27,58,107,0.1);
+    color: var(--primary);
+    border: 1px solid rgba(27,58,107,0.2);
+}
+
+body.dark-mode .dg-version-badge {
+    background: rgba(233,185,73,0.12);
+    color: #E9B949;
+    border-color: rgba(233,185,73,0.25);
+}
+
+.dg-thumb-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #9b59d0, #7B3FA0);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    cursor: zoom-in;
+}
+
+.dg-thumb-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    object-fit: cover;
+    cursor: zoom-in;
+}
+
+.dg-card-body {
+    padding: 12px 16px 6px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.dg-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.dg-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.74rem;
+}
+
+.dg-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--bg);
+    color: var(--muted);
+    border: 1px solid var(--card-border);
+}
+
+    .dg-tag.category {
+        color: var(--secondary);
+        border-color: rgba(200,146,42,0.3);
+    }
+
+    .dg-tag.project {
+        color: #1d6fd1;
+        border-color: rgba(29,111,209,0.25);
+    }
+
+.dg-sub-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+    .dg-sub-row span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+.dg-card-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px 16px;
+}
+
+.dg-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 10px;
+    border-radius: 9px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.1s;
+}
+
+    .dg-btn:active {
+        transform: scale(0.97);
+    }
+
+.dg-btn-download {
+    background: var(--primary);
+    color: #fff;
+}
+
+.dg-btn-view {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+    flex: 0 0 44px;
+}
+
+.dg-btn-delete {
+    background: rgba(192,57,43,0.1);
+    color: #c0392b;
+    border: 1px solid rgba(192,57,43,0.25);
+    flex: 0 0 44px;
+}
+
+.dg-btn:hover {
+    filter: brightness(1.08);
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.dg-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    background: var(--surface);
+    border-radius: 14px;
+    border: 1px dashed var(--card-border);
+}
+
+    .dg-empty i {
+        font-size: 2.6rem;
+        margin-bottom: 14px;
+        display: block;
+        opacity: 0.4;
+    }
+
+/* ── Lightbox ────────────────────────────────────────────── */
+.dg-lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(8,12,20,0.92);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 30px;
+}
+
+    .dg-lightbox.open {
+        display: flex;
+    }
+
+.dg-lightbox-img-wrap {
+    max-width: 90vw;
+    max-height: 72vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .dg-lightbox-img-wrap img {
+        max-width: 90vw;
+        max-height: 72vh;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+.dg-lightbox-info {
+    color: #fff;
+    text-align: center;
+    margin-top: 16px;
+}
+
+    .dg-lightbox-info h4 {
+        margin: 0 0 4px;
+        font-size: 1.05rem;
+    }
+
+    .dg-lightbox-info span {
+        color: rgba(255,255,255,0.65);
+        font-size: 0.82rem;
+    }
+
+.dg-lightbox-actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+}
+
+    .dg-lightbox-actions a, .dg-lightbox-actions button {
+        background: rgba(255,255,255,0.12);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.25);
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 0.84rem;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .dg-lightbox-actions a:hover, .dg-lightbox-actions button:hover {
+            background: rgba(255,255,255,0.22);
+        }
+
+.dg-lightbox-close {
+    position: absolute;
+    top: 22px;
+    left: 28px;
+    font-size: 1.6rem;
+    color: #fff;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+    .dg-lightbox-close:hover {
+        opacity: 1;
+    }
+
+.dg-lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+    .dg-lightbox-nav:hover {
+        background: rgba(255,255,255,0.25);
+    }
+
+.dg-lightbox-prev {
+    right: 30px;
+}
+
+.dg-lightbox-next {
+    left: 30px;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .dg-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    .dg-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .dg-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .dg-lightbox-nav {
+        width: 38px;
+        height: 38px;
+    }
+}

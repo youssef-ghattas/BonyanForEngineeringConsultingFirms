@@ -4,28 +4,98 @@
     var role = Context.Session.GetString("Role");
     var projects = ViewBag.Projects as List<Bonyan.DAL.Models.Project> ?? new();
     int? selectedProjectId = ViewBag.SelectedProjectId as int?;
+
+    // Stats
+    int totalDocs = Model.Count();
+    int pdfCount = Model.Count(d => d.FileType?.ToUpper() == "PDF");
+    int imgCount = Model.Count(d => new[] { "PNG", "JPG", "JPEG", "GIF", "WEBP", "SVG" }
+                                            .Contains(d.FileType?.ToUpper() ?? ""));
+    int otherCount = totalDocs - pdfCount - imgCount;
+
+    // Category distribution for visual breakdown
+    var categoryGroups = Model
+        .GroupBy(d => d.Category ?? "أخرى")
+        .Select(g => new { Name = g.Key, Count = g.Count() })
+        .OrderByDescending(g => g.Count)
+        .Take(4)
+        .ToList();
 }
 
-<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
+<link rel="stylesheet" href="~/css/document-index.css" />
 
+<!-- ══════════════════════ PAGE HEADER ══════════════════════ -->
 <div class="page-header">
     <div class="page-header-left">
         <h2>
             <i class="fas fa-folder-open" style="color:var(--secondary)"></i>
-            المستندات
+            <span data-lang="documents">المستندات</span>
         </h2>
+        <p>أرشيف وإدارة المستندات الهندسية</p>
     </div>
 </div>
 
-@if (projects.Any())
-{
-    <div class="filter-bar">
-        <form method="get" asp-action="Index" style="display:flex; align-items:center; gap:10px">
-            <label style="font-weight:600; font-size:0.88rem; color:#444">
-                <i class="fas fa-filter" style="color:var(--secondary)"></i>
-                تصفية حسب المشروع:
-            </label>
-            <select name="projectId" class="form-select filter-select"
+<!-- ══════════════════════ STATS CARDS (like Project page) ══════════════════════ -->
+<div class="doc-stats-grid">
+
+    <div class="doc-stat-card doc-stat-total">
+        <div class="doc-stat-icon">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="doc-stat-info">
+            <span class="doc-stat-value">@totalDocs</span>
+            <span class="doc-stat-label">إجمالي المستندات</span>
+        </div>
+    </div>
+
+    <div class="doc-stat-card doc-stat-pdf">
+        <div class="doc-stat-icon">
+            <i class="fas fa-file-pdf"></i>
+        </div>
+        <div class="doc-stat-info">
+            <span class="doc-stat-value">@pdfCount</span>
+            <span class="doc-stat-label">ملفات PDF</span>
+        </div>
+    </div>
+
+    <div class="doc-stat-card doc-stat-img">
+        <div class="doc-stat-icon">
+            <i class="fas fa-file-image"></i>
+        </div>
+        <div class="doc-stat-info">
+            <span class="doc-stat-value">@imgCount</span>
+            <span class="doc-stat-label">صور ومخططات</span>
+        </div>
+    </div>
+
+    <div class="doc-stat-card doc-stat-other">
+        <div class="doc-stat-icon">
+            <i class="fas fa-file-zipper"></i>
+        </div>
+        <div class="doc-stat-info">
+            <span class="doc-stat-value">@otherCount</span>
+            <span class="doc-stat-label">ملفات أخرى</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════════════ FILTER BAR ══════════════════════ -->
+<div class="filter-bar">
+
+    <!-- Search -->
+    <div class="filter-search">
+        <i class="fas fa-search"></i>
+        <input type="text" id="docSearchInput" class="form-control"
+               placeholder="ابحث بعنوان المستند أو المشروع أو التصنيف..."
+               onkeyup="filterDocuments()" />
+    </div>
+
+    <!-- Project dropdown (server-side) -->
+    @if (projects.Any())
+    {
+        <form method="get" asp-action="Index"
+              style="display:flex; align-items:center; gap:8px">
+            <select name="projectId" class="filter-select"
                     onchange="this.form.submit()">
                 <option value="">-- جميع المشاريع --</option>
                 @foreach (var p in projects)
@@ -43,77 +113,189 @@
             @if (selectedProjectId.HasValue)
             {
                 <a asp-action="Index" class="btn-bonyan-primary"
-                   style="font-size:0.82rem; padding:7px 12px">
-                    <i class="fas fa-times"></i> إلغاء التصفية
+                   style="font-size:0.82rem; padding:7px 14px; white-space:nowrap">
+                    <i class="fas fa-times"></i> إلغاء
                 </a>
             }
         </form>
+    }
+
+    <!-- Client-side category filter -->
+    <select id="categoryFilter" class="filter-select" onchange="filterDocuments()">
+        <option value="">كل التصنيفات</option>
+        <option value="ملاحظات">ملاحظات</option>
+        <option value="مخططات">مخططات</option>
+        <option value="تقارير">تقارير</option>
+        <option value="عقود">عقود</option>
+        <option value="أخرى">أخرى</option>
+    </select>
+
+    <!-- File type filter -->
+    <select id="typeFilter" class="filter-select" onchange="filterDocuments()">
+        <option value="">كل الأنواع</option>
+        <option value="PDF">PDF</option>
+        <option value="PNG">PNG</option>
+        <option value="JPG">JPG</option>
+        <option value="DOCX">DOCX</option>
+        <option value="XLSX">XLSX</option>
+    </select>
+
+    <!-- Results count -->
+    <span class="filter-count" id="filterCount">@totalDocs مستند</span>
+
+</div>
+
+<!-- ══════════════════════ DOCUMENTS GRID ══════════════════════ -->
+@if (!Model.Any())
+{
+    <div class="doc-empty-state">
+        <div class="doc-empty-icon">
+            <i class="fas fa-folder-open"></i>
+        </div>
+        <p class="doc-empty-title">لا توجد مستندات مرفوعة حتى الآن</p>
+        <p class="doc-empty-sub">ستظهر المستندات هنا بعد رفعها من صفحة المشروع</p>
+    </div>
+}
+else
+{
+    <div class="docs-grid" id="docsGrid">
+        @foreach (var doc in Model)
+        {
+            string ext = (doc.FileType ?? "FILE").ToUpper();
+            string iconClass = ext switch
+            {
+                "PDF" => "fas fa-file-pdf",
+                "DOC" => "fas fa-file-word",
+                "DOCX" => "fas fa-file-word",
+                "XLS" => "fas fa-file-excel",
+                "XLSX" => "fas fa-file-excel",
+                "PNG" => "fas fa-file-image",
+                "JPG" => "fas fa-file-image",
+                "JPEG" => "fas fa-file-image",
+                "GIF" => "fas fa-file-image",
+                "WEBP" => "fas fa-file-image",
+                "SVG" => "fas fa-file-image",
+                "ZIP" => "fas fa-file-zipper",
+                "RAR" => "fas fa-file-zipper",
+                _ => "fas fa-file-alt"
+            };
+            string colorClass = ext switch
+            {
+                "PDF" => "doc-color-pdf",
+                "DOC" or "DOCX" => "doc-color-word",
+                "XLS" or "XLSX" => "doc-color-excel",
+                "PNG" or "JPG" or "JPEG" or "GIF" or "WEBP" or "SVG" => "doc-color-img",
+                "ZIP" or "RAR" => "doc-color-zip",
+                _ => "doc-color-default"
+            };
+            string catLabel = doc.Category ?? "أخرى";
+            string uploaderName = (doc.Employee?.FirstName + " " + doc.Employee?.LastName)?.Trim() ?? "—";
+
+            <div class="doc-card"
+                 data-title="@doc.DocTitle.ToLower()"
+                 data-project="@(doc.Project?.ProjectName?.ToLower() ?? "")"
+                 data-category="@catLabel"
+                 data-type="@ext">
+
+                <!-- Card Top: icon + badge -->
+                <div class="doc-card-top">
+                    <div class="doc-file-icon @colorClass">
+                        <i class="@iconClass"></i>
+                    </div>
+                    <span class="doc-type-badge @colorClass">@ext</span>
+                </div>
+
+                <!-- Card Body -->
+                <div class="doc-card-body">
+                    <div class="doc-card-title" title="@doc.DocTitle">
+                        @doc.DocTitle
+                    </div>
+
+                    <div class="doc-card-meta">
+                        <div class="doc-meta-item">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>@(doc.Project?.ProjectName ?? "—")</span>
+                        </div>
+                        <div class="doc-meta-item">
+                            <i class="fas fa-tag"></i>
+                            <span>@catLabel</span>
+                        </div>
+                        <div class="doc-meta-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>@doc.UploadDate.ToString("yyyy-MM-dd")</span>
+                        </div>
+                        <div class="doc-meta-item">
+                            <i class="fas fa-user-circle"></i>
+                            <span>@uploaderName</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Footer: actions -->
+                <div class="doc-card-footer">
+                    <a href="@doc.FilePath" target="_blank"
+                       class="btn-doc-action btn-doc-download" title="تحميل">
+                        <i class="fas fa-download"></i>
+                        <span>تحميل</span>
+                    </a>
+
+                    @if (role == "ProjectManager" || role == "Engineer")
+                    {
+                        <form asp-action="Delete" asp-route-id="@doc.DocId"
+                              method="post" style="display:inline"
+                              onsubmit="return confirm('هل أنت متأكد من حذف هذا المستند؟')">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-doc-action btn-doc-delete" title="حذف">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    }
+                </div>
+
+            </div>
+        }
+    </div>
+
+    <!-- No results message (hidden by default) -->
+    <div class="doc-empty-state" id="noResultsMsg" style="display:none">
+        <div class="doc-empty-icon">
+            <i class="fas fa-search"></i>
+        </div>
+        <p class="doc-empty-title">لا توجد نتائج مطابقة</p>
+        <p class="doc-empty-sub">حاول تغيير كلمة البحث أو الفلتر</p>
     </div>
 }
 
-<div class="details-card">
-    @if (Model.Any())
-    {
-        <table class="doc-table">
-            <thead>
-                <tr>
-                    <th>عنوان المستند</th>
-                    <th>المشروع</th>
-                    <th>النوع</th>
-                    <th>التصنيف</th>
-                    <th>تاريخ الرفع</th>
-                    <th>إجراءات</th>
-                    <th>رُفع بواسطة</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var doc in Model)
-                {
-                    <tr>
-                        <td>
-                            <i class="fas fa-file-alt"
-                               style="color:var(--secondary); margin-left:6px"></i>
-                            @doc.DocTitle
-                        </td>
-                        <td>@(doc.Project?.ProjectName ?? "—")</td>
-                        <td>
-                            @if (!string.IsNullOrEmpty(doc.FileType))
-                            {
-                                <span class="file-type-badge">@doc.FileType</span>
-                            }
-                            else { <span>—</span> }
-                        </td>
-                        <td>@(doc.Category ?? "—")</td>
-                        <td>@doc.UploadDate.ToString("yyyy-MM-dd")</td>
-                        <td>@(doc.Employee?.FirstName + " " + doc.Employee?.LastName ?? "—")</td>
-                        <td>
-                            <a href="@doc.FilePath" target="_blank"
-                               class="btn-action view" title="تحميل">
-                                <i class="fas fa-download"></i>
-                            </a>
-                            @if (role == "ProjectManager" || role == "Engineer")
-                            {
-                                <form asp-action="Delete" asp-route-id="@doc.DocId"
-                                      method="post" style="display:inline"
-                                      onsubmit="return confirm('هل أنت متأكد من حذف هذا المستند؟')">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-action delete" title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div style="text-align:center; padding:40px; color:#aaa">
-            <i class="fas fa-folder-open"
-               style="font-size:3rem; margin-bottom:14px; display:block"></i>
-            <p>لا توجد مستندات مرفوعة حتى الآن</p>
-        </div>
-    }
-</div>
+@section Scripts {
+    <script>
+        function filterDocuments() {
+            const search   = (document.getElementById('docSearchInput')?.value  ?? '').toLowerCase();
+            const category = (document.getElementById('categoryFilter')?.value  ?? '').toLowerCase();
+            const type     = (document.getElementById('typeFilter')?.value      ?? '').toUpperCase();
+
+            const cards    = document.querySelectorAll('.doc-card');
+            let visible    = 0;
+
+            cards.forEach(card => {
+                const title    = card.dataset.title    ?? '';
+                const project  = card.dataset.project  ?? '';
+                const cat      = card.dataset.category ?? '';
+                const cardType = card.dataset.type     ?? '';
+
+                const matchSearch   = !search   || title.includes(search) || project.includes(search) || cat.toLowerCase().includes(search);
+                const matchCategory = !category || cat.toLowerCase() === category;
+                const matchType     = !type     || cardType === type;
+
+                const show = matchSearch && matchCategory && matchType;
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+
+            const countEl = document.getElementById('filterCount');
+            if (countEl) countEl.textContent = visible + ' مستند';
+
+            const noResults = document.getElementById('noResultsMsg');
+            if (noResults) noResults.style.display = (visible === 0 && cards.length > 0) ? 'flex' : 'none';
+        }
+    </script>
+}
