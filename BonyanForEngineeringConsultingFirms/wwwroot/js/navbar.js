@@ -150,13 +150,6 @@ document.addEventListener("DOMContentLoaded", function () {
     chatbotInput?.addEventListener("keypress", function (e) {
         if (e.key === "Enter") sendChatMessage();
     });
-
-    /* ── 4. LANGUAGE BUTTON LABEL SYNC ───────────────────── */
-    function syncLangButtonLabel() {
-        const langBtnText = document.getElementById("langBtnText");
-        if (!langBtnText) return;
-        const current = document.documentElement.getAttribute("lang") || "ar";
-        langBtnText.textContent = current === "ar" ? "English" : "العربية";
-    }
-    syncLangButtonLabel();
+    /* ── 4. LANG BUTTON SYNC — handled by lang-switch.js ─── */
+    
 });

@@ -2,19 +2,24 @@
 :root {
     --primary: #1B3A6B;
     --secondary: #C8922A;
-    --bg: #F4F6F9;
-    --sidebar: #112240;
-    --text: #2D2D2D;
+    --bg: #F0F2F7;
+    --sidebar: #162844; /* soft navy — not pure black */
+    --sidebar-hover: #1e3459;
+    --sidebar-active-bg: rgba(200,146,42,0.15);
+    --sidebar-active-border: #C8922A;
+    --text: #1F2937;
     --white: #FFFFFF;
-    --surface: #FFFFFF; /* NEW — card/panel background */
-    --success: #28A745;
-    --danger: #DC3545;
+    --surface: #FFFFFF;
+    --success: #22C55E;
+    --danger: #EF4444;
     --muted: #6B7280;
-    --card-border: rgba(0,0,0,0.08);
+    --card-border: rgba(0,0,0,0.07);
     --font-ar: 'Cairo', sans-serif;
     --font-en: 'Poppins', sans-serif;
-    --sidebar-w: 260px;
-    --navbar-h: 65px;
+    --sidebar-w: 256px;
+    --navbar-h: 62px;
+    --sidebar-collapsed-w: 0px;
+    --transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Reset ────────────────────────────────────────── */
@@ -46,7 +51,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
-    z-index: 1000;
+    z-index: 1050;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
@@ -111,45 +116,70 @@ body {
 }
 
 /* ── Sidebar ──────────────────────────────────────── */
+/* ── Sidebar ──────────────────────────────────────── */
 .bonyan-sidebar {
     width: var(--sidebar-w);
     background: var(--sidebar);
-    min-height: 100%;
     position: fixed;
     top: var(--navbar-h);
     right: 0;
     bottom: 0;
-    transition: all 0.3s;
+    transition: width var(--transition), transform var(--transition);
     overflow-y: auto;
-    z-index: 999;
+    overflow-x: hidden;
+    z-index: 900;
+    /* Subtle inner border for depth */
+    border-left: 1px solid rgba(255,255,255,0.05);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
 
-/* LTR sidebar on left */
+    .bonyan-sidebar::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .bonyan-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .bonyan-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.12);
+        border-radius: 999px;
+    }
+
+/* LTR — sidebar sits on left, border flips */
 [dir="ltr"] .bonyan-sidebar {
     right: auto;
     left: 0;
+    border-left: none;
+    border-right: 1px solid rgba(255,255,255,0.05);
 }
 
 .bonyan-sidebar.collapsed {
     width: 0;
-    overflow: hidden;
+    border: none;
 }
 
+/* ── Sidebar Menu ── */
 .sidebar-menu {
     list-style: none;
-    padding: 20px 0;
+    padding: 12px 0 24px;
 }
 
     .sidebar-menu li a {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 14px 20px;
-        color: #B0BEC5;
+        gap: 11px;
+        padding: 11px 20px;
+        color: rgba(185, 205, 235, 0.78);
         text-decoration: none;
-        font-size: 0.95rem;
-        transition: all 0.3s;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: background var(--transition), color var(--transition), border-color var(--transition);
         border-right: 3px solid transparent;
+        border-radius: 0;
+        white-space: nowrap;
+        overflow: hidden;
     }
 
 [dir="ltr"] .sidebar-menu li a {
@@ -157,31 +187,58 @@ body {
     border-left: 3px solid transparent;
 }
 
-.sidebar-menu li a:hover,
-.sidebar-menu li a.active {
-    background: rgba(255,255,255,0.08);
-    color: var(--white);
-    border-right-color: var(--secondary);
+.sidebar-menu li a:hover {
+    background: rgba(255,255,255,0.07);
+    color: #fff;
+    border-right-color: rgba(200,146,42,0.5);
 }
 
-[dir="ltr"] .sidebar-menu li a:hover,
-[dir="ltr"] .sidebar-menu li a.active {
-    border-left-color: var(--secondary);
+[dir="ltr"] .sidebar-menu li a:hover {
+    border-left-color: rgba(200,146,42,0.5);
     border-right-color: transparent;
+}
+
+.sidebar-menu li a.active,
+.sidebar-home-btn.active {
+    background: var(--sidebar-active-bg);
+    color: #fff;
+    border-right-color: var(--sidebar-active-border) !important;
+    font-weight: 600;
+}
+
+[dir="ltr"] .sidebar-menu li a.active,
+[dir="ltr"] .sidebar-home-btn.active {
+    border-left-color: var(--sidebar-active-border) !important;
+    border-right-color: transparent !important;
 }
 
 .sidebar-menu li a i {
     width: 20px;
+    min-width: 20px;
     color: var(--secondary);
-    font-size: 1rem;
+    font-size: 0.95rem;
+    text-align: center;
+    flex-shrink: 0;
+    transition: color var(--transition), transform var(--transition);
+}
+
+.sidebar-menu li a:hover i {
+    color: #e0a83a;
+    transform: translateX(-2px);
+}
+
+[dir="ltr"] .sidebar-menu li a:hover i {
+    transform: translateX(2px);
 }
 
 /* ── Main Content ─────────────────────────────────── */
+/* ── Main Content ─────────────────────────────────────── */
 .bonyan-content {
     margin-right: var(--sidebar-w);
+    margin-left: 0;
     padding: 30px;
     width: 100%;
-    transition: all 0.3s;
+    transition: margin var(--transition, 0.28s ease);
 }
 
 [dir="ltr"] .bonyan-content {
@@ -189,9 +246,11 @@ body {
     margin-left: var(--sidebar-w);
 }
 
-.bonyan-sidebar.collapsed ~ .bonyan-content {
-    margin-right: 0;
-    margin-left: 0;
+.bonyan-sidebar.collapsed ~ .bonyan-content,
+[dir="rtl"] .bonyan-sidebar.collapsed ~ .bonyan-content,
+[dir="ltr"] .bonyan-sidebar.collapsed ~ .bonyan-content {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
 }
 
 /* ── Cards ────────────────────────────────────────── */
@@ -480,16 +539,20 @@ body {
         }
 }
 /* ── Sidebar Section Title ───────────────────────── */
+/* ── Sidebar Section Title ───────────────────────── */
 .sidebar-section-title {
-    padding: 14px 20px 6px;
-    font-size: 0.7rem;
+    padding: 18px 20px 5px;
+    font-size: 0.65rem;
     font-weight: 700;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.28);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
+/* ── Main content area fix ── */
 /* ── Main content area fix ── */
 .bonyan-content {
     flex: 1;
@@ -497,27 +560,35 @@ body {
     min-width: 0;
     overflow-x: hidden;
     box-sizing: border-box;
+    transition: margin var(--transition);
 }
 
 .bonyan-wrapper {
     display: flex;
-    min-height: calc(100vh - 60px);
-    margin-top: 60px;
+    min-height: calc(100vh - var(--navbar-h));
+    margin-top: var(--navbar-h);
+}
+
+/* When sidebar collapses, remove margin */
+.bonyan-sidebar.collapsed + .bonyan-content {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
 }
 /* ════════════════════════════════════════════════════════
    GLOBAL DARK MODE — covers every shared component so it
    works consistently across ALL pages, not just dashboard/home
 ════════════════════════════════════════════════════════ */
 body.dark-mode {
-    --bg: #0F1A2E;
-    --surface: #1B2A45; /* card backgrounds go dark, NOT --white */
-    --text: #F5F7FA;
-    --sidebar: #0A1424;
-    --muted: #D5DCE8;
-    --card-border: rgba(255,255,255,0.10);
+    --bg: #0E1826; /* very deep navy, not pure black */
+    --surface: #19283F; /* soft slate for cards */
+    --text: #E8EDF5;
+    --sidebar: #111F33; /* premium dark slate sidebar */
+    --sidebar-hover: #1a2e48;
+    --sidebar-active-bg: rgba(200,146,42,0.14);
+    --muted: #C0CEDF;
+    --card-border: rgba(255,255,255,0.08);
     background: var(--bg);
     color: var(--text);
-    /* --white stays #FFFFFF — buttons keep readable white text */
 }
 
     body.dark-mode .bonyan-card,
@@ -542,22 +613,27 @@ body.dark-mode {
 
     body.dark-mode .bonyan-sidebar {
         background: var(--sidebar);
+        border-color: rgba(255,255,255,0.04);
     }
 
     body.dark-mode .sidebar-menu li a {
-        color: #8C9BB5;
+        color: rgba(160, 190, 225, 0.75);
     }
 
-        body.dark-mode .sidebar-menu li a:hover,
-        body.dark-mode .sidebar-menu li a.active {
-            background: rgba(255,255,255,0.06);
+        body.dark-mode .sidebar-menu li a:hover {
+            background: rgba(255,255,255,0.055);
+            color: #e8edf5;
+        }
+
+        body.dark-mode .sidebar-menu li a.active,
+        body.dark-mode .sidebar-home-btn.active {
+            background: rgba(200,146,42,0.12);
             color: #fff;
         }
 
     body.dark-mode .sidebar-section-title {
-        color: rgba(255,255,255,0.3);
+        color: rgba(255,255,255,0.25);
     }
-
     body.dark-mode .bonyan-table thead th {
         background: #16263F;
         color: #E4E9F2;
@@ -616,6 +692,32 @@ body.dark-mode {
         background: #16263F;
         color: #8FB3F5;
     }
+
+/* ── RTL/LTR sidebar margin — language-switch safe ── */
+html[dir="rtl"] .bonyan-content {
+    margin-right: var(--sidebar-w);
+    margin-left: 0;
+}
+
+html[dir="ltr"] .bonyan-content {
+    margin-right: 0;
+    margin-left: var(--sidebar-w);
+}
+
+html[dir="rtl"] .bonyan-sidebar.collapsed ~ .bonyan-content,
+html[dir="ltr"] .bonyan-sidebar.collapsed ~ .bonyan-content {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
+/* Mobile: always full width */
+@media (max-width: 768px) {
+    html[dir="rtl"] .bonyan-content,
+    html[dir="ltr"] .bonyan-content {
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+}
 /* ════════════════════════════════════════════════════════
    ENGINEERING TOOLS BACKGROUND WATERMARK
 ════════════════════════════════════════════════════════ */

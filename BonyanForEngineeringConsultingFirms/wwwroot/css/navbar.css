@@ -1,141 +1,120 @@
 ﻿/* ══════════════════════════════════════════════════════════
-   navbar.css
-   Top bar: logo, primary nav links, clock, quick actions,
-   notifications (live system data), status, chatbot, avatar.
-   Depends on variables in site.css:
-   --primary, --secondary, --white, --bg, --text
+   navbar.css  —  Premium Bonyan Navbar
+   RTL/LTR · Light/Dark · Fluid responsive
 ══════════════════════════════════════════════════════════ */
 
-/* ── Layout clusters ─────────────────────────────────────── */
+/* ── Layout clusters ───────────────────────────────────── */
 .navbar-left {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     min-width: 0;
+    flex-shrink: 0;
+}
+
+/* ── Sidebar Toggle ─────────────────────────────────────── */
+.sidebar-toggle {
+    background: rgba(255,255,255,0.09);
+    border: none;
+    color: rgba(255,255,255,0.85);
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.22s, color 0.22s;
+}
+
+    .sidebar-toggle:hover {
+        background: rgba(255,255,255,0.17);
+        color: #fff;
+    }
+
+/* ── Logo ───────────────────────────────────────────────── */
+.navbar-logo {
+    color: var(--white);
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    white-space: nowrap;
 }
 
 .navbar-logo-mark {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 10px;
     background: linear-gradient(135deg, var(--secondary), #e7b65c);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--primary);
-    font-size: 1.05rem;
-    box-shadow: 0 3px 10px rgba(200, 146, 42, 0.35);
+    font-size: 1rem;
+    box-shadow: 0 3px 10px rgba(200,146,42,0.35);
     flex-shrink: 0;
 }
 
 .navbar-logo-text {
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
 }
 
+/* ── Divider ────────────────────────────────────────────── */
 .navbar-divider {
     width: 1px;
-    height: 26px;
-    background: rgba(255, 255, 255, 0.18);
+    height: 24px;
+    background: rgba(255,255,255,0.15);
+    flex-shrink: 0;
 }
 
-.navbar-breadcrumb {
-    color: rgba(255, 255, 255, 0.75);
-    font-size: 0.85rem;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-}
-
-/* ── Generic round icon button (quick actions, notifications,
-       chatbot, dark mode) ───────────────────────────────────── */
-.navbar-icon-btn {
-    position: relative;
-    background: rgba(255, 255, 255, 0.08);
-    border: none;
-    color: var(--white);
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.25s, transform 0.2s;
-}
-
-    .navbar-icon-btn:hover {
-        background: rgba(255, 255, 255, 0.18);
-        transform: translateY(-1px);
-    }
-
-    .navbar-icon-btn:active {
-        transform: translateY(0);
-    }
-
-/* ── Notification badge ──────────────────────────────────── */
-.navbar-badge {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    background: var(--danger, #DC3545);
-    color: var(--white);
-    font-size: 0.65rem;
-    font-weight: 700;
-    min-width: 17px;
-    height: 17px;
-    padding: 0 4px;
-    border-radius: 999px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid var(--primary);
-    line-height: 1;
-}
-
-[dir="ltr"] .navbar-badge {
-    right: auto;
-    left: -4px;
-}
-
-/* ── Primary Nav Links (replaces global search) ──────────── */
+/* ── Primary Nav Links ──────────────────────────────────── */
 .navbar-main-links {
+    display: flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 5px;
+    gap: 3px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 11px;
+    padding: 4px;
+    flex-shrink: 0;
 }
 
 .navbar-nav-link {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 9px;
-    color: rgba(255, 255, 255, 0.75);
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    color: rgba(255,255,255,0.72);
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 0.84rem;
     font-weight: 600;
     text-decoration: none;
     background: transparent;
     border: none;
     white-space: nowrap;
     cursor: pointer;
-    transition: background 0.25s, color 0.25s;
+    transition: background 0.22s, color 0.22s;
 }
 
     .navbar-nav-link i {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.55);
-        transition: color 0.25s;
+        font-size: 0.82rem;
+        color: rgba(255,255,255,0.5);
+        transition: color 0.22s;
     }
 
     .navbar-nav-link:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: var(--white);
+        background: rgba(255,255,255,0.11);
+        color: #fff;
     }
 
         .navbar-nav-link:hover i {
@@ -145,6 +124,7 @@
     .navbar-nav-link.active {
         background: var(--secondary);
         color: var(--primary);
+        font-weight: 700;
     }
 
         .navbar-nav-link.active i {
@@ -157,16 +137,25 @@
     }
 
     .navbar-nav-link {
-        padding: 8px 12px;
+        padding: 7px 11px;
     }
 }
 
-/* ── Live Clock ───────────────────────────────────────────── */
-.navbar-clock {
+/* ── Right cluster ──────────────────────────────────────── */
+.navbar-right {
+    display: flex;
     align-items: center;
-    gap: 8px;
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 0.78rem;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* ── Live Clock ─────────────────────────────────────────── */
+.navbar-clock {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: rgba(255,255,255,0.82);
+    font-size: 0.76rem;
 }
 
     .navbar-clock i {
@@ -181,20 +170,93 @@
 
     .navbar-clock-text span:first-child {
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 0.83rem;
     }
 
     .navbar-clock-text span:last-child {
-        opacity: 0.75;
-        font-size: 0.68rem;
+        opacity: 0.7;
+        font-size: 0.67rem;
     }
 
-/* ── Quick Actions Dropdown ──────────────────────────────── */
+/* ── Generic icon button ────────────────────────────────── */
+.navbar-icon-btn {
+    position: relative;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: rgba(255,255,255,0.85);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.96rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.22s, color 0.22s, transform 0.18s;
+}
+
+    .navbar-icon-btn:hover {
+        background: rgba(255,255,255,0.17);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .navbar-icon-btn:active {
+        transform: translateY(0);
+    }
+
+/* ── Notification badge ─────────────────────────────────── */
+.navbar-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--danger, #EF4444);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--primary);
+    line-height: 1;
+}
+
+[dir="ltr"] .navbar-badge {
+    right: auto;
+    left: -4px;
+}
+
+/* ── Language button ────────────────────────────────────── */
+.lang-btn {
+    background: rgba(200,146,42,0.85);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.82rem;
+    transition: background 0.22s, transform 0.18s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+    .lang-btn:hover {
+        background: var(--secondary);
+        transform: translateY(-1px);
+    }
+
+/* ── Quick Actions dropdown ─────────────────────────────── */
 .navbar-quick-menu {
     min-width: 230px;
 }
 
-/* ── Notification Dropdown ───────────────────────────────── */
+/* ── Notification dropdown ──────────────────────────────── */
 .navbar-notif-menu {
     width: 340px;
     max-width: 90vw;
@@ -206,11 +268,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 16px;
-    background: var(--primary);
-    color: var(--white);
+    padding: 13px 16px;
+    background: linear-gradient(135deg, var(--primary), #1e4480);
+    color: #fff;
     font-weight: 700;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
 }
 
 .navbar-notif-clear {
@@ -225,54 +287,54 @@
     }
 
 .navbar-notif-list {
-    max-height: 320px;
+    max-height: 310px;
     overflow-y: auto;
 }
 
 .navbar-notif-item {
     display: flex;
-    gap: 12px;
-    padding: 12px 16px;
+    gap: 11px;
+    padding: 11px 15px;
     border-bottom: 1px solid #f0f0f0;
     text-decoration: none;
-    color: var(--text, #2D2D2D);
-    transition: background 0.2s;
+    color: var(--text, #1F2937);
+    transition: background 0.18s;
 }
 
     .navbar-notif-item:hover {
-        background: #F8FAFF;
+        background: #f8faff;
     }
 
     .navbar-notif-item.unread {
-        background: #F0F4FF;
+        background: #f0f4ff;
     }
 
 .navbar-notif-icon {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    font-size: 0.9rem;
-    color: var(--white);
+    font-size: 0.85rem;
+    color: #fff;
 }
 
     .navbar-notif-icon.warning {
-        background: #ffc107;
+        background: #f59e0b;
     }
 
     .navbar-notif-icon.danger {
-        background: var(--danger, #DC3545);
+        background: var(--danger, #EF4444);
     }
 
     .navbar-notif-icon.info {
-        background: #17a2b8;
+        background: #0ea5e9;
     }
 
     .navbar-notif-icon.success {
-        background: var(--success, #28A745);
+        background: var(--success, #22C55E);
     }
 
 .navbar-notif-text {
@@ -281,27 +343,27 @@
 }
 
 .navbar-notif-title {
-    font-size: 0.85rem;
+    font-size: 0.84rem;
     font-weight: 600;
     margin-bottom: 2px;
 }
 
 .navbar-notif-sub {
-    font-size: 0.75rem;
-    color: #888;
+    font-size: 0.74rem;
+    color: #777;
 }
 
 .navbar-notif-time {
-    font-size: 0.68rem;
+    font-size: 0.67rem;
     color: #aaa;
     margin-top: 3px;
 }
 
 .navbar-notif-empty {
-    padding: 28px 16px;
+    padding: 26px 16px;
     text-align: center;
     color: #999;
-    font-size: 0.85rem;
+    font-size: 0.84rem;
 }
 
 .navbar-notif-footer {
@@ -317,54 +379,54 @@
         text-decoration: none;
     }
 
-/* ── System Status Indicator ─────────────────────────────── */
+/* ── System Status ──────────────────────────────────────── */
 .navbar-status {
+    display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.8);
+    gap: 5px;
+    font-size: 0.73rem;
+    color: rgba(255,255,255,0.78);
 }
 
 .navbar-status-dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: var(--success, #28A745);
-    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.6);
+    background: var(--success, #22C55E);
     animation: navbarPulse 2s infinite;
 }
 
 @keyframes navbarPulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.5);
+        box-shadow: 0 0 0 0 rgba(34,197,94,0.55);
     }
 
     70% {
-        box-shadow: 0 0 0 6px rgba(40, 167, 69, 0);
+        box-shadow: 0 0 0 6px rgba(34,197,94,0);
     }
 
     100% {
-        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+        box-shadow: 0 0 0 0 rgba(34,197,94,0);
     }
 }
 
-/* ── Chatbot Toggle Button ───────────────────────────────── */
+/* ── Chatbot button ─────────────────────────────────────── */
 .navbar-chatbot-btn {
-    background: var(--secondary);
+    background: rgba(200,146,42,0.85);
 }
 
     .navbar-chatbot-btn:hover {
         background: var(--secondary);
-        opacity: 0.9;
+        opacity: 1;
     }
 
 .navbar-chatbot-pulse {
     position: absolute;
     top: -2px;
     right: -2px;
-    width: 9px;
-    height: 9px;
-    background: #28A745;
+    width: 8px;
+    height: 8px;
+    background: #22C55E;
     border-radius: 50%;
     border: 2px solid var(--primary);
 }
@@ -374,11 +436,11 @@
     left: -2px;
 }
 
-/* ── Avatar (trigger) ────────────────────────────────────── */
+/* ── Avatar ─────────────────────────────────────────────── */
 .navbar-avatar {
     position: relative;
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--secondary), #e7b65c);
     display: flex;
@@ -386,37 +448,38 @@
     justify-content: center;
     color: var(--primary);
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     flex-shrink: 0;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 3px 10px rgba(0, 0, 0, 0.25);
-    transition: transform 0.25s, box-shadow 0.25s;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.22), 0 3px 10px rgba(0,0,0,0.22);
+    transition: transform 0.22s, box-shadow 0.22s;
 }
 
 .user-info-btn:hover .navbar-avatar {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
+    transform: scale(1.06);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.38), 0 4px 14px rgba(0,0,0,0.28);
 }
 
 .navbar-avatar-status {
     position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 10px;
-    height: 10px;
+    bottom: -1px;
+    right: -1px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
-    background: #28A745;
+    background: #22C55E;
     border: 2px solid var(--primary);
-    animation: navbarPulse 2s infinite;
+    animation: navbarPulse 2.5s infinite;
 }
 
 [dir="ltr"] .navbar-avatar-status {
     right: auto;
-    left: -2px;
+    left: -1px;
 }
 
 .navbar-chevron {
-    transition: transform 0.25s;
-    color: rgba(255, 255, 255, 0.6);
+    transition: transform 0.22s;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.72rem;
 }
 
 .user-info-btn[aria-expanded="true"] .navbar-chevron {
@@ -427,39 +490,82 @@
 .user-info-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 8px;
-    transition: background 0.3s;
+    padding: 4px 9px;
+    border-radius: 9px;
+    transition: background 0.22s;
 }
 
     .user-info-btn:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255,255,255,0.1);
     }
 
-/* ── Profile Dropdown (rich card) ─────────────────────────── */
+.user-details {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.user-name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--white);
+}
+
+.user-role {
+    font-size: 0.72rem;
+    color: var(--secondary);
+}
+
+/* ── Profile Dropdown ───────────────────────────────────── */
 .bonyan-profile-dropdown {
-    width: 280px;
+    width: 276px;
     max-width: 90vw;
     padding: 0;
     border: none;
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+}
+
+/* ── Ensure dropdowns always render above sidebar ─── */
+.navbar-user .dropdown-menu,
+.bonyan-profile-dropdown,
+.navbar-notifications .dropdown-menu,
+.navbar-quick-actions .dropdown-menu {
+    z-index: 1100 !important;
+    position: absolute;
+}
+
+/* Fix Bootstrap dropdown stacking context */
+.bonyan-navbar .dropdown {
+    position: static; /* remove so dropdown positions relative to navbar, not this element */
+}
+
+.bonyan-navbar .navbar-user {
+    position: relative; /* re-add only on the user cluster so dropdown anchors correctly */
+}
+
+.bonyan-navbar .navbar-notifications {
+    position: relative;
+}
+
+.bonyan-navbar .navbar-quick-actions {
+    position: relative;
 }
 
 .profile-dropdown-header {
-    background: linear-gradient(135deg, var(--primary), #2a5298);
-    padding: 20px 18px;
+    background: linear-gradient(135deg, var(--primary), #1e4480);
+    padding: 18px 16px;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
 }
 
 .profile-dropdown-avatar {
-    width: 52px;
-    height: 52px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--secondary), #e7b65c);
     display: flex;
@@ -467,9 +573,9 @@
     justify-content: center;
     color: var(--primary);
     font-weight: 800;
-    font-size: 1.05rem;
+    font-size: 1.02rem;
     flex-shrink: 0;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.22);
 }
 
 .profile-dropdown-info {
@@ -479,16 +585,16 @@
 .profile-dropdown-name {
     color: var(--white);
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 0.93rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .profile-dropdown-email {
-    color: rgba(255, 255, 255, 0.65);
-    font-size: 0.72rem;
-    margin: 2px 0 8px;
+    color: rgba(255,255,255,0.62);
+    font-size: 0.7rem;
+    margin: 2px 0 7px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -497,12 +603,12 @@
 .profile-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.15);
+    gap: 5px;
+    background: rgba(255,255,255,0.15);
     backdrop-filter: blur(4px);
-    padding: 3px 11px;
+    padding: 2px 10px;
     border-radius: 999px;
-    font-size: 0.68rem;
+    font-size: 0.67rem;
     font-weight: 700;
     color: var(--white);
 }
@@ -528,20 +634,20 @@
 
 .profile-dropdown-body {
     background: var(--white);
-    padding: 8px;
+    padding: 7px;
 }
 
 .profile-dropdown-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px;
+    gap: 11px;
+    padding: 9px 10px;
     border-radius: 9px;
     text-decoration: none;
-    color: var(--text, #2D2D2D);
-    font-size: 0.86rem;
+    color: var(--text, #1F2937);
+    font-size: 0.85rem;
     font-weight: 600;
-    transition: background 0.2s;
+    transition: background 0.18s, color 0.18s;
 }
 
     .profile-dropdown-item:hover {
@@ -550,18 +656,18 @@
     }
 
     .profile-dropdown-item.item-danger:hover {
-        background: #FFF0F0;
-        color: var(--danger, #DC3545);
+        background: #fff0f0;
+        color: var(--danger, #EF4444);
     }
 
 .item-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     flex-shrink: 0;
 }
 
@@ -582,20 +688,20 @@
 
 .profile-dropdown-divider {
     height: 1px;
-    background: #F0F0F0;
-    margin: 6px 4px;
+    background: #f0f0f0;
+    margin: 5px 4px;
 }
 
-/* ── Dropdown open animation (shared) ────────────────────── */
+/* ── Dropdown animation ─────────────────────────────────── */
 .bonyan-dropdown.show,
 .bonyan-profile-dropdown.show {
-    animation: navbarDropdownPop 0.18s ease;
+    animation: navbarDropdownPop 0.17s ease;
 }
 
 @keyframes navbarDropdownPop {
     from {
         opacity: 0;
-        transform: translateY(-6px) scale(0.97);
+        transform: translateY(-7px) scale(0.97);
     }
 
     to {
@@ -604,7 +710,32 @@
     }
 }
 
-/* ── Chatbot Panel (slide-in widget) ─────────────────────── */
+/* ── Bonyan generic dropdown card ───────────────────────── */
+.bonyan-dropdown {
+    border: none;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.15);
+    border-radius: 12px;
+    min-width: 200px;
+}
+
+    .bonyan-dropdown .dropdown-item:hover {
+        background: #F0F4FF;
+    }
+
+    .bonyan-dropdown .dropdown-item.text-danger:hover {
+        background: #fff0f0;
+    }
+
+    .bonyan-dropdown .dropdown-header {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 10px 14px 6px;
+    }
+
+/* ── Chatbot panel ──────────────────────────────────────── */
 .chatbot-panel {
     position: fixed;
     bottom: 20px;
@@ -615,14 +746,14 @@
     max-height: calc(100vh - 100px);
     background: var(--white, #fff);
     border-radius: 16px;
-    box-shadow: 0 14px 50px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 14px 50px rgba(0,0,0,0.25);
     display: flex;
     flex-direction: column;
     z-index: 1200;
     transform: translateY(20px) scale(0.96);
     opacity: 0;
     pointer-events: none;
-    transition: all 0.25s ease;
+    transition: all 0.24s ease;
 }
 
 [dir="ltr"] .chatbot-panel {
@@ -637,9 +768,9 @@
 }
 
 .chatbot-panel-header {
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary), #1e4480);
     color: var(--white);
-    padding: 14px 16px;
+    padding: 13px 15px;
     border-radius: 16px 16px 0 0;
     display: flex;
     align-items: center;
@@ -649,9 +780,9 @@
 .chatbot-panel-title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 0.93rem;
 }
 
     .chatbot-panel-title i {
@@ -661,32 +792,37 @@
 #chatbotCloseBtn {
     background: transparent;
     border: none;
-    color: var(--white);
-    font-size: 1rem;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.95rem;
     cursor: pointer;
+    transition: color 0.18s;
 }
+
+    #chatbotCloseBtn:hover {
+        color: #fff;
+    }
 
 .chatbot-panel-body {
     flex: 1;
-    padding: 14px;
+    padding: 13px;
     overflow-y: auto;
-    background: var(--bg, #F4F6F9);
+    background: var(--bg, #F0F2F7);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 9px;
 }
 
 .chatbot-msg {
     max-width: 85%;
-    padding: 9px 13px;
+    padding: 8px 12px;
     border-radius: 12px;
-    font-size: 0.85rem;
+    font-size: 0.84rem;
     line-height: 1.4;
 }
 
 .chatbot-msg-bot {
     background: var(--white, #fff);
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0,0,0,0.06);
     align-self: flex-start;
     border-bottom-left-radius: 3px;
 }
@@ -711,101 +847,123 @@
 .chatbot-panel-footer {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    gap: 7px;
+    padding: 9px;
+    border-top: 1px solid rgba(0,0,0,0.06);
 }
 
     .chatbot-panel-footer input {
         flex: 1;
         border: 1px solid #ddd;
         border-radius: 20px;
-        padding: 8px 14px;
+        padding: 7px 13px;
         outline: none;
-        font-size: 0.85rem;
-        background: var(--input-bg, #f4f6f9);
+        font-size: 0.84rem;
+        background: var(--bg, #F0F2F7);
         color: var(--text);
+        transition: border-color 0.2s;
     }
+
+        .chatbot-panel-footer input:focus {
+            border-color: var(--primary);
+        }
 
 #chatbotSendBtn {
     background: var(--primary);
     color: var(--white);
     border: none;
-    width: 34px;
-    height: 34px;
+    width: 33px;
+    height: 33px;
     border-radius: 50%;
     flex-shrink: 0;
     cursor: pointer;
+    transition: background 0.2s, transform 0.18s;
 }
 
     #chatbotSendBtn:hover {
         background: #142d55;
+        transform: scale(1.05);
     }
 
 /* ══════════════════════════════════════════════════════════
-   DARK MODE overrides
+   DARK MODE — Navbar & Chatbot overrides
 ══════════════════════════════════════════════════════════ */
 body.dark-mode .navbar-notif-item {
     color: #e2e8f0;
-    border-bottom-color: rgba(255, 255, 255, 0.06);
+    border-bottom-color: rgba(255,255,255,0.06);
 }
 
     body.dark-mode .navbar-notif-item:hover,
     body.dark-mode .navbar-notif-item.unread {
-        background: rgba(255, 255, 255, 0.06);
+        background: rgba(255,255,255,0.055);
     }
 
 body.dark-mode .navbar-notif-footer {
-    border-top-color: rgba(255, 255, 255, 0.08);
+    border-top-color: rgba(255,255,255,0.07);
 }
 
 body.dark-mode .profile-dropdown-body {
-    background: #1a2535;
+    background: #19283F;
 }
 
 body.dark-mode .profile-dropdown-item {
-    color: #e2e8f0;
+    color: #d8e4f2;
 }
 
     body.dark-mode .profile-dropdown-item:hover {
-        background: rgba(255, 255, 255, 0.06);
+        background: rgba(255,255,255,0.07);
+        color: #fff;
     }
 
 body.dark-mode .profile-dropdown-divider {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255,255,255,0.07);
 }
 
+body.dark-mode .bonyan-dropdown {
+    background: #19283F;
+    color: #d8e4f2;
+}
+
+    body.dark-mode .bonyan-dropdown .dropdown-item {
+        color: #d8e4f2;
+    }
+
+        body.dark-mode .bonyan-dropdown .dropdown-item:hover {
+            background: rgba(255,255,255,0.07);
+            color: #fff;
+        }
+
 body.dark-mode .chatbot-panel {
-    background: #1a2535;
+    background: #19283F;
 }
 
 body.dark-mode .chatbot-panel-body {
-    background: #0f1923;
+    background: #111F33;
 }
 
 body.dark-mode .chatbot-msg-bot {
-    background: #1a2535;
-    border-color: rgba(255, 255, 255, 0.08);
+    background: #1e3252;
+    border-color: rgba(255,255,255,0.07);
     color: #e2e8f0;
 }
 
 body.dark-mode .chatbot-panel-footer {
-    border-top-color: rgba(255, 255, 255, 0.08);
+    border-top-color: rgba(255,255,255,0.07);
 }
+
+    body.dark-mode .chatbot-panel-footer input {
+        background: #111F33;
+        border-color: rgba(255,255,255,0.1);
+        color: #e2e8f0;
+    }
 
 /* ══════════════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════════════ */
-@media (max-width: 992px) {
-    .navbar-main-links {
-        gap: 2px;
-    }
-}
-
 @media (max-width: 768px) {
     .bonyan-navbar {
-        padding: 0 12px;
-        gap: 8px;
+        padding: 0 10px;
+        gap: 6px;
     }
 
     .navbar-logo-text {
@@ -813,18 +971,23 @@ body.dark-mode .chatbot-panel-footer {
     }
 
     .navbar-right {
-        gap: 8px;
+        gap: 5px;
     }
 
     .user-details {
-        display: none;
+        display: none !important;
     }
 
     .chatbot-panel {
-        right: 10px;
-        left: 10px;
+        right: 8px;
+        left: 8px;
         width: auto;
-        bottom: 10px;
+        bottom: 8px;
+    }
+
+    [dir="ltr"] .chatbot-panel {
+        right: 8px;
+        left: 8px;
     }
 }
 
@@ -834,6 +997,7 @@ body.dark-mode .chatbot-panel-footer {
     }
 
     .lang-btn {
-        padding: 8px 10px;
+        padding: 6px 9px;
     }
 }
+
