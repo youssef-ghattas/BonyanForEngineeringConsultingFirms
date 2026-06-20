@@ -1,0 +1,585 @@
+/* ════════════════════════════════════════════════════════════════════
+   theme-pro.css
+   Bonyan design-polish + complete light/dark theme layer.
+
+   Loaded LAST in <head>. Because dark-mode rules below always include
+   "body.dark-mode" (two extra selector classes), they out-rank the
+   plain, single-class rules in the page-specific stylesheets
+   (project.css, employee.css, invoice.css, ...) regardless of link
+   order — so this single file is enough to bring dark mode to every
+   page without editing two dozen files individually.
+════════════════════════════════════════════════════════════════════ */
+
+/* ── 0. Token fixes + extra tokens ─────────────────────────────────── */
+:root {
+    --secondary-rgb: 200, 146, 42;
+    --primary-rgb: 27, 58, 107;
+    --danger-rgb: 239, 68, 68;
+    --success-rgb: 34, 197, 94;
+    --shadow-card: 0 2px 15px rgba(0,0,0,0.06);
+    --shadow-card-hover: 0 10px 28px rgba(20,30,60,0.12);
+    --radius-card: 14px;
+}
+
+body.dark-mode {
+    --secondary-rgb: 233, 185, 73;
+    --primary-rgb: 22, 38, 63;
+    --shadow-card: 0 2px 16px rgba(0,0,0,0.38);
+    --shadow-card-hover: 0 14px 34px rgba(0,0,0,0.5);
+
+    /* semantic badge palette reused everywhere below */
+    --b-blue-bg: #0E2E37;   --b-blue-text: #6FD4E9;
+    --b-indigo-bg: #16263F; --b-indigo-text: #8FB3F5;
+    --b-green-bg: #14361F;  --b-green-text: #6FCF8E;
+    --b-amber-bg: #3A2E0E;  --b-amber-text: #E9B949;
+    --b-red-bg: #3A1418;    --b-red-text: #F18A93;
+    --b-purple-bg: #241A3A; --b-purple-text: #C9A6F2;
+    --b-pink-bg: #34182B;   --b-pink-text: #F2A8D6;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   1. GLOBAL POLISH — applies in both light & dark
+════════════════════════════════════════════════════════════════════ */
+
+html {
+    scroll-behavior: smooth;
+}
+
+::selection {
+    background: var(--secondary);
+    color: #fff;
+}
+
+/* Smooth, consistent theme-switch animation across the whole shell */
+body,
+.bonyan-navbar,
+.bonyan-sidebar,
+.bonyan-content,
+.sidebar-menu li a,
+[class$="-card"],
+[class*="-card"],
+[class$="-bar"],
+table,
+.form-control,
+.form-select,
+input,
+select,
+textarea,
+.dropdown-menu {
+    transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+
+/* Accessible, on-brand focus ring everywhere (replaces invisible/blue browser default) */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--secondary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Custom slim scrollbar for the whole app (already present on sidebar only) */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(27,58,107,0.25) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(27,58,107,0.22);
+    border-radius: 20px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(27,58,107,0.4);
+    background-clip: padding-box;
+}
+
+body.dark-mode * {
+    scrollbar-color: rgba(233,185,73,0.25) transparent;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: rgba(233,185,73,0.2);
+    background-clip: padding-box;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: rgba(233,185,73,0.38);
+    background-clip: padding-box;
+}
+
+/* Page content enters gently instead of popping in */
+.bonyan-content {
+    animation: bonyanFadeIn .35s ease both;
+}
+
+@keyframes bonyanFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Badges everywhere get a hint of definition instead of flat color blocks */
+[class*="badge-"],
+.status-badge,
+.task-status-badge,
+.invoice-status-badge,
+.file-type-badge,
+.unit-badge,
+.count-badge {
+    letter-spacing: .2px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.035);
+}
+
+/* Buttons feel more alive */
+.btn-bonyan-primary,
+.btn-bonyan-secondary,
+.btn-bonyan-danger,
+.btn-login,
+.btn-action,
+.mi-btn,
+.mi-action {
+    will-change: transform;
+}
+
+    .btn-bonyan-primary:active,
+    .btn-bonyan-secondary:active,
+    .btn-bonyan-danger:active,
+    .btn-login:active {
+        transform: translateY(0) scale(0.98);
+    }
+
+/* Empty states feel a little less "broken / placeholder" */
+.empty-state i,
+.mi-empty i {
+    color: var(--secondary);
+    opacity: .45;
+}
+
+/* Sidebar toggle / icon buttons: subtle press feedback */
+.navbar-icon-btn:active,
+.sidebar-toggle:active {
+    transform: scale(0.92);
+}
+
+/* Dark-mode toggle icon rotates smoothly between sun / moon */
+#darkModeIcon {
+    display: inline-block;
+    transition: transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+
+#darkModeBtn:hover #darkModeIcon {
+    transform: rotate(25deg);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   2. DARK MODE — base surfaces not already covered in site.css
+════════════════════════════════════════════════════════════════════ */
+
+body.dark-mode {
+    color-scheme: dark;
+}
+
+/* Generic catch-all: any element using the shared "card" naming
+   convention gets a dark surface + soft border automatically. */
+body.dark-mode .upload-card,
+body.dark-mode .details-card,
+body.dark-mode .table-card,
+body.dark-mode .form-card,
+body.dark-mode .delete-card,
+body.dark-mode .project-card,
+body.dark-mode .invoice-card,
+body.dark-mode .assign-card,
+body.dark-mode .mi-kpi,
+body.dark-mode .mi-filter,
+body.dark-mode .mi-card,
+body.dark-mode .inv-card,
+body.dark-mode .filter-bar,
+body.dark-mode .mat-add-form,
+body.dark-mode .cancel-modal-box,
+body.dark-mode .invoice-amounts,
+body.dark-mode .delete-info-box,
+body.dark-mode .photo-card {
+    background: var(--surface);
+    border-color: var(--card-border);
+    box-shadow: var(--shadow-card);
+}
+
+    body.dark-mode .project-card:hover,
+    body.dark-mode .inv-card:hover,
+    body.dark-mode .mi-kpi:hover,
+    body.dark-mode .photo-card:hover {
+        box-shadow: var(--shadow-card-hover);
+    }
+
+/* Page header text */
+body.dark-mode .page-header-left h2,
+body.dark-mode .mi-header h2,
+body.dark-mode .visit-detail-header h3,
+body.dark-mode .task-detail-header h3 {
+    color: #F1F5FB;
+}
+
+body.dark-mode .page-header-left p,
+body.dark-mode .invoice-project,
+body.dark-mode .inv-card-location,
+body.dark-mode .mat-info-label,
+body.dark-mode .mat-info-value,
+body.dark-mode .inv-stat-label,
+body.dark-mode .invoice-summary-label,
+body.dark-mode .delete-card-body p,
+body.dark-mode .project-card-client,
+body.dark-mode .project-team,
+body.dark-mode .project-meta-item label,
+body.dark-mode .detail-item label,
+body.dark-mode .inv-date-label,
+body.dark-mode .invoice-dates .inv-date-item,
+body.dark-mode .inv-amount-row,
+body.dark-mode .file-drop-zone p,
+body.dark-mode .file-drop-zone span,
+body.dark-mode .visit-detail-label,
+body.dark-mode .task-detail-label,
+body.dark-mode .task-detail-row,
+body.dark-mode .emp-name-cell .emp-info span,
+body.dark-mode .photo-card-info span {
+    color: var(--muted);
+}
+
+body.dark-mode .project-meta-item span,
+body.dark-mode .detail-item p,
+body.dark-mode .assigned-emp-info p,
+body.dark-mode .emp-name-cell .emp-info p,
+body.dark-mode .invoice-summary-value,
+body.dark-mode .mi-kpi-value,
+body.dark-mode .mat-info-value,
+body.dark-mode .photo-card-info p,
+body.dark-mode .file-preview {
+    color: var(--text);
+}
+
+/* Headline / title accents — keep brand gold instead of unreadable navy-on-navy */
+body.dark-mode .project-card-title,
+body.dark-mode .table-card-header h5,
+body.dark-mode .invoice-num,
+body.dark-mode .inv-total,
+body.dark-mode .inv-section-title,
+body.dark-mode .mi-card-head,
+body.dark-mode .mat-add-title,
+body.dark-mode .inv-card-name,
+body.dark-mode .inv-stat-value,
+body.dark-mode .invoice-summary-title,
+body.dark-mode .form-group label,
+body.dark-mode .assign-form label,
+body.dark-mode .assign-card-header h5,
+body.dark-mode .delete-info-box strong,
+body.dark-mode .mi-table td .mat-name,
+body.dark-mode .mi-amount.final,
+body.dark-mode .upload-card-body label,
+body.dark-mode .invoice-summary-final .invoice-summary-value {
+    color: #E9B949;
+}
+
+/* mi-card-head in materialinvoice.css has its own light gradient background */
+body.dark-mode .mi-card-head {
+    background: linear-gradient(135deg, #16263F, #19283F);
+    border-bottom-color: rgba(255,255,255,0.07);
+}
+
+body.dark-mode .invoice-summary-box {
+    background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(14,46,55,0.4));
+    border-color: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .invoice-summary-final {
+    background: #16263F;
+    border-color: var(--secondary);
+}
+
+/* ── Tables (emp / project[bonyan] / task / doc / mat / mi / visit) ── */
+body.dark-mode .emp-table thead th,
+body.dark-mode .task-table thead th,
+body.dark-mode .doc-table thead th,
+body.dark-mode .mat-table thead tr,
+body.dark-mode .mat-table th,
+body.dark-mode .mi-table thead tr,
+body.dark-mode .mi-table thead th {
+    background: #16263F;
+    color: #C9D6E8;
+    border-bottom-color: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .visit-table thead tr {
+    background: linear-gradient(135deg, var(--primary), #1e3a63);
+}
+
+body.dark-mode .emp-table tbody td,
+body.dark-mode .task-table tbody tr,
+body.dark-mode .doc-table tbody tr,
+body.dark-mode .mat-table tbody tr,
+body.dark-mode .mi-table tbody tr,
+body.dark-mode .visit-table th,
+body.dark-mode .visit-table td {
+    border-bottom-color: rgba(255,255,255,0.07);
+    color: var(--text);
+}
+
+body.dark-mode .task-table td,
+body.dark-mode .doc-table td,
+body.dark-mode .mi-table td,
+body.dark-mode .mat-table td {
+    color: var(--text);
+}
+
+body.dark-mode .emp-table tbody tr:hover td,
+body.dark-mode .task-table tbody tr:hover,
+body.dark-mode .doc-table tbody tr:hover,
+body.dark-mode .mat-table tbody tr:hover,
+body.dark-mode .mi-table tbody tr:hover,
+body.dark-mode .visit-table tbody tr:hover {
+    background: rgba(255,255,255,0.04);
+}
+
+/* ── Form controls that don't already use .bonyan-form ─────────────── */
+body.dark-mode .filter-search input,
+body.dark-mode .filter-select,
+body.dark-mode .form-group .form-control,
+body.dark-mode .form-group .form-select,
+body.dark-mode .assign-form .form-control,
+body.dark-mode .assign-form .form-select,
+body.dark-mode .upload-card-body .form-control,
+body.dark-mode .upload-card-body .form-select,
+body.dark-mode .mi-filter select,
+body.dark-mode .mi-filter .form-control,
+body.dark-mode .form-control,
+body.dark-mode .form-select,
+body.dark-mode input.form-control,
+body.dark-mode select.form-select,
+body.dark-mode textarea.form-control {
+    background: #16263F;
+    border-color: #2A3B58;
+    color: var(--text);
+}
+
+    body.dark-mode .filter-search input::placeholder,
+    body.dark-mode .form-control::placeholder {
+        color: #6E7C95;
+    }
+
+    body.dark-mode .filter-search i,
+    body.dark-mode .file-drop-zone i {
+        color: #6E7C95;
+    }
+
+    body.dark-mode .filter-search input:focus,
+    body.dark-mode .filter-select:focus,
+    body.dark-mode .form-group .form-control:focus,
+    body.dark-mode .form-group .form-select:focus,
+    body.dark-mode .upload-card-body .form-control:focus,
+    body.dark-mode .upload-card-body .form-select:focus,
+    body.dark-mode .mi-filter select:focus,
+    body.dark-mode .form-control:focus,
+    body.dark-mode .form-select:focus {
+        border-color: #E9B949;
+        box-shadow: 0 0 0 3px rgba(233,185,73,0.15);
+    }
+
+body.dark-mode .file-drop-zone {
+    background: #16263F;
+    border-color: #2A3B58;
+}
+
+    body.dark-mode .file-drop-zone:hover,
+    body.dark-mode .file-drop-zone.dragover {
+        background: #1a2e48;
+        border-color: var(--secondary);
+    }
+
+body.dark-mode .file-preview {
+    background: #16263F;
+}
+
+body.dark-mode .input-locked {
+    background: #16263F;
+    color: #6E7C95;
+}
+
+body.dark-mode .locked-fields-banner {
+    background: rgba(233,185,73,0.1);
+    border-color: rgba(233,185,73,0.35);
+}
+
+    body.dark-mode .locked-fields-banner i,
+    body.dark-mode .locked-fields-banner span {
+        color: #E9B949;
+    }
+
+/* ── Borders / dividers used throughout ─────────────────────────────── */
+body.dark-mode .project-card-top,
+body.dark-mode .form-actions,
+body.dark-mode .table-card-header,
+body.dark-mode .assigned-item,
+body.dark-mode .invoice-header,
+body.dark-mode .task-detail-header,
+body.dark-mode .visit-detail-header,
+body.dark-mode .visit-detail-row,
+body.dark-mode .form-section-title,
+body.dark-mode .details-section-title,
+body.dark-mode .mi-filter,
+body.dark-mode .inv-card-stats,
+body.dark-mode .inv-card-link {
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+body.dark-mode .project-card-footer,
+body.dark-mode .assign-card-header {
+    background: #16263F;
+    border-color: rgba(255,255,255,0.08);
+}
+
+/* ── Badges: light pastel chips → readable dark chips ───────────────── */
+body.dark-mode .badge-planning,
+body.dark-mode .badge-male,
+body.dark-mode .file-type-badge,
+body.dark-mode .unit-badge,
+body.dark-mode .btn-action.view,
+body.dark-mode .mi-btn-view,
+body.dark-mode .mi-action.view {
+    background: var(--b-blue-bg);
+    color: var(--b-blue-text);
+}
+
+body.dark-mode .mi-card-head .count-badge,
+body.dark-mode .count-badge {
+    background: var(--b-indigo-bg);
+    color: var(--b-indigo-text);
+}
+
+body.dark-mode .badge-inprogress,
+body.dark-mode .badge-pending,
+body.dark-mode .badge-attention,
+body.dark-mode .status-partial,
+body.dark-mode .btn-action.edit,
+body.dark-mode .mi-btn-edit,
+body.dark-mode .mi-action.edit,
+body.dark-mode .count-badge.inv {
+    background: var(--b-amber-bg);
+    color: var(--b-amber-text);
+}
+
+body.dark-mode .badge-completed,
+body.dark-mode .badge-safe,
+body.dark-mode .status-paid,
+body.dark-mode .alert-success-msg,
+body.dark-mode .mi-alert-success,
+body.dark-mode .invoice-summary-value.disc-value {
+    background: var(--b-green-bg);
+    color: var(--b-green-text);
+    border-color: rgba(111,207,142,0.25);
+}
+
+body.dark-mode .badge-cancelled,
+body.dark-mode .badge-critical,
+body.dark-mode .status-unpaid,
+body.dark-mode .btn-action.delete,
+body.dark-mode .mi-btn-delete,
+body.dark-mode .mi-action.delete,
+body.dark-mode .alert-error-msg,
+body.dark-mode .btn-remove,
+body.dark-mode .delete-icon {
+    background: var(--b-red-bg);
+    color: var(--b-red-text);
+    border-color: rgba(241,138,147,0.25);
+}
+
+    body.dark-mode .btn-remove:hover {
+        background: #4a191e;
+    }
+
+body.dark-mode .badge-onhold,
+body.dark-mode .badge-review,
+body.dark-mode .badge-spec {
+    background: var(--b-purple-bg);
+    color: var(--b-purple-text);
+}
+
+body.dark-mode .badge-female {
+    background: var(--b-pink-bg);
+    color: var(--b-pink-text);
+}
+
+body.dark-mode .project-badge {
+    background: rgba(233,185,73,0.1);
+    border-color: rgba(233,185,73,0.3);
+    color: #E9B949;
+}
+
+/* mi-kpi colored variants in materialinvoice.css (gradient pastel cards) */
+body.dark-mode .mi-kpi.blue {
+    background: linear-gradient(135deg, #0E2E37, #16263F);
+}
+body.dark-mode .mi-kpi.green {
+    background: linear-gradient(135deg, #14361F, #16263F);
+}
+body.dark-mode .mi-kpi.red {
+    background: linear-gradient(135deg, #3A1418, #16263F);
+}
+body.dark-mode .mi-kpi.amber {
+    background: linear-gradient(135deg, #3A2E0E, #16263F);
+}
+body.dark-mode .mi-kpi-label {
+    color: var(--muted);
+}
+body.dark-mode .mi-kpi-value {
+    color: #F1F5FB;
+}
+
+/* ── Empty states / alerts / overlays ───────────────────────────────── */
+body.dark-mode .empty-state,
+body.dark-mode .mi-empty {
+    color: #4d5a72;
+}
+
+body.dark-mode .cancel-modal-overlay {
+    background: rgba(0,0,0,0.7);
+}
+
+body.dark-mode .cancel-modal-body {
+    color: var(--muted);
+}
+
+body.dark-mode .btn-modal-back {
+    background: #16263F;
+    border-color: #2A3B58;
+    color: var(--text);
+}
+
+    body.dark-mode .btn-modal-back:hover {
+        background: #1a2e48;
+    }
+
+/* ── Misc small bits ─────────────────────────────────────────────────── */
+body.dark-mode .visit-thumb,
+body.dark-mode .photo-card {
+    border-color: rgba(255,255,255,0.1);
+}
+
+body.dark-mode .assign-card-body,
+body.dark-mode .details-body,
+body.dark-mode .delete-card-body,
+body.dark-mode .form-card-body {
+    color: var(--text);
+}

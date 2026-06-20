@@ -20,8 +20,21 @@
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="~/css/home.css" />
     <link rel="stylesheet" href="~/css/navbar.css" />
+    <link rel="stylesheet" href="~/css/theme-pro.css" />
 </head>
 <body>
+    <script>
+        // ── Restore dark/light preference BEFORE first paint of content ──
+        // Runs as the very first thing inside <body> (document.body already
+        // exists at this point even though later elements haven't been
+        // parsed yet), so there is no flash of the wrong theme.
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const on = saved === '1' || (saved === null && prefersDark);
+            if (on) document.body.classList.add('dark-mode');
+        })();
+    </script>
 
     <div class="bonyan-bg-tools" aria-hidden="true">
         <i class="fas fa-wrench bg-tool tool-1"></i>
@@ -498,11 +511,9 @@
             applyDarkMode(!document.body.classList.contains('dark-mode'));
         }
 
-        // Restore preference on load
-        (function () {
-            const saved = localStorage.getItem('bonyan-dark');
-            if (saved === '1') applyDarkMode(true);
-        })();
+        // Theme class was already applied pre-paint (see the inline script
+        // right after <body>); just sync the toggle icon to match it.
+        darkIcon.className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
     </script>
 
     @RenderSection("Scripts", required: false)
@@ -523,12 +534,12 @@
             <div class="chatbot-msg chatbot-msg-bot">
                 <span data-lang="assistant_greeting">مرحبًا! كيف يمكنني مساعدتك اليوم؟</span>
             </div>
-            </div>
         </div>
-        <div class="chatbot-panel-footer">
-            <input type="text" id="chatbotInput" data-lang-placeholder="type_message" placeholder="اكتب رسالتك..." autocomplete="off" />
-            <button id="chatbotSendBtn"><i class="fas fa-paper-plane"></i></button>
-        </div>
+    </div>
+    <div class="chatbot-panel-footer">
+        <input type="text" id="chatbotInput" data-lang-placeholder="type_message" placeholder="اكتب رسالتك..." autocomplete="off" />
+        <button id="chatbotSendBtn"><i class="fas fa-paper-plane"></i></button>
+    </div>
     </div>
 
     <script src="~/js/navbar.js"></script>

@@ -1,0 +1,200 @@
+/* ════════════════════════════════════════════════════════════════════
+   auth-theme.css
+   Shared polish + dark mode for the standalone auth pages (Login,
+   Register, ForgotPassword, ChangePassword) which sit outside the
+   main app layout and therefore need their own light/dark handling.
+   Uses the SAME localStorage key ("bonyan-dark") as the main app so
+   the chosen theme stays consistent everywhere.
+════════════════════════════════════════════════════════════════════ */
+
+:root {
+    --auth-primary: #1B3A6B;
+    --auth-secondary: #C8922A;
+}
+
+body {
+    background: radial-gradient(circle at 15% 20%, #eef2fb 0%, #F4F6F9 45%, #eef1f8 100%);
+}
+
+/* Entrance animation */
+.login-wrapper,
+.register-wrapper {
+    animation: authFadeIn .45s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes authFadeIn {
+    from { opacity: 0; transform: translateY(14px) scale(.99); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* A touch more depth + a hint of gold glow on the card */
+.login-wrapper,
+.register-wrapper {
+    box-shadow: 0 25px 70px rgba(15,28,55,0.18), 0 0 0 1px rgba(200,146,42,0.06);
+}
+
+/* Inputs feel more premium */
+.form-control {
+    transition: all .25s ease;
+}
+
+.btn-login {
+    position: relative;
+    overflow: hidden;
+}
+
+    .btn-login::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.25), transparent);
+        transform: translateX(-100%);
+        transition: transform .6s ease;
+    }
+
+    .btn-login:hover::after {
+        transform: translateX(100%);
+    }
+
+/* ── Theme toggle button (top corner, RTL-aware) ─────────────────── */
+.auth-theme-toggle {
+    position: fixed;
+    top: 22px;
+    left: 22px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.9);
+    color: var(--auth-primary);
+    box-shadow: 0 4px 18px rgba(15,28,55,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    cursor: pointer;
+    z-index: 999;
+    transition: all .25s ease;
+}
+
+    .auth-theme-toggle:hover {
+        transform: translateY(-2px) rotate(15deg);
+        box-shadow: 0 8px 24px rgba(15,28,55,0.25);
+    }
+
+    .auth-theme-toggle:active {
+        transform: scale(0.92);
+    }
+
+/* ════════════════════════════════════════════════════════════════════
+   DARK MODE
+════════════════════════════════════════════════════════════════════ */
+body.dark-mode {
+    background: radial-gradient(circle at 15% 20%, #16263F 0%, #0E1826 45%, #0c1420 100%);
+    color: #E8EDF5;
+}
+
+body.dark-mode .login-wrapper,
+body.dark-mode .register-wrapper {
+    box-shadow: 0 25px 70px rgba(0,0,0,0.55), 0 0 0 1px rgba(233,185,73,0.08);
+}
+
+body.dark-mode .login-right,
+body.dark-mode .register-right {
+    background: #19283F;
+}
+
+body.dark-mode .login-right h2,
+body.dark-mode .register-right h2,
+body.dark-mode .form-label {
+    color: #E9B949;
+}
+
+body.dark-mode .login-right p,
+body.dark-mode .register-right p {
+    color: #9AA7BD;
+}
+
+body.dark-mode .input-icon {
+    color: #E9B949;
+}
+
+body.dark-mode .form-control {
+    background: #16263F;
+    border-color: #2A3B58;
+    color: #E8EDF5;
+}
+
+    body.dark-mode .form-control::placeholder {
+        color: #6E7C95;
+    }
+
+    body.dark-mode .form-control:focus {
+        border-color: #E9B949;
+        box-shadow: 0 0 0 3px rgba(233,185,73,0.15);
+    }
+
+body.dark-mode .toggle-password {
+    color: #6E7C95;
+}
+
+    body.dark-mode .toggle-password:hover {
+        color: #E9B949;
+    }
+
+body.dark-mode .switch-link {
+    color: #9AA7BD;
+}
+
+    body.dark-mode .switch-link a {
+        color: #E9B949;
+    }
+
+body.dark-mode .error-alert,
+body.dark-mode .forgot-error {
+    background: #3A1418;
+    border-color: rgba(241,138,147,0.3);
+    color: #F18A93;
+}
+
+body.dark-mode .forgot-success,
+body.dark-mode .success-alert,
+body.dark-mode .auth-success-alert {
+    background: #14361F;
+    border-color: rgba(111,207,142,0.3);
+    color: #6FCF8E;
+}
+
+.auth-success-alert {
+    background: #EEFAF2;
+    border: 1px solid #C3EDD0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #28A745;
+    font-size: 0.88rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+}
+
+body.dark-mode .forgot-info-box,
+body.dark-mode .info-box {
+    background: rgba(233,185,73,0.1);
+}
+
+body.dark-mode .auth-theme-toggle {
+    background: #19283F;
+    color: #E9B949;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+}
+
+@media (max-width: 768px) {
+    .auth-theme-toggle {
+        top: 14px;
+        left: 14px;
+        width: 38px;
+        height: 38px;
+    }
+}
