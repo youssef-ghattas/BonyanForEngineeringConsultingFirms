@@ -1,192 +1,291 @@
-﻿@model IEnumerable<Bonyan.DAL.Models.Project>
+﻿@* Views/Project/Index.cshtml *@
+@model IEnumerable<Bonyan.DAL.Models.Project>
 @using Bonyan.DAL.Enums
 @{
     ViewData["Title"] = "المشاريع";
     var role = Context.Session.GetString("Role");
+    var today = DateTime.Today;
+
+    var total = Model.Count();
+    var inProgress = Model.Count(p => p.Status == ProjectStatus.InProgress);
+    var completed = Model.Count(p => p.Status == ProjectStatus.Completed);
+    var totalBudget = Model.Sum(p => p.Budget ?? 0);
 }
 
 <link rel="stylesheet" href="~/css/project.css" />
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert"
-         style="margin: 20px; text-align: right; direction: rtl;">
-        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
+<div class="project-page">
 
-<!-- Page Header -->
-<div class="page-header">
-    <div class="page-header-left">
-        <h2>
-            <i class="fas fa-project-diagram"
-               style="color:var(--secondary)"></i>
-            <span data-lang="projects">المشاريع</span>
-        </h2>
-        <p data-lang="projects_sub">إدارة وتتبع المشاريع الهندسية</p>
+    <!-- ── Header ─────────────────────────────────── -->
+    <div class="page-header">
+        <div class="page-header-left">
+            <h2><i class="fas fa-diagram-project"></i> المشاريع</h2>
+            <p>إدارة ومتابعة المشاريع الهندسية</p>
+        </div>
+        @if (role == "Admin")
+        {
+            <a asp-action="Create" class="btn-proj btn-proj-primary">
+                <i class="fas fa-plus"></i> إضافة مشروع
+            </a>
+        }
     </div>
-    @if (role == "Admin")
+
+    <!-- ── Alerts ─────────────────────────────────── -->
+    @if (TempData["SuccessMessage"] != null)
     {
-        <a asp-action="Create" class="btn-bonyan-secondary">
-            <i class="fas fa-plus"></i>
-            <span data-lang="add_project">إضافة مشروع</span>
-        </a>
+        <div class="alert-success-msg">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert-error-msg">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- ── KPI Strip ──────────────────────────────── -->
+    <div class="project-kpi-grid">
+        <div class="project-kpi navy">
+            <div class="project-kpi-icon"><i class="fas fa-diagram-project"></i></div>
+            <div>
+                <div class="project-kpi-label">إجمالي المشاريع</div>
+                <div class="project-kpi-value">@total</div>
+            </div>
+        </div>
+        <div class="project-kpi blue">
+            <div class="project-kpi-icon"><i class="fas fa-person-digging"></i></div>
+            <div>
+                <div class="project-kpi-label">قيد التنفيذ</div>
+                <div class="project-kpi-value">@inProgress</div>
+            </div>
+        </div>
+        <div class="project-kpi green">
+            <div class="project-kpi-icon"><i class="fas fa-circle-check"></i></div>
+            <div>
+                <div class="project-kpi-label">مكتملة</div>
+                <div class="project-kpi-value">@completed</div>
+            </div>
+        </div>
+        <div class="project-kpi gold">
+            <div class="project-kpi-icon"><i class="fas fa-coins"></i></div>
+            <div>
+                <div class="project-kpi-label">إجمالي الموازنات</div>
+                <div class="project-kpi-value">@totalBudget.ToString("N0") ج.م</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Filter Bar (client-side) ───────────────── -->
+    <div class="filter-bar">
+        <select class="filter-select" id="statusFilter">
+            <option value="">كل الحالات</option>
+            <option value="Planning">تخطيط</option>
+            <option value="InProgress">قيد التنفيذ</option>
+            <option value="OnHold">متوقف</option>
+            <option value="Completed">مكتمل</option>
+            <option value="Cancelled">ملغي</option>
+        </select>
+        <div class="filter-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="projSearchInput" placeholder="بحث عن مشروع بالاسم أو العميل أو الموقع...">
+        </div>
+        <button type="button" class="filter-reset" id="resetFiltersBtn">
+            <i class="fas fa-rotate-left"></i> إعادة تعيين
+        </button>
+        <span class="results-count"><strong id="visibleCount">@total</strong> مشروع</span>
+    </div>
+
+    <!-- ── Projects Grid ──────────────────────────── -->
+    @if (Model.Any())
+    {
+        <div class="projects-grid" id="projectsGrid">
+            @foreach (var proj in Model)
+            {
+                var statusClass = proj.Status switch
+                {
+                    ProjectStatus.Planning => "badge-planning",
+                    ProjectStatus.InProgress => "badge-inprogress",
+                    ProjectStatus.OnHold => "badge-onhold",
+                    ProjectStatus.Completed => "badge-completed",
+                    ProjectStatus.Cancelled => "badge-cancelled",
+                    _ => "badge-planning"
+                };
+                var statusIcon = proj.Status switch
+                {
+                    ProjectStatus.Planning => "fa-pen-ruler",
+                    ProjectStatus.InProgress => "fa-person-digging",
+                    ProjectStatus.OnHold => "fa-pause",
+                    ProjectStatus.Completed => "fa-circle-check",
+                    ProjectStatus.Cancelled => "fa-circle-xmark",
+                    _ => "fa-pen-ruler"
+                };
+                var statusLabel = proj.Status switch
+                {
+                    ProjectStatus.Planning => "تخطيط",
+                    ProjectStatus.InProgress => "قيد التنفيذ",
+                    ProjectStatus.OnHold => "متوقف",
+                    ProjectStatus.Completed => "مكتمل",
+                    ProjectStatus.Cancelled => "ملغي",
+                    _ => proj.Status.ToString()
+                };
+
+                // ── Progress calculation based on Start/End dates ──
+                int progressPercent = 0;
+                bool isOverdue = false;
+                if (proj.StartDate.HasValue && proj.EndDate.HasValue && proj.EndDate > proj.StartDate)
+                {
+                    var totalDays = (proj.EndDate.Value - proj.StartDate.Value).TotalDays;
+                    var elapsedDays = (today - proj.StartDate.Value).TotalDays;
+                    progressPercent = (int)Math.Round((elapsedDays / totalDays) * 100);
+                    progressPercent = Math.Max(0, Math.Min(100, progressPercent));
+                    isOverdue = today > proj.EndDate.Value && proj.Status != ProjectStatus.Completed;
+                }
+
+                var progressClass = proj.Status == ProjectStatus.Completed ? "is-completed"
+                : isOverdue ? "is-overdue" : "";
+
+                var teamCount = proj.EmployeeProjects?.Count ?? 0;
+
+                <div class="project-card"
+                     data-name="@proj.ProjectName?.ToLower()"
+                     data-client="@proj.Client_Name?.ToLower()"
+                     data-location="@proj.Location?.ToLower()"
+                     data-status="@proj.Status">
+                    <div class="project-card-top">
+                        <div class="project-card-header">
+                            <div class="project-icon"><i class="fas fa-diagram-project"></i></div>
+                            <span class="badge-status @statusClass">
+                                <i class="fas @statusIcon"></i> @statusLabel
+                            </span>
+                        </div>
+
+                        <div class="project-card-title-row">
+                            <p class="project-card-title" title="@proj.ProjectName">@proj.ProjectName</p>
+                        </div>
+                        <div class="project-card-client">
+                            <i class="fas fa-user-tie"></i> @(proj.Client_Name ?? "—")
+                        </div>
+
+                        @if (proj.StartDate.HasValue && proj.EndDate.HasValue)
+                        {
+                            <div class="project-progress-wrap">
+                                <div class="project-progress-labels">
+                                    <span>التقدم الزمني</span>
+                                    <strong>@(isOverdue ? "متأخر" : $"{progressPercent}%")</strong>
+                                </div>
+                                <div class="project-progress-bar">
+                                    <div class="project-progress-fill @progressClass" style="width:@progressPercent%"></div>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="project-meta">
+                            <div class="project-meta-item">
+                                <label><i class="fas fa-calendar-day"></i> تاريخ البدء</label>
+                                <span>@(proj.StartDate?.ToString("yyyy-MM-dd") ?? "—")</span>
+                            </div>
+                            <div class="project-meta-item">
+                                <label><i class="fas fa-calendar-check"></i> تاريخ الانتهاء</label>
+                                <span>@(proj.EndDate?.ToString("yyyy-MM-dd") ?? "—")</span>
+                            </div>
+                            <div class="project-meta-item">
+                                <label><i class="fas fa-location-dot"></i> الموقع</label>
+                                <span>@(proj.Location ?? "—")</span>
+                            </div>
+                            <div class="project-meta-item">
+                                <label><i class="fas fa-coins"></i> الموازنة</label>
+                                <span class="project-budget-value">@(proj.Budget.HasValue? proj.Budget.Value.ToString("N0") + " ج.م" : "—")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-card-footer">
+                        <div class="project-team">
+                            <i class="fas fa-users"></i> @teamCount عضو
+                        </div>
+                        <div class="project-actions">
+                            <a asp-action="Details" asp-route-id="@proj.ProjectId"
+                               class="btn-action view" data-tip="عرض التفاصيل">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            @if (role == "Admin")
+                            {
+                                <a asp-action="Edit" asp-route-id="@proj.ProjectId"
+                                   class="btn-action edit" data-tip="تعديل">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@proj.ProjectId"
+                                   class="btn-action delete" data-tip="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="empty-state" id="noResultsState" style="display:none">
+            <i class="fas fa-folder-open"></i>
+            <h6>لا توجد نتائج مطابقة</h6>
+            <p>جرّب تعديل كلمات البحث أو الفلاتر المستخدمة</p>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="fas fa-diagram-project"></i>
+            <h6>لا توجد مشاريع مسجلة</h6>
+            <p>ابدأ بإضافة أول مشروع هندسي لشركتك</p>
+        </div>
     }
 </div>
 
-<!-- Filter Bar -->
-<div class="filter-bar">
-    <div class="filter-search">
-        <i class="fas fa-search"></i>
-        <input type="text" class="form-control" placeholder="بحث عن مشروع..."
-               onkeyup="filterProjects()" />
-    </div>
-    <select class="filter-select" id="statusFilter"
-            onchange="filterProjects()">
-        <option value="" data-lang="all_statuses">كل الحالات</option>
-        <option value="planning" data-lang="status_planning">تخطيط</option>
-        <option value="inprogress" data-lang="status_inprogress">جاري</option>
-        <option value="completed" data-lang="status_completed">مكتمل</option>
-        <option value="onhold" data-lang="status_onhold">موقوف</option>
-        <option value="cancelled" data-lang="status_cancelled">ملغي</option>
-    </select>
-</div>
-
-<!-- Projects Grid -->
-@if (!Model.Any())
-{
-    <div class="empty-state">
-        <i class="fas fa-folder-open"></i>
-        <p data-lang="no_projects">لا توجد مشاريع حتى الآن</p>
-    </div>
-}
-else
-{
-    <div class="projects-grid" id="projectsGrid">
-        @foreach (var p in Model)
-        {
-            string badgeClass = p.Status switch
-            {
-                ProjectStatus.Planning => "badge-planning",
-                ProjectStatus.InProgress => "badge-inprogress",
-                ProjectStatus.Completed => "badge-completed",
-                ProjectStatus.OnHold => "badge-onhold",
-                ProjectStatus.Cancelled => "badge-cancelled",
-                _ => "badge-planning"
-            };
-            string statusAr = p.Status switch
-            {
-                ProjectStatus.Planning => "تخطيط",
-                ProjectStatus.InProgress => "جاري التنفيذ",
-                ProjectStatus.Completed => "مكتمل",
-                ProjectStatus.OnHold => "موقوف",
-                ProjectStatus.Cancelled => "ملغي",
-                _ => p.Status.ToString()
-            };
-            string statusKey = p.Status.ToString().ToLower();
-
-            <div class="project-card" data-status="@statusKey"
-                 data-name="@p.ProjectName.ToLower()">
-                <div class="project-card-top">
-                    <div class="project-card-header">
-                        <div class="project-icon">
-                            <i class="fas fa-hard-hat"></i>
-                        </div>
-                        <span class="badge-status @badgeClass"
-                              data-en="@p.Status.ToString()"
-                              data-ar="@statusAr">
-                            @statusAr
-                        </span>
-                    </div>
-                    <div class="project-card-title">@p.ProjectName</div>
-                    <div class="project-card-client">
-                        <i class="fas fa-user-tie"></i>
-                        @(p.Client_Name ?? "—")
-                    </div>
-                    <div class="project-meta">
-                        <div class="project-meta-item">
-                            <label data-lang="start_date">تاريخ البدء</label>
-                            <span>
-                                @(p.StartDate.HasValue
-                                                        ? p.StartDate.Value.ToString("yyyy-MM-dd")
-                                                        : "—")
-                                                          </span>
-                                                      </div>
-                                                      <div class="project-meta-item">
-                                                          <label data-lang="end_date">تاريخ الانتهاء</label>
-                                                          <span>
-                                @(p.EndDate.HasValue
-                                                        ? p.EndDate.Value.ToString("yyyy-MM-dd")
-                                                        : "—")
-                                                          </span>
-                                                      </div>
-                                                      <div class="project-meta-item">
-                                                          <label data-lang="budget">الميزانية</label>
-                                                          <span>
-                                @(p.Budget.HasValue
-                                                        ? p.Budget.Value.ToString("N0") + " ج.م"
-                                                        : "—")
-                    </span>
-                </div>
-                <div class="project-meta-item">
-                    <label data-lang="location">الموقع</label>
-                    <span>@(p.Location ?? "—")</span>
-                </div>
-            </div>
-        </div>
-        <div class="project-card-footer">
-            <div class="project-team">
-                <i class="fas fa-users"></i>
-                <span>
-                    @p.EmployeeProjects.Count
-                    <span data-lang="members">عضو</span>
-                </span>
-            </div>
-            <div class="project-actions">
-                <a asp-action="Details"
-                   asp-route-id="@p.ProjectId"
-                   class="btn-action view" title="تفاصيل">
-                    <i class="fas fa-eye"></i>
-                </a>
-                @if (role == "Admin")
-                        {
-                            <a asp-action="Edit"
-                               asp-route-id="@p.ProjectId"
-                               class="btn-action edit" title="تعديل">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a asp-action="Delete"
-                               asp-route-id="@p.ProjectId"
-                               class="btn-action delete" title="حذف">
-                                <i class="fas fa-trash"></i>
-                            </a>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-}
-
 @section Scripts {
     <script>
-        function filterProjects() {
-            const search = document.getElementById('searchInput')
-                                   .value.toLowerCase();
-            const status = document.getElementById('statusFilter')
-                                   .value.toLowerCase();
-            const cards  = document.querySelectorAll('.project-card');
+        (function () {
+            var searchInput = document.getElementById('projSearchInput');
+            var statusFilter = document.getElementById('statusFilter');
+            var resetBtn = document.getElementById('resetFiltersBtn');
+            var grid = document.getElementById('projectsGrid');
+            var visibleCountEl = document.getElementById('visibleCount');
+            var noResultsState = document.getElementById('noResultsState');
 
-            cards.forEach(card => {
-                const name      = card.getAttribute('data-name') || '';
-                const cardStatus = card.getAttribute('data-status') || '';
+            if (!grid) return;
 
-                const matchSearch = name.includes(search);
-                const matchStatus = status === '' || cardStatus === status;
+            var cards = Array.prototype.slice.call(grid.querySelectorAll('.project-card'));
 
-                card.style.display = (matchSearch && matchStatus) ? '' : 'none';
+            function applyFilters() {
+                var term = (searchInput.value || '').trim().toLowerCase();
+                var status = statusFilter.value;
+                var visible = 0;
+
+                cards.forEach(function (card) {
+                    var matchesTerm = !term ||
+                        (card.dataset.name || '').indexOf(term) !== -1 ||
+                        (card.dataset.client || '').indexOf(term) !== -1 ||
+                        (card.dataset.location || '').indexOf(term) !== -1;
+
+                    var matchesStatus = !status || card.dataset.status === status;
+
+                    var show = matchesTerm && matchesStatus;
+                    card.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
+
+                visibleCountEl.textContent = visible;
+                if (noResultsState) {
+                    noResultsState.style.display = visible === 0 ? 'block' : 'none';
+                }
+            }
+
+            searchInput.addEventListener('input', applyFilters);
+            statusFilter.addEventListener('change', applyFilters);
+            resetBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                statusFilter.value = '';
+                applyFilters();
             });
-        }
+        })();
     </script>
 }
