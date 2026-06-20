@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function sendChatMessage() {
         const text = chatbotInput.value.trim();
         if (!text) return;
-        appendChatMessage(text, "user");
+        appendChatMessage(text, "user"); applyLanguage
         chatbotInput.value = "";
 
         // ── TODO: replace with real fetch() call to your bot ──
