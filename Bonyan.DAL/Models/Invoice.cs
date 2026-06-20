@@ -45,6 +45,13 @@ namespace Bonyan.DAL.Models
 		[Range(0, double.MaxValue)]
 		public decimal? Discount { get; set; } = 0;
 
+		[Column(TypeName = "decimal(15, 2)")]
+		[Range(0, double.MaxValue)]
+		public decimal? Paid_Amount { get; set; } = 0;
+
+		[Column(TypeName = "decimal(15, 2)")]
+		public decimal? RemainingAmount { get; set; } = 0;
+
 		[ForeignKey("TaskId")]
 		public virtual Task Task { get; set; }
 

@@ -89,11 +89,12 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
                 return View(invoice);
             }
 
-            invoice.Invoice_Date = DateTime.Now;
-            _context.Invoices.Add(invoice);
-            await _context.SaveChangesAsync();
+			invoice.Invoice_Date = DateTime.Now;
+			CalculateInvoicePayment(invoice);
+			_context.Invoices.Add(invoice);
+			await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تمت إضافة الفاتورة بنجاح";
+			TempData["SuccessMessage"] = "تمت إضافة الفاتورة بنجاح";
             return RedirectToAction("Details", "Project", new { id = invoice.ProjectId });
         }
 
@@ -127,10 +128,11 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
                 return View(invoice);
             }
 
-            _context.Invoices.Update(invoice);
-            await _context.SaveChangesAsync();
+			CalculateInvoicePayment(invoice);
+			_context.Invoices.Update(invoice);
+			await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تم تحديث الفاتورة بنجاح";
+			TempData["SuccessMessage"] = "تم تحديث الفاتورة بنجاح";
             return RedirectToAction("Details", "Project", new { id = invoice.ProjectId });
         }
 
@@ -151,5 +153,32 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             TempData["SuccessMessage"] = "تم حذف الفاتورة بنجاح";
             return RedirectToAction("Details", "Project", new { id = projectId });
         }
-    }
+		private void CalculateInvoicePayment(Invoice invoice)
+		{
+			decimal total = invoice.Total_Amount ?? 0;
+			decimal discAmt = total * (invoice.Discount ?? 0) / 100m;
+			decimal discountedAmount = total - discAmt;
+			decimal taxAmt = discountedAmount * (invoice.Tax ?? 0) / 100m;
+			decimal finalAmount = discountedAmount + taxAmt;
+
+			if (invoice.Invoice_Status == InvoiceStatus.PartiallyPaid)
+			{
+				var paid = invoice.Paid_Amount ?? 0;
+				if (paid > finalAmount) paid = finalAmount;
+				if (paid < 0) paid = 0;
+				invoice.Paid_Amount = paid;
+				invoice.RemainingAmount = finalAmount - paid;
+			}
+			else if (invoice.Invoice_Status == InvoiceStatus.Paid)
+			{
+				invoice.Paid_Amount = finalAmount;
+				invoice.RemainingAmount = 0;
+			}
+			else // Unpaid
+			{
+				invoice.Paid_Amount = 0;
+				invoice.RemainingAmount = finalAmount;
+			}
+		}
+	}
 }

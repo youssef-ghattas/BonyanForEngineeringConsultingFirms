@@ -1325,6 +1325,15 @@ namespace Bonyan.DAL.Repositories
         }
     }
 }
+=== File: ./BonyanForEngineeringConsultingFirms/appsettings.Development.json ===
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
 === File: ./BonyanForEngineeringConsultingFirms/appsettings.json ===
 {
   "ConnectionStrings": {
@@ -4953,6 +4962,45 @@ public class Program
         app.Run();
         }
     }
+=== File: ./BonyanForEngineeringConsultingFirms/Properties/launchSettings.json ===
+﻿{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:49275",
+      "sslPort": 44374
+    }
+  },
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5137",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7236;http://localhost:5137",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
 === File: ./BonyanForEngineeringConsultingFirms/Services/EmailService.cs ===
 ﻿using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -5622,8 +5670,16 @@ namespace Bonyan.PL.ViewModels
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/Login.css" />
     <link rel="stylesheet" href="~/css/changepassword.css" />
+    <link rel="stylesheet" href="~/css/auth-theme.css" />
 </head>
 <body>
+    <script>
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === '1' || (saved === null && prefersDark)) document.body.classList.add('dark-mode');
+        })();
+    </script>
     <div class="login-wrapper">
 
         <!-- Left Panel -->
@@ -5750,6 +5806,7 @@ namespace Bonyan.PL.ViewModels
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/js/lang-switch.js"></script>
     <script src="~/js/show-password.js"></script>
+    <script src="~/js/auth-theme.js"></script>
 </body>
 </html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Account/ForgotPassword.cshtml ===
 ﻿@model Bonyan.PL.ViewModels.ForgotPasswordViewModel
@@ -5767,8 +5824,16 @@ namespace Bonyan.PL.ViewModels
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/Login.css" />
     <link rel="stylesheet" href="~/css/forgotpassword.css" />
+    <link rel="stylesheet" href="~/css/auth-theme.css" />
 </head>
 <body>
+    <script>
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === '1' || (saved === null && prefersDark)) document.body.classList.add('dark-mode');
+        })();
+    </script>
     <div class="login-wrapper">
 
         <!-- Left Panel -->
@@ -5857,6 +5922,7 @@ namespace Bonyan.PL.ViewModels
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/js/lang-switch.js"></script>
+    <script src="~/js/auth-theme.js"></script>
 </body>
 </html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Account/Index.cshtml ===
 ﻿@{
@@ -6214,8 +6280,16 @@ namespace Bonyan.PL.ViewModels
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/login.css" />
+    <link rel="stylesheet" href="~/css/auth-theme.css" />
 </head>
 <body>
+    <script>
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === '1' || (saved === null && prefersDark)) document.body.classList.add('dark-mode');
+        })();
+    </script>
     <div class="login-wrapper">
 
         <!-- Left Panel -->
@@ -6235,9 +6309,7 @@ namespace Bonyan.PL.ViewModels
 
             @if (TempData["Success"] != null)
             {
-                <div style="background:#EEFAF2; border:1px solid #C3EDD0; border-radius:10px;
-                    padding:12px 16px; color:#28A745; font-size:0.88rem;
-                    margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                <div class="auth-success-alert">
                     <i class="fas fa-check-circle"></i>
                     @TempData["Success"]
                 </div>
@@ -6295,6 +6367,7 @@ namespace Bonyan.PL.ViewModels
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/show-password.js"></script>
+    <script src="~/js/auth-theme.js"></script>
 </body>
 </html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Account/Profile.cshtml ===
 ﻿@model Bonyan.PL.ViewModels.ProfileViewModel
@@ -6529,8 +6602,16 @@ namespace Bonyan.PL.ViewModels
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/login.css" />
     <link rel="stylesheet" href="~/css/register.css" />
+    <link rel="stylesheet" href="~/css/auth-theme.css" />
 </head>
 <body>
+    <script>
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === '1' || (saved === null && prefersDark)) document.body.classList.add('dark-mode');
+        })();
+    </script>
     <div class="register-wrapper">
 
         <!-- Left Panel -->
@@ -6688,6 +6769,7 @@ namespace Bonyan.PL.ViewModels
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/auth-theme.js"></script>
 </body>
 </html>=== File: ./BonyanForEngineeringConsultingFirms/Views/Account/ResetPassword.cshtml ===
 ﻿@model Bonyan.PL.ViewModels.ResetPasswordViewModel
@@ -14279,8 +14361,21 @@ else
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="~/css/home.css" />
     <link rel="stylesheet" href="~/css/navbar.css" />
+    <link rel="stylesheet" href="~/css/theme-pro.css" />
 </head>
 <body>
+    <script>
+        // ── Restore dark/light preference BEFORE first paint of content ──
+        // Runs as the very first thing inside <body> (document.body already
+        // exists at this point even though later elements haven't been
+        // parsed yet), so there is no flash of the wrong theme.
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const on = saved === '1' || (saved === null && prefersDark);
+            if (on) document.body.classList.add('dark-mode');
+        })();
+    </script>
 
     <div class="bonyan-bg-tools" aria-hidden="true">
         <i class="fas fa-wrench bg-tool tool-1"></i>
@@ -14723,9 +14818,10 @@ else
             </ul>
         </aside>
 
-        <main class="bonyan-content">
+        <main class="bonyan-content" id="mainContent">
             @RenderBody()
         </main>
+    </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -14735,10 +14831,13 @@ else
 
     <script>
         // ── Sidebar toggle ─────────────────────────
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('collapsed');
-        }
-
+        // ── Sidebar toggle ─────────────────────────
+        // ── Sidebar toggle ─────────────────────────
+         function toggleSidebar() {
+             document.getElementById('sidebar').classList.toggle('collapsed');
+             // Force a reflow so the CSS [dir] + .collapsed sibling selector updates instantly
+             document.getElementById('mainContent') && void document.getElementById('mainContent').offsetHeight;
+         }
         // ── Dark Mode ──────────────────────────────
         const darkBtn  = document.getElementById('darkModeBtn');
         const darkIcon = document.getElementById('darkModeIcon');
@@ -14753,11 +14852,9 @@ else
             applyDarkMode(!document.body.classList.contains('dark-mode'));
         }
 
-        // Restore preference on load
-        (function () {
-            const saved = localStorage.getItem('bonyan-dark');
-            if (saved === '1') applyDarkMode(true);
-        })();
+        // Theme class was already applied pre-paint (see the inline script
+        // right after <body>); just sync the toggle icon to match it.
+        darkIcon.className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
     </script>
 
     @RenderSection("Scripts", required: false)
@@ -14778,12 +14875,12 @@ else
             <div class="chatbot-msg chatbot-msg-bot">
                 <span data-lang="assistant_greeting">مرحبًا! كيف يمكنني مساعدتك اليوم؟</span>
             </div>
-            </div>
         </div>
-        <div class="chatbot-panel-footer">
-            <input type="text" id="chatbotInput" data-lang-placeholder="type_message" placeholder="اكتب رسالتك..." autocomplete="off" />
-            <button id="chatbotSendBtn"><i class="fas fa-paper-plane"></i></button>
-        </div>
+    </div>
+    <div class="chatbot-panel-footer">
+        <input type="text" id="chatbotInput" data-lang-placeholder="type_message" placeholder="اكتب رسالتك..." autocomplete="off" />
+        <button id="chatbotSendBtn"><i class="fas fa-paper-plane"></i></button>
+    </div>
     </div>
 
     <script src="~/js/navbar.js"></script>
@@ -16617,6 +16714,207 @@ button.accept-policy {
         .pw-wrapper .toggle-password:hover {
             color: #1B3A6B;
         }
+=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/auth-theme.css ===
+/* ════════════════════════════════════════════════════════════════════
+   auth-theme.css
+   Shared polish + dark mode for the standalone auth pages (Login,
+   Register, ForgotPassword, ChangePassword) which sit outside the
+   main app layout and therefore need their own light/dark handling.
+   Uses the SAME localStorage key ("bonyan-dark") as the main app so
+   the chosen theme stays consistent everywhere.
+════════════════════════════════════════════════════════════════════ */
+
+:root {
+    --auth-primary: #1B3A6B;
+    --auth-secondary: #C8922A;
+}
+
+body {
+    background: radial-gradient(circle at 15% 20%, #eef2fb 0%, #F4F6F9 45%, #eef1f8 100%);
+}
+
+/* Entrance animation */
+.login-wrapper,
+.register-wrapper {
+    animation: authFadeIn .45s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes authFadeIn {
+    from { opacity: 0; transform: translateY(14px) scale(.99); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* A touch more depth + a hint of gold glow on the card */
+.login-wrapper,
+.register-wrapper {
+    box-shadow: 0 25px 70px rgba(15,28,55,0.18), 0 0 0 1px rgba(200,146,42,0.06);
+}
+
+/* Inputs feel more premium */
+.form-control {
+    transition: all .25s ease;
+}
+
+.btn-login {
+    position: relative;
+    overflow: hidden;
+}
+
+    .btn-login::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.25), transparent);
+        transform: translateX(-100%);
+        transition: transform .6s ease;
+    }
+
+    .btn-login:hover::after {
+        transform: translateX(100%);
+    }
+
+/* ── Theme toggle button (top corner, RTL-aware) ─────────────────── */
+.auth-theme-toggle {
+    position: fixed;
+    top: 22px;
+    left: 22px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.9);
+    color: var(--auth-primary);
+    box-shadow: 0 4px 18px rgba(15,28,55,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    cursor: pointer;
+    z-index: 999;
+    transition: all .25s ease;
+}
+
+    .auth-theme-toggle:hover {
+        transform: translateY(-2px) rotate(15deg);
+        box-shadow: 0 8px 24px rgba(15,28,55,0.25);
+    }
+
+    .auth-theme-toggle:active {
+        transform: scale(0.92);
+    }
+
+/* ════════════════════════════════════════════════════════════════════
+   DARK MODE
+════════════════════════════════════════════════════════════════════ */
+body.dark-mode {
+    background: radial-gradient(circle at 15% 20%, #16263F 0%, #0E1826 45%, #0c1420 100%);
+    color: #E8EDF5;
+}
+
+body.dark-mode .login-wrapper,
+body.dark-mode .register-wrapper {
+    box-shadow: 0 25px 70px rgba(0,0,0,0.55), 0 0 0 1px rgba(233,185,73,0.08);
+}
+
+body.dark-mode .login-right,
+body.dark-mode .register-right {
+    background: #19283F;
+}
+
+body.dark-mode .login-right h2,
+body.dark-mode .register-right h2,
+body.dark-mode .form-label {
+    color: #E9B949;
+}
+
+body.dark-mode .login-right p,
+body.dark-mode .register-right p {
+    color: #9AA7BD;
+}
+
+body.dark-mode .input-icon {
+    color: #E9B949;
+}
+
+body.dark-mode .form-control {
+    background: #16263F;
+    border-color: #2A3B58;
+    color: #E8EDF5;
+}
+
+    body.dark-mode .form-control::placeholder {
+        color: #6E7C95;
+    }
+
+    body.dark-mode .form-control:focus {
+        border-color: #E9B949;
+        box-shadow: 0 0 0 3px rgba(233,185,73,0.15);
+    }
+
+body.dark-mode .toggle-password {
+    color: #6E7C95;
+}
+
+    body.dark-mode .toggle-password:hover {
+        color: #E9B949;
+    }
+
+body.dark-mode .switch-link {
+    color: #9AA7BD;
+}
+
+    body.dark-mode .switch-link a {
+        color: #E9B949;
+    }
+
+body.dark-mode .error-alert,
+body.dark-mode .forgot-error {
+    background: #3A1418;
+    border-color: rgba(241,138,147,0.3);
+    color: #F18A93;
+}
+
+body.dark-mode .forgot-success,
+body.dark-mode .success-alert,
+body.dark-mode .auth-success-alert {
+    background: #14361F;
+    border-color: rgba(111,207,142,0.3);
+    color: #6FCF8E;
+}
+
+.auth-success-alert {
+    background: #EEFAF2;
+    border: 1px solid #C3EDD0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #28A745;
+    font-size: 0.88rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+}
+
+body.dark-mode .forgot-info-box,
+body.dark-mode .info-box {
+    background: rgba(233,185,73,0.1);
+}
+
+body.dark-mode .auth-theme-toggle {
+    background: #19283F;
+    color: #E9B949;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+}
+
+@media (max-width: 768px) {
+    .auth-theme-toggle {
+        top: 14px;
+        left: 14px;
+        width: 38px;
+        height: 38px;
+    }
+}
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/changepassword.css ===
 ﻿/* ── Change Password Page ─────────────────────────── */
 
@@ -21574,143 +21872,122 @@ body {
     }
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/navbar.css ===
 ﻿/* ══════════════════════════════════════════════════════════
-   navbar.css
-   Top bar: logo, primary nav links, clock, quick actions,
-   notifications (live system data), status, chatbot, avatar.
-   Depends on variables in site.css:
-   --primary, --secondary, --white, --bg, --text
+   navbar.css  —  Premium Bonyan Navbar
+   RTL/LTR · Light/Dark · Fluid responsive
 ══════════════════════════════════════════════════════════ */
 
-/* ── Layout clusters ─────────────────────────────────────── */
+/* ── Layout clusters ───────────────────────────────────── */
 .navbar-left {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     min-width: 0;
+    flex-shrink: 0;
+}
+
+/* ── Sidebar Toggle ─────────────────────────────────────── */
+.sidebar-toggle {
+    background: rgba(255,255,255,0.09);
+    border: none;
+    color: rgba(255,255,255,0.85);
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.22s, color 0.22s;
+}
+
+    .sidebar-toggle:hover {
+        background: rgba(255,255,255,0.17);
+        color: #fff;
+    }
+
+/* ── Logo ───────────────────────────────────────────────── */
+.navbar-logo {
+    color: var(--white);
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    white-space: nowrap;
 }
 
 .navbar-logo-mark {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 10px;
     background: linear-gradient(135deg, var(--secondary), #e7b65c);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--primary);
-    font-size: 1.05rem;
-    box-shadow: 0 3px 10px rgba(200, 146, 42, 0.35);
+    font-size: 1rem;
+    box-shadow: 0 3px 10px rgba(200,146,42,0.35);
     flex-shrink: 0;
 }
 
 .navbar-logo-text {
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
 }
 
+/* ── Divider ────────────────────────────────────────────── */
 .navbar-divider {
     width: 1px;
-    height: 26px;
-    background: rgba(255, 255, 255, 0.18);
+    height: 24px;
+    background: rgba(255,255,255,0.15);
+    flex-shrink: 0;
 }
 
-.navbar-breadcrumb {
-    color: rgba(255, 255, 255, 0.75);
-    font-size: 0.85rem;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-}
-
-/* ── Generic round icon button (quick actions, notifications,
-       chatbot, dark mode) ───────────────────────────────────── */
-.navbar-icon-btn {
-    position: relative;
-    background: rgba(255, 255, 255, 0.08);
-    border: none;
-    color: var(--white);
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.25s, transform 0.2s;
-}
-
-    .navbar-icon-btn:hover {
-        background: rgba(255, 255, 255, 0.18);
-        transform: translateY(-1px);
-    }
-
-    .navbar-icon-btn:active {
-        transform: translateY(0);
-    }
-
-/* ── Notification badge ──────────────────────────────────── */
-.navbar-badge {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    background: var(--danger, #DC3545);
-    color: var(--white);
-    font-size: 0.65rem;
-    font-weight: 700;
-    min-width: 17px;
-    height: 17px;
-    padding: 0 4px;
-    border-radius: 999px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid var(--primary);
-    line-height: 1;
-}
-
-[dir="ltr"] .navbar-badge {
-    right: auto;
-    left: -4px;
-}
-
-/* ── Primary Nav Links (replaces global search) ──────────── */
+/* ── Primary Nav Links ──────────────────────────────────── */
 .navbar-main-links {
+    display: flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 5px;
+    gap: 3px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 11px;
+    padding: 4px;
+    flex-shrink: 0;
 }
 
 .navbar-nav-link {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 9px;
-    color: rgba(255, 255, 255, 0.75);
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    color: rgba(255,255,255,0.72);
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 0.84rem;
     font-weight: 600;
     text-decoration: none;
     background: transparent;
     border: none;
     white-space: nowrap;
     cursor: pointer;
-    transition: background 0.25s, color 0.25s;
+    transition: background 0.22s, color 0.22s;
 }
 
     .navbar-nav-link i {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.55);
-        transition: color 0.25s;
+        font-size: 0.82rem;
+        color: rgba(255,255,255,0.5);
+        transition: color 0.22s;
     }
 
     .navbar-nav-link:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: var(--white);
+        background: rgba(255,255,255,0.11);
+        color: #fff;
     }
 
         .navbar-nav-link:hover i {
@@ -21720,6 +21997,7 @@ body {
     .navbar-nav-link.active {
         background: var(--secondary);
         color: var(--primary);
+        font-weight: 700;
     }
 
         .navbar-nav-link.active i {
@@ -21732,16 +22010,25 @@ body {
     }
 
     .navbar-nav-link {
-        padding: 8px 12px;
+        padding: 7px 11px;
     }
 }
 
-/* ── Live Clock ───────────────────────────────────────────── */
-.navbar-clock {
+/* ── Right cluster ──────────────────────────────────────── */
+.navbar-right {
+    display: flex;
     align-items: center;
-    gap: 8px;
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 0.78rem;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* ── Live Clock ─────────────────────────────────────────── */
+.navbar-clock {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: rgba(255,255,255,0.82);
+    font-size: 0.76rem;
 }
 
     .navbar-clock i {
@@ -21756,20 +22043,93 @@ body {
 
     .navbar-clock-text span:first-child {
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 0.83rem;
     }
 
     .navbar-clock-text span:last-child {
-        opacity: 0.75;
-        font-size: 0.68rem;
+        opacity: 0.7;
+        font-size: 0.67rem;
     }
 
-/* ── Quick Actions Dropdown ──────────────────────────────── */
+/* ── Generic icon button ────────────────────────────────── */
+.navbar-icon-btn {
+    position: relative;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: rgba(255,255,255,0.85);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.96rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.22s, color 0.22s, transform 0.18s;
+}
+
+    .navbar-icon-btn:hover {
+        background: rgba(255,255,255,0.17);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .navbar-icon-btn:active {
+        transform: translateY(0);
+    }
+
+/* ── Notification badge ─────────────────────────────────── */
+.navbar-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--danger, #EF4444);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--primary);
+    line-height: 1;
+}
+
+[dir="ltr"] .navbar-badge {
+    right: auto;
+    left: -4px;
+}
+
+/* ── Language button ────────────────────────────────────── */
+.lang-btn {
+    background: rgba(200,146,42,0.85);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.82rem;
+    transition: background 0.22s, transform 0.18s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+    .lang-btn:hover {
+        background: var(--secondary);
+        transform: translateY(-1px);
+    }
+
+/* ── Quick Actions dropdown ─────────────────────────────── */
 .navbar-quick-menu {
     min-width: 230px;
 }
 
-/* ── Notification Dropdown ───────────────────────────────── */
+/* ── Notification dropdown ──────────────────────────────── */
 .navbar-notif-menu {
     width: 340px;
     max-width: 90vw;
@@ -21781,11 +22141,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 16px;
-    background: var(--primary);
-    color: var(--white);
+    padding: 13px 16px;
+    background: linear-gradient(135deg, var(--primary), #1e4480);
+    color: #fff;
     font-weight: 700;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
 }
 
 .navbar-notif-clear {
@@ -21800,54 +22160,54 @@ body {
     }
 
 .navbar-notif-list {
-    max-height: 320px;
+    max-height: 310px;
     overflow-y: auto;
 }
 
 .navbar-notif-item {
     display: flex;
-    gap: 12px;
-    padding: 12px 16px;
+    gap: 11px;
+    padding: 11px 15px;
     border-bottom: 1px solid #f0f0f0;
     text-decoration: none;
-    color: var(--text, #2D2D2D);
-    transition: background 0.2s;
+    color: var(--text, #1F2937);
+    transition: background 0.18s;
 }
 
     .navbar-notif-item:hover {
-        background: #F8FAFF;
+        background: #f8faff;
     }
 
     .navbar-notif-item.unread {
-        background: #F0F4FF;
+        background: #f0f4ff;
     }
 
 .navbar-notif-icon {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    font-size: 0.9rem;
-    color: var(--white);
+    font-size: 0.85rem;
+    color: #fff;
 }
 
     .navbar-notif-icon.warning {
-        background: #ffc107;
+        background: #f59e0b;
     }
 
     .navbar-notif-icon.danger {
-        background: var(--danger, #DC3545);
+        background: var(--danger, #EF4444);
     }
 
     .navbar-notif-icon.info {
-        background: #17a2b8;
+        background: #0ea5e9;
     }
 
     .navbar-notif-icon.success {
-        background: var(--success, #28A745);
+        background: var(--success, #22C55E);
     }
 
 .navbar-notif-text {
@@ -21856,27 +22216,27 @@ body {
 }
 
 .navbar-notif-title {
-    font-size: 0.85rem;
+    font-size: 0.84rem;
     font-weight: 600;
     margin-bottom: 2px;
 }
 
 .navbar-notif-sub {
-    font-size: 0.75rem;
-    color: #888;
+    font-size: 0.74rem;
+    color: #777;
 }
 
 .navbar-notif-time {
-    font-size: 0.68rem;
+    font-size: 0.67rem;
     color: #aaa;
     margin-top: 3px;
 }
 
 .navbar-notif-empty {
-    padding: 28px 16px;
+    padding: 26px 16px;
     text-align: center;
     color: #999;
-    font-size: 0.85rem;
+    font-size: 0.84rem;
 }
 
 .navbar-notif-footer {
@@ -21892,54 +22252,54 @@ body {
         text-decoration: none;
     }
 
-/* ── System Status Indicator ─────────────────────────────── */
+/* ── System Status ──────────────────────────────────────── */
 .navbar-status {
+    display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.8);
+    gap: 5px;
+    font-size: 0.73rem;
+    color: rgba(255,255,255,0.78);
 }
 
 .navbar-status-dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: var(--success, #28A745);
-    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.6);
+    background: var(--success, #22C55E);
     animation: navbarPulse 2s infinite;
 }
 
 @keyframes navbarPulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.5);
+        box-shadow: 0 0 0 0 rgba(34,197,94,0.55);
     }
 
     70% {
-        box-shadow: 0 0 0 6px rgba(40, 167, 69, 0);
+        box-shadow: 0 0 0 6px rgba(34,197,94,0);
     }
 
     100% {
-        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+        box-shadow: 0 0 0 0 rgba(34,197,94,0);
     }
 }
 
-/* ── Chatbot Toggle Button ───────────────────────────────── */
+/* ── Chatbot button ─────────────────────────────────────── */
 .navbar-chatbot-btn {
-    background: var(--secondary);
+    background: rgba(200,146,42,0.85);
 }
 
     .navbar-chatbot-btn:hover {
         background: var(--secondary);
-        opacity: 0.9;
+        opacity: 1;
     }
 
 .navbar-chatbot-pulse {
     position: absolute;
     top: -2px;
     right: -2px;
-    width: 9px;
-    height: 9px;
-    background: #28A745;
+    width: 8px;
+    height: 8px;
+    background: #22C55E;
     border-radius: 50%;
     border: 2px solid var(--primary);
 }
@@ -21949,11 +22309,11 @@ body {
     left: -2px;
 }
 
-/* ── Avatar (trigger) ────────────────────────────────────── */
+/* ── Avatar ─────────────────────────────────────────────── */
 .navbar-avatar {
     position: relative;
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--secondary), #e7b65c);
     display: flex;
@@ -21961,37 +22321,38 @@ body {
     justify-content: center;
     color: var(--primary);
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     flex-shrink: 0;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 3px 10px rgba(0, 0, 0, 0.25);
-    transition: transform 0.25s, box-shadow 0.25s;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.22), 0 3px 10px rgba(0,0,0,0.22);
+    transition: transform 0.22s, box-shadow 0.22s;
 }
 
 .user-info-btn:hover .navbar-avatar {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
+    transform: scale(1.06);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.38), 0 4px 14px rgba(0,0,0,0.28);
 }
 
 .navbar-avatar-status {
     position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 10px;
-    height: 10px;
+    bottom: -1px;
+    right: -1px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
-    background: #28A745;
+    background: #22C55E;
     border: 2px solid var(--primary);
-    animation: navbarPulse 2s infinite;
+    animation: navbarPulse 2.5s infinite;
 }
 
 [dir="ltr"] .navbar-avatar-status {
     right: auto;
-    left: -2px;
+    left: -1px;
 }
 
 .navbar-chevron {
-    transition: transform 0.25s;
-    color: rgba(255, 255, 255, 0.6);
+    transition: transform 0.22s;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.72rem;
 }
 
 .user-info-btn[aria-expanded="true"] .navbar-chevron {
@@ -22002,39 +22363,82 @@ body {
 .user-info-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 8px;
-    transition: background 0.3s;
+    padding: 4px 9px;
+    border-radius: 9px;
+    transition: background 0.22s;
 }
 
     .user-info-btn:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255,255,255,0.1);
     }
 
-/* ── Profile Dropdown (rich card) ─────────────────────────── */
+.user-details {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.user-name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--white);
+}
+
+.user-role {
+    font-size: 0.72rem;
+    color: var(--secondary);
+}
+
+/* ── Profile Dropdown ───────────────────────────────────── */
 .bonyan-profile-dropdown {
-    width: 280px;
+    width: 276px;
     max-width: 90vw;
     padding: 0;
     border: none;
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+}
+
+/* ── Ensure dropdowns always render above sidebar ─── */
+.navbar-user .dropdown-menu,
+.bonyan-profile-dropdown,
+.navbar-notifications .dropdown-menu,
+.navbar-quick-actions .dropdown-menu {
+    z-index: 1100 !important;
+    position: absolute;
+}
+
+/* Fix Bootstrap dropdown stacking context */
+.bonyan-navbar .dropdown {
+    position: static; /* remove so dropdown positions relative to navbar, not this element */
+}
+
+.bonyan-navbar .navbar-user {
+    position: relative; /* re-add only on the user cluster so dropdown anchors correctly */
+}
+
+.bonyan-navbar .navbar-notifications {
+    position: relative;
+}
+
+.bonyan-navbar .navbar-quick-actions {
+    position: relative;
 }
 
 .profile-dropdown-header {
-    background: linear-gradient(135deg, var(--primary), #2a5298);
-    padding: 20px 18px;
+    background: linear-gradient(135deg, var(--primary), #1e4480);
+    padding: 18px 16px;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
 }
 
 .profile-dropdown-avatar {
-    width: 52px;
-    height: 52px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--secondary), #e7b65c);
     display: flex;
@@ -22042,9 +22446,9 @@ body {
     justify-content: center;
     color: var(--primary);
     font-weight: 800;
-    font-size: 1.05rem;
+    font-size: 1.02rem;
     flex-shrink: 0;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.22);
 }
 
 .profile-dropdown-info {
@@ -22054,16 +22458,16 @@ body {
 .profile-dropdown-name {
     color: var(--white);
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 0.93rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .profile-dropdown-email {
-    color: rgba(255, 255, 255, 0.65);
-    font-size: 0.72rem;
-    margin: 2px 0 8px;
+    color: rgba(255,255,255,0.62);
+    font-size: 0.7rem;
+    margin: 2px 0 7px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -22072,12 +22476,12 @@ body {
 .profile-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.15);
+    gap: 5px;
+    background: rgba(255,255,255,0.15);
     backdrop-filter: blur(4px);
-    padding: 3px 11px;
+    padding: 2px 10px;
     border-radius: 999px;
-    font-size: 0.68rem;
+    font-size: 0.67rem;
     font-weight: 700;
     color: var(--white);
 }
@@ -22103,20 +22507,20 @@ body {
 
 .profile-dropdown-body {
     background: var(--white);
-    padding: 8px;
+    padding: 7px;
 }
 
 .profile-dropdown-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px;
+    gap: 11px;
+    padding: 9px 10px;
     border-radius: 9px;
     text-decoration: none;
-    color: var(--text, #2D2D2D);
-    font-size: 0.86rem;
+    color: var(--text, #1F2937);
+    font-size: 0.85rem;
     font-weight: 600;
-    transition: background 0.2s;
+    transition: background 0.18s, color 0.18s;
 }
 
     .profile-dropdown-item:hover {
@@ -22125,18 +22529,18 @@ body {
     }
 
     .profile-dropdown-item.item-danger:hover {
-        background: #FFF0F0;
-        color: var(--danger, #DC3545);
+        background: #fff0f0;
+        color: var(--danger, #EF4444);
     }
 
 .item-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     flex-shrink: 0;
 }
 
@@ -22157,20 +22561,20 @@ body {
 
 .profile-dropdown-divider {
     height: 1px;
-    background: #F0F0F0;
-    margin: 6px 4px;
+    background: #f0f0f0;
+    margin: 5px 4px;
 }
 
-/* ── Dropdown open animation (shared) ────────────────────── */
+/* ── Dropdown animation ─────────────────────────────────── */
 .bonyan-dropdown.show,
 .bonyan-profile-dropdown.show {
-    animation: navbarDropdownPop 0.18s ease;
+    animation: navbarDropdownPop 0.17s ease;
 }
 
 @keyframes navbarDropdownPop {
     from {
         opacity: 0;
-        transform: translateY(-6px) scale(0.97);
+        transform: translateY(-7px) scale(0.97);
     }
 
     to {
@@ -22179,7 +22583,32 @@ body {
     }
 }
 
-/* ── Chatbot Panel (slide-in widget) ─────────────────────── */
+/* ── Bonyan generic dropdown card ───────────────────────── */
+.bonyan-dropdown {
+    border: none;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.15);
+    border-radius: 12px;
+    min-width: 200px;
+}
+
+    .bonyan-dropdown .dropdown-item:hover {
+        background: #F0F4FF;
+    }
+
+    .bonyan-dropdown .dropdown-item.text-danger:hover {
+        background: #fff0f0;
+    }
+
+    .bonyan-dropdown .dropdown-header {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 10px 14px 6px;
+    }
+
+/* ── Chatbot panel ──────────────────────────────────────── */
 .chatbot-panel {
     position: fixed;
     bottom: 20px;
@@ -22190,14 +22619,14 @@ body {
     max-height: calc(100vh - 100px);
     background: var(--white, #fff);
     border-radius: 16px;
-    box-shadow: 0 14px 50px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 14px 50px rgba(0,0,0,0.25);
     display: flex;
     flex-direction: column;
     z-index: 1200;
     transform: translateY(20px) scale(0.96);
     opacity: 0;
     pointer-events: none;
-    transition: all 0.25s ease;
+    transition: all 0.24s ease;
 }
 
 [dir="ltr"] .chatbot-panel {
@@ -22212,9 +22641,9 @@ body {
 }
 
 .chatbot-panel-header {
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary), #1e4480);
     color: var(--white);
-    padding: 14px 16px;
+    padding: 13px 15px;
     border-radius: 16px 16px 0 0;
     display: flex;
     align-items: center;
@@ -22224,9 +22653,9 @@ body {
 .chatbot-panel-title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 0.93rem;
 }
 
     .chatbot-panel-title i {
@@ -22236,32 +22665,37 @@ body {
 #chatbotCloseBtn {
     background: transparent;
     border: none;
-    color: var(--white);
-    font-size: 1rem;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.95rem;
     cursor: pointer;
+    transition: color 0.18s;
 }
+
+    #chatbotCloseBtn:hover {
+        color: #fff;
+    }
 
 .chatbot-panel-body {
     flex: 1;
-    padding: 14px;
+    padding: 13px;
     overflow-y: auto;
-    background: var(--bg, #F4F6F9);
+    background: var(--bg, #F0F2F7);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 9px;
 }
 
 .chatbot-msg {
     max-width: 85%;
-    padding: 9px 13px;
+    padding: 8px 12px;
     border-radius: 12px;
-    font-size: 0.85rem;
+    font-size: 0.84rem;
     line-height: 1.4;
 }
 
 .chatbot-msg-bot {
     background: var(--white, #fff);
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0,0,0,0.06);
     align-self: flex-start;
     border-bottom-left-radius: 3px;
 }
@@ -22286,101 +22720,123 @@ body {
 .chatbot-panel-footer {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    gap: 7px;
+    padding: 9px;
+    border-top: 1px solid rgba(0,0,0,0.06);
 }
 
     .chatbot-panel-footer input {
         flex: 1;
         border: 1px solid #ddd;
         border-radius: 20px;
-        padding: 8px 14px;
+        padding: 7px 13px;
         outline: none;
-        font-size: 0.85rem;
-        background: var(--input-bg, #f4f6f9);
+        font-size: 0.84rem;
+        background: var(--bg, #F0F2F7);
         color: var(--text);
+        transition: border-color 0.2s;
     }
+
+        .chatbot-panel-footer input:focus {
+            border-color: var(--primary);
+        }
 
 #chatbotSendBtn {
     background: var(--primary);
     color: var(--white);
     border: none;
-    width: 34px;
-    height: 34px;
+    width: 33px;
+    height: 33px;
     border-radius: 50%;
     flex-shrink: 0;
     cursor: pointer;
+    transition: background 0.2s, transform 0.18s;
 }
 
     #chatbotSendBtn:hover {
         background: #142d55;
+        transform: scale(1.05);
     }
 
 /* ══════════════════════════════════════════════════════════
-   DARK MODE overrides
+   DARK MODE — Navbar & Chatbot overrides
 ══════════════════════════════════════════════════════════ */
 body.dark-mode .navbar-notif-item {
     color: #e2e8f0;
-    border-bottom-color: rgba(255, 255, 255, 0.06);
+    border-bottom-color: rgba(255,255,255,0.06);
 }
 
     body.dark-mode .navbar-notif-item:hover,
     body.dark-mode .navbar-notif-item.unread {
-        background: rgba(255, 255, 255, 0.06);
+        background: rgba(255,255,255,0.055);
     }
 
 body.dark-mode .navbar-notif-footer {
-    border-top-color: rgba(255, 255, 255, 0.08);
+    border-top-color: rgba(255,255,255,0.07);
 }
 
 body.dark-mode .profile-dropdown-body {
-    background: #1a2535;
+    background: #19283F;
 }
 
 body.dark-mode .profile-dropdown-item {
-    color: #e2e8f0;
+    color: #d8e4f2;
 }
 
     body.dark-mode .profile-dropdown-item:hover {
-        background: rgba(255, 255, 255, 0.06);
+        background: rgba(255,255,255,0.07);
+        color: #fff;
     }
 
 body.dark-mode .profile-dropdown-divider {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255,255,255,0.07);
 }
 
+body.dark-mode .bonyan-dropdown {
+    background: #19283F;
+    color: #d8e4f2;
+}
+
+    body.dark-mode .bonyan-dropdown .dropdown-item {
+        color: #d8e4f2;
+    }
+
+        body.dark-mode .bonyan-dropdown .dropdown-item:hover {
+            background: rgba(255,255,255,0.07);
+            color: #fff;
+        }
+
 body.dark-mode .chatbot-panel {
-    background: #1a2535;
+    background: #19283F;
 }
 
 body.dark-mode .chatbot-panel-body {
-    background: #0f1923;
+    background: #111F33;
 }
 
 body.dark-mode .chatbot-msg-bot {
-    background: #1a2535;
-    border-color: rgba(255, 255, 255, 0.08);
+    background: #1e3252;
+    border-color: rgba(255,255,255,0.07);
     color: #e2e8f0;
 }
 
 body.dark-mode .chatbot-panel-footer {
-    border-top-color: rgba(255, 255, 255, 0.08);
+    border-top-color: rgba(255,255,255,0.07);
 }
+
+    body.dark-mode .chatbot-panel-footer input {
+        background: #111F33;
+        border-color: rgba(255,255,255,0.1);
+        color: #e2e8f0;
+    }
 
 /* ══════════════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════════════ */
-@media (max-width: 992px) {
-    .navbar-main-links {
-        gap: 2px;
-    }
-}
-
 @media (max-width: 768px) {
     .bonyan-navbar {
-        padding: 0 12px;
-        gap: 8px;
+        padding: 0 10px;
+        gap: 6px;
     }
 
     .navbar-logo-text {
@@ -22388,18 +22844,23 @@ body.dark-mode .chatbot-panel-footer {
     }
 
     .navbar-right {
-        gap: 8px;
+        gap: 5px;
     }
 
     .user-details {
-        display: none;
+        display: none !important;
     }
 
     .chatbot-panel {
-        right: 10px;
-        left: 10px;
+        right: 8px;
+        left: 8px;
         width: auto;
-        bottom: 10px;
+        bottom: 8px;
+    }
+
+    [dir="ltr"] .chatbot-panel {
+        right: 8px;
+        left: 8px;
     }
 }
 
@@ -22409,9 +22870,10 @@ body.dark-mode .chatbot-panel-footer {
     }
 
     .lang-btn {
-        padding: 8px 10px;
+        padding: 6px 9px;
     }
 }
+
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/profile.css ===
 ﻿/* ══════════════════════════════════════════════════════
    profile.css  –  Employee / Admin Profile Page
@@ -23666,19 +24128,24 @@ body.dark-mode .btn-secondary-action {
 :root {
     --primary: #1B3A6B;
     --secondary: #C8922A;
-    --bg: #F4F6F9;
-    --sidebar: #112240;
-    --text: #2D2D2D;
+    --bg: #F0F2F7;
+    --sidebar: #162844; /* soft navy — not pure black */
+    --sidebar-hover: #1e3459;
+    --sidebar-active-bg: rgba(200,146,42,0.15);
+    --sidebar-active-border: #C8922A;
+    --text: #1F2937;
     --white: #FFFFFF;
-    --surface: #FFFFFF; /* NEW — card/panel background */
-    --success: #28A745;
-    --danger: #DC3545;
+    --surface: #FFFFFF;
+    --success: #22C55E;
+    --danger: #EF4444;
     --muted: #6B7280;
-    --card-border: rgba(0,0,0,0.08);
+    --card-border: rgba(0,0,0,0.07);
     --font-ar: 'Cairo', sans-serif;
     --font-en: 'Poppins', sans-serif;
-    --sidebar-w: 260px;
-    --navbar-h: 65px;
+    --sidebar-w: 256px;
+    --navbar-h: 62px;
+    --sidebar-collapsed-w: 0px;
+    --transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Reset ────────────────────────────────────────── */
@@ -23710,7 +24177,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
-    z-index: 1000;
+    z-index: 1050;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
@@ -23775,45 +24242,70 @@ body {
 }
 
 /* ── Sidebar ──────────────────────────────────────── */
+/* ── Sidebar ──────────────────────────────────────── */
 .bonyan-sidebar {
     width: var(--sidebar-w);
     background: var(--sidebar);
-    min-height: 100%;
     position: fixed;
     top: var(--navbar-h);
     right: 0;
     bottom: 0;
-    transition: all 0.3s;
+    transition: width var(--transition), transform var(--transition);
     overflow-y: auto;
-    z-index: 999;
+    overflow-x: hidden;
+    z-index: 900;
+    /* Subtle inner border for depth */
+    border-left: 1px solid rgba(255,255,255,0.05);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
 
-/* LTR sidebar on left */
+    .bonyan-sidebar::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .bonyan-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .bonyan-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.12);
+        border-radius: 999px;
+    }
+
+/* LTR — sidebar sits on left, border flips */
 [dir="ltr"] .bonyan-sidebar {
     right: auto;
     left: 0;
+    border-left: none;
+    border-right: 1px solid rgba(255,255,255,0.05);
 }
 
 .bonyan-sidebar.collapsed {
     width: 0;
-    overflow: hidden;
+    border: none;
 }
 
+/* ── Sidebar Menu ── */
 .sidebar-menu {
     list-style: none;
-    padding: 20px 0;
+    padding: 12px 0 24px;
 }
 
     .sidebar-menu li a {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 14px 20px;
-        color: #B0BEC5;
+        gap: 11px;
+        padding: 11px 20px;
+        color: rgba(185, 205, 235, 0.78);
         text-decoration: none;
-        font-size: 0.95rem;
-        transition: all 0.3s;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: background var(--transition), color var(--transition), border-color var(--transition);
         border-right: 3px solid transparent;
+        border-radius: 0;
+        white-space: nowrap;
+        overflow: hidden;
     }
 
 [dir="ltr"] .sidebar-menu li a {
@@ -23821,31 +24313,58 @@ body {
     border-left: 3px solid transparent;
 }
 
-.sidebar-menu li a:hover,
-.sidebar-menu li a.active {
-    background: rgba(255,255,255,0.08);
-    color: var(--white);
-    border-right-color: var(--secondary);
+.sidebar-menu li a:hover {
+    background: rgba(255,255,255,0.07);
+    color: #fff;
+    border-right-color: rgba(200,146,42,0.5);
 }
 
-[dir="ltr"] .sidebar-menu li a:hover,
-[dir="ltr"] .sidebar-menu li a.active {
-    border-left-color: var(--secondary);
+[dir="ltr"] .sidebar-menu li a:hover {
+    border-left-color: rgba(200,146,42,0.5);
     border-right-color: transparent;
+}
+
+.sidebar-menu li a.active,
+.sidebar-home-btn.active {
+    background: var(--sidebar-active-bg);
+    color: #fff;
+    border-right-color: var(--sidebar-active-border) !important;
+    font-weight: 600;
+}
+
+[dir="ltr"] .sidebar-menu li a.active,
+[dir="ltr"] .sidebar-home-btn.active {
+    border-left-color: var(--sidebar-active-border) !important;
+    border-right-color: transparent !important;
 }
 
 .sidebar-menu li a i {
     width: 20px;
+    min-width: 20px;
     color: var(--secondary);
-    font-size: 1rem;
+    font-size: 0.95rem;
+    text-align: center;
+    flex-shrink: 0;
+    transition: color var(--transition), transform var(--transition);
+}
+
+.sidebar-menu li a:hover i {
+    color: #e0a83a;
+    transform: translateX(-2px);
+}
+
+[dir="ltr"] .sidebar-menu li a:hover i {
+    transform: translateX(2px);
 }
 
 /* ── Main Content ─────────────────────────────────── */
+/* ── Main Content ─────────────────────────────────────── */
 .bonyan-content {
     margin-right: var(--sidebar-w);
+    margin-left: 0;
     padding: 30px;
     width: 100%;
-    transition: all 0.3s;
+    transition: margin var(--transition, 0.28s ease);
 }
 
 [dir="ltr"] .bonyan-content {
@@ -23853,9 +24372,11 @@ body {
     margin-left: var(--sidebar-w);
 }
 
-.bonyan-sidebar.collapsed ~ .bonyan-content {
-    margin-right: 0;
-    margin-left: 0;
+.bonyan-sidebar.collapsed ~ .bonyan-content,
+[dir="rtl"] .bonyan-sidebar.collapsed ~ .bonyan-content,
+[dir="ltr"] .bonyan-sidebar.collapsed ~ .bonyan-content {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
 }
 
 /* ── Cards ────────────────────────────────────────── */
@@ -24144,16 +24665,20 @@ body {
         }
 }
 /* ── Sidebar Section Title ───────────────────────── */
+/* ── Sidebar Section Title ───────────────────────── */
 .sidebar-section-title {
-    padding: 14px 20px 6px;
-    font-size: 0.7rem;
+    padding: 18px 20px 5px;
+    font-size: 0.65rem;
     font-weight: 700;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.28);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
+/* ── Main content area fix ── */
 /* ── Main content area fix ── */
 .bonyan-content {
     flex: 1;
@@ -24161,27 +24686,35 @@ body {
     min-width: 0;
     overflow-x: hidden;
     box-sizing: border-box;
+    transition: margin var(--transition);
 }
 
 .bonyan-wrapper {
     display: flex;
-    min-height: calc(100vh - 60px);
-    margin-top: 60px;
+    min-height: calc(100vh - var(--navbar-h));
+    margin-top: var(--navbar-h);
+}
+
+/* When sidebar collapses, remove margin */
+.bonyan-sidebar.collapsed + .bonyan-content {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
 }
 /* ════════════════════════════════════════════════════════
    GLOBAL DARK MODE — covers every shared component so it
    works consistently across ALL pages, not just dashboard/home
 ════════════════════════════════════════════════════════ */
 body.dark-mode {
-    --bg: #0F1A2E;
-    --surface: #1B2A45; /* card backgrounds go dark, NOT --white */
-    --text: #F5F7FA;
-    --sidebar: #0A1424;
-    --muted: #D5DCE8;
-    --card-border: rgba(255,255,255,0.10);
+    --bg: #0E1826; /* very deep navy, not pure black */
+    --surface: #19283F; /* soft slate for cards */
+    --text: #E8EDF5;
+    --sidebar: #111F33; /* premium dark slate sidebar */
+    --sidebar-hover: #1a2e48;
+    --sidebar-active-bg: rgba(200,146,42,0.14);
+    --muted: #C0CEDF;
+    --card-border: rgba(255,255,255,0.08);
     background: var(--bg);
     color: var(--text);
-    /* --white stays #FFFFFF — buttons keep readable white text */
 }
 
     body.dark-mode .bonyan-card,
@@ -24206,22 +24739,27 @@ body.dark-mode {
 
     body.dark-mode .bonyan-sidebar {
         background: var(--sidebar);
+        border-color: rgba(255,255,255,0.04);
     }
 
     body.dark-mode .sidebar-menu li a {
-        color: #8C9BB5;
+        color: rgba(160, 190, 225, 0.75);
     }
 
-        body.dark-mode .sidebar-menu li a:hover,
-        body.dark-mode .sidebar-menu li a.active {
-            background: rgba(255,255,255,0.06);
+        body.dark-mode .sidebar-menu li a:hover {
+            background: rgba(255,255,255,0.055);
+            color: #e8edf5;
+        }
+
+        body.dark-mode .sidebar-menu li a.active,
+        body.dark-mode .sidebar-home-btn.active {
+            background: rgba(200,146,42,0.12);
             color: #fff;
         }
 
     body.dark-mode .sidebar-section-title {
-        color: rgba(255,255,255,0.3);
+        color: rgba(255,255,255,0.25);
     }
-
     body.dark-mode .bonyan-table thead th {
         background: #16263F;
         color: #E4E9F2;
@@ -24280,6 +24818,32 @@ body.dark-mode {
         background: #16263F;
         color: #8FB3F5;
     }
+
+/* ── RTL/LTR sidebar margin — language-switch safe ── */
+html[dir="rtl"] .bonyan-content {
+    margin-right: var(--sidebar-w);
+    margin-left: 0;
+}
+
+html[dir="ltr"] .bonyan-content {
+    margin-right: 0;
+    margin-left: var(--sidebar-w);
+}
+
+html[dir="rtl"] .bonyan-sidebar.collapsed ~ .bonyan-content,
+html[dir="ltr"] .bonyan-sidebar.collapsed ~ .bonyan-content {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
+/* Mobile: always full width */
+@media (max-width: 768px) {
+    html[dir="rtl"] .bonyan-content,
+    html[dir="ltr"] .bonyan-content {
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+}
 /* ════════════════════════════════════════════════════════
    ENGINEERING TOOLS BACKGROUND WATERMARK
 ════════════════════════════════════════════════════════ */
@@ -25138,49 +25702,696 @@ textarea.form-control {
     .alert-success-msg i {
         margin-left: 8px;
     }
+=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/css/theme-pro.css ===
+/* ════════════════════════════════════════════════════════════════════
+   theme-pro.css
+   Bonyan design-polish + complete light/dark theme layer.
+
+   Loaded LAST in <head>. Because dark-mode rules below always include
+   "body.dark-mode" (two extra selector classes), they out-rank the
+   plain, single-class rules in the page-specific stylesheets
+   (project.css, employee.css, invoice.css, ...) regardless of link
+   order — so this single file is enough to bring dark mode to every
+   page without editing two dozen files individually.
+════════════════════════════════════════════════════════════════════ */
+
+/* ── 0. Token fixes + extra tokens ─────────────────────────────────── */
+:root {
+    --secondary-rgb: 200, 146, 42;
+    --primary-rgb: 27, 58, 107;
+    --danger-rgb: 239, 68, 68;
+    --success-rgb: 34, 197, 94;
+    --shadow-card: 0 2px 15px rgba(0,0,0,0.06);
+    --shadow-card-hover: 0 10px 28px rgba(20,30,60,0.12);
+    --radius-card: 14px;
+}
+
+body.dark-mode {
+    --secondary-rgb: 233, 185, 73;
+    --primary-rgb: 22, 38, 63;
+    --shadow-card: 0 2px 16px rgba(0,0,0,0.38);
+    --shadow-card-hover: 0 14px 34px rgba(0,0,0,0.5);
+
+    /* semantic badge palette reused everywhere below */
+    --b-blue-bg: #0E2E37;   --b-blue-text: #6FD4E9;
+    --b-indigo-bg: #16263F; --b-indigo-text: #8FB3F5;
+    --b-green-bg: #14361F;  --b-green-text: #6FCF8E;
+    --b-amber-bg: #3A2E0E;  --b-amber-text: #E9B949;
+    --b-red-bg: #3A1418;    --b-red-text: #F18A93;
+    --b-purple-bg: #241A3A; --b-purple-text: #C9A6F2;
+    --b-pink-bg: #34182B;   --b-pink-text: #F2A8D6;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   1. GLOBAL POLISH — applies in both light & dark
+════════════════════════════════════════════════════════════════════ */
+
+html {
+    scroll-behavior: smooth;
+}
+
+::selection {
+    background: var(--secondary);
+    color: #fff;
+}
+
+/* Smooth, consistent theme-switch animation across the whole shell */
+body,
+.bonyan-navbar,
+.bonyan-sidebar,
+.bonyan-content,
+.sidebar-menu li a,
+[class$="-card"],
+[class*="-card"],
+[class$="-bar"],
+table,
+.form-control,
+.form-select,
+input,
+select,
+textarea,
+.dropdown-menu {
+    transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+
+/* Accessible, on-brand focus ring everywhere (replaces invisible/blue browser default) */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--secondary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Custom slim scrollbar for the whole app (already present on sidebar only) */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(27,58,107,0.25) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(27,58,107,0.22);
+    border-radius: 20px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(27,58,107,0.4);
+    background-clip: padding-box;
+}
+
+body.dark-mode * {
+    scrollbar-color: rgba(233,185,73,0.25) transparent;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: rgba(233,185,73,0.2);
+    background-clip: padding-box;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: rgba(233,185,73,0.38);
+    background-clip: padding-box;
+}
+
+/* Page content enters gently instead of popping in */
+.bonyan-content {
+    animation: bonyanFadeIn .35s ease both;
+}
+
+@keyframes bonyanFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Badges everywhere get a hint of definition instead of flat color blocks */
+[class*="badge-"],
+.status-badge,
+.task-status-badge,
+.invoice-status-badge,
+.file-type-badge,
+.unit-badge,
+.count-badge {
+    letter-spacing: .2px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.035);
+}
+
+/* Buttons feel more alive */
+.btn-bonyan-primary,
+.btn-bonyan-secondary,
+.btn-bonyan-danger,
+.btn-login,
+.btn-action,
+.mi-btn,
+.mi-action {
+    will-change: transform;
+}
+
+    .btn-bonyan-primary:active,
+    .btn-bonyan-secondary:active,
+    .btn-bonyan-danger:active,
+    .btn-login:active {
+        transform: translateY(0) scale(0.98);
+    }
+
+/* Empty states feel a little less "broken / placeholder" */
+.empty-state i,
+.mi-empty i {
+    color: var(--secondary);
+    opacity: .45;
+}
+
+/* Sidebar toggle / icon buttons: subtle press feedback */
+.navbar-icon-btn:active,
+.sidebar-toggle:active {
+    transform: scale(0.92);
+}
+
+/* Dark-mode toggle icon rotates smoothly between sun / moon */
+#darkModeIcon {
+    display: inline-block;
+    transition: transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+
+#darkModeBtn:hover #darkModeIcon {
+    transform: rotate(25deg);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   2. DARK MODE — base surfaces not already covered in site.css
+════════════════════════════════════════════════════════════════════ */
+
+body.dark-mode {
+    color-scheme: dark;
+}
+
+/* Generic catch-all: any element using the shared "card" naming
+   convention gets a dark surface + soft border automatically. */
+body.dark-mode .upload-card,
+body.dark-mode .details-card,
+body.dark-mode .table-card,
+body.dark-mode .form-card,
+body.dark-mode .delete-card,
+body.dark-mode .project-card,
+body.dark-mode .invoice-card,
+body.dark-mode .assign-card,
+body.dark-mode .mi-kpi,
+body.dark-mode .mi-filter,
+body.dark-mode .mi-card,
+body.dark-mode .inv-card,
+body.dark-mode .filter-bar,
+body.dark-mode .mat-add-form,
+body.dark-mode .cancel-modal-box,
+body.dark-mode .invoice-amounts,
+body.dark-mode .delete-info-box,
+body.dark-mode .photo-card {
+    background: var(--surface);
+    border-color: var(--card-border);
+    box-shadow: var(--shadow-card);
+}
+
+    body.dark-mode .project-card:hover,
+    body.dark-mode .inv-card:hover,
+    body.dark-mode .mi-kpi:hover,
+    body.dark-mode .photo-card:hover {
+        box-shadow: var(--shadow-card-hover);
+    }
+
+/* Page header text */
+body.dark-mode .page-header-left h2,
+body.dark-mode .mi-header h2,
+body.dark-mode .visit-detail-header h3,
+body.dark-mode .task-detail-header h3 {
+    color: #F1F5FB;
+}
+
+body.dark-mode .page-header-left p,
+body.dark-mode .invoice-project,
+body.dark-mode .inv-card-location,
+body.dark-mode .mat-info-label,
+body.dark-mode .mat-info-value,
+body.dark-mode .inv-stat-label,
+body.dark-mode .invoice-summary-label,
+body.dark-mode .delete-card-body p,
+body.dark-mode .project-card-client,
+body.dark-mode .project-team,
+body.dark-mode .project-meta-item label,
+body.dark-mode .detail-item label,
+body.dark-mode .inv-date-label,
+body.dark-mode .invoice-dates .inv-date-item,
+body.dark-mode .inv-amount-row,
+body.dark-mode .file-drop-zone p,
+body.dark-mode .file-drop-zone span,
+body.dark-mode .visit-detail-label,
+body.dark-mode .task-detail-label,
+body.dark-mode .task-detail-row,
+body.dark-mode .emp-name-cell .emp-info span,
+body.dark-mode .photo-card-info span {
+    color: var(--muted);
+}
+
+body.dark-mode .project-meta-item span,
+body.dark-mode .detail-item p,
+body.dark-mode .assigned-emp-info p,
+body.dark-mode .emp-name-cell .emp-info p,
+body.dark-mode .invoice-summary-value,
+body.dark-mode .mi-kpi-value,
+body.dark-mode .mat-info-value,
+body.dark-mode .photo-card-info p,
+body.dark-mode .file-preview {
+    color: var(--text);
+}
+
+/* Headline / title accents — keep brand gold instead of unreadable navy-on-navy */
+body.dark-mode .project-card-title,
+body.dark-mode .table-card-header h5,
+body.dark-mode .invoice-num,
+body.dark-mode .inv-total,
+body.dark-mode .inv-section-title,
+body.dark-mode .mi-card-head,
+body.dark-mode .mat-add-title,
+body.dark-mode .inv-card-name,
+body.dark-mode .inv-stat-value,
+body.dark-mode .invoice-summary-title,
+body.dark-mode .form-group label,
+body.dark-mode .assign-form label,
+body.dark-mode .assign-card-header h5,
+body.dark-mode .delete-info-box strong,
+body.dark-mode .mi-table td .mat-name,
+body.dark-mode .mi-amount.final,
+body.dark-mode .upload-card-body label,
+body.dark-mode .invoice-summary-final .invoice-summary-value {
+    color: #E9B949;
+}
+
+/* mi-card-head in materialinvoice.css has its own light gradient background */
+body.dark-mode .mi-card-head {
+    background: linear-gradient(135deg, #16263F, #19283F);
+    border-bottom-color: rgba(255,255,255,0.07);
+}
+
+body.dark-mode .invoice-summary-box {
+    background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(14,46,55,0.4));
+    border-color: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .invoice-summary-final {
+    background: #16263F;
+    border-color: var(--secondary);
+}
+
+/* ── Tables (emp / project[bonyan] / task / doc / mat / mi / visit) ── */
+body.dark-mode .emp-table thead th,
+body.dark-mode .task-table thead th,
+body.dark-mode .doc-table thead th,
+body.dark-mode .mat-table thead tr,
+body.dark-mode .mat-table th,
+body.dark-mode .mi-table thead tr,
+body.dark-mode .mi-table thead th {
+    background: #16263F;
+    color: #C9D6E8;
+    border-bottom-color: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .visit-table thead tr {
+    background: linear-gradient(135deg, var(--primary), #1e3a63);
+}
+
+body.dark-mode .emp-table tbody td,
+body.dark-mode .task-table tbody tr,
+body.dark-mode .doc-table tbody tr,
+body.dark-mode .mat-table tbody tr,
+body.dark-mode .mi-table tbody tr,
+body.dark-mode .visit-table th,
+body.dark-mode .visit-table td {
+    border-bottom-color: rgba(255,255,255,0.07);
+    color: var(--text);
+}
+
+body.dark-mode .task-table td,
+body.dark-mode .doc-table td,
+body.dark-mode .mi-table td,
+body.dark-mode .mat-table td {
+    color: var(--text);
+}
+
+body.dark-mode .emp-table tbody tr:hover td,
+body.dark-mode .task-table tbody tr:hover,
+body.dark-mode .doc-table tbody tr:hover,
+body.dark-mode .mat-table tbody tr:hover,
+body.dark-mode .mi-table tbody tr:hover,
+body.dark-mode .visit-table tbody tr:hover {
+    background: rgba(255,255,255,0.04);
+}
+
+/* ── Form controls that don't already use .bonyan-form ─────────────── */
+body.dark-mode .filter-search input,
+body.dark-mode .filter-select,
+body.dark-mode .form-group .form-control,
+body.dark-mode .form-group .form-select,
+body.dark-mode .assign-form .form-control,
+body.dark-mode .assign-form .form-select,
+body.dark-mode .upload-card-body .form-control,
+body.dark-mode .upload-card-body .form-select,
+body.dark-mode .mi-filter select,
+body.dark-mode .mi-filter .form-control,
+body.dark-mode .form-control,
+body.dark-mode .form-select,
+body.dark-mode input.form-control,
+body.dark-mode select.form-select,
+body.dark-mode textarea.form-control {
+    background: #16263F;
+    border-color: #2A3B58;
+    color: var(--text);
+}
+
+    body.dark-mode .filter-search input::placeholder,
+    body.dark-mode .form-control::placeholder {
+        color: #6E7C95;
+    }
+
+    body.dark-mode .filter-search i,
+    body.dark-mode .file-drop-zone i {
+        color: #6E7C95;
+    }
+
+    body.dark-mode .filter-search input:focus,
+    body.dark-mode .filter-select:focus,
+    body.dark-mode .form-group .form-control:focus,
+    body.dark-mode .form-group .form-select:focus,
+    body.dark-mode .upload-card-body .form-control:focus,
+    body.dark-mode .upload-card-body .form-select:focus,
+    body.dark-mode .mi-filter select:focus,
+    body.dark-mode .form-control:focus,
+    body.dark-mode .form-select:focus {
+        border-color: #E9B949;
+        box-shadow: 0 0 0 3px rgba(233,185,73,0.15);
+    }
+
+body.dark-mode .file-drop-zone {
+    background: #16263F;
+    border-color: #2A3B58;
+}
+
+    body.dark-mode .file-drop-zone:hover,
+    body.dark-mode .file-drop-zone.dragover {
+        background: #1a2e48;
+        border-color: var(--secondary);
+    }
+
+body.dark-mode .file-preview {
+    background: #16263F;
+}
+
+body.dark-mode .input-locked {
+    background: #16263F;
+    color: #6E7C95;
+}
+
+body.dark-mode .locked-fields-banner {
+    background: rgba(233,185,73,0.1);
+    border-color: rgba(233,185,73,0.35);
+}
+
+    body.dark-mode .locked-fields-banner i,
+    body.dark-mode .locked-fields-banner span {
+        color: #E9B949;
+    }
+
+/* ── Borders / dividers used throughout ─────────────────────────────── */
+body.dark-mode .project-card-top,
+body.dark-mode .form-actions,
+body.dark-mode .table-card-header,
+body.dark-mode .assigned-item,
+body.dark-mode .invoice-header,
+body.dark-mode .task-detail-header,
+body.dark-mode .visit-detail-header,
+body.dark-mode .visit-detail-row,
+body.dark-mode .form-section-title,
+body.dark-mode .details-section-title,
+body.dark-mode .mi-filter,
+body.dark-mode .inv-card-stats,
+body.dark-mode .inv-card-link {
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+body.dark-mode .project-card-footer,
+body.dark-mode .assign-card-header {
+    background: #16263F;
+    border-color: rgba(255,255,255,0.08);
+}
+
+/* ── Badges: light pastel chips → readable dark chips ───────────────── */
+body.dark-mode .badge-planning,
+body.dark-mode .badge-male,
+body.dark-mode .file-type-badge,
+body.dark-mode .unit-badge,
+body.dark-mode .btn-action.view,
+body.dark-mode .mi-btn-view,
+body.dark-mode .mi-action.view {
+    background: var(--b-blue-bg);
+    color: var(--b-blue-text);
+}
+
+body.dark-mode .mi-card-head .count-badge,
+body.dark-mode .count-badge {
+    background: var(--b-indigo-bg);
+    color: var(--b-indigo-text);
+}
+
+body.dark-mode .badge-inprogress,
+body.dark-mode .badge-pending,
+body.dark-mode .badge-attention,
+body.dark-mode .status-partial,
+body.dark-mode .btn-action.edit,
+body.dark-mode .mi-btn-edit,
+body.dark-mode .mi-action.edit,
+body.dark-mode .count-badge.inv {
+    background: var(--b-amber-bg);
+    color: var(--b-amber-text);
+}
+
+body.dark-mode .badge-completed,
+body.dark-mode .badge-safe,
+body.dark-mode .status-paid,
+body.dark-mode .alert-success-msg,
+body.dark-mode .mi-alert-success,
+body.dark-mode .invoice-summary-value.disc-value {
+    background: var(--b-green-bg);
+    color: var(--b-green-text);
+    border-color: rgba(111,207,142,0.25);
+}
+
+body.dark-mode .badge-cancelled,
+body.dark-mode .badge-critical,
+body.dark-mode .status-unpaid,
+body.dark-mode .btn-action.delete,
+body.dark-mode .mi-btn-delete,
+body.dark-mode .mi-action.delete,
+body.dark-mode .alert-error-msg,
+body.dark-mode .btn-remove,
+body.dark-mode .delete-icon {
+    background: var(--b-red-bg);
+    color: var(--b-red-text);
+    border-color: rgba(241,138,147,0.25);
+}
+
+    body.dark-mode .btn-remove:hover {
+        background: #4a191e;
+    }
+
+body.dark-mode .badge-onhold,
+body.dark-mode .badge-review,
+body.dark-mode .badge-spec {
+    background: var(--b-purple-bg);
+    color: var(--b-purple-text);
+}
+
+body.dark-mode .badge-female {
+    background: var(--b-pink-bg);
+    color: var(--b-pink-text);
+}
+
+body.dark-mode .project-badge {
+    background: rgba(233,185,73,0.1);
+    border-color: rgba(233,185,73,0.3);
+    color: #E9B949;
+}
+
+/* mi-kpi colored variants in materialinvoice.css (gradient pastel cards) */
+body.dark-mode .mi-kpi.blue {
+    background: linear-gradient(135deg, #0E2E37, #16263F);
+}
+body.dark-mode .mi-kpi.green {
+    background: linear-gradient(135deg, #14361F, #16263F);
+}
+body.dark-mode .mi-kpi.red {
+    background: linear-gradient(135deg, #3A1418, #16263F);
+}
+body.dark-mode .mi-kpi.amber {
+    background: linear-gradient(135deg, #3A2E0E, #16263F);
+}
+body.dark-mode .mi-kpi-label {
+    color: var(--muted);
+}
+body.dark-mode .mi-kpi-value {
+    color: #F1F5FB;
+}
+
+/* ── Empty states / alerts / overlays ───────────────────────────────── */
+body.dark-mode .empty-state,
+body.dark-mode .mi-empty {
+    color: #4d5a72;
+}
+
+body.dark-mode .cancel-modal-overlay {
+    background: rgba(0,0,0,0.7);
+}
+
+body.dark-mode .cancel-modal-body {
+    color: var(--muted);
+}
+
+body.dark-mode .btn-modal-back {
+    background: #16263F;
+    border-color: #2A3B58;
+    color: var(--text);
+}
+
+    body.dark-mode .btn-modal-back:hover {
+        background: #1a2e48;
+    }
+
+/* ── Misc small bits ─────────────────────────────────────────────────── */
+body.dark-mode .visit-thumb,
+body.dark-mode .photo-card {
+    border-color: rgba(255,255,255,0.1);
+}
+
+body.dark-mode .assign-card-body,
+body.dark-mode .details-body,
+body.dark-mode .delete-card-body,
+body.dark-mode .form-card-body {
+    color: var(--text);
+}
+=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/js/auth-theme.js ===
+/* ══════════════════════════════════════════════════════════
+   auth-theme.js
+   Light/dark toggle for the standalone auth pages (Login,
+   Register, ForgotPassword, ChangePassword). Shares the same
+   "bonyan-dark" localStorage key as the main app layout, so
+   switching theme on one is reflected everywhere.
+══════════════════════════════════════════════════════════ */
+(function () {
+    function injectToggleButton() {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'auth-theme-toggle';
+        btn.id = 'authThemeToggle';
+        btn.title = 'Dark / Light';
+        btn.setAttribute('aria-label', 'Toggle theme');
+        btn.innerHTML = '<i class="fas fa-moon" id="authThemeIcon"></i>';
+        document.body.appendChild(btn);
+        return btn;
+    }
+
+    function syncIcon() {
+        var icon = document.getElementById('authThemeIcon');
+        if (!icon) return;
+        icon.className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var btn = injectToggleButton();
+        syncIcon();
+
+        btn.addEventListener('click', function () {
+            var on = !document.body.classList.contains('dark-mode');
+            document.body.classList.toggle('dark-mode', on);
+            localStorage.setItem('bonyan-dark', on ? '1' : '0');
+            syncIcon();
+        });
+    });
+})();
 === File: ./BonyanForEngineeringConsultingFirms/wwwroot/js/lang-switch.js ===
-﻿// langswitch.js
+﻿// lang-switch.js
 
 function applyLanguage(lang) {
-    // 1. Fallback security check
     const data = TRANSLATIONS[lang];
     if (!data) return;
 
-    // 2. Set structural HTML document settings
+    // 1. Set dir + lang on <html>
     document.documentElement.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
     document.documentElement.setAttribute("lang", lang);
     localStorage.setItem("lang", lang);
 
-    // 3. Scan and translate standard text elements AND placeholders
-    document.querySelectorAll("[data-lang]").forEach(el => {
-        const key = el.getAttribute("data-lang");
-        if (data[key]) {
-            // Update standard element inner text
-            el.innerText = data[key];
+    // 2. Apply font family on body
+    document.body.style.fontFamily = lang === "ar"
+        ? "'Cairo', sans-serif"
+        : "'Poppins', sans-serif";
 
-            // Support text placeholders on inputs/text areas
-            if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
-                el.setAttribute("placeholder", data[key]);
-            }
+    // 3. Translate all [data-lang] elements
+    document.querySelectorAll("[data-lang]").forEach(function (el) {
+        var key = el.getAttribute("data-lang");
+        if (!data[key]) return;
+
+        // Don't overwrite elements that only contain child nodes (icons etc.)
+        // Only set innerText if the element has no child elements, OR is a <span>/<p>/<td> etc.
+        if (el.children.length === 0) {
+            el.innerText = data[key];
+        } else {
+            // Find a text node child and update it, leave icons intact
+            el.childNodes.forEach(function (node) {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== "") {
+                    node.textContent = data[key];
+                }
+            });
+        }
+
+        // Also handle placeholder attribute
+        if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+            el.setAttribute("placeholder", data[key]);
         }
     });
 
-    // 4. Update the trigger button text safely
-    const btn = document.getElementById("langBtn");
-    if (btn) btn.innerText = lang === "ar" ? "English" : "عربي";
+    // 4. Update lang button text (only the <span> inside it, not the icon)
+    var langBtnText = document.getElementById("langBtnText");
+    if (langBtnText) {
+        langBtnText.textContent = lang === "ar" ? "English" : "العربية";
+    }
 
-    // 5. Fire custom app events if needed
-    document.dispatchEvent(new CustomEvent("languageChanged", { detail: { lang } }));
+    // 5. Update placeholder-only elements
+    document.querySelectorAll("[data-lang-placeholder]").forEach(function (el) {
+        var key = el.getAttribute("data-lang-placeholder");
+        if (data[key]) el.setAttribute("placeholder", data[key]);
+    });
+
+    // 6. Fire custom event for other scripts
+    document.dispatchEvent(new CustomEvent("languageChanged", { detail: { lang: lang } }));
 }
 
 function toggleLanguage() {
-    const current = localStorage.getItem("lang") || "ar";
+    var current = localStorage.getItem("lang") || "ar";
     applyLanguage(current === "ar" ? "en" : "ar");
 }
 
-// Run immediately as soon as DOM environment parses
+// Apply saved language on page load
 document.addEventListener("DOMContentLoaded", function () {
-    const saved = localStorage.getItem("lang") || "ar";
+    var saved = localStorage.getItem("lang") || "ar";
     applyLanguage(saved);
 });=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/js/navbar.js ===
 ﻿/* ══════════════════════════════════════════════════════════
@@ -25335,15 +26546,8 @@ document.addEventListener("DOMContentLoaded", function () {
     chatbotInput?.addEventListener("keypress", function (e) {
         if (e.key === "Enter") sendChatMessage();
     });
-
-    /* ── 4. LANGUAGE BUTTON LABEL SYNC ───────────────────── */
-    function syncLangButtonLabel() {
-        const langBtnText = document.getElementById("langBtnText");
-        if (!langBtnText) return;
-        const current = document.documentElement.getAttribute("lang") || "ar";
-        langBtnText.textContent = current === "ar" ? "English" : "العربية";
-    }
-    syncLangButtonLabel();
+    /* ── 4. LANG BUTTON SYNC — handled by lang-switch.js ─── */
+    
 });=== File: ./BonyanForEngineeringConsultingFirms/wwwroot/js/show-password.js ===
 ﻿// Show/Hide password toggle — works for all password fields
 document.addEventListener('DOMContentLoaded', function () {

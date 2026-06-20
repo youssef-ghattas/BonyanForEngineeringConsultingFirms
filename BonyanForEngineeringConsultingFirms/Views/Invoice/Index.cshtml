@@ -109,10 +109,15 @@
                         </td>
                         <td>@(inv.Project?.ProjectName ?? "—")</td>
                         <td>
-                            @(inv.Total_Amount.HasValue
-                                                ? inv.Total_Amount.Value.ToString("N0") + " ج.م"
-                                                : "—")
-                </td>
+                            @{
+                                decimal invTotal = inv.Total_Amount ?? 0;
+                                decimal invDiscAmt = invTotal * (inv.Discount ?? 0) / 100;
+                                decimal invDiscounted = invTotal - invDiscAmt;
+                                decimal invTaxAmt = invDiscounted * (inv.Tax ?? 0) / 100;
+                                decimal invFinal = invDiscounted + invTaxAmt;
+                            }
+                            @(invFinal.ToString("N0")) ج.م
+                        </td>
                 <td>
                     <span style="background:@statusBg; color:@statusColor;
                                          padding:3px 10px; border-radius:12px;

@@ -26,9 +26,10 @@
         _ => "#eee"
     };
 
-    decimal net = (Model.Total_Amount ?? 0)
-                  * (1 + (Model.Tax ?? 0) / 100)
-                  * (1 - (Model.Discount ?? 0) / 100);
+    decimal discAmt = (Model.Total_Amount ?? 0) * (Model.Discount ?? 0) / 100;
+    decimal discountedAmount = (Model.Total_Amount ?? 0) - discAmt;
+    decimal taxAmt = discountedAmount * (Model.Tax ?? 0) / 100;
+    decimal net = discountedAmount + taxAmt;
 }
 
 <link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
@@ -80,17 +81,36 @@
             <span>@((Model.Total_Amount ?? 0).ToString("N2")) ج.م</span>
         </div>
         <div class="inv-amount-row">
-            <span>الضريبة (@((Model.Tax ?? 0).ToString("N1"))%)</span>
-            <span>+@(((Model.Total_Amount ?? 0) * (Model.Tax ?? 0) / 100).ToString("N2")) ج.م</span>
+            <span>الخصم (@((Model.Discount ?? 0).ToString("N1"))%)</span>
+            <span>-@discAmt.ToString("N2") ج.م</span>
         </div>
         <div class="inv-amount-row">
-            <span>الخصم (@((Model.Discount ?? 0).ToString("N1"))%)</span>
-            <span>-@(((Model.Total_Amount ?? 0) * (Model.Discount ?? 0) / 100).ToString("N2")) ج.م</span>
+            <span>الضريبة (@((Model.Tax ?? 0).ToString("N1"))%) <small style="opacity:.65">بعد الخصم</small></span>
+            <span>+@taxAmt.ToString("N2") ج.م</span>
         </div>
         <div class="inv-amount-row inv-total">
             <span>الإجمالي النهائي</span>
             <span>@net.ToString("N2") ج.م</span>
         </div>
+
+        @if (Model.Invoice_Status == InvoiceStatus.PartiallyPaid)
+        {
+            <div class="inv-amount-row" style="color:#2e7d32; font-weight:700;">
+                <span>المبلغ المدفوع</span>
+                <span>@((Model.Paid_Amount ?? 0).ToString("N2")) ج.م</span>
+            </div>
+            <div class="inv-amount-row" style="color:#c62828; font-weight:700;">
+                <span>المبلغ المتبقي</span>
+                <span>@((Model.RemainingAmount ?? 0).ToString("N2")) ج.م</span>
+            </div>
+        }
+        else if (Model.Invoice_Status == InvoiceStatus.Paid)
+        {
+            <div class="inv-amount-row" style="color:#2e7d32; font-weight:700;">
+                <span>المبلغ المدفوع</span>
+                <span>@((Model.Paid_Amount ?? net).ToString("N2")) ج.م</span>
+            </div>
+        }
     </div>
 
     <!-- Dates -->
