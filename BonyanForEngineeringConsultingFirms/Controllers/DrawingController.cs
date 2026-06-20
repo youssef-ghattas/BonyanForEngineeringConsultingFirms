@@ -43,6 +43,32 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
             ViewBag.Projects = await projectsQuery.ToListAsync();
             ViewBag.SelectedProjectId = projectId;
+
+            // ── Stats for the dashboard cards ─────────────────────────
+            var now = DateTime.Now;
+            ViewBag.TotalDrawings = drawings.Count;
+            ViewBag.ThisMonthCount = drawings.Count(d => d.UploadDate.Year == now.Year && d.UploadDate.Month == now.Month);
+
+            // Drawings that share a title with another drawing in the same project = multiple versions
+            ViewBag.MultiVersionCount = drawings
+                .GroupBy(d => new { d.ProjectId, Title = (d.DrawingTitle ?? "").Trim().ToLower() })
+                .Count(g => g.Count() > 1);
+
+            ViewBag.ActiveProjectsCount = drawings
+                .Where(d => d.ProjectId != 0)
+                .Select(d => d.ProjectId)
+                .Distinct()
+                .Count();
+
+            // Distinct, non-empty categories for the filter dropdown
+            ViewBag.Categories = drawings
+                .Select(d => d.Category)
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c!.Trim())
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
+
             return View(drawings);
         }
 
