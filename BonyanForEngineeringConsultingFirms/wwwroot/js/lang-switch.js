@@ -1,44 +1,66 @@
-﻿// langswitch.js
+﻿// lang-switch.js
 
 function applyLanguage(lang) {
-    // 1. Fallback security check
     const data = TRANSLATIONS[lang];
     if (!data) return;
 
-    // 2. Set structural HTML document settings
+    // 1. Set dir + lang on <html>
     document.documentElement.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
     document.documentElement.setAttribute("lang", lang);
     localStorage.setItem("lang", lang);
 
-    // 3. Scan and translate standard text elements AND placeholders
-    document.querySelectorAll("[data-lang]").forEach(el => {
-        const key = el.getAttribute("data-lang");
-        if (data[key]) {
-            // Update standard element inner text
-            el.innerText = data[key];
+    // 2. Apply font family on body
+    document.body.style.fontFamily = lang === "ar"
+        ? "'Cairo', sans-serif"
+        : "'Poppins', sans-serif";
 
-            // Support text placeholders on inputs/text areas
-            if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
-                el.setAttribute("placeholder", data[key]);
-            }
+    // 3. Translate all [data-lang] elements
+    document.querySelectorAll("[data-lang]").forEach(function (el) {
+        var key = el.getAttribute("data-lang");
+        if (!data[key]) return;
+
+        // Don't overwrite elements that only contain child nodes (icons etc.)
+        // Only set innerText if the element has no child elements, OR is a <span>/<p>/<td> etc.
+        if (el.children.length === 0) {
+            el.innerText = data[key];
+        } else {
+            // Find a text node child and update it, leave icons intact
+            el.childNodes.forEach(function (node) {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== "") {
+                    node.textContent = data[key];
+                }
+            });
+        }
+
+        // Also handle placeholder attribute
+        if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+            el.setAttribute("placeholder", data[key]);
         }
     });
 
-    // 4. Update the trigger button text safely
-    const btn = document.getElementById("langBtn");
-    if (btn) btn.innerText = lang === "ar" ? "English" : "عربي";
+    // 4. Update lang button text (only the <span> inside it, not the icon)
+    var langBtnText = document.getElementById("langBtnText");
+    if (langBtnText) {
+        langBtnText.textContent = lang === "ar" ? "English" : "العربية";
+    }
 
-    // 5. Fire custom app events if needed
-    document.dispatchEvent(new CustomEvent("languageChanged", { detail: { lang } }));
+    // 5. Update placeholder-only elements
+    document.querySelectorAll("[data-lang-placeholder]").forEach(function (el) {
+        var key = el.getAttribute("data-lang-placeholder");
+        if (data[key]) el.setAttribute("placeholder", data[key]);
+    });
+
+    // 6. Fire custom event for other scripts
+    document.dispatchEvent(new CustomEvent("languageChanged", { detail: { lang: lang } }));
 }
 
 function toggleLanguage() {
-    const current = localStorage.getItem("lang") || "ar";
+    var current = localStorage.getItem("lang") || "ar";
     applyLanguage(current === "ar" ? "en" : "ar");
 }
 
-// Run immediately as soon as DOM environment parses
+// Apply saved language on page load
 document.addEventListener("DOMContentLoaded", function () {
-    const saved = localStorage.getItem("lang") || "ar";
+    var saved = localStorage.getItem("lang") || "ar";
     applyLanguage(saved);
 });
