@@ -50,6 +50,14 @@ function applyLanguage(lang) {
         if (data[key]) el.setAttribute("placeholder", data[key]);
     });
 
+    // 5b. Translate dynamic per-row values (status badges, roles, etc.)
+    //     These carry their own pre-computed Arabic/English text via
+    //     data-ar / data-en attributes (set server-side) instead of a
+    //     shared dictionary key, since the text differs per row/record.
+    document.querySelectorAll("[data-en][data-ar]").forEach(function (el) {
+        el.textContent = lang === "ar" ? el.getAttribute("data-ar") : el.getAttribute("data-en");
+    });
+
     // 6. Fire custom event for other scripts
     document.dispatchEvent(new CustomEvent("languageChanged", { detail: { lang: lang } }));
 }
