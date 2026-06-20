@@ -692,6 +692,13 @@ namespace Bonyan.DAL.Models
 		[Range(0, double.MaxValue)]
 		public decimal? Discount { get; set; } = 0;
 
+		[Column(TypeName = "decimal(15, 2)")]
+		[Range(0, double.MaxValue)]
+		public decimal? Paid_Amount { get; set; } = 0;
+
+		[Column(TypeName = "decimal(15, 2)")]
+		public decimal? RemainingAmount { get; set; } = 0;
+
 		[ForeignKey("TaskId")]
 		public virtual Task Task { get; set; }
 
@@ -1324,15 +1331,6 @@ namespace Bonyan.DAL.Repositories
             return _dbSet.AsQueryable();
         }
     }
-}
-=== File: ./BonyanForEngineeringConsultingFirms/appsettings.Development.json ===
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  }
 }
 === File: ./BonyanForEngineeringConsultingFirms/appsettings.json ===
 {
@@ -3055,11 +3053,12 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
                 return View(invoice);
             }
 
-            invoice.Invoice_Date = DateTime.Now;
-            _context.Invoices.Add(invoice);
-            await _context.SaveChangesAsync();
+			invoice.Invoice_Date = DateTime.Now;
+			CalculateInvoicePayment(invoice);
+			_context.Invoices.Add(invoice);
+			await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تمت إضافة الفاتورة بنجاح";
+			TempData["SuccessMessage"] = "تمت إضافة الفاتورة بنجاح";
             return RedirectToAction("Details", "Project", new { id = invoice.ProjectId });
         }
 
@@ -3093,10 +3092,11 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
                 return View(invoice);
             }
 
-            _context.Invoices.Update(invoice);
-            await _context.SaveChangesAsync();
+			CalculateInvoicePayment(invoice);
+			_context.Invoices.Update(invoice);
+			await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تم تحديث الفاتورة بنجاح";
+			TempData["SuccessMessage"] = "تم تحديث الفاتورة بنجاح";
             return RedirectToAction("Details", "Project", new { id = invoice.ProjectId });
         }
 
@@ -3117,7 +3117,34 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             TempData["SuccessMessage"] = "تم حذف الفاتورة بنجاح";
             return RedirectToAction("Details", "Project", new { id = projectId });
         }
-    }
+		private void CalculateInvoicePayment(Invoice invoice)
+		{
+			decimal total = invoice.Total_Amount ?? 0;
+			decimal discAmt = total * (invoice.Discount ?? 0) / 100m;
+			decimal discountedAmount = total - discAmt;
+			decimal taxAmt = discountedAmount * (invoice.Tax ?? 0) / 100m;
+			decimal finalAmount = discountedAmount + taxAmt;
+
+			if (invoice.Invoice_Status == InvoiceStatus.PartiallyPaid)
+			{
+				var paid = invoice.Paid_Amount ?? 0;
+				if (paid > finalAmount) paid = finalAmount;
+				if (paid < 0) paid = 0;
+				invoice.Paid_Amount = paid;
+				invoice.RemainingAmount = finalAmount - paid;
+			}
+			else if (invoice.Invoice_Status == InvoiceStatus.Paid)
+			{
+				invoice.Paid_Amount = finalAmount;
+				invoice.RemainingAmount = 0;
+			}
+			else // Unpaid
+			{
+				invoice.Paid_Amount = 0;
+				invoice.RemainingAmount = finalAmount;
+			}
+		}
+	}
 }=== File: ./BonyanForEngineeringConsultingFirms/Controllers/MaterialController.cs ===
 ﻿// Controllers/MaterialController.cs
 using Bonyan.DAL.Context;
@@ -4962,45 +4989,6 @@ public class Program
         app.Run();
         }
     }
-=== File: ./BonyanForEngineeringConsultingFirms/Properties/launchSettings.json ===
-﻿{
-  "$schema": "http://json.schemastore.org/launchsettings.json",
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:49275",
-      "sslPort": 44374
-    }
-  },
-  "profiles": {
-    "http": {
-      "commandName": "Project",
-      "dotnetRunMessages": true,
-      "launchBrowser": true,
-      "applicationUrl": "http://localhost:5137",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    "https": {
-      "commandName": "Project",
-      "dotnetRunMessages": true,
-      "launchBrowser": true,
-      "applicationUrl": "https://localhost:7236;http://localhost:5137",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    }
-  }
-}
 === File: ./BonyanForEngineeringConsultingFirms/Services/EmailService.cs ===
 ﻿using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -10447,11 +10435,25 @@ namespace Bonyan.PL.ViewModels
 
             <div class="form-group">
                 <label>الحالة <span style="color:red">*</span></label>
-                <select asp-for="Invoice_Status" class="form-select">
+                <select asp-for="Invoice_Status" class="form-select" id="invoiceStatusSelect" onchange="toggleInvoicePaidAmount()">
                     <option value="1">غير مدفوعة</option>
                     <option value="0">مدفوعة</option>
                     <option value="2">مدفوعة جزئياً</option>
                 </select>
+            </div>
+
+            <div class="form-group" id="paidAmountGroup" style="display:none;">
+                <label>المبلغ المدفوع <span style="color:red">*</span></label>
+                <input asp-for="Paid_Amount" type="number" step="0.01" min="0"
+                       class="form-control" id="paidAmountInput"
+                       placeholder="0.00" oninput="calcRemainingInvoice()" />
+                <span asp-validation-for="Paid_Amount" class="text-danger"></span>
+            </div>
+
+            <div class="form-group" id="remainingAmountGroup" style="display:none;">
+                <label>المبلغ المتبقي</label>
+                <input type="text" id="remainingAmountDisplay" class="form-control" readonly
+                       style="background:#f4f4f4; font-weight:700; color:#c62828;" />
             </div>
 
             <div class="form-group">
@@ -10482,6 +10484,56 @@ namespace Bonyan.PL.ViewModels
             </div>
         </form>
     </div>
+    @section Scripts {
+        <script>
+            function toggleInvoicePaidAmount() {
+                var status   = document.getElementById('invoiceStatusSelect').value;
+                var paidGrp  = document.getElementById('paidAmountGroup');
+                var remGrp   = document.getElementById('remainingAmountGroup');
+
+                if (status === '2') {
+                    paidGrp.style.display = 'block';
+                    remGrp.style.display  = 'block';
+                } else {
+                    paidGrp.style.display = 'none';
+                    remGrp.style.display  = 'none';
+                    document.getElementById('paidAmountInput').value = '';
+                    document.getElementById('remainingAmountDisplay').value = '';
+                }
+                calcRemainingInvoice();
+            }
+
+            function calcRemainingInvoice() {
+                var total    = parseFloat(document.querySelector('[name="Total_Amount"]')?.value) || 0;
+                var tax      = parseFloat(document.querySelector('[name="Tax"]')?.value)           || 0;
+                var discount = parseFloat(document.querySelector('[name="Discount"]')?.value)      || 0;
+                var paidEl   = document.getElementById('paidAmountInput');
+                var paid     = parseFloat(paidEl?.value) || 0;
+
+                var discAmt = total * discount / 100;
+            var discountedAmount = total - discAmt;
+            var taxAmt = discountedAmount * tax / 100;
+            var finalAmount = discountedAmount + taxAmt;
+
+                if (paid > finalAmount) {
+                    paid = finalAmount;
+                    if (paidEl) paidEl.value = finalAmount.toFixed(2);
+                }
+
+                var remaining = finalAmount - paid;
+                var remEl = document.getElementById('remainingAmountDisplay');
+                if (remEl) remEl.value = remaining.toFixed(2) + ' ج.م';
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                toggleInvoicePaidAmount();
+                ['Total_Amount', 'Tax', 'Discount'].forEach(function (name) {
+                    var el = document.querySelector('[name="' + name + '"]');
+                    if (el) el.addEventListener('input', calcRemainingInvoice);
+                });
+            });
+        </script>
+    }
 </div>=== File: ./BonyanForEngineeringConsultingFirms/Views/Invoice/Details.cshtml ===
 ﻿@model Bonyan.DAL.Models.Invoice
 @using Bonyan.DAL.Enums
@@ -10511,9 +10563,10 @@ namespace Bonyan.PL.ViewModels
         _ => "#eee"
     };
 
-    decimal net = (Model.Total_Amount ?? 0)
-                  * (1 + (Model.Tax ?? 0) / 100)
-                  * (1 - (Model.Discount ?? 0) / 100);
+    decimal discAmt = (Model.Total_Amount ?? 0) * (Model.Discount ?? 0) / 100;
+    decimal discountedAmount = (Model.Total_Amount ?? 0) - discAmt;
+    decimal taxAmt = discountedAmount * (Model.Tax ?? 0) / 100;
+    decimal net = discountedAmount + taxAmt;
 }
 
 <link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
@@ -10565,17 +10618,36 @@ namespace Bonyan.PL.ViewModels
             <span>@((Model.Total_Amount ?? 0).ToString("N2")) ج.م</span>
         </div>
         <div class="inv-amount-row">
-            <span>الضريبة (@((Model.Tax ?? 0).ToString("N1"))%)</span>
-            <span>+@(((Model.Total_Amount ?? 0) * (Model.Tax ?? 0) / 100).ToString("N2")) ج.م</span>
+            <span>الخصم (@((Model.Discount ?? 0).ToString("N1"))%)</span>
+            <span>-@discAmt.ToString("N2") ج.م</span>
         </div>
         <div class="inv-amount-row">
-            <span>الخصم (@((Model.Discount ?? 0).ToString("N1"))%)</span>
-            <span>-@(((Model.Total_Amount ?? 0) * (Model.Discount ?? 0) / 100).ToString("N2")) ج.م</span>
+            <span>الضريبة (@((Model.Tax ?? 0).ToString("N1"))%) <small style="opacity:.65">بعد الخصم</small></span>
+            <span>+@taxAmt.ToString("N2") ج.م</span>
         </div>
         <div class="inv-amount-row inv-total">
             <span>الإجمالي النهائي</span>
             <span>@net.ToString("N2") ج.م</span>
         </div>
+
+        @if (Model.Invoice_Status == InvoiceStatus.PartiallyPaid)
+        {
+            <div class="inv-amount-row" style="color:#2e7d32; font-weight:700;">
+                <span>المبلغ المدفوع</span>
+                <span>@((Model.Paid_Amount ?? 0).ToString("N2")) ج.م</span>
+            </div>
+            <div class="inv-amount-row" style="color:#c62828; font-weight:700;">
+                <span>المبلغ المتبقي</span>
+                <span>@((Model.RemainingAmount ?? 0).ToString("N2")) ج.م</span>
+            </div>
+        }
+        else if (Model.Invoice_Status == InvoiceStatus.Paid)
+        {
+            <div class="inv-amount-row" style="color:#2e7d32; font-weight:700;">
+                <span>المبلغ المدفوع</span>
+                <span>@((Model.Paid_Amount ?? net).ToString("N2")) ج.م</span>
+            </div>
+        }
     </div>
 
     <!-- Dates -->
@@ -10696,11 +10768,25 @@ namespace Bonyan.PL.ViewModels
 
             <div class="form-group">
                 <label>الحالة <span style="color:red">*</span></label>
-                <select asp-for="Invoice_Status" class="form-select">
+                <select asp-for="Invoice_Status" class="form-select" id="invoiceStatusSelect" onchange="toggleInvoicePaidAmount()">
                     <option value="1">غير مدفوعة</option>
                     <option value="0">مدفوعة</option>
                     <option value="2">مدفوعة جزئياً</option>
                 </select>
+            </div>
+
+            <div class="form-group" id="paidAmountGroup" style="display:none;">
+                <label>المبلغ المدفوع <span style="color:red">*</span></label>
+                <input asp-for="Paid_Amount" type="number" step="0.01" min="0"
+                       class="form-control" id="paidAmountInput"
+                       placeholder="0.00" oninput="calcRemainingInvoice()" />
+                <span asp-validation-for="Paid_Amount" class="text-danger"></span>
+            </div>
+
+            <div class="form-group" id="remainingAmountGroup" style="display:none;">
+                <label>المبلغ المتبقي</label>
+                <input type="text" id="remainingAmountDisplay" class="form-control" readonly
+                       style="background:#f4f4f4; font-weight:700; color:#c62828;" />
             </div>
 
             <div class="form-group">
@@ -10731,6 +10817,56 @@ namespace Bonyan.PL.ViewModels
             </div>
         </form>
     </div>
+    @section Scripts {
+        <script>
+            function toggleInvoicePaidAmount() {
+                var status   = document.getElementById('invoiceStatusSelect').value;
+                var paidGrp  = document.getElementById('paidAmountGroup');
+                var remGrp   = document.getElementById('remainingAmountGroup');
+
+                if (status === '2') {
+                    paidGrp.style.display = 'block';
+                    remGrp.style.display  = 'block';
+                } else {
+                    paidGrp.style.display = 'none';
+                    remGrp.style.display  = 'none';
+                    document.getElementById('paidAmountInput').value = '';
+                    document.getElementById('remainingAmountDisplay').value = '';
+                }
+                calcRemainingInvoice();
+            }
+
+            function calcRemainingInvoice() {
+                var total    = parseFloat(document.querySelector('[name="Total_Amount"]')?.value) || 0;
+                var tax      = parseFloat(document.querySelector('[name="Tax"]')?.value)           || 0;
+                var discount = parseFloat(document.querySelector('[name="Discount"]')?.value)      || 0;
+                var paidEl   = document.getElementById('paidAmountInput');
+                var paid     = parseFloat(paidEl?.value) || 0;
+
+                var discAmt = total * discount / 100;
+                var discountedAmount = total - discAmt;
+                var taxAmt = discountedAmount * tax / 100;
+                var finalAmount = discountedAmount + taxAmt;
+
+                if (paid > finalAmount) {
+                    paid = finalAmount;
+                    if (paidEl) paidEl.value = finalAmount.toFixed(2);
+                }
+
+                var remaining = finalAmount - paid;
+                var remEl = document.getElementById('remainingAmountDisplay');
+                if (remEl) remEl.value = remaining.toFixed(2) + ' ج.م';
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                toggleInvoicePaidAmount();
+                ['Total_Amount', 'Tax', 'Discount'].forEach(function (name) {
+                    var el = document.querySelector('[name="' + name + '"]');
+                    if (el) el.addEventListener('input', calcRemainingInvoice);
+                });
+            });
+        </script>
+    }
 </div>=== File: ./BonyanForEngineeringConsultingFirms/Views/Invoice/Index.cshtml ===
 ﻿@model IEnumerable<Bonyan.DAL.Models.Invoice>
 @using Bonyan.DAL.Enums
@@ -10843,10 +10979,15 @@ namespace Bonyan.PL.ViewModels
                         </td>
                         <td>@(inv.Project?.ProjectName ?? "—")</td>
                         <td>
-                            @(inv.Total_Amount.HasValue
-                                                ? inv.Total_Amount.Value.ToString("N0") + " ج.م"
-                                                : "—")
-                </td>
+                            @{
+                                decimal invTotal = inv.Total_Amount ?? 0;
+                                decimal invDiscAmt = invTotal * (inv.Discount ?? 0) / 100;
+                                decimal invDiscounted = invTotal - invDiscAmt;
+                                decimal invTaxAmt = invDiscounted * (inv.Tax ?? 0) / 100;
+                                decimal invFinal = invDiscounted + invTaxAmt;
+                            }
+                            @(invFinal.ToString("N0")) ج.م
+                        </td>
                 <td>
                     <span style="background:@statusBg; color:@statusColor;
                                          padding:3px 10px; border-radius:12px;
@@ -14876,11 +15017,10 @@ else
                 <span data-lang="assistant_greeting">مرحبًا! كيف يمكنني مساعدتك اليوم؟</span>
             </div>
         </div>
-    </div>
-    <div class="chatbot-panel-footer">
-        <input type="text" id="chatbotInput" data-lang-placeholder="type_message" placeholder="اكتب رسالتك..." autocomplete="off" />
-        <button id="chatbotSendBtn"><i class="fas fa-paper-plane"></i></button>
-    </div>
+        <div class="chatbot-panel-footer">
+            <input type="text" id="chatbotInput" data-lang-placeholder="type_message" placeholder="اكتب رسالتك..." autocomplete="off" />
+            <button id="chatbotSendBtn"><i class="fas fa-paper-plane"></i></button>
+        </div>
     </div>
 
     <script src="~/js/navbar.js"></script>
@@ -24986,8 +25126,6 @@ body.dark-mode .bg-tool {
 }
 
 /* Keep real content above the watermark layer */
-.bonyan-navbar,
-.bonyan-wrapper,
 .navbar-mobile-search,
 .chatbot-panel,
 .landing-navbar,
@@ -24999,6 +25137,11 @@ body.dark-mode .bg-tool {
     position: relative;
     z-index: 1;
 }
+
+/* .bonyan-navbar and .bonyan-wrapper intentionally excluded above:
+   they must keep their original position/z-index (fixed navbar,
+   z-index 1050) so the navbar stays pinned on scroll and its
+   dropdown renders above the welcome banner card. */
 
 @media (max-width: 768px) {
     .bg-tool {
@@ -26525,7 +26668,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function sendChatMessage() {
         const text = chatbotInput.value.trim();
         if (!text) return;
-        appendChatMessage(text, "user");
+        appendChatMessage(text, "user"); applyLanguage
         chatbotInput.value = "";
 
         // ── TODO: replace with real fetch() call to your bot ──
