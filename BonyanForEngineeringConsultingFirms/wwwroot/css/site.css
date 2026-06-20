@@ -860,8 +860,6 @@ body.dark-mode .bg-tool {
 }
 
 /* Keep real content above the watermark layer */
-.bonyan-navbar,
-.bonyan-wrapper,
 .navbar-mobile-search,
 .chatbot-panel,
 .landing-navbar,
@@ -873,6 +871,11 @@ body.dark-mode .bg-tool {
     position: relative;
     z-index: 1;
 }
+
+/* .bonyan-navbar and .bonyan-wrapper intentionally excluded above:
+   they must keep their original position/z-index (fixed navbar,
+   z-index 1050) so the navbar stays pinned on scroll and its
+   dropdown renders above the welcome banner card. */
 
 @media (max-width: 768px) {
     .bg-tool {

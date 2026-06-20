@@ -47,11 +47,25 @@
 
             <div class="form-group">
                 <label>الحالة <span style="color:red">*</span></label>
-                <select asp-for="Invoice_Status" class="form-select">
+                <select asp-for="Invoice_Status" class="form-select" id="invoiceStatusSelect" onchange="toggleInvoicePaidAmount()">
                     <option value="1">غير مدفوعة</option>
                     <option value="0">مدفوعة</option>
                     <option value="2">مدفوعة جزئياً</option>
                 </select>
+            </div>
+
+            <div class="form-group" id="paidAmountGroup" style="display:none;">
+                <label>المبلغ المدفوع <span style="color:red">*</span></label>
+                <input asp-for="Paid_Amount" type="number" step="0.01" min="0"
+                       class="form-control" id="paidAmountInput"
+                       placeholder="0.00" oninput="calcRemainingInvoice()" />
+                <span asp-validation-for="Paid_Amount" class="text-danger"></span>
+            </div>
+
+            <div class="form-group" id="remainingAmountGroup" style="display:none;">
+                <label>المبلغ المتبقي</label>
+                <input type="text" id="remainingAmountDisplay" class="form-control" readonly
+                       style="background:#f4f4f4; font-weight:700; color:#c62828;" />
             </div>
 
             <div class="form-group">
@@ -82,4 +96,54 @@
             </div>
         </form>
     </div>
+    @section Scripts {
+        <script>
+            function toggleInvoicePaidAmount() {
+                var status   = document.getElementById('invoiceStatusSelect').value;
+                var paidGrp  = document.getElementById('paidAmountGroup');
+                var remGrp   = document.getElementById('remainingAmountGroup');
+
+                if (status === '2') {
+                    paidGrp.style.display = 'block';
+                    remGrp.style.display  = 'block';
+                } else {
+                    paidGrp.style.display = 'none';
+                    remGrp.style.display  = 'none';
+                    document.getElementById('paidAmountInput').value = '';
+                    document.getElementById('remainingAmountDisplay').value = '';
+                }
+                calcRemainingInvoice();
+            }
+
+            function calcRemainingInvoice() {
+                var total    = parseFloat(document.querySelector('[name="Total_Amount"]')?.value) || 0;
+                var tax      = parseFloat(document.querySelector('[name="Tax"]')?.value)           || 0;
+                var discount = parseFloat(document.querySelector('[name="Discount"]')?.value)      || 0;
+                var paidEl   = document.getElementById('paidAmountInput');
+                var paid     = parseFloat(paidEl?.value) || 0;
+
+                var discAmt = total * discount / 100;
+                var discountedAmount = total - discAmt;
+                var taxAmt = discountedAmount * tax / 100;
+                var finalAmount = discountedAmount + taxAmt;
+
+                if (paid > finalAmount) {
+                    paid = finalAmount;
+                    if (paidEl) paidEl.value = finalAmount.toFixed(2);
+                }
+
+                var remaining = finalAmount - paid;
+                var remEl = document.getElementById('remainingAmountDisplay');
+                if (remEl) remEl.value = remaining.toFixed(2) + ' ج.م';
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                toggleInvoicePaidAmount();
+                ['Total_Amount', 'Tax', 'Discount'].forEach(function (name) {
+                    var el = document.querySelector('[name="' + name + '"]');
+                    if (el) el.addEventListener('input', calcRemainingInvoice);
+                });
+            });
+        </script>
+    }
 </div>
