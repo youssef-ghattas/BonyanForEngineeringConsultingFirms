@@ -1,209 +1,294 @@
-﻿@model IEnumerable<Bonyan.DAL.Models.Employee>
+﻿@* Views/Employee/Index.cshtml *@
+@model IEnumerable<Bonyan.DAL.Models.Employee>
 @using Bonyan.DAL.Enums
 @{
     ViewData["Title"] = "الموظفون";
+    var role = Context.Session.GetString("Role");
+
+    var total = Model.Count();
+    var engineers = Model.Count(e => e.UserAccount != null && e.UserAccount.Role == UserRole.Engineer);
+    var managers = Model.Count(e => e.UserAccount != null && e.UserAccount.Role == UserRole.ProjectManager);
+    var totalSalary = Model.Sum(e => e.Salary);
 }
 
 <link rel="stylesheet" href="~/css/employee.css" />
 
-@if (TempData["Success"] != null)
-{
-    <div style="background:#EEFAF2; border:1px solid #C3EDD0;
-                    border-radius:10px; padding:12px 18px; margin-bottom:18px;
-                    color:#28A745; display:flex; align-items:center; gap:10px;
-                    font-size:0.9rem;">
-        <i class="fas fa-check-circle"></i>
-        @TempData["Success"]
-    </div>
-}
+<div class="emp-page">
 
-<!-- Page Header -->
-<div class="page-header">
-    <div class="page-header-left">
-        <h2>
-            <i class="fas fa-users" style="color:var(--secondary)"></i>
-            <span data-lang="employees">الموظفون</span>
-        </h2>
-        <p data-lang="employees_sub">إدارة بيانات الموظفين</p>
-    </div>
-    <div style="display:flex; gap:10px;">
-        @if (Context.Session.GetString("Role") == "Admin")
+    <!-- ── Header ─────────────────────────────────── -->
+    <div class="emp-header">
+        <div class="emp-header-title">
+            <h2><i class="fas fa-users"></i> الموظفون</h2>
+            <p>إدارة بيانات الموظفين وحساباتهم في النظام</p>
+        </div>
+        @if (role == "Admin")
         {
-            <a asp-controller="Account" asp-action="AdminRegister" class="btn-bonyan-primary">
-                <i class="fas fa-user-shield"></i>
-                <span data-lang="add_admin">إضافة أدمن</span>
-            </a>
+            <div class="emp-header-actions">
+                <a asp-action="Create" class="btn-emp btn-emp-primary">
+                    <i class="fas fa-user-plus"></i> إضافة موظف
+                </a>
+            </div>
         }
-        <a asp-action="Create" class="btn-bonyan-secondary">
-            <i class="fas fa-plus"></i>
-            <span data-lang="add_employee">إضافة موظف</span>
-        </a>
     </div>
-</div>
 
-<!-- Filter Bar -->
-<div class="filter-bar">
-    <div class="filter-search">
-        <i class="fas fa-search"></i>
-        <input type="text" id="searchInput"
-               placeholder="بحث عن موظف..."
-               data-lang-placeholder="search_employee"
-               onkeyup="filterTable()" />
+    <!-- ── Alerts ─────────────────────────────────── -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="emp-alert emp-alert-success">
+            <i class="fas fa-check-circle"></i> @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="emp-alert emp-alert-error">
+            <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        </div>
+    }
+
+    <!-- ── KPI Strip ──────────────────────────────── -->
+    <div class="emp-kpi-grid">
+        <div class="emp-kpi navy">
+            <div class="emp-kpi-icon"><i class="fas fa-users"></i></div>
+            <div>
+                <div class="emp-kpi-label">إجمالي الموظفين</div>
+                <div class="emp-kpi-value">@total</div>
+            </div>
+        </div>
+        <div class="emp-kpi blue">
+            <div class="emp-kpi-icon"><i class="fas fa-hard-hat"></i></div>
+            <div>
+                <div class="emp-kpi-label">المهندسون</div>
+                <div class="emp-kpi-value">@engineers</div>
+            </div>
+        </div>
+        <div class="emp-kpi gold">
+            <div class="emp-kpi-icon"><i class="fas fa-user-tie"></i></div>
+            <div>
+                <div class="emp-kpi-label">مديرو المشاريع</div>
+                <div class="emp-kpi-value">@managers</div>
+            </div>
+        </div>
+        <div class="emp-kpi green">
+            <div class="emp-kpi-icon"><i class="fas fa-coins"></i></div>
+            <div>
+                <div class="emp-kpi-label">إجمالي الرواتب</div>
+                <div class="emp-kpi-value">@totalSalary.ToString("N0") ج.م</div>
+            </div>
+        </div>
     </div>
-    <select class="filter-select" id="genderFilter" onchange="filterTable()">
-        <option value="" data-lang="all_genders">كل الأجناس</option>
-        <option value="Male" data-lang="male">ذكر</option>
-        <option value="Female" data-lang="female">أنثى</option>
-    </select>
-    <select class="filter-select" id="specFilter" onchange="filterTable()">
-        <option value="" data-lang="all_specs">كل التخصصات</option>
-        @foreach (var s in Enum.GetValues(typeof(Specialization)))
+
+    <!-- ── Filter Bar (client-side) ───────────────── -->
+    <div class="filter-bar">
+        <div class="filter-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="empSearchInput" placeholder="بحث عن موظف بالاسم أو البريد أو الهاتف...">
+        </div>
+        <select class="filter-select" id="specFilter">
+            <option value="">كل التخصصات</option>
+            <option value="Civil">مدني</option>
+            <option value="Mechanical">ميكانيكا</option>
+            <option value="Electrical">كهرباء</option>
+            <option value="Architectural">عمارة</option>
+        </select>
+        <select class="filter-select" id="genderFilter">
+            <option value="">كل الأجناس</option>
+            <option value="Male">ذكر</option>
+            <option value="Female">أنثى</option>
+        </select>
+        <button type="button" class="filter-reset" id="resetFiltersBtn">
+            <i class="fas fa-rotate-left"></i> إعادة تعيين
+        </button>
+    </div>
+
+    <!-- ── Employees Table ────────────────────────── -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h5><i class="fas fa-list"></i> قائمة الموظفين</h5>
+            <span class="count-badge" id="visibleCount">@total</span>
+        </div>
+
+        @if (Model.Any())
         {
-            <option value="@s">@s</option>
-        }
-    </select>
-</div>
-
-<!-- Table Card -->
-<div class="table-card">
-    <div class="table-card-header">
-        <h5>
-            <i class="fas fa-list"></i>
-            <span data-lang="employee_list">قائمة الموظفين</span>
-        </h5>
-        <span style="font-size:0.85rem; color:#888">
-            <span data-lang="total">الإجمالي</span>:
-            <strong>@Model.Count()</strong>
-        </span>
-    </div>
-
-    <div class="table-responsive">
-        <table class="emp-table" id="empTable">
-            <thead>
-                <tr>
-                    <th data-lang="employee">#</th>
-                    <th data-lang="employee">الموظف</th>
-                    <th data-lang="email">البريد الإلكتروني</th>
-                    <th data-lang="phone">الهاتف</th>
-                    <th data-lang="specialization">التخصص</th>
-                    <th data-lang="gender">الجنس</th>
-                    <th data-lang="salary">الراتب</th>
-                    <th data-lang="hiredate">تاريخ التعيين</th>
-                    <th data-lang="actions">الإجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
-                {
-                    <tr>
-                        <td colspan="9">
-                            <div class="empty-state">
-                                <i class="fas fa-users-slash"></i>
-                                <p data-lang="no_employees">لا يوجد موظفون حتى الآن</p>
-                            </div>
-                        </td>
-                    </tr>
-                }
-                else
-                {
-                    int i = 1;
-                    foreach (var emp in Model)
-                    {
-                        string initials = emp.FirstName[0].ToString().ToUpper()
-                        + emp.LastName[0].ToString().ToUpper();
-
-                        string genderAr = emp.Gender == Gender.Male ? "ذكر" : "أنثى";
-                        string genderBadge = emp.Gender == Gender.Male
-                        ? "badge-male" : "badge-female";
-
-                        string specAr = emp.Specialization switch
-                        {
-                            Specialization.Civil => "مدني",
-                            Specialization.Mechanical => "ميكانيكا",
-                            Specialization.Electrical => "كهرباء",
-                            Specialization.Architectural => "معماري",
-                            _ => emp.Specialization.ToString()
-                        };
-
-                        <tr data-gender="@emp.Gender" data-spec="@emp.Specialization">
-                            <td>@(i++)</td>
-                            <td>
-                                <div class="emp-name-cell">
-                                    <div class="emp-avatar">@initials</div>
-                                    <div class="emp-info">
-                                        <p>@emp.FirstName @emp.LastName</p>
-                                        <span>ID: @emp.EmployeeId</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>@emp.Email</td>
-                            <td>@(emp.PhoneNum ?? "—")</td>
-                            <td>
-                                <span class="badge-spec"
-                                      data-en="@emp.Specialization.ToString()"
-                                      data-ar="@specAr">
-                                    @specAr
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge-gender @genderBadge"
-                                      data-en="@emp.Gender.ToString()"
-                                      data-ar="@genderAr">
-                                    @genderAr
-                                </span>
-                            </td>
-                            <td>@emp.Salary.ToString("N2") ج.م</td>
-                            <td>@emp.HireDate.ToString("yyyy-MM-dd")</td>
-                            <td>
-                                <div class="action-btns">
-                                    <a asp-action="Details"
-                                       asp-route-id="@emp.EmployeeId"
-                                       class="btn-action view"
-                                       title="تفاصيل">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a asp-action="Edit"
-                                       asp-route-id="@emp.EmployeeId"
-                                       class="btn-action edit"
-                                       title="تعديل">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a asp-action="Delete"
-                                       asp-route-id="@emp.EmployeeId"
-                                       class="btn-action delete"
-                                       title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </div>
-                            </td>
+            <div class="table-responsive">
+                <table class="emp-table" id="empTable">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-id-badge"></i> الموظف</th>
+                            <th><i class="fas fa-address-book"></i> التواصل</th>
+                            <th><i class="fas fa-drafting-compass"></i> التخصص</th>
+                            <th><i class="fas fa-venus-mars"></i> الجنس</th>
+                            <th><i class="fas fa-user-shield"></i> الصلاحية</th>
+                            <th><i class="fas fa-calendar-day"></i> تاريخ التعيين</th>
+                            <th><i class="fas fa-coins"></i> الراتب</th>
+                            @if (role == "Admin")
+                            {
+                                <th><i class="fas fa-cog"></i> إجراءات</th>
+                            }
                         </tr>
-                    }
-                }
-            </tbody>
-        </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var emp in Model)
+                        {
+                            var initials = $"{(string.IsNullOrEmpty(emp.FirstName) ? "" : emp.FirstName.Substring(0, 1))}{(string.IsNullOrEmpty(emp.LastName) ? "" : emp.LastName.Substring(0, 1))}".ToUpper();
+                            var specClass = emp.Specialization switch
+                            {
+                                Specialization.Civil => "spec-civil",
+                                Specialization.Mechanical => "spec-mechanical",
+                                Specialization.Electrical => "spec-electrical",
+                                Specialization.Architectural => "spec-architectural",
+                                _ => "spec-civil"
+                            };
+                            var specIcon = emp.Specialization switch
+                            {
+                                Specialization.Civil => "fa-building",
+                                Specialization.Mechanical => "fa-cogs",
+                                Specialization.Electrical => "fa-bolt",
+                                Specialization.Architectural => "fa-drafting-compass",
+                                _ => "fa-building"
+                            };
+                            var specLabel = emp.Specialization switch
+                            {
+                                Specialization.Civil => "مدني",
+                                Specialization.Mechanical => "ميكانيكا",
+                                Specialization.Electrical => "كهرباء",
+                                Specialization.Architectural => "عمارة",
+                                _ => emp.Specialization.ToString()
+                            };
+                            var isMale = emp.Gender == Gender.Male;
+                            var roleLabel = emp.UserAccount?.Role == UserRole.ProjectManager ? "مدير مشروع" : "مهندس";
+                            var isPm = emp.UserAccount?.Role == UserRole.ProjectManager;
+
+                            <tr data-name="@($"{emp.FirstName} {emp.LastName}".ToLower())"
+                                data-email="@emp.Email?.ToLower()"
+                                data-phone="@emp.PhoneNum"
+                                data-spec="@emp.Specialization"
+                                data-gender="@emp.Gender">
+                                <td>
+                                    <div class="emp-name-cell">
+                                        <div class="emp-avatar">@initials</div>
+                                        <div class="emp-info">
+                                            <p>@emp.FirstName @emp.LastName</p>
+                                            <span><i class="fas fa-hashtag"></i> ID: @emp.EmployeeId</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="emp-contact-cell">
+                                        <span><i class="fas fa-envelope"></i> @emp.Email</span>
+                                        <span><i class="fas fa-phone"></i> @(emp.PhoneNum ?? "—")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge-spec @specClass">
+                                        <i class="fas @specIcon"></i> @specLabel
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge-gender @(isMale ? "badge-male" : "badge-female")">
+                                        <i class="fas @(isMale ? "fa-mars" : "fa-venus")"></i> @(isMale ? "ذكر" : "أنثى")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="role-pill @(isPm ? "pm" : "")">
+                                        <i class="fas @(isPm ? "fa-user-tie" : "fa-hard-hat")"></i> @roleLabel
+                                    </span>
+                                </td>
+                                <td>@emp.HireDate.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <span class="emp-salary">@emp.Salary.ToString("N0")</span>
+                                    <span class="emp-salary-currency">ج.م</span>
+                                </td>
+                                @if (role == "Admin")
+                                {
+                                    <td>
+                                        <div class="action-btns">
+                                            <a asp-action="Details" asp-route-id="@emp.EmployeeId"
+                                               class="btn-action view" data-tip="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@emp.EmployeeId"
+                                               class="btn-action edit" data-tip="تعديل">
+                                                <i class="fas fa-pen"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@emp.EmployeeId"
+                                               class="btn-action delete" data-tip="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="noResultsState" style="display:none">
+                <i class="fas fa-user-slash"></i>
+                <h6>لا توجد نتائج مطابقة</h6>
+                <p>جرّب تعديل كلمات البحث أو الفلاتر المستخدمة</p>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-users-slash"></i>
+                <h6>لا يوجد موظفون مسجلون</h6>
+                <p>ابدأ بإضافة أول موظف في فريقك</p>
+            </div>
+        }
     </div>
 </div>
 
 @section Scripts {
     <script>
-        function filterTable() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const gender = document.getElementById('genderFilter').value;
-            const spec   = document.getElementById('specFilter').value;
-            const rows   = document.querySelectorAll('#empTable tbody tr');
+        (function () {
+            var searchInput = document.getElementById('empSearchInput');
+            var specFilter = document.getElementById('specFilter');
+            var genderFilter = document.getElementById('genderFilter');
+            var resetBtn = document.getElementById('resetFiltersBtn');
+            var table = document.getElementById('empTable');
+            var visibleCountEl = document.getElementById('visibleCount');
+            var noResultsState = document.getElementById('noResultsState');
 
-            rows.forEach(row => {
-                const text      = row.innerText.toLowerCase();
-                const rowGender = row.getAttribute('data-gender') || '';
-                const rowSpec   = row.getAttribute('data-spec')   || '';
+            if (!table) return;
 
-                const matchSearch = text.includes(search);
-                const matchGender = gender === '' || rowGender === gender;
-                const matchSpec   = spec   === '' || rowSpec   === spec;
+            var rows = Array.prototype.slice.call(table.querySelectorAll('tbody tr'));
 
-                row.style.display = (matchSearch && matchGender && matchSpec)
-                                    ? '' : 'none';
+            function applyFilters() {
+                var term = (searchInput.value || '').trim().toLowerCase();
+                var spec = specFilter.value;
+                var gender = genderFilter.value;
+                var visible = 0;
+
+                rows.forEach(function (row) {
+                    var matchesTerm = !term ||
+                        row.dataset.name.indexOf(term) !== -1 ||
+                        (row.dataset.email || '').indexOf(term) !== -1 ||
+                        (row.dataset.phone || '').indexOf(term) !== -1;
+
+                    var matchesSpec = !spec || row.dataset.spec === spec;
+                    var matchesGender = !gender || row.dataset.gender === gender;
+
+                    var show = matchesTerm && matchesSpec && matchesGender;
+                    row.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
+
+                visibleCountEl.textContent = visible;
+                if (noResultsState) {
+                    noResultsState.style.display = visible === 0 ? 'block' : 'none';
+                }
+            }
+
+            searchInput.addEventListener('input', applyFilters);
+            specFilter.addEventListener('change', applyFilters);
+            genderFilter.addEventListener('change', applyFilters);
+            resetBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                specFilter.value = '';
+                genderFilter.value = '';
+                applyFilters();
             });
-        }
+        })();
     </script>
 }
