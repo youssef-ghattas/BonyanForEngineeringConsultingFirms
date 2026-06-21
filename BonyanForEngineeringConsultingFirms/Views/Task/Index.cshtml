@@ -11,47 +11,63 @@
     var totalCount = taskList.Count;
     var pendingCount = taskList.Count(t => t.Status == TasksStatus.Pending);
     var inProgressCount = taskList.Count(t => t.Status == TasksStatus.InProgress);
+    var reviewCount = taskList.Count(t => t.Status == TasksStatus.UnderReview);
     var completedCount = taskList.Count(t => t.Status == TasksStatus.Completed);
     var overdueCount = taskList.Count(t => t.DueDate.HasValue && t.DueDate.Value.Date < today
-        && t.Status != TasksStatus.Completed && t.Status != TasksStatus.Cancelled);
+                        && t.Status != TasksStatus.Completed && t.Status != TasksStatus.Cancelled);
 }
 
 <link rel="stylesheet" href="~/css/task.css" />
+<link rel="stylesheet" href="~/css//theme-pro.css" />
 
 <div class="task-page">
 
     <div class="page-header">
         <div class="page-header-left">
             <h2>
-                <i class="fas fa-tasks" style="color:var(--secondary)"></i>
+                <i class="fas fa-tasks"></i>
                 @if (projectId.HasValue)
                 {
                     <span data-lang="task_of_project">مهام مشروع:</span>
-                    @projectName
+                    <span class="project-name-accent">@projectName</span>
                 }
                 else
                 {
                     <span data-lang="all_tasks">جميع المهام</span>
                 }
             </h2>
+            <p data-lang="task_subtitle">
+                @if (projectId.HasValue)
+                {
+                    <text>استعراض وإدارة مهام مشروع @projectName</text>
+                }
+                else
+                {
+
+                    <text>استعراض وإدارة جميع مهام النظام</text>
+                }
+            </p>
         </div>
-        <div style="display:flex; gap:10px">
+        <div class="page-header-actions">
             @if (projectId.HasValue)
             {
                 <a asp-controller="Project" asp-action="Details"
                    asp-route-id="@projectId" class="btn-bonyan-primary">
-                    <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
+                    <i class="fas fa-arrow-right"></i>
+                    <span data-lang="back_to_project">رجوع للمشروع</span>
                 </a>
             }
             @if (role == "ProjectManager" && projectId.HasValue)
             {
                 <a asp-action="Create" asp-route-projectId="@projectId"
                    class="btn-bonyan-secondary">
-                    <i class="fas fa-plus"></i> <span data-lang="add_task">إضافة مهمة</span>
+                    <i class="fas fa-plus"></i>
+                    <span data-lang="add_task">إضافة مهمة</span>
                 </a>
             }
         </div>
     </div>
+
 
     @if (TempData["SuccessMessage"] != null)
     {
@@ -59,6 +75,7 @@
             <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
         </div>
     }
+
 
     <div class="task-kpi-grid">
         <div class="task-kpi navy">
@@ -76,10 +93,17 @@
             </div>
         </div>
         <div class="task-kpi blue">
-            <div class="task-kpi-icon"><i class="fas fa-spinner"></i></div>
+            <div class="task-kpi-icon"><i class="fas fa-spinner fa-spin-pulse"></i></div>
             <div>
                 <div class="task-kpi-label" data-lang="inprogress_tasks">جارية</div>
                 <div class="task-kpi-value">@inProgressCount</div>
+            </div>
+        </div>
+        <div class="task-kpi purple">
+            <div class="task-kpi-icon"><i class="fas fa-magnifying-glass"></i></div>
+            <div>
+                <div class="task-kpi-label" data-lang="review_tasks">قيد المراجعة</div>
+                <div class="task-kpi-value">@reviewCount</div>
             </div>
         </div>
         <div class="task-kpi green">
@@ -98,11 +122,19 @@
         </div>
     </div>
 
+
     <div class="filter-bar">
+        <span class="filter-bar-label">
+            <i class="fas fa-sliders"></i>
+            <span data-lang="filter_label">تصفية:</span>
+        </span>
+
+
         <div class="filter-bar-project">
-            <label class="filter-bar-label" data-lang="filter_by_project"><i class="fas fa-diagram-project"></i> تصفية حسب المشروع:</label>
-            <select id="projectFilterSelector" class="filter-select" onchange="filterTasksByProject(this.value)">
-                <option value="" data-lang="task_all_projects_option">-- استعراض مهام كافة المشاريع --</option>
+            <i class="fas fa-diagram-project" style="color:var(--secondary);font-size:.85rem;flex-shrink:0"></i>
+            <select id="projectFilterSelector" class="filter-select"
+                    onchange="filterTasksByProject(this.value)">
+                <option value="" data-lang="task_all_projects_option">-- كافة المشاريع --</option>
                 @if (ViewBag.Projects != null)
                 {
                     foreach (var proj in ViewBag.Projects)
@@ -119,41 +151,70 @@
                 }
             </select>
         </div>
+
+
+        <div class="filter-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="taskSearch"
+                   placeholder="ابحث عن مهمة..."
+                   data-lang-placeholder="search_task"
+                   oninput="liveSearchTasks(this.value)" />
+        </div>
+
+        <select class="filter-select" id="statusFilter" onchange="filterByStatus(this.value)">
+            <option value="" data-lang="all_statuses">كل الحالات</option>
+            <option value="badge-pending" data-lang="status_pending">معلق</option>
+            <option value="badge-inprogress" data-lang="status_inprogress">جاري</option>
+            <option value="badge-review" data-lang="status_review">قيد المراجعة</option>
+            <option value="badge-completed" data-lang="status_completed">مكتمل</option>
+            <option value="badge-cancelled" data-lang="status_cancelled">ملغي</option>
+        </select>
+
         @if (projectId.HasValue)
         {
             <a asp-action="Index" class="filter-reset">
-                <i class="fas fa-undo"></i> <span data-lang="clear_filter">إلغاء التصفية</span>
+                <i class="fas fa-rotate-left"></i>
+                <span data-lang="clear_filter">إلغاء التصفية</span>
             </a>
         }
+
+        <span class="results-count" id="resultsCount">
+            <strong>@totalCount</strong> <span data-lang="results_label">نتيجة</span>
+        </span>
     </div>
+
 
     <div class="table-card">
         <div class="table-card-header">
-            <h5><i class="fas fa-list"></i> <span data-lang="task_list">قائمة المهام</span></h5>
-            <span class="count-badge">@totalCount</span>
+            <h5>
+                <i class="fas fa-table-list"></i>
+                <span data-lang="task_list">قائمة المهام</span>
+            </h5>
+            <span class="count-badge" id="headerBadgeCount">@totalCount</span>
         </div>
+
         @if (Model.Any())
         {
             <div class="table-responsive">
-                <table class="task-table">
+                <table class="task-table" id="taskTable">
                     <thead>
                         <tr>
-                            <th data-lang="task_name_label">اسم المهمة</th>
+                            <th><i class="fas fa-clipboard-list"></i> <span data-lang="task_name_label">اسم المهمة</span></th>
                             @if (!projectId.HasValue)
                             {
-                                <th data-lang="project">المشروع</th>
+                                <th><i class="fas fa-diagram-project"></i> <span data-lang="project">المشروع</span></th>
                             }
-                            <th data-lang="status">الحالة</th>
-                            <th data-lang="created_at">تاريخ الإنشاء</th>
-                            <th data-lang="due_date">الموعد النهائي</th>
-                            <th data-lang="assigned_engineer">المهندس المعيَّن</th>
+                            <th><i class="fas fa-circle-half-stroke"></i> <span data-lang="status">الحالة</span></th>
+                            <th><i class="fas fa-calendar-plus"></i> <span data-lang="created_at">تاريخ الإنشاء</span></th>
+                            <th><i class="fas fa-calendar-xmark"></i> <span data-lang="due_date">الموعد النهائي</span></th>
+                            <th><i class="fas fa-user-hard-hat"></i> <span data-lang="assigned_engineer">المهندس المعيَّن</span></th>
                             @if (role == "ProjectManager")
                             {
-                                <th data-lang="actions">إجراءات</th>
+                                <th><i class="fas fa-gear"></i> <span data-lang="actions">إجراءات</span></th>
                             }
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="taskTableBody">
                         @foreach (var t in Model)
                         {
                             string statusLabel = t.Status switch
@@ -163,6 +224,15 @@
                                 TasksStatus.UnderReview => "قيد المراجعة",
                                 TasksStatus.Completed => "مكتمل",
                                 TasksStatus.Cancelled => "ملغي",
+                                _ => t.Status.ToString()
+                            };
+                            string statusLabelEn = t.Status switch
+                            {
+                                TasksStatus.Pending => "Pending",
+                                TasksStatus.InProgress => "In Progress",
+                                TasksStatus.UnderReview => "Under Review",
+                                TasksStatus.Completed => "Completed",
+                                TasksStatus.Cancelled => "Cancelled",
                                 _ => t.Status.ToString()
                             };
                             string statusClass = t.Status switch
@@ -184,64 +254,107 @@
                                 _ => "fa-circle"
                             };
                             bool isOverdue = t.DueDate.HasValue && t.DueDate.Value.Date < today
-                            && t.Status != TasksStatus.Completed && t.Status != TasksStatus.Cancelled;
-                            <tr>
+                            && t.Status != TasksStatus.Completed
+                            && t.Status != TasksStatus.Cancelled;
+
+                            string initials = $"{(string.IsNullOrEmpty(t.AssignedToEmployee?.FirstName) ? "" : t.AssignedToEmployee.FirstName.Substring(0, 1))}{(string.IsNullOrEmpty(t.AssignedToEmployee?.LastName) ? "" : t.AssignedToEmployee.LastName.Substring(0, 1))}".ToUpper();
+
+                            <tr class="task-row" data-status="@statusClass" data-name="@t.Task_Name.ToLower()">
                                 <td>
                                     <a asp-action="Details" asp-route-id="@t.TaskId" class="task-name-link">
                                         <span class="task-icon-dot"><i class="fas fa-clipboard"></i></span>
-                                        @t.Task_Name
+                                        <span>@t.Task_Name</span>
                                     </a>
                                 </td>
+
                                 @if (!projectId.HasValue)
                                 {
                                     <td>
                                         @if (t.Project != null)
                                         {
-                                            <span class="task-project-pill"><i class="fas fa-diagram-project"></i> @t.Project.ProjectName</span>
+                                            <span class="task-project-pill">
+                                                <i class="fas fa-diagram-project"></i>
+                                                @t.Project.ProjectName
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span>—</span>
+
+                                            <span class="text-muted">—</span>
                                         }
                                     </td>
                                 }
-                                <td><span class="task-status-badge @statusClass" data-en="@t.Status.ToString()" data-ar="@statusLabel"><i class="fas @statusIcon"></i> @statusLabel</span></td>
-                                <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
+
+                                <td>
+                                    <span class="task-status-badge @statusClass"
+                                          data-en="@statusLabelEn"
+                                          data-ar="@statusLabel">
+                                        <i class="fas @statusIcon"></i>
+                                        <span class="badge-text-ar">@statusLabel</span>
+                                        <span class="badge-text-en" style="display:none">@statusLabelEn</span>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="task-date-cell">
+                                        <span>@t.CreatedAt.ToString("yyyy-MM-dd")</span>
+                                        <small>@t.CreatedAt.ToString("hh:mm tt")</small>
+                                    </div>
+                                </td>
+
                                 <td>
                                     <div class="task-date-cell">
                                         <span>@(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")</span>
                                         @if (isOverdue)
                                         {
-                                            <span class="task-overdue-tag"><i class="fas fa-triangle-exclamation"></i> <span data-lang="overdue">متأخر</span></span>
+                                            <span class="task-overdue-tag">
+                                                <i class="fas fa-triangle-exclamation"></i>
+                                                <span data-lang="overdue">متأخر</span>
+                                            </span>
                                         }
                                     </div>
                                 </td>
+
                                 <td>
                                     @if (t.AssignedToEmployee != null)
                                     {
                                         <div class="task-assignee-cell">
-                                            <div class="task-assignee-avatar">@($"{(string.IsNullOrEmpty(t.AssignedToEmployee.FirstName) ? "" : t.AssignedToEmployee.FirstName.Substring(0, 1))}{(string.IsNullOrEmpty(t.AssignedToEmployee.LastName) ? "" : t.AssignedToEmployee.LastName.Substring(0, 1))}".ToUpper())</div>
+                                            <div class="task-assignee-avatar">@initials</div>
                                             <span>@t.AssignedToEmployee.FirstName @t.AssignedToEmployee.LastName</span>
                                         </div>
                                     }
                                     else
                                     {
-                                        <span class="task-assignee-unassigned">—</span>
+                                        <span class="task-assignee-unassigned">
+                                            <i class="fas fa-user-slash"></i>
+                                            <span data-lang="unassigned">غير معيَّن</span>
+                                        </span>
                                     }
                                 </td>
+
                                 @if (role == "ProjectManager")
                                 {
                                     <td>
                                         <div class="action-btns">
+                                            <a asp-action="Details" asp-route-id="@t.TaskId"
+                                               class="btn-action view"
+                                               data-tip="عرض"
+                                               data-tip-en="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
                                             <a asp-action="Edit" asp-route-id="@t.TaskId"
-                                               class="btn-action edit" title="تعديل">
-                                                <i class="fas fa-edit"></i>
+                                               class="btn-action edit"
+                                               data-tip="تعديل"
+                                               data-tip-en="Edit">
+                                                <i class="fas fa-pen"></i>
                                             </a>
                                             <form asp-action="Delete" asp-route-id="@t.TaskId"
                                                   method="post" style="display:inline"
                                                   onsubmit="return confirm('هل أنت متأكد من حذف هذه المهمة؟')">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn-action delete" title="حذف">
+                                                <button type="submit" class="btn-action delete"
+                                                        data-tip="حذف"
+                                                        data-tip-en="Delete">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -253,12 +366,30 @@
                     </tbody>
                 </table>
             </div>
+
+
+            <div class="empty-state" id="noResultsState" style="display:none">
+                <i class="fas fa-filter-circle-xmark"></i>
+                <h6 data-lang="no_match_title">لا توجد نتائج</h6>
+                <p data-lang="no_match_sub">جرّب تغيير معايير البحث أو التصفية</p>
+            </div>
         }
         else
         {
             <div class="empty-state">
-                <i class="fas fa-tasks"></i>
-                <p data-lang="no_tasks_yet">لا توجد مهام حتى الآن</p>
+                <i class="fas fa-clipboard-list"></i>
+                <h6 data-lang="no_tasks_title">لا توجد مهام بعد</h6>
+                <p data-lang="no_tasks_yet">
+                    @if (role == "ProjectManager" && projectId.HasValue)
+                    {
+                        <text>ابدأ بإضافة مهمة جديدة للمشروع</text>
+                    }
+                    else
+                    {
+
+                        <text>لا توجد مهام مسجّلة حتى الآن</text>
+                    }
+                </p>
             </div>
         }
     </div>
@@ -266,13 +397,56 @@
 </div>
 
 @section Scripts {
-    <script type="text/javascript">
+    <script>
+        /* ── Project filter ─────────────────────── */
         function filterTasksByProject(projId) {
-            if (projId) {
-                window.location.href = '@Url.Action("Index", "Task")?projectId=' + projId;
-            } else {
-                window.location.href = '@Url.Action("Index", "Task")';
-            }
+            window.location.href = projId
+                ? '@Url.Action("Index", "Task")?projectId=' + projId
+                : '@Url.Action("Index", "Task")';
         }
+
+        /* ── Live search + status filter ───────── */
+        function applyFilters() {
+            const q      = (document.getElementById('taskSearch')?.value || '').toLowerCase();
+            const status = document.getElementById('statusFilter')?.value || '';
+            const rows   = document.querySelectorAll('#taskTableBody .task-row');
+            let visible  = 0;
+
+            rows.forEach(row => {
+                const name   = row.dataset.name || '';
+                const rStatus= row.dataset.status || '';
+                const matchQ = !q || name.includes(q);
+                const matchS = !status || rStatus === status;
+                const show   = matchQ && matchS;
+                row.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+
+            const noRes = document.getElementById('noResultsState');
+            if (noRes) noRes.style.display = visible === 0 ? 'flex' : 'none';
+
+            const rc = document.getElementById('resultsCount');
+            if (rc) rc.querySelector('strong').textContent = visible;
+
+            const hb = document.getElementById('headerBadgeCount');
+            if (hb) hb.textContent = visible;
+        }
+
+        function liveSearchTasks(val) { applyFilters(); }
+        function filterByStatus(val)  { applyFilters(); }
+
+        /* ── Language-aware badge labels ────────── */
+        document.addEventListener('DOMContentLoaded', () => {
+            const isAr = document.documentElement.dir !== 'ltr';
+            document.querySelectorAll('.task-status-badge').forEach(b => {
+                b.querySelectorAll('.badge-text-ar').forEach(el => el.style.display = isAr ? '' : 'none');
+                b.querySelectorAll('.badge-text-en').forEach(el => el.style.display = isAr ? 'none' : '');
+            });
+            /* action button tooltips */
+            const isLtr = document.documentElement.dir === 'ltr';
+            document.querySelectorAll('.btn-action[data-tip-en]').forEach(btn => {
+                if (isLtr) btn.setAttribute('data-tip', btn.dataset.tipEn);
+            });
+        });
     </script>
 }

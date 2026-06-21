@@ -1060,3 +1060,413 @@ body.dark-mode .form-card-body {
         color: var(--muted);
     }
 
+    /*
+ * ════════════════════════════════════════════════════════════════════
+ *  APPEND THIS BLOCK TO THE END OF theme-pro.css
+ *  (new task page elements — filter-bar-project, results-count,
+ *   task-name-link, task-assignee-unassigned icon, empty-state flex)
+ * ════════════════════════════════════════════════════════════════════
+ */
+
+    /* ── Results count in filter bar ──────────────────── */
+    body.dark-mode .results-count {
+        color: var(--muted);
+    }
+
+        body.dark-mode .results-count strong {
+            color: #E9B949;
+        }
+
+    /* ── Task name link hover in dark ─────────────────── */
+    body.dark-mode .task-name-link {
+        color: var(--text);
+    }
+
+        body.dark-mode .task-name-link:hover {
+            color: #E9B949;
+        }
+
+    /* ── Project-name accent in header ────────────────── */
+    body.dark-mode .project-name-accent {
+        color: #E9B949;
+    }
+
+    /* ── Unassigned icon style ────────────────────────── */
+    body.dark-mode .task-assignee-unassigned {
+        color: var(--muted);
+    }
+
+    /* ── Overdue tag ──────────────────────────────────── */
+    body.dark-mode .task-overdue-tag {
+        background: var(--b-red-bg);
+        color: var(--b-red-text);
+    }
+
+    /* ── KPI cards (already declared above, kept for completeness) ── */
+    body.dark-mode .task-kpi.navy {
+        background: linear-gradient(135deg, #16263F, #1c3050);
+    }
+
+    body.dark-mode .task-kpi.amber {
+        background: linear-gradient(135deg, #3A2E0E, #16263F);
+    }
+
+    body.dark-mode .task-kpi.blue {
+        background: linear-gradient(135deg, #0E2E37, #16263F);
+    }
+
+    body.dark-mode .task-kpi.purple {
+        background: linear-gradient(135deg, #241A3A, #16263F);
+    }
+
+    body.dark-mode .task-kpi.green {
+        background: linear-gradient(135deg, #14361F, #16263F);
+    }
+
+    body.dark-mode .task-kpi.red {
+        background: linear-gradient(135deg, #3A1418, #16263F);
+    }
+
+    body.dark-mode .task-kpi-label {
+        color: var(--muted);
+    }
+
+    body.dark-mode .task-kpi-value {
+        color: #F1F5FB;
+    }
+
+    /* ── Filter bar project wrapper ───────────────────── */
+    body.dark-mode .filter-bar-project > i {
+        color: #E9B949;
+    }
+
+    /* ── Action btn hover fill in dark ───────────────── */
+    body.dark-mode .btn-action.view:hover {
+        background: #1a4a6e;
+        color: #6FD4E9;
+    }
+
+    body.dark-mode .btn-action.edit:hover {
+        background: #4a3a0e;
+        color: #E9B949;
+    }
+
+    body.dark-mode .btn-action.delete:hover {
+        background: #4a1418;
+        color: #F18A93;
+    }
+
+    /* ── Empty state (flex-column variant) ───────────── */
+    body.dark-mode .empty-state {
+        color: var(--muted);
+    }
+
+        body.dark-mode .empty-state h6 {
+            color: var(--muted);
+        }
+
+    /* ── Status badge — dark recolour ─────────────────── */
+    body.dark-mode .badge-pending {
+        background: var(--b-amber-bg);
+        color: var(--b-amber-text);
+    }
+
+    body.dark-mode .badge-inprogress {
+        background: var(--b-blue-bg);
+        color: var(--b-blue-text);
+    }
+
+    body.dark-mode .badge-review {
+        background: var(--b-purple-bg);
+        color: var(--b-purple-text);
+    }
+
+    body.dark-mode .badge-completed {
+        background: var(--b-green-bg);
+        color: var(--b-green-text);
+    }
+
+    body.dark-mode .badge-cancelled {
+        background: var(--b-red-bg);
+        color: var(--b-red-text);
+    }
+
+    /* ════════════════════════════════════════════════════════════════════
+   DOCUMENT PAGE REDESIGN v2 — dark-mode patch
+   Append this block to the END of theme-pro.css.
+   Covers: doc-kpi, doc-table (new), doc-title-link, doc-type-badge,
+   doc-category-pill, doc-project-pill, doc-uploader-*, doc-date-*,
+   filter bar, results-count, action buttons, empty state.
+════════════════════════════════════════════════════════════════════ */
+
+    /* ── KPI cards ─────────────────────────────────────── */
+    body.dark-mode .doc-kpi {
+        box-shadow: var(--shadow-card);
+    }
+
+        body.dark-mode .doc-kpi:hover {
+            box-shadow: var(--shadow-card-hover);
+        }
+
+        body.dark-mode .doc-kpi.navy {
+            background: linear-gradient(135deg, #16263F, #1c3050);
+        }
+
+        body.dark-mode .doc-kpi.red {
+            background: linear-gradient(135deg, #3A1418, #16263F);
+        }
+
+        body.dark-mode .doc-kpi.blue {
+            background: linear-gradient(135deg, #0E2E37, #16263F);
+        }
+
+        body.dark-mode .doc-kpi.green {
+            background: linear-gradient(135deg, #14361F, #16263F);
+        }
+
+        body.dark-mode .doc-kpi.purple {
+            background: linear-gradient(135deg, #241A3A, #16263F);
+        }
+
+        body.dark-mode .doc-kpi.amber {
+            background: linear-gradient(135deg, #3A2E0E, #16263F);
+        }
+
+    body.dark-mode .doc-kpi-label {
+        color: var(--muted);
+    }
+
+    body.dark-mode .doc-kpi-value {
+        color: #F1F5FB;
+    }
+
+    /* ── Filter bar ─────────────────────────────────────── */
+    body.dark-mode .filter-bar-label {
+        color: #C9D6E8;
+    }
+
+    body.dark-mode .filter-search i {
+        color: #6E7C95;
+    }
+
+    body.dark-mode .filter-search input,
+    body.dark-mode .filter-select {
+        background: #16263F;
+        border-color: #2A3B58;
+        color: var(--text);
+    }
+
+        body.dark-mode .filter-search input::placeholder {
+            color: #6E7C95;
+        }
+
+        body.dark-mode .filter-search input:focus,
+        body.dark-mode .filter-select:focus {
+            border-color: #E9B949;
+            box-shadow: 0 0 0 3px rgba(233,185,73,0.15);
+        }
+
+    body.dark-mode .filter-reset {
+        background: #16263F;
+        color: var(--muted);
+    }
+
+        body.dark-mode .filter-reset:hover {
+            background: #1a2e48;
+            color: #E9B949;
+        }
+
+    body.dark-mode .results-count {
+        color: var(--muted);
+    }
+
+        body.dark-mode .results-count strong {
+            color: #E9B949;
+        }
+
+    /* ── Table card header ──────────────────────────────── */
+    body.dark-mode .table-card-header {
+        background: linear-gradient(135deg, #16263F, #19283F);
+        border-bottom-color: rgba(255,255,255,0.08);
+    }
+
+        body.dark-mode .table-card-header h5 {
+            color: #E9B949;
+        }
+
+    body.dark-mode .count-badge {
+        background: rgba(233,185,73,0.15);
+        color: #E9B949;
+    }
+
+    /* ── Doc table ──────────────────────────────────────── */
+    body.dark-mode .doc-table thead th {
+        background: #16263F;
+        color: #C9D6E8;
+        border-bottom-color: rgba(255,255,255,0.08);
+    }
+
+    body.dark-mode .doc-table tbody tr {
+        border-bottom-color: rgba(255,255,255,0.07);
+    }
+
+        body.dark-mode .doc-table tbody tr:hover {
+            background: rgba(255,255,255,0.04);
+        }
+
+    body.dark-mode .doc-table td {
+        color: var(--text);
+    }
+
+    /* ── Document title link ────────────────────────────── */
+    body.dark-mode .doc-title-link {
+        color: var(--text);
+    }
+
+        body.dark-mode .doc-title-link:hover {
+            color: #E9B949;
+        }
+
+    body.dark-mode .doc-file-icon {
+        background: rgba(233,185,73,0.1);
+    }
+
+    body.dark-mode .doc-title-note {
+        color: var(--muted);
+    }
+
+    /* ── File type badges in dark ───────────────────────── */
+    body.dark-mode .doc-type-badge.type-pdf {
+        background: var(--b-red-bg);
+        color: var(--b-red-text);
+    }
+
+    body.dark-mode .doc-type-badge.type-doc {
+        background: var(--b-blue-bg);
+        color: var(--b-blue-text);
+    }
+
+    body.dark-mode .doc-type-badge.type-xls {
+        background: var(--b-green-bg);
+        color: var(--b-green-text);
+    }
+
+    body.dark-mode .doc-type-badge.type-img {
+        background: var(--b-purple-bg);
+        color: var(--b-purple-text);
+    }
+
+    body.dark-mode .doc-type-badge.type-other {
+        background: var(--b-amber-bg);
+        color: var(--b-amber-text);
+    }
+
+    /* ── Category pill ──────────────────────────────────── */
+    body.dark-mode .doc-category-pill {
+        background: rgba(255,255,255,0.08);
+        color: #C9D6E8;
+    }
+
+    /* ── Project pill ───────────────────────────────────── */
+    body.dark-mode .doc-project-pill {
+        background: rgba(255,255,255,0.08);
+        color: #C9D6E8;
+    }
+
+    /* ── Date cell ──────────────────────────────────────── */
+    body.dark-mode .doc-date-cell span {
+        color: var(--text);
+    }
+
+    body.dark-mode .doc-date-cell small {
+        color: var(--muted);
+    }
+
+    /* ── Uploader cell ──────────────────────────────────── */
+    body.dark-mode .doc-uploader-cell span {
+        color: var(--text);
+    }
+
+    /* ── Action buttons ─────────────────────────────────── */
+    body.dark-mode .btn-action {
+        background: rgba(255,255,255,0.06);
+        color: var(--muted);
+    }
+
+        body.dark-mode .btn-action.download,
+        body.dark-mode .btn-action.view {
+            background: var(--b-blue-bg);
+            color: var(--b-blue-text);
+        }
+
+            body.dark-mode .btn-action.download:hover,
+            body.dark-mode .btn-action.view:hover {
+                background: #1a4a6e;
+                color: #6FD4E9;
+            }
+
+        body.dark-mode .btn-action.delete {
+            background: var(--b-red-bg);
+            color: var(--b-red-text);
+        }
+
+            body.dark-mode .btn-action.delete:hover {
+                background: #4a1418;
+                color: #F18A93;
+            }
+
+        body.dark-mode .btn-action::after {
+            background: #0c1626;
+            color: #F1F5FB;
+        }
+
+    /* ── Empty state ────────────────────────────────────── */
+    body.dark-mode .empty-state {
+        color: var(--muted);
+    }
+
+        body.dark-mode .empty-state h6 {
+            color: var(--muted);
+        }
+
+    /* ── Upload / create form (shared on Create.cshtml) ── */
+    body.dark-mode .upload-card {
+        background: var(--surface);
+        border-color: var(--card-border);
+    }
+
+    body.dark-mode .upload-card-body label {
+        color: #E9B949;
+    }
+
+    body.dark-mode .file-drop-zone {
+        background: #16263F;
+        border-color: #2A3B58;
+    }
+
+        body.dark-mode .file-drop-zone:hover,
+        body.dark-mode .file-drop-zone.dragover {
+            background: #1a2e48;
+            border-color: var(--secondary);
+        }
+
+        body.dark-mode .file-drop-zone p {
+            color: var(--muted);
+        }
+
+    body.dark-mode .file-preview {
+        background: #16263F;
+    }
+
+    body.dark-mode .project-badge {
+        background: rgba(233,185,73,0.1);
+        border-color: rgba(233,185,73,0.3);
+        color: #E9B949;
+    }
+
+    /* ── Alert error in dark ────────────────────────────── */
+    body.dark-mode .alert-error-msg {
+        background: var(--b-red-bg);
+        border-color: rgba(241,138,147,0.25);
+        color: var(--b-red-text);
+    }

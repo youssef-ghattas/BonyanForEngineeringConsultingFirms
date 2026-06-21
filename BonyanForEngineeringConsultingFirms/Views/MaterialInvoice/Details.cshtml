@@ -26,13 +26,13 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-file-invoice" style="color:var(--secondary)"></i>
-            فاتورة مادة #@Model.MaterialInvoiceID
+            <span data-lang="material_invoice_hash">فاتورة مادة #</span>@Model.MaterialInvoiceID
         </h2>
     </div>
     <div style="display:flex;gap:10px">
-        <a asp-action="Index" class="btn-bonyan-primary"><i class="fas fa-arrow-right"></i> رجوع</a>
+        <a asp-action="Index" class="btn-bonyan-primary"><i class="fas fa-arrow-right"></i> <span data-lang="back">رجوع</span></a>
         <a asp-action="Edit" asp-route-id="@Model.MaterialInvoiceID" class="btn-bonyan-secondary">
-            <i class="fas fa-edit"></i> تعديل
+            <i class="fas fa-edit"></i> <span data-lang="edit">تعديل</span>
         </a>
     </div>
 </div>
@@ -44,10 +44,10 @@
 
 <!-- Invoice Card -->
 <div class="details-card" style="margin-bottom:20px">
-    <div class="details-section-title"><i class="fas fa-info-circle"></i> بيانات الفاتورة</div>
+    <div class="details-section-title"><i class="fas fa-info-circle"></i> <span data-lang="invoice_data">بيانات الفاتورة</span></div>
     <div class="mat-info-grid">
         <div class="mat-info-item">
-            <span class="mat-info-label">المادة</span>
+            <span class="mat-info-label" data-lang="material">المادة</span>
             <span class="mat-info-value">
                 <a asp-controller="Material" asp-action="Details" asp-route-id="@Model.MaterialID"
                    style="color:var(--primary);font-weight:600;text-decoration:none">
@@ -60,7 +60,7 @@
             </span>
         </div>
         <div class="mat-info-item">
-            <span class="mat-info-label">المورد</span>
+            <span class="mat-info-label" data-lang="supplier">المورد</span>
             <span class="mat-info-value">
                 <a asp-controller="Supplier" asp-action="Details" asp-route-id="@Model.SupplierID"
                    style="color:var(--primary);font-weight:600;text-decoration:none">
@@ -69,19 +69,19 @@
             </span>
         </div>
         <div class="mat-info-item">
-            <span class="mat-info-label">تاريخ الفاتورة</span>
+            <span class="mat-info-label" data-lang="invoice_date">تاريخ الفاتورة</span>
             <span class="mat-info-value">@Model.InvoiceDate.ToString("yyyy-MM-dd")</span>
         </div>
         <div class="mat-info-item">
-            <span class="mat-info-label">تاريخ الاستحقاق</span>
+            <span class="mat-info-label" data-lang="due_date">تاريخ الاستحقاق</span>
             <span class="mat-info-value">@(Model.DueDate.HasValue? Model.DueDate.Value.ToString("yyyy-MM-dd") : "—")</span>
         </div>
         <div class="mat-info-item">
-            <span class="mat-info-label">الحالة</span>
-            <span class="mat-info-value"><span class="task-status-badge @statusClass">@statusLabel</span></span>
+            <span class="mat-info-label" data-lang="status">الحالة</span>
+            <span class="mat-info-value"><span class="task-status-badge @statusClass" data-en="@Model.Status.ToString()" data-ar="@statusLabel">@statusLabel</span></span>
         </div>
         <div class="mat-info-item">
-            <span class="mat-info-label">ملاحظات</span>
+            <span class="mat-info-label" data-lang="notes">ملاحظات</span>
             <span class="mat-info-value">@(string.IsNullOrEmpty(Model.Notes) ? "—" : Model.Notes)</span>
         </div>
     </div>
@@ -89,31 +89,31 @@
 
 <!-- Amount Breakdown -->
 <div class="details-card">
-    <div class="details-section-title"><i class="fas fa-calculator"></i> تفاصيل المبلغ</div>
+    <div class="details-section-title"><i class="fas fa-calculator"></i> <span data-lang="amount_breakdown">تفاصيل المبلغ</span></div>
     <table class="mat-table" style="max-width:600px">
         <tbody>
             <tr>
-                <td style="font-weight:600">الكمية</td>
+                <td style="font-weight:600" data-lang="quantity">الكمية</td>
                 <td>@Model.Quantity.ToString("N3") @(Model.Material?.Unit ?? "")</td>
             </tr>
             <tr>
-                <td style="font-weight:600">سعر الوحدة</td>
+                <td style="font-weight:600" data-lang="unit_price">سعر الوحدة</td>
                 <td>@Model.UnitPrice.ToString("N2") ج.م</td>
             </tr>
             <tr>
-                <td style="font-weight:600">المجموع</td>
+                <td style="font-weight:600" data-lang="mi_total">المجموع</td>
                 <td>@Model.TotalAmount.ToString("N2") ج.م</td>
             </tr>
             <tr>
-                <td style="font-weight:600">الضريبة (@(Model.TaxPercent ?? 0)%)</td>
+                <td style="font-weight:600"><span data-lang="tax">الضريبة</span> (@(Model.TaxPercent ?? 0)%)</td>
                 <td>+@((Model.TotalAmount * (Model.TaxPercent ?? 0) / 100).ToString("N2")) ج.م</td>
             </tr>
             <tr>
-                <td style="font-weight:600">الخصم (@(Model.DiscountPercent ?? 0)%)</td>
+                <td style="font-weight:600"><span data-lang="discount">الخصم</span> (@(Model.DiscountPercent ?? 0)%)</td>
                 <td style="color:#388e3c">-@((Model.TotalAmount * (Model.DiscountPercent ?? 0) / 100).ToString("N2")) ج.م</td>
             </tr>
             <tr style="background:#e8f5e9">
-                <td style="font-weight:700; font-size:1.1rem; color:var(--secondary)">الصافي النهائي</td>
+                <td style="font-weight:700; font-size:1.1rem; color:var(--secondary)" data-lang="net_final">الصافي النهائي</td>
                 <td style="font-weight:700; font-size:1.2rem; color:var(--secondary)">@Model.FinalAmount.ToString("N2") ج.م</td>
             </tr>
         </tbody>
@@ -121,13 +121,13 @@
 
     <div style="margin-top:16px; display:flex; gap:10px">
         <a asp-action="Edit" asp-route-id="@Model.MaterialInvoiceID" class="btn-bonyan-secondary">
-            <i class="fas fa-edit"></i> تعديل
+            <i class="fas fa-edit"></i> <span data-lang="edit">تعديل</span>
         </a>
         <form asp-action="Delete" asp-route-id="@Model.MaterialInvoiceID" method="post" style="display:inline"
               onsubmit="return confirm('حذف هذه الفاتورة نهائياً؟')">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn-bonyan-primary" style="background:#e53935;border-color:#e53935">
-                <i class="fas fa-trash"></i> حذف
+                <i class="fas fa-trash"></i> <span data-lang="delete">حذف</span>
             </button>
         </form>
     </div>
