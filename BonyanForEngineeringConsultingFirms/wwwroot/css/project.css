@@ -1186,3 +1186,164 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ═══════════════════════════════════════════════════════
+   Dark Mode — Project Pages
+   Applied when body has .dark-mode class
+═══════════════════════════════════════════════════════ */
+
+body.dark-mode .project-page {
+    color: #c8d4e8;
+}
+
+body.dark-mode .page-header h2 {
+    color: #e0e8f8;
+}
+
+body.dark-mode .page-header p {
+    color: #6a7d9a;
+}
+
+body.dark-mode .btn-proj-primary {
+    background: linear-gradient(135deg, #1a3a6c, #122b52);
+    border-color: rgba(255,255,255,0.1);
+    color: #d0dff0;
+}
+
+    body.dark-mode .btn-proj-primary:hover {
+        background: linear-gradient(135deg, #1e4480, #163566);
+    }
+
+/* KPI Cards */
+body.dark-mode .project-kpi.navy {
+    background: linear-gradient(135deg, #152038, #101828);
+}
+
+body.dark-mode .project-kpi.blue {
+    background: linear-gradient(135deg, #0e1d35, #0b1728);
+}
+
+body.dark-mode .project-kpi.green {
+    background: linear-gradient(135deg, #0a2010, #081a0c);
+}
+
+body.dark-mode .project-kpi.gold {
+    background: linear-gradient(135deg, #231808, #2e2008);
+}
+
+/* Filter bar */
+body.dark-mode .filter-bar {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .filter-select,
+body.dark-mode .filter-search input {
+    background: rgba(255,255,255,0.07);
+    color: #c8d4e8;
+    border-color: rgba(255,255,255,0.12);
+}
+
+body.dark-mode .filter-search {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.12);
+}
+
+    body.dark-mode .filter-search i {
+        color: #6a7d9a;
+    }
+
+body.dark-mode .filter-reset {
+    background: rgba(255,255,255,0.06);
+    color: #a8bcd8;
+    border-color: rgba(255,255,255,0.1);
+}
+
+    body.dark-mode .filter-reset:hover {
+        background: rgba(255,255,255,0.1);
+    }
+
+/* Project Cards */
+body.dark-mode .project-card {
+    background: linear-gradient(145deg, #111c2e, #0d1624);
+    border-color: rgba(255,255,255,0.08);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+
+    body.dark-mode .project-card:hover {
+        border-color: rgba(100,160,255,0.25);
+        box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+    }
+
+body.dark-mode .project-card-title {
+    color: #d0dff0;
+}
+
+body.dark-mode .project-card-client {
+    color: #7a9abf;
+}
+
+body.dark-mode .project-meta-item label {
+    color: #506080;
+}
+
+body.dark-mode .project-meta-item span {
+    color: #b0c4de;
+}
+
+body.dark-mode .project-budget-value {
+    color: #e8c84a;
+}
+
+body.dark-mode .project-progress-bar {
+    background: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .project-card-footer {
+    border-top-color: rgba(255,255,255,0.06);
+}
+
+body.dark-mode .project-team {
+    color: #6a8aaa;
+}
+
+/* Alert messages */
+body.dark-mode .alert-success-msg {
+    background: rgba(34, 120, 60, 0.2);
+    border-color: rgba(34, 120, 60, 0.4);
+    color: #6edf96;
+}
+
+body.dark-mode .alert-error-msg {
+    background: rgba(180, 40, 40, 0.2);
+    border-color: rgba(180, 40, 40, 0.4);
+    color: #f08080;
+}
+
+/* Empty state */
+body.dark-mode .empty-state {
+    color: #4a6080;
+}
+
+    body.dark-mode .empty-state i {
+        color: #2a3a55;
+    }
+
+/* Action buttons */
+body.dark-mode .btn-action.view {
+    background: rgba(30, 80, 160, 0.3);
+    color: #7ab0e8;
+    border-color: rgba(30, 80, 160, 0.4);
+}
+
+body.dark-mode .btn-action.edit {
+    background: rgba(180, 120, 20, 0.3);
+    color: #e8b84a;
+    border-color: rgba(180, 120, 20, 0.4);
+}
+
+body.dark-mode .btn-action.delete {
+    background: rgba(160, 30, 30, 0.3);
+    color: #e87070;
+    border-color: rgba(160, 30, 30, 0.4);
+}
