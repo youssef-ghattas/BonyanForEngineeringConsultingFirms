@@ -26,10 +26,9 @@
         _ => "#eee"
     };
 
-    decimal discAmt = (Model.Total_Amount ?? 0) * (Model.Discount ?? 0) / 100;
-    decimal discountedAmount = (Model.Total_Amount ?? 0) - discAmt;
-    decimal taxAmt = discountedAmount * (Model.Tax ?? 0) / 100;
-    decimal net = discountedAmount + taxAmt;
+    decimal net = (Model.Total_Amount ?? 0)
+                  * (1 + (Model.Tax ?? 0) / 100)
+                  * (1 - (Model.Discount ?? 0) / 100);
 }
 
 <link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
@@ -39,19 +38,19 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-file-invoice-dollar" style="color:var(--secondary)"></i>
-            فاتورة #@Model.Invoice_ID
+            <span data-lang="invoice_hash">فاتورة #</span>@Model.Invoice_ID
         </h2>
     </div>
     <div style="display:flex; gap:10px">
         <a asp-controller="Project" asp-action="Details"
            asp-route-id="@Model.ProjectId" class="btn-bonyan-primary">
-            <i class="fas fa-arrow-right"></i> رجوع للمشروع
+            <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
         </a>
         @if (role == "Admin")
         {
             <a asp-action="Edit" asp-route-id="@Model.Invoice_ID"
                class="btn-bonyan-secondary">
-                <i class="fas fa-edit"></i> تعديل
+                <i class="fas fa-edit"></i> <span data-lang="edit">تعديل</span>
             </a>
         }
     </div>
@@ -62,14 +61,15 @@
     <!-- Header row -->
     <div class="invoice-header">
         <div>
-            <div class="invoice-num">فاتورة #@Model.Invoice_ID</div>
+            <div class="invoice-num"><span data-lang="invoice_hash">فاتورة #</span>@Model.Invoice_ID</div>
             <div class="invoice-project">
                 <i class="fas fa-project-diagram"></i>
                 @(Model.Project?.ProjectName ?? "—")
             </div>
         </div>
         <span class="invoice-status-badge"
-              style="background:@statusBg; color:@statusColor">
+              style="background:@statusBg; color:@statusColor"
+              data-en="@Model.Invoice_Status.ToString()" data-ar="@statusLabel">
             @statusLabel
         </span>
     </div>
@@ -77,50 +77,31 @@
     <!-- Amounts -->
     <div class="invoice-amounts">
         <div class="inv-amount-row">
-            <span>المبلغ الأساسي</span>
+            <span data-lang="base_amount">المبلغ الأساسي</span>
             <span>@((Model.Total_Amount ?? 0).ToString("N2")) ج.م</span>
         </div>
         <div class="inv-amount-row">
-            <span>الخصم (@((Model.Discount ?? 0).ToString("N1"))%)</span>
-            <span>-@discAmt.ToString("N2") ج.م</span>
+            <span><span data-lang="tax">الضريبة</span> (@((Model.Tax ?? 0).ToString("N1"))%)</span>
+            <span>+@(((Model.Total_Amount ?? 0) * (Model.Tax ?? 0) / 100).ToString("N2")) ج.م</span>
         </div>
         <div class="inv-amount-row">
-            <span>الضريبة (@((Model.Tax ?? 0).ToString("N1"))%) <small style="opacity:.65">بعد الخصم</small></span>
-            <span>+@taxAmt.ToString("N2") ج.م</span>
+            <span><span data-lang="discount">الخصم</span> (@((Model.Discount ?? 0).ToString("N1"))%)</span>
+            <span>-@(((Model.Total_Amount ?? 0) * (Model.Discount ?? 0) / 100).ToString("N2")) ج.م</span>
         </div>
         <div class="inv-amount-row inv-total">
-            <span>الإجمالي النهائي</span>
+            <span data-lang="final_total">الإجمالي النهائي</span>
             <span>@net.ToString("N2") ج.م</span>
         </div>
-
-        @if (Model.Invoice_Status == InvoiceStatus.PartiallyPaid)
-        {
-            <div class="inv-amount-row" style="color:#2e7d32; font-weight:700;">
-                <span>المبلغ المدفوع</span>
-                <span>@((Model.Paid_Amount ?? 0).ToString("N2")) ج.م</span>
-            </div>
-            <div class="inv-amount-row" style="color:#c62828; font-weight:700;">
-                <span>المبلغ المتبقي</span>
-                <span>@((Model.RemainingAmount ?? 0).ToString("N2")) ج.م</span>
-            </div>
-        }
-        else if (Model.Invoice_Status == InvoiceStatus.Paid)
-        {
-            <div class="inv-amount-row" style="color:#2e7d32; font-weight:700;">
-                <span>المبلغ المدفوع</span>
-                <span>@((Model.Paid_Amount ?? net).ToString("N2")) ج.م</span>
-            </div>
-        }
     </div>
 
     <!-- Dates -->
     <div class="invoice-dates">
         <div class="inv-date-item">
-            <span class="inv-date-label"><i class="fas fa-calendar-alt"></i> تاريخ الإصدار</span>
+            <span class="inv-date-label"><i class="fas fa-calendar-alt"></i> <span data-lang="issue_date">تاريخ الإصدار</span></span>
             <span>@Model.Invoice_Date.ToString("yyyy-MM-dd")</span>
         </div>
         <div class="inv-date-item">
-            <span class="inv-date-label"><i class="fas fa-calendar-check"></i> تاريخ الاستحقاق</span>
+            <span class="inv-date-label"><i class="fas fa-calendar-check"></i> <span data-lang="due_date">تاريخ الاستحقاق</span></span>
             <span>@(Model.Due_Date.HasValue ? Model.Due_Date.Value.ToString("yyyy-MM-dd") : "—")</span>
         </div>
     </div>
@@ -130,14 +111,14 @@
     {
         <div class="invoice-payments">
             <div class="inv-section-title">
-                <i class="fas fa-money-bill-wave"></i> المدفوعات
+                <i class="fas fa-money-bill-wave"></i> <span data-lang="payments">المدفوعات</span>
             </div>
             <table class="doc-table">
                 <thead>
                     <tr>
-                        <th>المبلغ</th>
-                        <th>طريقة الدفع</th>
-                        <th>الحالة</th>
+                        <th data-lang="amount">المبلغ</th>
+                        <th data-lang="payment_method">طريقة الدفع</th>
+                        <th data-lang="status">الحالة</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -176,7 +157,7 @@
                   onsubmit="return confirm('هل أنت متأكد من حذف هذه الفاتورة؟')">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="btn-bonyan-danger">
-                    <i class="fas fa-trash"></i> حذف الفاتورة
+                    <i class="fas fa-trash"></i> <span data-lang="delete_invoice">حذف الفاتورة</span>
                 </button>
             </form>
         </div>

@@ -5,171 +5,264 @@
     var role = Context.Session.GetString("Role");
     int? projectId = ViewBag.ProjectId as int?;
     string projectName = ViewBag.ProjectName as string ?? "";
+
+    var today = DateTime.Today;
+    var taskList = Model.ToList();
+    var totalCount = taskList.Count;
+    var pendingCount = taskList.Count(t => t.Status == TasksStatus.Pending);
+    var inProgressCount = taskList.Count(t => t.Status == TasksStatus.InProgress);
+    var completedCount = taskList.Count(t => t.Status == TasksStatus.Completed);
+    var overdueCount = taskList.Count(t => t.DueDate.HasValue && t.DueDate.Value.Date < today
+        && t.Status != TasksStatus.Completed && t.Status != TasksStatus.Cancelled);
 }
 
 <link rel="stylesheet" href="~/css/task.css" />
 
-<div class="page-header">
-    <div class="page-header-left">
-        <h2>
-            <i class="fas fa-tasks" style="color:var(--secondary)"></i>
+<div class="task-page">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h2>
+                <i class="fas fa-tasks" style="color:var(--secondary)"></i>
+                @if (projectId.HasValue)
+                {
+                    <span data-lang="task_of_project">مهام مشروع:</span>
+                    @projectName
+                }
+                else
+                {
+                    <span data-lang="all_tasks">جميع المهام</span>
+                }
+            </h2>
+        </div>
+        <div style="display:flex; gap:10px">
             @if (projectId.HasValue)
             {
-                <span data-lang="task_of_project">مهام مشروع:</span> 
-                @projectName
+                <a asp-controller="Project" asp-action="Details"
+                   asp-route-id="@projectId" class="btn-bonyan-primary">
+                    <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
+                </a>
             }
-            else
+            @if (role == "ProjectManager" && projectId.HasValue)
             {
-                <span data-lang="all_tasks">جميع المهام</span>
+                <a asp-action="Create" asp-route-projectId="@projectId"
+                   class="btn-bonyan-secondary">
+                    <i class="fas fa-plus"></i> <span data-lang="add_task">إضافة مهمة</span>
+                </a>
             }
-        </h2>
+        </div>
     </div>
-    <div style="display:flex; gap:10px">
-        @if (projectId.HasValue)
-        {
-            <a asp-controller="Project" asp-action="Details"
-               asp-route-id="@projectId" class="btn-bonyan-primary">
-                <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
-            </a>
-        }
-        @if (role == "ProjectManager" && projectId.HasValue)
-        {
-            <a asp-action="Create" asp-route-projectId="@projectId"
-               class="btn-bonyan-secondary">
-                <i class="fas fa-plus"></i> <span data-lang="add_task">إضافة مهمة</span>
-            </a>
-        }
-    </div>
-</div>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert-success-msg">
-        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-    </div>
-}
-
-<div class="filter-bar" style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; direction: rtl;">
-    <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 400px;">
-        <label style="font-weight: bold; color: var(--primary); white-space: nowrap;" data-lang="filter_by_project">تصفية حسب المشروع:</label>
-        <select id="projectFilterSelector" class="form-control" onchange="filterTasksByProject(this.value)" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; width: 100%;">
-            <option value="" data-lang="task_all_projects_option">-- استعراض مهام كافة المشاريع --</option>
-            @if (ViewBag.Projects != null)
-            {
-                foreach (var proj in ViewBag.Projects)
-                {
-                    if (projectId == proj.ProjectId)
-                    {
-                        <option value="@proj.ProjectId" selected="selected">@proj.ProjectName</option>
-                    }
-                    else
-                    {
-                        <option value="@proj.ProjectId">@proj.ProjectName</option>
-                    }
-                }
-            }
-        </select>
-    </div>
-    @if (projectId.HasValue)
+    @if (TempData["SuccessMessage"] != null)
     {
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px; padding: 6px 12px; font-size: 0.85rem; text-decoration: none; border: 1px solid #ccc; color: #333; background: #f8f9fa;">
-            <i class="fas fa-undo"></i> <span data-lang="clear_filter">إلغاء التصفية</span>
-        </a>
-    }
-</div>
-
-<div class="details-card">
-    @if (Model.Any())
-    {
-        <table class="task-table">
-            <thead>
-                <tr>
-                    <th data-lang="task_name_label">اسم المهمة</th>
-                    @if (!projectId.HasValue)
-                    {
-                        <th data-lang="project">المشروع</th>
-                    }
-                    <th data-lang="status">الحالة</th>
-                    <th data-lang="created_at">تاريخ الإنشاء</th>
-                    <th data-lang="due_date">الموعد النهائي</th>
-                    <th data-lang="assigned_engineer">المهندس المعيَّن</th>
-                    @if (role == "ProjectManager")
-                    {
-                        <th data-lang="actions">إجراءات</th>
-                    }
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var t in Model)
-                {
-                    string statusLabel = t.Status switch
-                    {
-                        TasksStatus.Pending => "معلق",
-                        TasksStatus.InProgress => "جاري",
-                        TasksStatus.UnderReview => "قيد المراجعة",
-                        TasksStatus.Completed => "مكتمل",
-                        TasksStatus.Cancelled => "ملغي",
-                        _ => t.Status.ToString()
-                    };
-                    string statusClass = t.Status switch
-                    {
-                        TasksStatus.Pending => "badge-pending",
-                        TasksStatus.InProgress => "badge-inprogress",
-                        TasksStatus.UnderReview => "badge-review",
-                        TasksStatus.Completed => "badge-completed",
-                        TasksStatus.Cancelled => "badge-cancelled",
-                        _ => ""
-                    };
-                    <tr>
-                        <td>
-                            <a asp-action="Details" asp-route-id="@t.TaskId"
-                               style="color:var(--primary); font-weight:600; text-decoration:none">
-                                <i class="fas fa-circle-notch"
-                                   style="font-size:0.6rem; color:var(--secondary); margin-left:6px"></i>
-                                @t.Task_Name
-                            </a>
-                        </td>
-                        @if (!projectId.HasValue)
-                        {
-                            <td>@(t.Project?.ProjectName ?? "—")</td>
-                        }
-                    <td><span class="task-status-badge @statusClass" data-en="@t.Status.ToString()" data-ar="@statusLabel">@statusLabel</span></td>
-                    <td>@(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
-                    <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
-                    <td>
-                        @(t.AssignedToEmployee != null
-                                            ? t.AssignedToEmployee.FirstName + " " + t.AssignedToEmployee.LastName
-                                            : "—")
-                </td>
-                @if (role == "ProjectManager")
-                        {
-                            <td>
-                                <a asp-action="Edit" asp-route-id="@t.TaskId"
-                                   class="btn-action edit" title="تعديل">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form asp-action="Delete" asp-route-id="@t.TaskId"
-                                      method="post" style="display:inline"
-                                      onsubmit="return confirm('هل أنت متأكد من حذف هذه المهمة؟')">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-action delete" title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        }
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div class="empty-state">
-            <i class="fas fa-tasks"></i>
-            <p data-lang="no_tasks_yet">لا توجد مهام حتى الآن</p>
+        <div class="alert-success-msg">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
         </div>
     }
+
+    <div class="task-kpi-grid">
+        <div class="task-kpi navy">
+            <div class="task-kpi-icon"><i class="fas fa-list-check"></i></div>
+            <div>
+                <div class="task-kpi-label" data-lang="total_tasks">إجمالي المهام</div>
+                <div class="task-kpi-value">@totalCount</div>
+            </div>
+        </div>
+        <div class="task-kpi amber">
+            <div class="task-kpi-icon"><i class="fas fa-hourglass-half"></i></div>
+            <div>
+                <div class="task-kpi-label" data-lang="pending_tasks">معلقة</div>
+                <div class="task-kpi-value">@pendingCount</div>
+            </div>
+        </div>
+        <div class="task-kpi blue">
+            <div class="task-kpi-icon"><i class="fas fa-spinner"></i></div>
+            <div>
+                <div class="task-kpi-label" data-lang="inprogress_tasks">جارية</div>
+                <div class="task-kpi-value">@inProgressCount</div>
+            </div>
+        </div>
+        <div class="task-kpi green">
+            <div class="task-kpi-icon"><i class="fas fa-circle-check"></i></div>
+            <div>
+                <div class="task-kpi-label" data-lang="completed_tasks">مكتملة</div>
+                <div class="task-kpi-value">@completedCount</div>
+            </div>
+        </div>
+        <div class="task-kpi red">
+            <div class="task-kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
+            <div>
+                <div class="task-kpi-label" data-lang="overdue_tasks">متأخرة</div>
+                <div class="task-kpi-value">@overdueCount</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <div class="filter-bar-project">
+            <label class="filter-bar-label" data-lang="filter_by_project"><i class="fas fa-diagram-project"></i> تصفية حسب المشروع:</label>
+            <select id="projectFilterSelector" class="filter-select" onchange="filterTasksByProject(this.value)">
+                <option value="" data-lang="task_all_projects_option">-- استعراض مهام كافة المشاريع --</option>
+                @if (ViewBag.Projects != null)
+                {
+                    foreach (var proj in ViewBag.Projects)
+                    {
+                        if (projectId == proj.ProjectId)
+                        {
+                            <option value="@proj.ProjectId" selected="selected">@proj.ProjectName</option>
+                        }
+                        else
+                        {
+                            <option value="@proj.ProjectId">@proj.ProjectName</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+        @if (projectId.HasValue)
+        {
+            <a asp-action="Index" class="filter-reset">
+                <i class="fas fa-undo"></i> <span data-lang="clear_filter">إلغاء التصفية</span>
+            </a>
+        }
+    </div>
+
+    <div class="table-card">
+        <div class="table-card-header">
+            <h5><i class="fas fa-list"></i> <span data-lang="task_list">قائمة المهام</span></h5>
+            <span class="count-badge">@totalCount</span>
+        </div>
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="task-table">
+                    <thead>
+                        <tr>
+                            <th data-lang="task_name_label">اسم المهمة</th>
+                            @if (!projectId.HasValue)
+                            {
+                                <th data-lang="project">المشروع</th>
+                            }
+                            <th data-lang="status">الحالة</th>
+                            <th data-lang="created_at">تاريخ الإنشاء</th>
+                            <th data-lang="due_date">الموعد النهائي</th>
+                            <th data-lang="assigned_engineer">المهندس المعيَّن</th>
+                            @if (role == "ProjectManager")
+                            {
+                                <th data-lang="actions">إجراءات</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model)
+                        {
+                            string statusLabel = t.Status switch
+                            {
+                                TasksStatus.Pending => "معلق",
+                                TasksStatus.InProgress => "جاري",
+                                TasksStatus.UnderReview => "قيد المراجعة",
+                                TasksStatus.Completed => "مكتمل",
+                                TasksStatus.Cancelled => "ملغي",
+                                _ => t.Status.ToString()
+                            };
+                            string statusClass = t.Status switch
+                            {
+                                TasksStatus.Pending => "badge-pending",
+                                TasksStatus.InProgress => "badge-inprogress",
+                                TasksStatus.UnderReview => "badge-review",
+                                TasksStatus.Completed => "badge-completed",
+                                TasksStatus.Cancelled => "badge-cancelled",
+                                _ => ""
+                            };
+                            string statusIcon = t.Status switch
+                            {
+                                TasksStatus.Pending => "fa-hourglass-half",
+                                TasksStatus.InProgress => "fa-spinner",
+                                TasksStatus.UnderReview => "fa-magnifying-glass",
+                                TasksStatus.Completed => "fa-circle-check",
+                                TasksStatus.Cancelled => "fa-circle-xmark",
+                                _ => "fa-circle"
+                            };
+                            bool isOverdue = t.DueDate.HasValue && t.DueDate.Value.Date < today
+                            && t.Status != TasksStatus.Completed && t.Status != TasksStatus.Cancelled;
+                            <tr>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@t.TaskId" class="task-name-link">
+                                        <span class="task-icon-dot"><i class="fas fa-clipboard"></i></span>
+                                        @t.Task_Name
+                                    </a>
+                                </td>
+                                @if (!projectId.HasValue)
+                                {
+                                    <td>
+                                        @if (t.Project != null)
+                                        {
+                                            <span class="task-project-pill"><i class="fas fa-diagram-project"></i> @t.Project.ProjectName</span>
+                                        }
+                                        else
+                                        {
+                                            <span>—</span>
+                                        }
+                                    </td>
+                                }
+                                <td><span class="task-status-badge @statusClass" data-en="@t.Status.ToString()" data-ar="@statusLabel"><i class="fas @statusIcon"></i> @statusLabel</span></td>
+                                <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <div class="task-date-cell">
+                                        <span>@(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")</span>
+                                        @if (isOverdue)
+                                        {
+                                            <span class="task-overdue-tag"><i class="fas fa-triangle-exclamation"></i> <span data-lang="overdue">متأخر</span></span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (t.AssignedToEmployee != null)
+                                    {
+                                        <div class="task-assignee-cell">
+                                            <div class="task-assignee-avatar">@($"{(string.IsNullOrEmpty(t.AssignedToEmployee.FirstName) ? "" : t.AssignedToEmployee.FirstName.Substring(0, 1))}{(string.IsNullOrEmpty(t.AssignedToEmployee.LastName) ? "" : t.AssignedToEmployee.LastName.Substring(0, 1))}".ToUpper())</div>
+                                            <span>@t.AssignedToEmployee.FirstName @t.AssignedToEmployee.LastName</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="task-assignee-unassigned">—</span>
+                                    }
+                                </td>
+                                @if (role == "ProjectManager")
+                                {
+                                    <td>
+                                        <div class="action-btns">
+                                            <a asp-action="Edit" asp-route-id="@t.TaskId"
+                                               class="btn-action edit" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form asp-action="Delete" asp-route-id="@t.TaskId"
+                                                  method="post" style="display:inline"
+                                                  onsubmit="return confirm('هل أنت متأكد من حذف هذه المهمة؟')">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn-action delete" title="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-tasks"></i>
+                <p data-lang="no_tasks_yet">لا توجد مهام حتى الآن</p>
+            </div>
+        }
+    </div>
+
 </div>
 
 @section Scripts {
