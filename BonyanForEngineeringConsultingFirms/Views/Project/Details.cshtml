@@ -141,7 +141,7 @@
                                             @if (isPM)
                                             {
                                                 <span style="color:#8B5E3C; font-size:0.75rem;
-                                                                             font-weight:700; margin-right:4px">
+                                                                                             font-weight:700; margin-right:4px">
                                                     مدير مشروع
                                                 </span>
                                             }
@@ -233,7 +233,7 @@
                                             @if (isPM)
                                             {
                                                 <span style="color:#8B5E3C; font-size:0.75rem;
-                                                                             font-weight:700; margin-right:4px">
+                                                                                             font-weight:700; margin-right:4px">
                                                     مدير مشروع
                                                 </span>
                                             }
@@ -414,7 +414,7 @@
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">تاريخ الرفع</th>
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">رُفع بواسطة</th>
                             <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem">تحميل</th>
-                            
+
                         </tr>
                     </thead>
                     <tbody>
@@ -462,13 +462,13 @@
             @if (Model.Drawings != null && Model.Drawings.Any())
             {
                 <div style="display:grid;
-                                grid-template-columns:repeat(auto-fill, minmax(160px,1fr));
-                                gap:14px">
+                                    grid-template-columns:repeat(auto-fill, minmax(160px,1fr));
+                                    gap:14px">
                     @foreach (var dr in Model.Drawings)
                     {
                         <div style="border:1px solid #eee; border-radius:8px;
-                                            overflow:hidden; text-align:center;
-                                            box-shadow:0 1px 4px rgba(0,0,0,0.07)">
+                                                    overflow:hidden; text-align:center;
+                                                    box-shadow:0 1px 4px rgba(0,0,0,0.07)">
                             <img src="@dr.FilePath"
                                  alt="@dr.DrawingTitle"
                                  style="width:100%; height:120px; object-fit:cover"
@@ -637,19 +637,19 @@
                             </td>
                             <td style="padding:10px">
                                 <span style="font-size:0.75rem; background:#EEF2FF; color:#3730a3;
-                                                     padding:2px 8px; border-radius:10px; font-weight:600">
+                                                             padding:2px 8px; border-radius:10px; font-weight:600">
                                     @empRole
                                 </span>
                             </td>
                             <td style="padding:10px">
                                 <span style="background:@safetyBg; color:@safetyColor;
-                                                     padding:3px 10px; border-radius:12px;
-                                                     font-size:0.75rem; font-weight:700">
+                                                             padding:3px 10px; border-radius:12px;
+                                                             font-size:0.75rem; font-weight:700">
                                     @safetyLabel
                                 </span>
                             </td>
                             <td style="padding:10px; max-width:220px; white-space:nowrap;
-                                               overflow:hidden; text-overflow:ellipsis" title="@sv.Report">
+                                                       overflow:hidden; text-overflow:ellipsis" title="@sv.Report">
                                 @(sv.Report?.Length > 60 ? sv.Report.Substring(0, 60) + "..." : sv.Report ?? "—")
                             </td>
                             <td style="padding:10px">
@@ -658,7 +658,7 @@
                                     <a href="@sv.VisitPhotos" target="_blank">
                                         <img src="@sv.VisitPhotos" alt="صورة الزيارة"
                                              style="width:48px; height:48px; object-fit:cover;
-                                                                border-radius:6px; border:1px solid #eee"
+                                                                            border-radius:6px; border:1px solid #eee"
                                              onerror="this.style.display='none'" />
                                     </a>
                                 }

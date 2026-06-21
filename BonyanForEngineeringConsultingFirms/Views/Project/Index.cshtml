@@ -19,13 +19,13 @@
     <!-- ── Header ─────────────────────────────────── -->
     <div class="page-header">
         <div class="page-header-left">
-            <h2><i class="fas fa-diagram-project"></i> المشاريع</h2>
-            <p>إدارة ومتابعة المشاريع الهندسية</p>
+            <h2><i class="fas fa-diagram-project"></i> <span data-lang="projects">المشاريع</span></h2>
+            <p data-lang="projects_sub">إدارة ومتابعة المشاريع الهندسية</p>
         </div>
         @if (role == "Admin")
         {
             <a asp-action="Create" class="btn-proj btn-proj-primary">
-                <i class="fas fa-plus"></i> إضافة مشروع
+                <i class="fas fa-plus"></i> <span data-lang="add_project">إضافة مشروع</span>
             </a>
         }
     </div>
@@ -49,29 +49,29 @@
         <div class="project-kpi navy">
             <div class="project-kpi-icon"><i class="fas fa-diagram-project"></i></div>
             <div>
-                <div class="project-kpi-label">إجمالي المشاريع</div>
+                <div class="project-kpi-label" data-lang="proj_kpi_total">إجمالي المشاريع</div>
                 <div class="project-kpi-value">@total</div>
             </div>
         </div>
         <div class="project-kpi blue">
             <div class="project-kpi-icon"><i class="fas fa-person-digging"></i></div>
             <div>
-                <div class="project-kpi-label">قيد التنفيذ</div>
+                <div class="project-kpi-label" data-lang="status_inprogress">قيد التنفيذ</div>
                 <div class="project-kpi-value">@inProgress</div>
             </div>
         </div>
         <div class="project-kpi green">
             <div class="project-kpi-icon"><i class="fas fa-circle-check"></i></div>
             <div>
-                <div class="project-kpi-label">مكتملة</div>
+                <div class="project-kpi-label" data-lang="status_completed">مكتملة</div>
                 <div class="project-kpi-value">@completed</div>
             </div>
         </div>
         <div class="project-kpi gold">
             <div class="project-kpi-icon"><i class="fas fa-coins"></i></div>
             <div>
-                <div class="project-kpi-label">إجمالي الموازنات</div>
-                <div class="project-kpi-value">@totalBudget.ToString("N0") ج.م</div>
+                <div class="project-kpi-label" data-lang="proj_kpi_budget">إجمالي الموازنات</div>
+                <div class="project-kpi-value">@totalBudget.ToString("N0") <span data-lang="currency_egp">ج.م</span></div>
             </div>
         </div>
     </div>
@@ -79,21 +79,21 @@
     <!-- ── Filter Bar (client-side) ───────────────── -->
     <div class="filter-bar">
         <select class="filter-select" id="statusFilter">
-            <option value="">كل الحالات</option>
-            <option value="Planning">تخطيط</option>
-            <option value="InProgress">قيد التنفيذ</option>
-            <option value="OnHold">متوقف</option>
-            <option value="Completed">مكتمل</option>
-            <option value="Cancelled">ملغي</option>
+            <option value="" data-lang="all_statuses">كل الحالات</option>
+            <option value="Planning" data-lang="status_planning">تخطيط</option>
+            <option value="InProgress" data-lang="status_inprogress">قيد التنفيذ</option>
+            <option value="OnHold" data-lang="status_onhold">متوقف</option>
+            <option value="Completed" data-lang="status_completed">مكتمل</option>
+            <option value="Cancelled" data-lang="status_cancelled">ملغي</option>
         </select>
         <div class="filter-search">
             <i class="fas fa-search"></i>
-            <input type="text" id="projSearchInput" placeholder="بحث عن مشروع بالاسم أو العميل أو الموقع...">
+            <input type="text" id="projSearchInput" data-lang-placeholder="proj_search_placeholder" placeholder="بحث عن مشروع بالاسم أو العميل أو الموقع...">
         </div>
         <button type="button" class="filter-reset" id="resetFiltersBtn">
-            <i class="fas fa-rotate-left"></i> إعادة تعيين
+            <i class="fas fa-rotate-left"></i> <span data-lang="reset_filters">إعادة تعيين</span>
         </button>
-        <span class="results-count"><strong id="visibleCount">@total</strong> مشروع</span>
+        <span class="results-count"><strong id="visibleCount">@total</strong> <span data-lang="proj_count_label">مشروع</span></span>
     </div>
 
     <!-- ── Projects Grid ──────────────────────────── -->
@@ -120,13 +120,22 @@
                     ProjectStatus.Cancelled => "fa-circle-xmark",
                     _ => "fa-pen-ruler"
                 };
-                var statusLabel = proj.Status switch
+                var statusLabelAr = proj.Status switch
                 {
                     ProjectStatus.Planning => "تخطيط",
                     ProjectStatus.InProgress => "قيد التنفيذ",
                     ProjectStatus.OnHold => "متوقف",
                     ProjectStatus.Completed => "مكتمل",
                     ProjectStatus.Cancelled => "ملغي",
+                    _ => proj.Status.ToString()
+                };
+                var statusLabelEn = proj.Status switch
+                {
+                    ProjectStatus.Planning => "Planning",
+                    ProjectStatus.InProgress => "In Progress",
+                    ProjectStatus.OnHold => "On Hold",
+                    ProjectStatus.Completed => "Completed",
+                    ProjectStatus.Cancelled => "Cancelled",
                     _ => proj.Status.ToString()
                 };
 
@@ -155,8 +164,8 @@
                     <div class="project-card-top">
                         <div class="project-card-header">
                             <div class="project-icon"><i class="fas fa-diagram-project"></i></div>
-                            <span class="badge-status @statusClass">
-                                <i class="fas @statusIcon"></i> @statusLabel
+                            <span class="badge-status @statusClass" data-ar="@statusLabelAr" data-en="@statusLabelEn">
+                                <i class="fas @statusIcon"></i> @statusLabelAr
                             </span>
                         </div>
 
@@ -171,8 +180,13 @@
                         {
                             <div class="project-progress-wrap">
                                 <div class="project-progress-labels">
-                                    <span>التقدم الزمني</span>
-                                    <strong>@(isOverdue ? "متأخر" : $"{progressPercent}%")</strong>
+                                    <span data-lang="proj_progress_label">التقدم الزمني</span>
+                                    <strong class="progress-value"
+                                            data-ar-overdue="متأخر" data-en-overdue="Overdue"
+                                            data-percent="@progressPercent"
+                                            data-overdue="@isOverdue.ToString().ToLower()">
+                                        @(isOverdue ? "متأخر" : $"{progressPercent}%")
+                                    </strong>
                                 </div>
                                 <div class="project-progress-bar">
                                     <div class="project-progress-fill @progressClass" style="width:@progressPercent%"></div>
@@ -182,19 +196,19 @@
 
                         <div class="project-meta">
                             <div class="project-meta-item">
-                                <label><i class="fas fa-calendar-day"></i> تاريخ البدء</label>
+                                <label><i class="fas fa-calendar-day"></i> <span data-lang="start_date">تاريخ البدء</span></label>
                                 <span>@(proj.StartDate?.ToString("yyyy-MM-dd") ?? "—")</span>
                             </div>
                             <div class="project-meta-item">
-                                <label><i class="fas fa-calendar-check"></i> تاريخ الانتهاء</label>
+                                <label><i class="fas fa-calendar-check"></i> <span data-lang="end_date">تاريخ الانتهاء</span></label>
                                 <span>@(proj.EndDate?.ToString("yyyy-MM-dd") ?? "—")</span>
                             </div>
                             <div class="project-meta-item">
-                                <label><i class="fas fa-location-dot"></i> الموقع</label>
+                                <label><i class="fas fa-location-dot"></i> <span data-lang="location">الموقع</span></label>
                                 <span>@(proj.Location ?? "—")</span>
                             </div>
                             <div class="project-meta-item">
-                                <label><i class="fas fa-coins"></i> الموازنة</label>
+                                <label><i class="fas fa-coins"></i> <span data-lang="budget">الموازنة</span></label>
                                 <span class="project-budget-value">@(proj.Budget.HasValue? proj.Budget.Value.ToString("N0") + " ج.م" : "—")</span>
                             </div>
                         </div>
@@ -202,21 +216,24 @@
 
                     <div class="project-card-footer">
                         <div class="project-team">
-                            <i class="fas fa-users"></i> @teamCount عضو
+                            <i class="fas fa-users"></i> <span class="team-count">@teamCount</span> <span data-lang="members">عضو</span>
                         </div>
                         <div class="project-actions">
                             <a asp-action="Details" asp-route-id="@proj.ProjectId"
-                               class="btn-action view" data-tip="عرض التفاصيل">
+                               class="btn-action view"
+                               data-tip-ar="عرض التفاصيل" data-tip-en="View Details" data-tip="عرض التفاصيل">
                                 <i class="fas fa-eye"></i>
                             </a>
                             @if (role == "Admin")
                             {
                                 <a asp-action="Edit" asp-route-id="@proj.ProjectId"
-                                   class="btn-action edit" data-tip="تعديل">
+                                   class="btn-action edit"
+                                   data-tip-ar="تعديل" data-tip-en="Edit" data-tip="تعديل">
                                     <i class="fas fa-pen"></i>
                                 </a>
                                 <a asp-action="Delete" asp-route-id="@proj.ProjectId"
-                                   class="btn-action delete" data-tip="حذف">
+                                   class="btn-action delete"
+                                   data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
                                     <i class="fas fa-trash"></i>
                                 </a>
                             }
@@ -227,16 +244,16 @@
         </div>
         <div class="empty-state" id="noResultsState" style="display:none">
             <i class="fas fa-folder-open"></i>
-            <h6>لا توجد نتائج مطابقة</h6>
-            <p>جرّب تعديل كلمات البحث أو الفلاتر المستخدمة</p>
+            <h6 data-lang="no_match_results">لا توجد نتائج مطابقة</h6>
+            <p data-lang="try_adjust_filters">جرّب تعديل كلمات البحث أو الفلاتر المستخدمة</p>
         </div>
     }
     else
     {
         <div class="empty-state">
             <i class="fas fa-diagram-project"></i>
-            <h6>لا توجد مشاريع مسجلة</h6>
-            <p>ابدأ بإضافة أول مشروع هندسي لشركتك</p>
+            <h6 data-lang="no_projects">لا توجد مشاريع مسجلة</h6>
+            <p data-lang="add_first_project">ابدأ بإضافة أول مشروع هندسي لشركتك</p>
         </div>
     }
 </div>
@@ -285,6 +302,17 @@
                 searchInput.value = '';
                 statusFilter.value = '';
                 applyFilters();
+            });
+
+            // Update tooltips + overdue text on language change
+            document.addEventListener('languageChanged', function (e) {
+                var lang = e.detail.lang;
+                document.querySelectorAll('[data-tip-ar]').forEach(function (el) {
+                    el.setAttribute('data-tip', lang === 'ar' ? el.dataset.tipAr : el.dataset.tipEn);
+                });
+                document.querySelectorAll('.progress-value[data-overdue="true"]').forEach(function (el) {
+                    el.textContent = lang === 'ar' ? el.dataset.arOverdue : el.dataset.enOverdue;
+                });
             });
         })();
     </script>

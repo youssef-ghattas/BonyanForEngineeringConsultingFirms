@@ -151,5 +151,5 @@ document.addEventListener("DOMContentLoaded", function () {
         if (e.key === "Enter") sendChatMessage();
     });
     /* ── 4. LANG BUTTON SYNC — handled by lang-switch.js ─── */
-    
+
 });
