@@ -11,7 +11,7 @@
 @if (ViewBag.ShowSuccess == true)
 {
     <div style="background:#d1e7dd; color:#146c43; border-radius:10px;
-                    padding:14px 18px; margin-bottom:16px; font-weight:600">
+                        padding:14px 18px; margin-bottom:16px; font-weight:600">
         <i class="fas fa-check-circle"></i> تم الحفظ بنجاح
     </div>
 }
@@ -19,8 +19,8 @@
 @if (ViewBag.DebugLog != null)
 {
     <div style="background:#1e1e2e; color:#cdd6f4; border-radius:12px;
-                    padding:20px 24px; margin-bottom:22px; font-family:monospace;
-                    font-size:0.83rem; line-height:1.9; direction:ltr; text-align:left">
+                        padding:20px 24px; margin-bottom:22px; font-family:monospace;
+                        font-size:0.83rem; line-height:1.9; direction:ltr; text-align:left">
         <div style="color:#89b4fa; font-weight:700; font-size:1rem; margin-bottom:12px">
             🔍 Debug Log
         </div>
@@ -38,7 +38,7 @@
 @if (!ViewData.ModelState.IsValid)
 {
     <div style="background:#fde8e8; border:1px solid #f5c6cb; border-radius:10px;
-                    padding:14px 18px; margin-bottom:18px; color:#842029;">
+                        padding:14px 18px; margin-bottom:18px; color:#842029;">
         <strong><i class="fas fa-exclamation-triangle"></i> يوجد أخطاء في النموذج:</strong>
         <ul style="margin:8px 0 0 0; padding-right:20px">
             @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
@@ -53,18 +53,18 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-plus-circle" style="color:var(--secondary)"></i>
-            إضافة مادة جديدة
+            <span data-lang="add_material_new">إضافة مادة جديدة</span>
         </h2>
     </div>
     <a asp-action="Index" class="btn-bonyan-primary">
-        <i class="fas fa-arrow-right"></i> رجوع للمواد
+        <i class="fas fa-arrow-right"></i> <span data-lang="back_to_materials">رجوع للمواد</span>
     </a>
 </div>
 
 <div class="upload-card">
     <div class="upload-card-header">
         <i class="fas fa-cube"></i>
-        <h4>بيانات المادة</h4>
+        <h4 data-lang="material_data">بيانات المادة</h4>
     </div>
     <div class="upload-card-body">
         <form asp-action="Create" method="post" id="matForm">
@@ -79,29 +79,29 @@
             <div class="form-grid-2">
 
                 <div class="form-group">
-                    <label>نوع المادة <span style="color:red">*</span></label>
+                    <label data-lang="material_type">نوع المادة</label> <span style="color:red">*</span>
                     <select name="MaterialName" id="matTypeSelect" class="form-control"
                             required onchange="onMatTypeChange(this.value)">
-                        <option value="">-- اختر نوع المادة --</option>
+                        <option value="" data-lang="choose_material_type_option">-- اختر نوع المادة --</option>
                         <option value="Steel">حديد تسليح (Steel)</option>
                         <option value="Sand">رمل (Sand)</option>
                         <option value="Cement">أسمنت (Cement)</option>
                         <option value="Bricks">طوب (Bricks)</option>
-                        <option value="Others">أخرى</option>
+                        <option value="Others" data-lang="cat_other">أخرى</option>
                     </select>
                     <span class="text-danger" id="matNameError"></span>
                 </div>
 
                 <div class="form-group" id="customNameWrap" style="display:none">
-                    <label>اسم المادة المخصص <span style="color:red">*</span></label>
+                    <label data-lang="custom_material_name">اسم المادة المخصص</label> <span style="color:red">*</span>
                     <input type="text" id="customName" class="form-control"
                            placeholder="مثال: رخام، زجاج..." />
                 </div>
 
                 <div class="form-group">
-                    <label>وحدة القياس</label>
+                    <label data-lang="measurement_unit">وحدة القياس</label>
                     <select asp-for="Unit" class="form-control">
-                        <option value="">-- اختر --</option>
+                        <option value="" data-lang="select">-- اختر --</option>
                         <option value="Kg">كيلوجرام (Kg)</option>
                         <option value="Ton">طن (Ton)</option>
                         <option value="Meter">متر</option>
@@ -112,21 +112,21 @@
                 </div>
 
                 <div class="form-group">
-                    <label>سعر الوحدة (ج.م)</label>
+                    <label data-lang="unit_price">سعر الوحدة (ج.م)</label>
                     <input asp-for="UnitPrice" type="number" step="0.01" min="0"
                            class="form-control" id="unitPrice" placeholder="0.00"
                            oninput="calcTotal()" />
                 </div>
 
                 <div class="form-group">
-                    <label>الكمية المطلوبة</label>
+                    <label data-lang="quantity_required">الكمية المطلوبة</label>
                     <input asp-for="Quantity" type="number" step="0.001" min="0"
                            class="form-control" id="qty" placeholder="0.000"
                            oninput="calcTotal()" />
                 </div>
 
                 <div class="form-group">
-                    <label>الإجمالي (ج.م)</label>
+                    <label data-lang="total_egp">الإجمالي (ج.م)</label>
                     <input type="text" id="totalDisplay" readonly class="form-control"
                            style="background:#f0f7ff; font-weight:700; color:var(--secondary)"
                            value="0.00" />
@@ -134,8 +134,8 @@
 
                 <div class="form-group">
                     <label>
-                        معامل الحجم (م³/وحدة)
-                        <span style="font-size:0.73rem; color:#888; font-weight:400">
+                        <span data-lang="volume_factor">معامل الحجم (م³/وحدة)</span>
+                        <span style="font-size:0.73rem; color:#888; font-weight:400" data-lang="volume_factor_hint">
                             — لحساب سعة المخزن
                         </span>
                     </label>
@@ -145,9 +145,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label>المخزن المستهدف</label>
+                    <label data-lang="target_warehouse">المخزن المستهدف</label>
                     <select asp-for="TargetInventoryID" class="form-control">
-                        <option value="">-- اختر المخزن --</option>
+                        <option value="" data-lang="choose_warehouse_option">-- اختر المخزن --</option>
                         @foreach (var inv in inventories)
                         {
                             <option value="@inv.InventoryID">
@@ -160,7 +160,7 @@
                 </div>
 
                 <div class="form-group" style="grid-column:1/-1">
-                    <label>الوصف</label>
+                    <label data-lang="description">الوصف</label>
                     <textarea asp-for="Description" class="form-control" rows="2"
                               placeholder="وصف مختصر..."></textarea>
                 </div>
@@ -171,15 +171,15 @@
             <div style="margin:20px 0">
                 <label style="font-weight:700; color:var(--primary); font-size:1rem;
                                display:block; margin-bottom:8px">
-                    <i class="fas fa-truck"></i> اختر المورد
-                    <span style="font-size:0.78rem; color:#888; font-weight:400">
+                    <i class="fas fa-truck"></i> <span data-lang="choose_supplier">اختر المورد</span>
+                    <span style="font-size:0.78rem; color:#888; font-weight:400" data-lang="suppliers_filtered_hint">
                         — يُعرض الموردون الذين يورّدون هذه المادة فقط
                     </span>
                 </label>
                 <div id="supplierContainer">
                     <div style="color:#aaa; font-size:0.88rem; padding:14px;
                                 background:#f9f9f9; border-radius:8px; border:1px dashed #ddd">
-                        <i class="fas fa-info-circle"></i> اختر نوع المادة أولاً
+                        <i class="fas fa-info-circle"></i> <span data-lang="select_material_type_first">اختر نوع المادة أولاً</span>
                     </div>
                 </div>
                 <input type="hidden" asp-for="PreferredSupplierID" id="preferredSupplierID" />
@@ -192,7 +192,7 @@
                         border:1px solid #c8e6c9">
                 <div style="font-weight:700; color:var(--primary); margin-bottom:10px; font-size:0.95rem">
                     <i class="fas fa-file-invoice" style="color:var(--secondary)"></i>
-                    ✓ سيتم إنشاء فاتورة تلقائياً عند الحفظ
+                    <span data-lang="auto_invoice_notice">✓ سيتم إنشاء فاتورة تلقائياً عند الحفظ</span>
                 </div>
                 <div style="display:grid; grid-template-columns:repeat(3,1fr);
                             gap:10px; font-size:0.85rem">
@@ -207,10 +207,10 @@
 
             <div class="upload-actions">
                 <a asp-action="Index" class="btn-bonyan-primary">
-                    <i class="fas fa-times"></i> إلغاء
+                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
                 </a>
                 <button type="button" class="btn-bonyan-secondary" onclick="interceptSubmit(event)">
-                    <i class="fas fa-save"></i> حفظ المادة وإنشاء الفاتورة
+                    <i class="fas fa-save"></i> <span data-lang="save_material_invoice">حفظ المادة وإنشاء الفاتورة</span>
                 </button>
             </div>
         </form>
@@ -219,10 +219,10 @@
 
 @section Scripts {
     <div id="capModal" style="display:none; position:fixed; inset:0;
-         background:rgba(0,0,0,.55); z-index:9999; align-items:center; justify-content:center;">
+             background:rgba(0,0,0,.55); z-index:9999; align-items:center; justify-content:center;">
         <div style="background:#fff; border-radius:16px; padding:32px 28px;
-                    max-width:520px; width:94%; box-shadow:0 8px 40px rgba(0,0,0,.25);
-                    direction:rtl; text-align:right; position:relative;">
+                        max-width:520px; width:94%; box-shadow:0 8px 40px rgba(0,0,0,.25);
+                        direction:rtl; text-align:right; position:relative;">
             <div id="cmIcon" style="font-size:2.4rem; text-align:center; margin-bottom:8px;"></div>
             <h4 id="cmTitle" style="margin:0 0 8px; color:#2C3E6B; font-size:1.1rem; text-align:center;"></h4>
             <p id="cmBody" style="margin:0 0 18px; color:#555; font-size:0.9rem; line-height:1.7; text-align:center;"></p>
@@ -246,7 +246,7 @@
         var allSuppliers = [
             @foreach (var s in allSuppliers)
             {
-                        @Html.Raw($"{{id:{s.SupplierID},name:'{s.SupplierName.Replace("'", "\\'")}',phone:'{s.Phone ?? ""}',types:'{s.SuppliedMaterialTypes ?? ""}'}},")
+                            @Html.Raw($"{{id:{s.SupplierID},name:'{s.SupplierName.Replace("'", "\\'")}',phone:'{s.Phone ?? ""}',types:'{s.SuppliedMaterialTypes ?? ""}'}},")
             }
         ];
 
