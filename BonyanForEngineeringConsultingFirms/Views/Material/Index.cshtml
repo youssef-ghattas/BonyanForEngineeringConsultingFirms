@@ -12,8 +12,8 @@
 {
     var logs = TempData["DebugLog"].ToString().Split('|');
     <div style="background:#1e1e2e; color:#cdd6f4; border-radius:12px;
-                    padding:20px 24px; margin-bottom:22px; font-family:monospace;
-                    font-size:0.82rem; line-height:1.8; direction:ltr; text-align:left">
+                        padding:20px 24px; margin-bottom:22px; font-family:monospace;
+                        font-size:0.82rem; line-height:1.8; direction:ltr; text-align:left">
         <div style="color:#89b4fa; font-weight:700; font-size:0.95rem; margin-bottom:10px">
             🔍 Debug Log — Material Create
         </div>
@@ -33,13 +33,13 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-boxes" style="color:var(--secondary)"></i>
-            المواد
+            <span data-lang="materials">المواد</span>
         </h2>
     </div>
     @if (role == "Admin")
     {
         <a asp-action="Create" class="btn-bonyan-secondary">
-            <i class="fas fa-plus"></i> إضافة مادة
+            <i class="fas fa-plus"></i> <span data-lang="add_material">إضافة مادة</span>
         </a>
     }
 </div>
@@ -66,16 +66,16 @@
                style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
                       color:#aaa; z-index:1"></i>
             <input type="text" name="search" value="@search"
-                   placeholder="بحث بالاسم أو الوصف..."
+                   data-lang-placeholder="search_material" placeholder="بحث بالاسم أو الوصف..."
                    class="form-control" style="padding-right:36px" />
         </div>
         <button type="submit" class="btn-bonyan-secondary" style="padding:8px 16px">
-            <i class="fas fa-search"></i> بحث
+            <i class="fas fa-search"></i> <span data-lang="search">بحث</span>
         </button>
         @if (!string.IsNullOrEmpty(search))
         {
             <a asp-action="Index" class="btn-bonyan-primary" style="padding:8px 16px">
-                <i class="fas fa-times"></i> إلغاء
+                <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
             </a>
         }
     </form>
@@ -87,12 +87,12 @@
         <table class="mat-table">
             <thead>
                 <tr>
-                    <th>اسم المادة</th>
-                    <th>الوحدة</th>
-                    <th>سعر الوحدة</th>
-                    <th>الموردون</th>
-                    <th>المخازن</th>
-                    <th>إجراءات</th>
+                    <th data-lang="material_name_label">اسم المادة</th>
+                    <th data-lang="unit">الوحدة</th>
+                    <th data-lang="unit_price">سعر الوحدة</th>
+                    <th data-lang="suppliers">الموردون</th>
+                    <th data-lang="warehouses">المخازن</th>
+                    <th data-lang="actions">إجراءات</th>
                 </tr>
             </thead>
             <tbody>
@@ -159,7 +159,7 @@
     {
         <div class="empty-state">
             <i class="fas fa-boxes"></i>
-            <p>لا توجد مواد @(!string.IsNullOrEmpty(search) ? "تطابق البحث" : "حتى الآن")</p>
+            <p>@(!string.IsNullOrEmpty(search) ? Html.Raw("<span data-lang=\"no_materials_match\">لا توجد مواد تطابق البحث</span>") : Html.Raw("<span data-lang=\"no_materials\">لا توجد مواد حتى الآن</span>"))</p>
         </div>
     }
 </div>

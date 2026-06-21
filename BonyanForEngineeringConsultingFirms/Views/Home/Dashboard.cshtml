@@ -41,9 +41,9 @@
         <div>
             <h2 class="db-page-title">
                 <i class="fas fa-chart-pie"></i>
-                <span>Dashboard</span>
+                <span data-lang="db_title">Dashboard</span>
             </h2>
-            <p class="db-page-sub">Real-time engineering workspace performance & statistics</p>
+            <p class="db-page-sub" data-lang="db_subtitle">Real-time engineering workspace performance & statistics</p>
         </div>
     </div>
 
@@ -56,7 +56,7 @@
                 </div>
                 <div class="db-mc-info">
                     <div class="db-mc-number">@Model.TotalProjects</div>
-                    <div class="db-mc-label">Total Projects</div>
+                    <div class="db-mc-label" data-lang="db_total_projects">Total Projects</div>
                 </div>
             </div>
             <div class="db-mc-bar-group">
@@ -65,7 +65,7 @@
                 <div class="db-mc-bar-seg" style="background: #ffc107; flex: @(Model.ProjPlanning + 1);"></div>
             </div>
             <div class="db-mc-footer">
-                <span class="db-mc-total">All registered projects</span>
+                <span class="db-mc-total" data-lang="db_all_projects_budget2">All registered projects</span>
             </div>
         </div>
 
@@ -76,14 +76,14 @@
                 </div>
                 <div class="db-mc-info">
                     <div class="db-mc-number">@Model.ActiveTasks</div>
-                    <div class="db-mc-label">Active Tasks</div>
+                    <div class="db-mc-label" data-lang="db_active_tasks">Active Tasks</div>
                 </div>
             </div>
             <div class="db-mc-bar-group">
                 <div class="db-mc-bar-seg" style="background: #28a745; flex: 100;"></div>
             </div>
             <div class="db-mc-footer">
-                <span class="db-mc-badge green">In Progress</span>
+                <span class="db-mc-badge green" data-lang="db_inprogress_label">In Progress</span>
             </div>
         </div>
 
@@ -94,14 +94,14 @@
                 </div>
                 <div class="db-mc-info">
                     <div class="db-mc-number">@Model.TotalClients</div>
-                    <div class="db-mc-label">Total Clients</div>
+                    <div class="db-mc-label" data-lang="db_total_clients">Total Clients</div>
                 </div>
             </div>
             <div class="db-mc-bar-group">
                 <div class="db-mc-bar-seg" style="background: #ffc107; flex: 100;"></div>
             </div>
             <div class="db-mc-footer">
-                <span class="db-mc-total">Distinct client base</span>
+                <span class="db-mc-total" data-lang="db_unique_clients">Distinct client base</span>
             </div>
         </div>
 
@@ -112,14 +112,14 @@
                 </div>
                 <div class="db-mc-info">
                     <div class="db-mc-number">@Model.TotalDocuments</div>
-                    <div class="db-mc-label">Documents</div>
+                    <div class="db-mc-label" data-lang="db_total_docs">Documents</div>
                 </div>
             </div>
             <div class="db-mc-bar-group">
                 <div class="db-mc-bar-seg" style="background: #17a2b8; flex: 100;"></div>
             </div>
             <div class="db-mc-footer">
-                <span class="db-mc-total">Files & Drawings</span>
+                <span class="db-mc-total" data-lang="db_files_label">Files & Drawings</span>
             </div>
         </div>
 
@@ -130,14 +130,14 @@
                 </div>
                 <div class="db-mc-info">
                     <div class="db-mc-number db-mc-budget">@Model.TotalBudget.ToString("C0")</div>
-                    <div class="db-mc-label">Total Budget</div>
+                    <div class="db-mc-label" data-lang="db_total_budget">Total Budget</div>
                 </div>
             </div>
             <div class="db-mc-bar-group">
                 <div class="db-mc-bar-seg" style="background: #dc3545; flex: 100;"></div>
             </div>
             <div class="db-mc-footer">
-                <span class="db-mc-total">Project Finances</span>
+                <span class="db-mc-total" data-lang="db_project_finances">Project Finances</span>
             </div>
         </div>
 
@@ -148,7 +148,7 @@
         <div class="db-panel">
             <div class="db-panel-header">
                 <h3 class="db-panel-title">
-                    <i class="fas fa-chart-bar"></i> Projects by Status
+                    <i class="fas fa-chart-bar"></i> <span data-lang="db_chart_projects">Projects by Status</span>
                 </h3>
             </div>
             <div class="db-chart-wrap" style="height: 300px; position: relative;">
@@ -159,7 +159,7 @@
         <div class="db-panel">
             <div class="db-panel-header">
                 <h3 class="db-panel-title">
-                    <i class="fas fa-chart-pie"></i> Tasks by Status
+                    <i class="fas fa-chart-pie"></i> <span data-lang="db_chart_tasks">Tasks by Status</span>
                 </h3>
             </div>
             <div class="db-chart-wrap db-doughnut-wrap" style="height: 300px; position: relative;">
@@ -174,9 +174,9 @@
         <div class="db-panel">
             <div class="db-panel-header">
                 <h3 class="db-panel-title">
-                    <i class="fas fa-folder-plus"></i> Recent Projects
+                    <i class="fas fa-folder-plus"></i> <span data-lang="db_recent_projects">Recent Projects</span>
                 </h3>
-                <a asp-controller="Project" asp-action="Index" class="db-view-all">View All</a>
+                <a asp-controller="Project" asp-action="Index" class="db-view-all" data-lang="view_all">View All</a>
             </div>
             <div class="db-table-wrap">
                 @if (Model.RecentProjects != null && Model.RecentProjects.Any())
@@ -184,10 +184,10 @@
                     <table class="db-table table m-0 table-hover">
                         <thead>
                             <tr>
-                                <th>PROJECT</th>
-                                <th>CLIENT</th>
-                                <th>STATUS</th>
-                                <th class="text-center">TASKS</th>
+                                <th data-lang="project_name">PROJECT</th>
+                                <th data-lang="client">CLIENT</th>
+                                <th data-lang="status">STATUS</th>
+                                <th class="text-center" data-lang="tasks_col">TASKS</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -202,8 +202,8 @@
                                     <td class="db-muted">@proj.ClientName</td>
                                     <td>
                                         <span class="db-mc-badge @(proj.Status == Bonyan.DAL.Enums.ProjectStatus.InProgress ? "teal" :
-                                                                                                                  proj.Status == Bonyan.DAL.Enums.ProjectStatus.Completed ? "green" :
-                                                                                                                  proj.Status == Bonyan.DAL.Enums.ProjectStatus.Planning ? "amber" : "purple")">
+                                                                                                                                                                proj.Status == Bonyan.DAL.Enums.ProjectStatus.Completed ? "green" :
+                                                                                                                                                                proj.Status == Bonyan.DAL.Enums.ProjectStatus.Planning ? "amber" : "purple")">
                                     @proj.Status
                                 </span>
                             </td>
@@ -219,7 +219,7 @@
                 {
                     <div class="db-empty">
                         <i class="fas fa-folder-open"></i>
-                        <span>No recent projects found</span>
+                        <span data-lang="db_no_recent_projects">No recent projects found</span>
                     </div>
                 }
             </div>
@@ -228,9 +228,9 @@
         <div class="db-panel db-panel-overdue">
             <div class="db-panel-header">
                 <h3 class="db-panel-title db-overdue-title">
-                    <i class="fas fa-exclamation-triangle"></i> Overdue Tasks
+                    <i class="fas fa-exclamation-triangle"></i> <span data-lang="db_overdue_tasks">Overdue Tasks</span>
                 </h3>
-                <a asp-controller="Task" asp-action="Index" class="db-view-all">View All</a>
+                <a asp-controller="Task" asp-action="Index" class="db-view-all" data-lang="view_all">View All</a>
             </div>
             <div class="db-overdue-list">
                 @if (Model.OverdueTasks != null && Model.OverdueTasks.Any())
@@ -250,7 +250,7 @@
                             <div class="db-overdue-meta">
                                 <span class="db-overdue-date">@task.DueDate.ToString("dd MMM yyyy")</span>
                                 <span class="db-overdue-late">
-                                    <i class="fas fa-hourglass-end"></i> Overdue
+                                    <i class="fas fa-hourglass-end"></i> <span data-lang="overdue_label">Overdue</span>
                                 </span>
                             </div>
                         </div>
@@ -260,7 +260,7 @@
                 {
                     <div class="db-empty db-empty-good">
                         <i class="fas fa-check-circle" style="color: #28a745; font-size: 2rem;"></i>
-                        <span style="color: #28a745; font-weight: bold; margin-top: 8px;">Great! No overdue tasks.</span>
+                        <span style="color: #28a745; font-weight: bold; margin-top: 8px;" data-lang="no_overdue">Great! No overdue tasks.</span>
                     </div>
                 }
             </div>

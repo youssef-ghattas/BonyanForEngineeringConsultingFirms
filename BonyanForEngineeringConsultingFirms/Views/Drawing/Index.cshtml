@@ -1,193 +1,88 @@
 ﻿@model IEnumerable<Bonyan.DAL.Models.Drawing>
 @{
-    ViewData["Title"] = "الرسومات";
+    ViewData["Title"] = "صور المشاريع";
     var role = Context.Session.GetString("Role");
     var projects = ViewBag.Projects as List<Bonyan.DAL.Models.Project> ?? new();
-    var categories = ViewBag.Categories as List<string> ?? new();
     int? selectedProjectId = ViewBag.SelectedProjectId as int?;
-
-    int total = ViewBag.TotalDrawings ?? Model.Count();
-    int thisMonth = ViewBag.ThisMonthCount ?? 0;
-    int multiVersion = ViewBag.MultiVersionCount ?? 0;
-    int activeProjects = ViewBag.ActiveProjectsCount ?? 0;
-
-    string Ext(string? path)
-    {
-        if (string.IsNullOrEmpty(path)) return "—";
-        var e = System.IO.Path.GetExtension(path).TrimStart('.').ToUpper();
-        return string.IsNullOrEmpty(e) ? "—" : e;
-    }
-    string ExtClass(string ext) => "dg-ext-" + ext.ToLower();
 }
 
 <link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
-<link rel="stylesheet" href="~/css/drawing-gallery.css" />
 
-<div class="dg-wrap">
-
-    <!-- ── Header ───────────────────────────────────────────── -->
-    <div class="dg-header">
-        <div>
-            <h2>
-                <i class="fas fa-drafting-compass" style="color:var(--secondary)"></i>
-                الرسومات
-            </h2>
-            <p>أرشيف وإدارة المخططات والرسومات الهندسية للمشاريع</p>
-        </div>
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-images" style="color:var(--secondary)"></i>
+            <span data-lang="project_photos">صور المشاريع</span>
+        </h2>
     </div>
+</div>
 
-    <!-- ── Stat Cards ───────────────────────────────────────── -->
-    <div class="dg-stats">
-        <button type="button" class="dg-stat-card brown" data-filter-stat="all">
-            <div>
-                <div class="dg-stat-num" data-count="@total">0</div>
-                <div class="dg-stat-label">إجمالي الرسومات</div>
-            </div>
-            <div class="dg-stat-icon"><i class="fas fa-folder-open"></i></div>
-        </button>
-
-        <button type="button" class="dg-stat-card blue" data-filter-stat="month">
-            <div>
-                <div class="dg-stat-num" data-count="@thisMonth">0</div>
-                <div class="dg-stat-label">مرفوعة هذا الشهر</div>
-            </div>
-            <div class="dg-stat-icon"><i class="fas fa-calendar-plus"></i></div>
-        </button>
-
-        <button type="button" class="dg-stat-card red" data-filter-stat="versions">
-            <div>
-                <div class="dg-stat-num" data-count="@multiVersion">0</div>
-                <div class="dg-stat-label">رسومات متعددة الإصدارات</div>
-            </div>
-            <div class="dg-stat-icon"><i class="fas fa-code-branch"></i></div>
-        </button>
-
-        <button type="button" class="dg-stat-card navy" data-filter-stat="projects">
-            <div>
-                <div class="dg-stat-num" data-count="@activeProjects">0</div>
-                <div class="dg-stat-label">مشاريع مرتبطة</div>
-            </div>
-            <div class="dg-stat-icon"><i class="fas fa-project-diagram"></i></div>
-        </button>
-    </div>
-
-    <!-- ── Filter Bar ───────────────────────────────────────── -->
-    <div class="dg-filter-bar">
-        <span class="dg-count-pill" id="dgVisibleCount">@Model.Count() رسم</span>
-
-        <select class="dg-select" id="dgTypeFilter">
-            <option value="">كل الأنواع</option>
-        </select>
-
-        <select class="dg-select" id="dgCategoryFilter">
-            <option value="">كل التصنيفات</option>
-            @foreach (var c in categories)
-            {
-                <option value="@c">@c</option>
-            }
-        </select>
-
-        @if (projects.Any())
-        {
-            <form method="get" asp-action="Index" id="dgProjectForm">
-                <select name="projectId" class="dg-select" onchange="this.form.submit()">
-                    <option value="">-- جميع المشاريع --</option>
-                    @foreach (var p in projects)
+@if (projects.Any())
+{
+    <div class="filter-bar">
+        <form method="get" asp-action="Index" style="display:flex; align-items:center; gap:10px">
+            <label style="font-weight:600; font-size:0.88rem; color:#444">
+                <i class="fas fa-filter" style="color:var(--secondary)"></i>
+                <span data-lang="filter_by_project">تصفية حسب المشروع:</span>
+            </label>
+            <select name="projectId" class="form-select filter-select"
+                    onchange="this.form.submit()">
+                <option value="" data-lang="all_projects_option">-- جميع المشاريع --</option>
+                @foreach (var p in projects)
+                {
+                    if (selectedProjectId == p.ProjectId)
                     {
-                        if (selectedProjectId == p.ProjectId)
-                        {
-                            <option value="@p.ProjectId" selected>@p.ProjectName</option>
-                        }
-                        else
-                        {
-                            <option value="@p.ProjectId">@p.ProjectName</option>
-                        }
+                        <option value="@p.ProjectId" selected>@p.ProjectName</option>
                     }
-                </select>
-            </form>
-        }
-
-        <div class="dg-search">
-            <input type="text" id="dgSearch" placeholder="ابحث بعنوان الرسم أو التصنيف أو المشروع..." />
-            <i class="fas fa-search"></i>
-        </div>
-
-        @if (selectedProjectId.HasValue)
-        {
-            <a asp-action="Index" class="dg-clear-btn">
-                <i class="fas fa-times"></i> إلغاء تصفية المشروع
-            </a>
-        }
-        <button type="button" class="dg-clear-btn" id="dgResetBtn">
-            <i class="fas fa-undo"></i> إعادة تعيين
-        </button>
+                    else
+                    {
+                        <option value="@p.ProjectId">@p.ProjectName</option>
+                    }
+                }
+            </select>
+            @if (selectedProjectId.HasValue)
+            {
+                <a asp-action="Index" class="btn-bonyan-primary"
+                   style="font-size:0.82rem; padding:7px 12px">
+                    <i class="fas fa-times"></i> <span data-lang="clear_filter">إلغاء التصفية</span>
+                </a>
+            }
+        </form>
     </div>
+}
 
-    <!-- ── Card Grid ────────────────────────────────────────── -->
+<div class="details-card">
     @if (Model.Any())
     {
-        <div class="dg-grid" id="dgGrid">
+        <div class="photo-grid">
             @foreach (var dr in Model)
             {
-                string ext = Ext(dr.FilePath);
-                string extClass = ExtClass(ext);
-                string category = string.IsNullOrWhiteSpace(dr.Category) ? "" : dr.Category!.Trim();
-                string projectName = dr.Project?.ProjectName ?? "—";
-                string uploader = (dr.Employee?.FirstName + " " + dr.Employee?.LastName).Trim();
-                if (string.IsNullOrWhiteSpace(uploader)) uploader = "—";
-                bool isMonth = dr.UploadDate.Year == DateTime.Now.Year && dr.UploadDate.Month == DateTime.Now.Month;
-
-                <div class="dg-card"
-                     data-title="@dr.DrawingTitle.ToLower()"
-                     data-category="@category"
-                     data-project="@projectName.ToLower()"
-                     data-uploader="@uploader.ToLower()"
-                     data-ext="@ext"
-                     data-month="@(isMonth ? "1" : "0")">
-
-                    <div class="dg-card-thumb">
-                        <span class="dg-ext-badge @extClass">@ext</span>
-                        @if (multiVersion > 0)
-                        {
-                            <span class="dg-version-badge">v@dr.Version</span>
-                        }
-                        <img class="dg-thumb-img"
-                             src="@dr.FilePath"
-                             alt="@dr.DrawingTitle"
-                             onerror="this.onerror=null;this.outerHTML='<div class=\'dg-thumb-icon\'><i class=\'fas fa-image\'></i></div>'"
-                             onclick="dgOpenLightbox('@dr.DrawingId')" />
+                <div class="photo-card">
+                    <img src="@dr.FilePath"
+                         alt="@dr.DrawingTitle"
+                         onerror="this.src='/images/placeholder.png'" />
+                    <div class="photo-card-info">
+                        <p title="@dr.DrawingTitle">@dr.DrawingTitle</p>
+                        <span>@(dr.Project?.ProjectName ?? "—")</span><br />
+                        <span>@dr.UploadDate.ToString("yyyy-MM-dd")</span>
+                        @* inside photo-card-info *@
+                        <span style="font-size:0.72rem; color:#888">
+                            <i class="fas fa-user" style="font-size:0.65rem"></i>
+                            @(dr.Employee?.FirstName + " " + dr.Employee?.LastName ?? "—")
+                        </span>
                     </div>
-
-                    <div class="dg-card-body">
-                        <p class="dg-title" title="@dr.DrawingTitle">@dr.DrawingTitle</p>
-
-                        <div class="dg-meta-row">
-                            @if (!string.IsNullOrWhiteSpace(category))
-                            {
-                                <span class="dg-tag category"><i class="fas fa-tag"></i> @category</span>
-                            }
-                            <span class="dg-tag project"><i class="fas fa-share-alt"></i> @projectName</span>
-                        </div>
-
-                        <div class="dg-sub-row">
-                            <span><i class="fas fa-user"></i> @uploader</span>
-                            <span><i class="fas fa-calendar-alt"></i> @dr.UploadDate.ToString("yyyy-MM-dd")</span>
-                        </div>
-                    </div>
-
-                    <div class="dg-card-actions">
-                        <button type="button" class="dg-btn dg-btn-view" title="معاينة" onclick="dgOpenLightbox('@dr.DrawingId')">
+                    <div class="photo-card-actions">
+                        <a href="@dr.FilePath" target="_blank"
+                           class="btn-action view" title="عرض">
                             <i class="fas fa-eye"></i>
-                        </button>
-                        <a href="@dr.FilePath" target="_blank" download class="dg-btn dg-btn-download">
-                            <i class="fas fa-download"></i> تحميل
                         </a>
                         @if (role == "ProjectManager" || role == "Engineer")
                         {
-                            <form asp-action="Delete" asp-route-id="@dr.DrawingId" method="post"
+                            <form asp-action="Delete" asp-route-id="@dr.DrawingId"
+                                  method="post" style="display:inline"
                                   onsubmit="return confirm('هل أنت متأكد من حذف هذه الصورة؟')">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="dg-btn dg-btn-delete" title="حذف">
+                                <button type="submit" class="btn-action delete" title="حذف">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -199,184 +94,10 @@
     }
     else
     {
-        <div class="dg-empty">
-            <i class="fas fa-drafting-compass"></i>
-            <p>لا توجد رسومات مرفوعة حتى الآن</p>
+        <div style="text-align:center; padding:40px; color:#aaa">
+            <i class="fas fa-images"
+               style="font-size:3rem; margin-bottom:14px; display:block"></i>
+            <p data-lang="no_photos">لا توجد صور مرفوعة حتى الآن</p>
         </div>
     }
 </div>
-
-<!-- ── Lightbox ─────────────────────────────────────────────── -->
-<div class="dg-lightbox" id="dgLightbox">
-    <button class="dg-lightbox-close" onclick="dgCloseLightbox()"><i class="fas fa-times"></i></button>
-    <button class="dg-lightbox-nav dg-lightbox-prev" onclick="dgNavLightbox(1)"><i class="fas fa-chevron-right"></i></button>
-    <button class="dg-lightbox-nav dg-lightbox-next" onclick="dgNavLightbox(-1)"><i class="fas fa-chevron-left"></i></button>
-    <div class="dg-lightbox-img-wrap">
-        <img id="dgLightboxImg" src="" alt="" />
-    </div>
-    <div class="dg-lightbox-info">
-        <h4 id="dgLightboxTitle"></h4>
-        <span id="dgLightboxMeta"></span>
-    </div>
-    <div class="dg-lightbox-actions">
-        <a id="dgLightboxDownload" href="#" target="_blank" download>
-            <i class="fas fa-download"></i> تحميل
-        </a>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        // ── Build the drawing data set from the rendered cards ──────────
-        var dgItems = Array.from(document.querySelectorAll('.dg-card')).map(function (card) {
-            return {
-                id: card.querySelector('[onclick*="dgOpenLightbox"]')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || '',
-                el: card,
-                title: card.getAttribute('data-title'),
-                category: card.getAttribute('data-category'),
-                project: card.getAttribute('data-project'),
-                uploader: card.getAttribute('data-uploader'),
-                ext: card.getAttribute('data-ext'),
-                month: card.getAttribute('data-month'),
-                img: card.querySelector('.dg-thumb-img')?.getAttribute('src') || '',
-                titleDisplay: card.querySelector('.dg-title')?.getAttribute('title') || '',
-                projectDisplay: card.querySelector('.dg-tag.project')?.textContent.trim() || '',
-                downloadHref: card.querySelector('.dg-btn-download')?.getAttribute('href') || ''
-            };
-        });
-
-        // ── Populate the "type" filter dropdown dynamically ─────────────
-        (function populateTypes() {
-            var sel = document.getElementById('dgTypeFilter');
-            var seen = {};
-            dgItems.forEach(function (it) {
-                if (it.ext && it.ext !== '—' && !seen[it.ext]) {
-                    seen[it.ext] = true;
-                    var opt = document.createElement('option');
-                    opt.value = it.ext;
-                    opt.textContent = it.ext;
-                    sel.appendChild(opt);
-                }
-            });
-        })();
-
-        // ── Filtering ────────────────────────────────────────────────
-        var dgActiveStat = null;
-
-        function dgApplyFilters() {
-            var type = document.getElementById('dgTypeFilter').value;
-            var cat = document.getElementById('dgCategoryFilter').value.toLowerCase();
-            var q = document.getElementById('dgSearch').value.trim().toLowerCase();
-            var visible = 0;
-
-            dgItems.forEach(function (it) {
-                var matchType = !type || it.ext === type;
-                var matchCat = !cat || it.category.toLowerCase() === cat;
-                var matchSearch = !q ||
-                    it.title.includes(q) || it.category.toLowerCase().includes(q) ||
-                    it.project.includes(q) || it.uploader.includes(q);
-
-                var matchStat = true;
-                if (dgActiveStat === 'month') matchStat = it.month === '1';
-
-                var show = matchType && matchCat && matchSearch && matchStat;
-                it.el.style.display = show ? '' : 'none';
-                if (show) visible++;
-            });
-
-            document.getElementById('dgVisibleCount').textContent = visible + ' رسم';
-        }
-
-        document.getElementById('dgTypeFilter').addEventListener('change', dgApplyFilters);
-        document.getElementById('dgCategoryFilter').addEventListener('change', dgApplyFilters);
-        document.getElementById('dgSearch').addEventListener('input', dgApplyFilters);
-
-        document.getElementById('dgResetBtn').addEventListener('click', function () {
-            document.getElementById('dgTypeFilter').value = '';
-            document.getElementById('dgCategoryFilter').value = '';
-            document.getElementById('dgSearch').value = '';
-            dgActiveStat = null;
-            document.querySelectorAll('.dg-stat-card').forEach(function (c) { c.classList.remove('is-active'); });
-            dgApplyFilters();
-        });
-
-        // ── Stat cards double as quick filters ──────────────────────────
-        document.querySelectorAll('.dg-stat-card').forEach(function (card) {
-            card.addEventListener('click', function () {
-                var kind = card.getAttribute('data-filter-stat');
-                document.querySelectorAll('.dg-stat-card').forEach(function (c) { c.classList.remove('is-active'); });
-
-                if (kind === 'all') {
-                    dgActiveStat = null;
-                } else if (kind === 'month') {
-                    dgActiveStat = (dgActiveStat === 'month') ? null : 'month';
-                    if (dgActiveStat) card.classList.add('is-active');
-                } else {
-                    // versions / projects stats are informational — just pulse
-                    dgActiveStat = null;
-                }
-                dgApplyFilters();
-            });
-        });
-
-        // ── Animated count-up for the stat numbers ──────────────────────
-        document.querySelectorAll('.dg-stat-num').forEach(function (el) {
-            var target = parseInt(el.getAttribute('data-count'), 10) || 0;
-            var current = 0;
-            var step = Math.max(1, Math.ceil(target / 24));
-            var timer = setInterval(function () {
-                current += step;
-                if (current >= target) { current = target; clearInterval(timer); }
-                el.textContent = current;
-            }, 18);
-        });
-
-        // ── Lightbox ─────────────────────────────────────────────────
-        var dgCurrentIndex = -1;
-
-        function dgVisibleItems() {
-            return dgItems.filter(function (it) { return it.el.style.display !== 'none'; });
-        }
-
-        function dgOpenLightbox(id) {
-            var visible = dgVisibleItems();
-            var idx = visible.findIndex(function (it) { return it.id === id; });
-            if (idx === -1) idx = 0;
-            dgCurrentIndex = idx;
-            dgRenderLightbox(visible);
-            document.getElementById('dgLightbox').classList.add('open');
-        }
-
-        function dgRenderLightbox(visible) {
-            if (!visible.length) return;
-            var it = visible[dgCurrentIndex];
-            document.getElementById('dgLightboxImg').src = it.img;
-            document.getElementById('dgLightboxImg').alt = it.titleDisplay;
-            document.getElementById('dgLightboxTitle').textContent = it.titleDisplay;
-            document.getElementById('dgLightboxMeta').textContent = it.projectDisplay + ' · ' + it.uploader;
-            document.getElementById('dgLightboxDownload').href = it.downloadHref;
-        }
-
-        function dgNavLightbox(dir) {
-            var visible = dgVisibleItems();
-            if (!visible.length) return;
-            dgCurrentIndex = (dgCurrentIndex + dir + visible.length) % visible.length;
-            dgRenderLightbox(visible);
-        }
-
-        function dgCloseLightbox() {
-            document.getElementById('dgLightbox').classList.remove('open');
-        }
-
-        document.getElementById('dgLightbox').addEventListener('click', function (e) {
-            if (e.target === this) dgCloseLightbox();
-        });
-
-        document.addEventListener('keydown', function (e) {
-            if (!document.getElementById('dgLightbox').classList.contains('open')) return;
-            if (e.key === 'Escape') dgCloseLightbox();
-            if (e.key === 'ArrowRight') dgNavLightbox(1);
-            if (e.key === 'ArrowLeft') dgNavLightbox(-1);
-        });
-    </script>
-}

@@ -10,7 +10,7 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-plus-circle" style="color:var(--secondary)"></i>
-            <span>إضافة مشروع جديد</span>
+            <span data-lang="add_project_new">إضافة مشروع جديد</span>
         </h2>
     </div>
     <a asp-action="Index" class="btn-bonyan-primary">
@@ -22,38 +22,38 @@
 <div class="form-card">
     <div class="form-card-header">
         <i class="fas fa-project-diagram"></i>
-        <h4>بيانات المشروع</h4>
+        <h4 data-lang="project_data">بيانات المشروع</h4>
     </div>
 
     <div class="form-card-body">
         <form asp-action="Create" method="post">
             @Html.AntiForgeryToken()
 
-            <div class="form-section-title">المعلومات الأساسية</div>
+            <div class="form-section-title" data-lang="basic_info">المعلومات الأساسية</div>
 
             <div class="form-grid-2">
                 <div class="form-group">
                     <label>
-                        <span>اسم المشروع</span>
+                        <span data-lang="project_name">اسم المشروع</span>
                         <span class="required">*</span>
                     </label>
                     <input asp-for="ProjectName" class="form-control" required />
                     <span asp-validation-for="ProjectName" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label>اسم العميل</label>
+                    <label data-lang="client">اسم العميل</label>
                     <input asp-for="Client_Name" class="form-control" />
                 </div>
             </div>
 
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label>الموقع</label>
+                    <label data-lang="location">الموقع</label>
                     <input asp-for="Location" class="form-control" />
                 </div>
                 <div class="form-group">
                     <label>
-                        <span>الحالة</span>
+                        <span data-lang="status">الحالة</span>
                         <span class="required">*</span>
                     </label>
                     <select asp-for="Status" class="form-select">
@@ -68,25 +68,25 @@
                                 "Cancelled" => "ملغي",
                                 _ => s.ToString()
                             };
-                            <option value="@s">@statusAr</option>
+                            <option value="@s" data-en="@s" data-ar="@statusAr">@statusAr</option>
                         }
                     </select>
                 </div>
             </div>
 
-            <div class="form-section-title">التواريخ والميزانية</div>
+            <div class="form-section-title" data-lang="dates_budget">التواريخ والميزانية</div>
 
             <div class="form-grid-3">
                 <div class="form-group">
-                    <label>تاريخ البدء</label>
+                    <label data-lang="start_date">تاريخ البدء</label>
                     <input asp-for="StartDate" class="form-control" type="date" />
                 </div>
                 <div class="form-group">
-                    <label>تاريخ الانتهاء</label>
+                    <label data-lang="end_date">تاريخ الانتهاء</label>
                     <input asp-for="EndDate" class="form-control" type="date" />
                 </div>
                 <div class="form-group">
-                    <label>الميزانية (ج.م)</label>
+                    <label data-lang="budget">الميزانية (ج.م)</label>
                     <input asp-for="Budget" class="form-control" type="number" step="any" min="0" />
                 </div>
             </div>
@@ -94,10 +94,10 @@
             <!-- ══════════════════════════════════════════
                  ENGINEER ASSIGNMENT CHECKBOX DROPDOWN
             ══════════════════════════════════════════ -->
-            <div class="form-section-title">تعيين المهندسين للمشروع</div>
+            <div class="form-section-title" data-lang="assign_engineers_title">تعيين المهندسين للمشروع</div>
 
             <div class="form-group" style="position:relative; margin-bottom:24px">
-                <label>اختر المهندسين المعينين</label>
+                <label data-lang="select_assigned_engineers">اختر المهندسين المعينين</label>
 
                 <!-- Trigger button -->
                 <button type="button" id="empDropdownBtn"
@@ -107,7 +107,7 @@
                                background:#fff; cursor:pointer; display:flex;
                                justify-content:space-between; align-items:center;
                                margin-top:6px">
-                    <span id="empDropdownLabel">-- اختر المهندسين --</span>
+                    <span id="empDropdownLabel" data-lang="select_engineers_placeholder">-- اختر المهندسين --</span>
                     <i class="fas fa-chevron-down" id="empChevron"
                        style="transition:transform 0.2s"></i>
                 </button>
@@ -129,9 +129,9 @@
                             && emp.UserAccount.Role == UserRole.ProjectManager;
 
                             <label style="display:flex; align-items:center; gap:10px;
-                                                  padding:10px 14px; cursor:pointer;
-                                                  border-bottom:1px solid #f0f0f0;
-                                                  background:#fff; margin:0"
+                                                          padding:10px 14px; cursor:pointer;
+                                                          border-bottom:1px solid #f0f0f0;
+                                                          background:#fff; margin:0"
                                    onmouseover="this.style.background='#f8f9fa'"
                                    onmouseout="this.style.background='#fff'">
                                 <input type="checkbox"
@@ -145,7 +145,7 @@
                                     @if (isPM)
                                     {
                                         <span style="color:#8B5E3C; font-weight:700;
-                                                                 font-size:0.78rem; margin-right:4px">
+                                                                             font-size:0.78rem; margin-right:4px" data-lang="dash_project_manager">
                                             — مدير مشروع
                                         </span>
                                     }
@@ -155,7 +155,7 @@
                     }
                     else
                     {
-                        <p style="padding:12px; color:#aaa; margin:0">
+                        <p style="padding:12px; color:#aaa; margin:0" data-lang="no_registered_engineers">
                             لا يوجد مهندسون مسجلون
                         </p>
                     }
@@ -165,11 +165,11 @@
             <div class="form-actions">
                 <a asp-action="Index" class="btn-bonyan-primary">
                     <i class="fas fa-times"></i>
-                    <span>إلغاء</span>
+                    <span data-lang="cancel">إلغاء</span>
                 </a>
                 <button type="submit" class="btn-bonyan-secondary">
                     <i class="fas fa-save"></i>
-                    <span>حفظ المشروع</span>
+                    <span data-lang="save_project">حفظ المشروع</span>
                 </button>
             </div>
         </form>

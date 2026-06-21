@@ -11,19 +11,19 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-camera" style="color:var(--secondary)"></i>
-            رفع صورة للمشروع
+            <span data-lang="upload_project_photo">رفع صورة للمشروع</span>
         </h2>
     </div>
     <a asp-controller="Project" asp-action="Details"
        asp-route-id="@projectId" class="btn-bonyan-primary">
-        <i class="fas fa-arrow-right"></i> رجوع للمشروع
+        <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
     </a>
 </div>
 
 <div class="upload-card">
     <div class="upload-card-header">
         <i class="fas fa-images"></i>
-        <h4>بيانات الصورة</h4>
+        <h4 data-lang="photo_data">بيانات الصورة</h4>
     </div>
 
     <div class="upload-card-body">
@@ -41,12 +41,12 @@
 
             <!-- Image drop zone with live preview -->
             <div class="form-group">
-                <label>الصورة <span style="color:red">*</span></label>
+                <label data-lang="photo">الصورة</label> <span style="color:red">*</span>
                 <div class="file-drop-zone" id="dropZone"
                      style="min-height:160px">
                     <div id="dropContent">
                         <i class="fas fa-image"></i>
-                        <p>اسحب الصورة هنا أو انقر للاختيار</p>
+                        <p data-lang="drag_drop_photo">اسحب الصورة هنا أو انقر للاختيار</p>
                         <span>JPG, PNG, GIF, WEBP, SVG</span>
                     </div>
                     <!-- Image preview inside zone -->
@@ -65,48 +65,48 @@
 
             <!-- Title -->
             <div class="form-group">
-                <label>عنوان الصورة <span style="color:red">*</span></label>
+                <label data-lang="photo_title">عنوان الصورة</label> <span style="color:red">*</span>
                 <input asp-for="DrawingTitle" class="form-control"
-                       placeholder="وصف مختصر للصورة" required />
+                       data-lang-placeholder="photo_title_placeholder" placeholder="وصف مختصر للصورة" required />
                 <span asp-validation-for="DrawingTitle" class="text-danger"></span>
             </div>
 
             <!-- Version -->
             <div class="form-group">
-                <label>الإصدار</label>
+                <label data-lang="version">الإصدار</label>
                 <input asp-for="Version" class="form-control"
-                       placeholder="مثال: 1.0" />
+                       data-lang-placeholder="version_placeholder" placeholder="مثال: 1.0" />
             </div>
 
             <!-- Category -->
             <div class="form-group">
-                <label>التصنيف</label>
+                <label data-lang="category">التصنيف</label>
                 <select asp-for="Category" class="form-select">
-                    <option value="">-- اختر التصنيف --</option>
-                    <option value="موقع">صور الموقع</option>
-                    <option value="تقدم">تقدم الأعمال</option>
-                    <option value="مشاكل">مشاكل وعيوب</option>
-                    <option value="اكتمال">صور اكتمال</option>
-                    <option value="أخرى">أخرى</option>
+                    <option value="" data-lang="choose_category_option">-- اختر التصنيف --</option>
+                    <option value="موقع" data-lang="cat_site_photos">صور الموقع</option>
+                    <option value="تقدم" data-lang="cat_progress">تقدم الأعمال</option>
+                    <option value="مشاكل" data-lang="cat_issues">مشاكل وعيوب</option>
+                    <option value="اكتمال" data-lang="cat_completion">صور اكتمال</option>
+                    <option value="أخرى" data-lang="cat_other">أخرى</option>
                 </select>
             </div>
 
             <!-- Notes -->
             <div class="form-group">
-                <label>ملاحظات</label>
+                <label data-lang="notes">ملاحظات</label>
                 <textarea asp-for="Notes" class="form-control"
                           rows="2"
-                          placeholder="أي ملاحظات..."></textarea>
+                          data-lang-placeholder="notes_placeholder" placeholder="أي ملاحظات..."></textarea>
             </div>
 
             <div class="upload-actions">
                 <a asp-controller="Project" asp-action="Details"
                    asp-route-id="@projectId"
                    class="btn-bonyan-primary">
-                    <i class="fas fa-times"></i> إلغاء
+                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
                 </a>
                 <button type="submit" class="btn-bonyan-secondary">
-                    <i class="fas fa-upload"></i> رفع الصورة
+                    <i class="fas fa-upload"></i> <span data-lang="upload_photo">رفع الصورة</span>
                 </button>
             </div>
         </form>
