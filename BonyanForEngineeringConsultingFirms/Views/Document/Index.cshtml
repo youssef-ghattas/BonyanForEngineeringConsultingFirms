@@ -7,164 +7,315 @@
 
     var docList = Model.ToList();
     var totalCount = docList.Count;
-    var typeGroups = docList
-        .Where(d => !string.IsNullOrEmpty(d.FileType))
-        .GroupBy(d => d.FileType)
-        .OrderByDescending(g => g.Count())
-        .ToList();
-    var topTypeCount = typeGroups.Any() ? typeGroups.First().Count() : 0;
-    var topTypeName = typeGroups.Any() ? typeGroups.First().Key : "—";
-    var distinctProjectsCount = docList.Select(d => d.ProjectId).Distinct().Count();
-    var thisMonthCount = docList.Count(d => d.UploadDate.Month == DateTime.Today.Month && d.UploadDate.Year == DateTime.Today.Year);
+    var pdfCount = docList.Count(d => (d.FileType ?? "").ToUpper() == "PDF");
+    var wordCount = docList.Count(d => new[] { "DOC", "DOCX" }.Contains((d.FileType ?? "").ToUpper()));
+    var excelCount = docList.Count(d => new[] { "XLS", "XLSX" }.Contains((d.FileType ?? "").ToUpper()));
+    var imageCount = docList.Count(d => new[] { "PNG", "JPG", "JPEG", "GIF", "WEBP" }.Contains((d.FileType ?? "").ToUpper()));
+    var otherCount = totalCount - pdfCount - wordCount - excelCount - imageCount;
+
+    // Category counts for pills
+    var categories = docList
+        .Where(d => !string.IsNullOrEmpty(d.Category))
+        .GroupBy(d => d.Category)
+        .ToDictionary(g => g.Key, g => g.Count());
 }
 
-<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
+<link rel="stylesheet" href="~/css/document.css" />
 
 <div class="doc-page">
+
 
     <div class="page-header">
         <div class="page-header-left">
             <h2>
-                <i class="fas fa-folder-open" style="color:var(--secondary)"></i>
-                <span data-lang="documents">المستندات</span>
+                <i class="fas fa-folder-open"></i>
+                <span data-lang="documents_title">المستندات</span>
             </h2>
+            <p data-lang="documents_subtitle">إدارة ومتابعة مستندات المشاريع الهندسية</p>
+        </div>
+        <div class="page-header-actions">
+            @if (selectedProjectId.HasValue && (role == "ProjectManager" || role == "Engineer"))
+            {
+                <a asp-controller="Document" asp-action="Create"
+                   asp-route-projectId="@selectedProjectId"
+                   class="btn-bonyan-secondary">
+                    <i class="fas fa-upload"></i>
+                    <span data-lang="upload_doc">رفع مستند</span>
+                </a>
+            }
         </div>
     </div>
+
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert-success-msg">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert-error-msg">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
 
     <div class="doc-kpi-grid">
         <div class="doc-kpi navy">
             <div class="doc-kpi-icon"><i class="fas fa-folder-open"></i></div>
             <div>
-                <div class="doc-kpi-label" data-lang="total_documents">إجمالي المستندات</div>
+                <div class="doc-kpi-label" data-lang="total_docs">إجمالي المستندات</div>
                 <div class="doc-kpi-value">@totalCount</div>
             </div>
         </div>
-        <div class="doc-kpi blue">
-            <div class="doc-kpi-icon"><i class="fas fa-diagram-project"></i></div>
+        <div class="doc-kpi red">
+            <div class="doc-kpi-icon"><i class="fas fa-file-pdf"></i></div>
             <div>
-                <div class="doc-kpi-label" data-lang="projects_with_docs">المشاريع المرتبطة</div>
-                <div class="doc-kpi-value">@distinctProjectsCount</div>
+                <div class="doc-kpi-label">PDF</div>
+                <div class="doc-kpi-value">@pdfCount</div>
             </div>
         </div>
-        <div class="doc-kpi gold">
-            <div class="doc-kpi-icon"><i class="fas fa-file-circle-check"></i></div>
+        <div class="doc-kpi blue">
+            <div class="doc-kpi-icon"><i class="fas fa-file-word"></i></div>
             <div>
-                <div class="doc-kpi-label" data-lang="most_common_type">النوع الأكثر شيوعًا</div>
-                <div class="doc-kpi-value">@topTypeName (@topTypeCount)</div>
+                <div class="doc-kpi-label" data-lang="word_docs">Word</div>
+                <div class="doc-kpi-value">@wordCount</div>
             </div>
         </div>
         <div class="doc-kpi green">
-            <div class="doc-kpi-icon"><i class="fas fa-calendar-check"></i></div>
+            <div class="doc-kpi-icon"><i class="fas fa-file-excel"></i></div>
             <div>
-                <div class="doc-kpi-label" data-lang="uploaded_this_month">رُفع هذا الشهر</div>
-                <div class="doc-kpi-value">@thisMonthCount</div>
+                <div class="doc-kpi-label" data-lang="excel_docs">Excel</div>
+                <div class="doc-kpi-value">@excelCount</div>
+            </div>
+        </div>
+        <div class="doc-kpi purple">
+            <div class="doc-kpi-icon"><i class="fas fa-file-image"></i></div>
+            <div>
+                <div class="doc-kpi-label" data-lang="image_docs">صور</div>
+                <div class="doc-kpi-value">@imageCount</div>
+            </div>
+        </div>
+        <div class="doc-kpi amber">
+            <div class="doc-kpi-icon"><i class="fas fa-file-circle-question"></i></div>
+            <div>
+                <div class="doc-kpi-label" data-lang="other_docs">أخرى</div>
+                <div class="doc-kpi-value">@otherCount</div>
             </div>
         </div>
     </div>
 
-    @if (projects.Any())
-    {
-        <div class="filter-bar">
-            <form method="get" asp-action="Index" class="filter-bar-project">
-                <label class="filter-bar-label">
-                    <i class="fas fa-filter"></i>
-                    <span data-lang="filter_by_project">تصفية حسب المشروع:</span>
-                </label>
-                <select name="projectId" class="filter-select"
-                        onchange="this.form.submit()">
-                    <option value="" data-lang="all_projects_option">-- جميع المشاريع --</option>
-                    @foreach (var p in projects)
-                    {
-                        if (selectedProjectId == p.ProjectId)
-                        {
-                            <option value="@p.ProjectId" selected>@p.ProjectName</option>
-                        }
-                        else
-                        {
-                            <option value="@p.ProjectId">@p.ProjectName</option>
-                        }
-                    }
-                </select>
-                @if (selectedProjectId.HasValue)
+
+    <div class="filter-bar">
+        <span class="filter-bar-label">
+            <i class="fas fa-sliders"></i>
+            <span data-lang="filter_label">تصفية:</span>
+        </span>
+
+
+        <div class="filter-bar-project">
+            <i class="fas fa-diagram-project" style="color:var(--secondary);font-size:.85rem;flex-shrink:0"></i>
+            <select id="projectFilter" class="filter-select"
+                    onchange="filterByProject(this.value)">
+                <option value="" data-lang="all_projects"> كافة المشاريع </option>
+                @foreach (var p in projects)
                 {
-                    <a asp-action="Index" class="filter-reset">
-                        <i class="fas fa-times"></i> <span data-lang="clear_filter">إلغاء التصفية</span>
-                    </a>
+                    if (selectedProjectId == p.ProjectId)
+                    {
+                        <option value="@p.ProjectId" selected>@p.ProjectName</option>
+                    }
+                    else
+                    {
+                        <option value="@p.ProjectId">@p.ProjectName</option>
+                    }
                 }
-            </form>
+            </select>
         </div>
-    }
+
+        <div class="filter-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="docSearch"
+                   placeholder="ابحث عن مستند..."
+                   data-lang-placeholder="search_doc"
+                   oninput="applyFilters()" />
+        </div>
+
+        
+        <select class="filter-select" id="typeFilter" onchange="applyFilters()">
+            <option value="" data-lang="all_types">كل الأنواع</option>
+            <option value="PDF">PDF</option>
+            <option value="DOC">Word</option>
+            <option value="XLS">Excel</option>
+            <option value="IMG" data-lang="images">صور</option>
+            <option value="OTHER" data-lang="other">أخرى</option>
+        </select>
+
+        <select class="filter-select" id="categoryFilter" onchange="applyFilters()">
+            <option value="" data-lang="all_categories">كل التصنيفات</option>
+            <option value="عقود">عقود</option>
+            <option value="تقارير">تقارير</option>
+            <option value="مخططات">مخططات</option>
+            <option value="ملاحظات">ملاحظات</option>
+            <option value="أخرى">أخرى</option>
+        </select>
+
+        @if (selectedProjectId.HasValue)
+        {
+            <a asp-action="Index" class="filter-reset">
+                <i class="fas fa-rotate-left"></i>
+                <span data-lang="clear_filter">إلغاء التصفية</span>
+            </a>
+        }
+
+        <span class="results-count" id="resultsCount">
+            <strong>@totalCount</strong>
+            <span data-lang="results_label">مستند</span>
+        </span>
+    </div>
 
     <div class="table-card">
         <div class="table-card-header">
-            <h5><i class="fas fa-list"></i> <span data-lang="document_list">قائمة المستندات</span></h5>
-            <span class="count-badge">@totalCount</span>
+            <h5>
+                <i class="fas fa-list-ul"></i>
+                <span data-lang="doc_list">قائمة المستندات</span>
+            </h5>
+            <span class="count-badge" id="headerBadgeCount">@totalCount</span>
         </div>
+
         @if (Model.Any())
         {
             <div class="table-responsive">
-                <table class="doc-table">
+                <table class="doc-table" id="docTable">
                     <thead>
                         <tr>
-                            <th data-lang="doc_title">عنوان المستند</th>
-                            <th data-lang="project">المشروع</th>
-                            <th data-lang="file_type">النوع</th>
-                            <th data-lang="category">التصنيف</th>
-                            <th data-lang="upload_date">تاريخ الرفع</th>
-                            <th data-lang="uploaded_by">رُفع بواسطة</th>
-                            <th data-lang="actions">إجراءات</th>
+                            <th><i class="fas fa-file-alt"></i> <span data-lang="doc_title_col">المستند</span></th>
+                            <th><i class="fas fa-diagram-project"></i> <span data-lang="project_col">المشروع</span></th>
+                            <th><i class="fas fa-tag"></i> <span data-lang="type_col">النوع</span></th>
+                            <th><i class="fas fa-bookmark"></i> <span data-lang="category_col">التصنيف</span></th>
+                            <th><i class="fas fa-calendar-alt"></i> <span data-lang="upload_date_col">تاريخ الرفع</span></th>
+                            <th><i class="fas fa-user-tie"></i> <span data-lang="uploader_col">رُفع بواسطة</span></th>
+                            <th><i class="fas fa-gear"></i> <span data-lang="actions_col">إجراءات</span></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="docTableBody">
                         @foreach (var doc in Model)
                         {
-                            <tr>
+                            var ext = (doc.FileType ?? "").ToUpper();
+                            var isImg = new[] { "PNG", "JPG", "JPEG", "GIF", "WEBP" }.Contains(ext);
+                            var isWord = new[] { "DOC", "DOCX" }.Contains(ext);
+                            var isExcel = new[] { "XLS", "XLSX" }.Contains(ext);
+                            var isPdf = ext == "PDF";
+
+                            string fileIconClass = isPdf ? "fa-file-pdf    doc-icon-pdf"
+                            : isWord ? "fa-file-word   doc-icon-word"
+                            : isExcel ? "fa-file-excel  doc-icon-excel"
+                            : isImg ? "fa-file-image  doc-icon-image"
+                            : "fa-file        doc-icon-other";
+
+                            string typeGroup = isPdf ? "PDF"
+                            : isWord ? "DOC"
+                            : isExcel ? "XLS"
+                            : isImg ? "IMG"
+                            : "OTHER";
+
+                            string uploaderInitials = $"{(string.IsNullOrEmpty(doc.Employee?.FirstName) ? "" : doc.Employee.FirstName.Substring(0, 1))}{(string.IsNullOrEmpty(doc.Employee?.LastName) ? "" : doc.Employee.LastName.Substring(0, 1))}".ToUpper();
+
+                            <tr class="doc-row"
+                                data-name="@doc.DocTitle.ToLower()"
+                                data-type="@typeGroup"
+                                data-category="@(doc.Category ?? "")">
+                                
                                 <td>
-                                    <div class="doc-title-cell">
-                                        <span class="doc-file-icon"><i class="fas fa-file-alt"></i></span>
-                                        @doc.DocTitle
-                                    </div>
+                                    <a href="@doc.FilePath" target="_blank" class="doc-title-link">
+                                        <span class="doc-file-icon">
+                                            <i class="fas @fileIconClass"></i>
+                                        </span>
+                                        <div class="doc-title-text">
+                                            <span class="doc-title-name">@doc.DocTitle</span>
+                                            @if (!string.IsNullOrEmpty(doc.Notes))
+                                            {
+                                                <small class="doc-title-note" title="@doc.Notes">@doc.Notes</small>
+                                            }
+                                        </div>
+                                    </a>
                                 </td>
+
+                                
                                 <td>
                                     @if (doc.Project != null)
                                     {
-                                        <span class="doc-project-pill"><i class="fas fa-diagram-project"></i> @doc.Project.ProjectName</span>
-                                    }
-                                    else
-                                    {
-                                        <span>—</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(doc.FileType))
-                                    {
-                                        <span class="file-type-badge">@doc.FileType</span>
+                                        <span class="doc-project-pill">
+                                            <i class="fas fa-diagram-project"></i>
+                                            @doc.Project.ProjectName
+                                        </span>
                                     }
                                     else
                                     {
 
-                                        <span>—</span>
+                                        <span class="text-muted">—</span>
                                     }
                                 </td>
-                                <td>@(doc.Category ?? "—")</td>
-                                <td>@doc.UploadDate.ToString("yyyy-MM-dd")</td>
+
+                               
+                                <td>
+                                    @if (!string.IsNullOrEmpty(doc.FileType))
+                                    {
+                                        <span class="doc-type-badge @($"type-{typeGroup.ToLower()}")">
+                                            <i class="fas @fileIconClass.Split(' ')[0]"></i>
+                                            @doc.FileType.ToUpper()
+                                        </span>
+                                    }
+                                    else
+                                    {
+
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+
+                                
+                                <td>
+                                    @if (!string.IsNullOrEmpty(doc.Category))
+                                    {
+                                        <span class="doc-category-pill">@doc.Category</span>
+                                    }
+                                    else
+                                    {
+
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+
+                                
+                                <td>
+                                    <div class="doc-date-cell">
+                                        <span>@doc.UploadDate.ToString("yyyy-MM-dd")</span>
+                                        <small>@doc.UploadDate.ToString("hh:mm tt")</small>
+                                    </div>
+                                </td>
+
+                               
                                 <td>
                                     @if (doc.Employee != null)
                                     {
                                         <div class="doc-uploader-cell">
-                                            <div class="doc-uploader-avatar">@($"{(string.IsNullOrEmpty(doc.Employee.FirstName) ? "" : doc.Employee.FirstName.Substring(0, 1))}{(string.IsNullOrEmpty(doc.Employee.LastName) ? "" : doc.Employee.LastName.Substring(0, 1))}".ToUpper())</div>
+                                            <div class="doc-uploader-avatar">@uploaderInitials</div>
                                             <span>@doc.Employee.FirstName @doc.Employee.LastName</span>
                                         </div>
                                     }
                                     else
                                     {
-                                        <span>—</span>
+                                        <span class="text-muted">—</span>
                                     }
                                 </td>
+
+                                
                                 <td>
                                     <div class="action-btns">
                                         <a href="@doc.FilePath" target="_blank"
-                                           class="btn-action view" title="تحميل">
+                                           class="btn-action download"
+                                           data-tip="تحميل"
+                                           data-tip-en="Download">
                                             <i class="fas fa-download"></i>
                                         </a>
                                         @if (role == "ProjectManager" || role == "Engineer")
@@ -173,7 +324,9 @@
                                                   method="post" style="display:inline"
                                                   onsubmit="return confirm('هل أنت متأكد من حذف هذا المستند؟')">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn-action delete" title="حذف">
+                                                <button type="submit" class="btn-action delete"
+                                                        data-tip="حذف"
+                                                        data-tip-en="Delete">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -185,13 +338,83 @@
                     </tbody>
                 </table>
             </div>
+
+            
+            <div class="empty-state" id="noResultsState" style="display:none">
+                <i class="fas fa-filter-circle-xmark"></i>
+                <h6 data-lang="no_match_title">لا توجد نتائج</h6>
+                <p data-lang="no_match_sub">جرّب تغيير معايير البحث أو التصفية</p>
+            </div>
         }
         else
         {
             <div class="empty-state">
                 <i class="fas fa-folder-open"></i>
-                <p data-lang="no_documents">لا توجد مستندات مرفوعة حتى الآن</p>
+                <h6 data-lang="no_docs_title">لا توجد مستندات بعد</h6>
+                <p data-lang="no_docs_sub">
+                    @if (selectedProjectId.HasValue && (role == "ProjectManager" || role == "Engineer"))
+                    {
+                        <text>ابدأ برفع مستند جديد للمشروع</text>
+                    }
+                    else
+                    {
+
+                        <text>لم يتم رفع أي مستندات حتى الآن</text>
+                    }
+                </p>
             </div>
         }
     </div>
+
 </div>
+
+@section Scripts {
+    <script>
+        /* ── Project redirect filter ─────────── */
+        function filterByProject(projId) {
+            window.location.href = projId
+                ? '@Url.Action("Index", "Document")?projectId=' + projId
+                : '@Url.Action("Index", "Document")';
+        }
+
+        /* ── Combined client-side filter ───────── */
+        function applyFilters() {
+            const q        = (document.getElementById('docSearch')?.value || '').toLowerCase();
+            const type     = document.getElementById('typeFilter')?.value || '';
+            const category = document.getElementById('categoryFilter')?.value || '';
+            const rows     = document.querySelectorAll('#docTableBody .doc-row');
+            let visible    = 0;
+
+            rows.forEach(row => {
+                const name = row.dataset.name || '';
+                const rType = row.dataset.type || '';
+                const rCat  = row.dataset.category || '';
+
+                const matchQ = !q || name.includes(q);
+                const matchT = !type || rType === type;
+                const matchC = !category || rCat === category;
+
+                const show = matchQ && matchT && matchC;
+                row.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+
+            const noRes = document.getElementById('noResultsState');
+            if (noRes) noRes.style.display = visible === 0 ? 'flex' : 'none';
+
+            const rc = document.getElementById('resultsCount');
+            if (rc) rc.querySelector('strong').textContent = visible;
+
+            const hb = document.getElementById('headerBadgeCount');
+            if (hb) hb.textContent = visible;
+        }
+
+        /* ── LTR tooltip flip ───────────────── */
+        document.addEventListener('DOMContentLoaded', () => {
+            const isLtr = document.documentElement.dir === 'ltr';
+            document.querySelectorAll('.btn-action[data-tip-en]').forEach(btn => {
+                if (isLtr) btn.setAttribute('data-tip', btn.dataset.tipEn);
+            });
+        });
+    </script>
+}

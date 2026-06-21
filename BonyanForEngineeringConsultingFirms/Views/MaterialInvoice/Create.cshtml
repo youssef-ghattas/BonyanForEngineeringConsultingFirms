@@ -16,13 +16,13 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-plus-circle" style="color:var(--secondary)"></i>
-            إنشاء فاتورة مادة جديدة
+            <span data-lang="create_material_invoice">إنشاء فاتورة مادة جديدة</span>
         </h2>
     </div>
     @if (!fromMaterial)
     {
         <a asp-action="Index" class="btn-bonyan-primary">
-            <i class="fas fa-arrow-right"></i> رجوع للفواتير
+            <i class="fas fa-arrow-right"></i> <span data-lang="back_to_invoices">رجوع للفواتير</span>
         </a>
     }
 </div>
@@ -32,8 +32,7 @@
     <div class="locked-fields-banner">
         <i class="fas fa-lock"></i>
         <span>
-            تم تعبئة بيانات المادة والمورد والكمية والسعر تلقائياً ولا يمكن تعديلها.
-            يمكنك إكمال بيانات الضريبة والخصم وتاريخ الاستحقاق وحالة الدفع.
+            <span data-lang="locked_fields_banner">تم تعبئة بيانات المادة والمورد والكمية والسعر تلقائياً ولا يمكن تعديلها. يمكنك إكمال بيانات الضريبة والخصم وتاريخ الاستحقاق وحالة الدفع.</span>
         </span>
     </div>
 }
@@ -41,7 +40,7 @@
 <div class="upload-card">
     <div class="upload-card-header">
         <i class="fas fa-file-invoice"></i>
-        <h4>بيانات الفاتورة</h4>
+        <h4 data-lang="invoice_data">بيانات الفاتورة</h4>
     </div>
     <div class="upload-card-body">
         <form asp-action="Create" method="post" id="invForm">
@@ -51,7 +50,7 @@
 
                 @* ── MATERIAL ── *@
                 <div class="form-group">
-                    <label>المادة <span style="color:red">*</span></label>
+                    <label data-lang="material">المادة</label> <span style="color:red">*</span>
                     @if (fromMaterial)
                     {
                         var mat = materials.FirstOrDefault(m => m.MaterialID == Model.MaterialID);
@@ -64,7 +63,7 @@
                     else
                     {
                         <select asp-for="MaterialID" class="form-control" required id="materialSelect">
-                            <option value="">-- اختر المادة --</option>
+                            <option value="" data-lang="choose_material_option2">-- اختر المادة --</option>
                             @foreach (var m in materials)
                             {
                                 <option value="@m.MaterialID"
@@ -81,7 +80,7 @@
 
                 @* ── SUPPLIER ── *@
                 <div class="form-group">
-                    <label>المورد <span style="color:red">*</span></label>
+                    <label data-lang="supplier">المورد</label> <span style="color:red">*</span>
                     @if (fromMaterial)
                     {
                         var sup = suppliers.FirstOrDefault(s => s.SupplierID == Model.SupplierID);
@@ -94,9 +93,9 @@
                     else
                     {
                         <select asp-for="SupplierID" class="form-control" required id="supplierSelect">
-                            <option value="">-- اختر المادة أولاً --</option>
+                            <option value="" data-lang="choose_material_first_option">-- اختر المادة أولاً --</option>
                         </select>
-                        <small class="text-muted" id="supplierHint" style="display:none">
+                        <small class="text-muted" id="supplierHint" style="display:none" data-lang="no_suppliers_for_material">
                             لا يوجد موردون مرتبطون بهذه المادة
                         </small>
                     }
@@ -105,7 +104,7 @@
 
                 @* ── QUANTITY ── *@
                 <div class="form-group">
-                    <label>الكمية <span style="color:red">*</span></label>
+                    <label data-lang="quantity">الكمية</label> <span style="color:red">*</span>
                     @if (fromMaterial)
                     {
                         <input type="hidden" name="Quantity" value="@Model.Quantity" />
@@ -123,7 +122,7 @@
 
                 @* ── UNIT PRICE ── *@
                 <div class="form-group">
-                    <label>سعر الوحدة (ج.م) <span style="color:red">*</span></label>
+                    <label data-lang="unit_price_egp">سعر الوحدة (ج.م)</label> <span style="color:red">*</span>
                     @if (fromMaterial)
                     {
                         <input type="hidden" name="UnitPrice" value="@Model.UnitPrice" />
@@ -141,43 +140,43 @@
 
                 @* ── TAX ── *@
                 <div class="form-group">
-                    <label>نسبة الضريبة (%)</label>
+                    <label data-lang="tax_percent">نسبة الضريبة (%)</label>
                     <input asp-for="TaxPercent" type="number" step="0.01" min="0" max="100"
                            class="form-control" id="TaxPercent" oninput="calcFinal()" placeholder="0" />
                 </div>
 
                 @* ── DISCOUNT ── *@
                 <div class="form-group">
-                    <label>نسبة الخصم (%)</label>
+                    <label data-lang="discount_percent2">نسبة الخصم (%)</label>
                     <input asp-for="DiscountPercent" type="number" step="0.01" min="0" max="100"
                            class="form-control" id="DiscountPercent" oninput="calcFinal()" placeholder="0" />
                 </div>
 
                 @* ── INVOICE DATE ── *@
                 <div class="form-group">
-                    <label>تاريخ الفاتورة <span style="color:red">*</span></label>
+                    <label data-lang="invoice_date">تاريخ الفاتورة</label> <span style="color:red">*</span>
                     <input asp-for="InvoiceDate" type="date" class="form-control" required />
                 </div>
 
                 @* ── DUE DATE ── *@
                 <div class="form-group">
-                    <label>تاريخ الاستحقاق</label>
+                    <label data-lang="due_date">تاريخ الاستحقاق</label>
                     <input asp-for="DueDate" type="date" class="form-control" />
                 </div>
 
                 @* ── STATUS ── *@
                 <div class="form-group">
-                    <label>حالة الدفع</label>
+                    <label data-lang="payment_status">حالة الدفع</label>
                     <select asp-for="Status" class="form-control" id="statusSelect" onchange="onStatusChange()">
-                        <option value="1">غير مدفوعة</option>
-                        <option value="0">مدفوعة</option>
-                        <option value="2">مدفوعة جزئياً</option>
+                        <option value="1" data-lang="invoice_unpaid">غير مدفوعة</option>
+                        <option value="0" data-lang="invoice_paid">مدفوعة</option>
+                        <option value="2" data-lang="invoice_partial">مدفوعة جزئياً</option>
                     </select>
                 </div>
 
                 @* ── AMOUNT PAID (shown only when PartiallyPaid) ── *@
                 <div class="form-group" id="amountPaidRow" style="display:none;">
-                    <label>المبلغ المدفوع (ج.م) <span style="color:red">*</span></label>
+                    <label data-lang="amount_paid">المبلغ المدفوع (ج.م)</label> <span style="color:red">*</span>
                     <input asp-for="AmountPaid" type="number" step="0.01" min="0"
                            class="form-control" id="amountPaidInput"
                            placeholder="0.00" oninput="calcRemaining()" />
@@ -186,8 +185,8 @@
 
                 @* ── NOTES ── *@
                 <div class="form-group" style="grid-column:1 / -1">
-                    <label>ملاحظات</label>
-                    <textarea asp-for="Notes" class="form-control" rows="2" placeholder="أي ملاحظات..."></textarea>
+                    <label data-lang="notes">ملاحظات</label>
+                    <textarea asp-for="Notes" class="form-control" rows="2" data-lang-placeholder="notes_placeholder3" placeholder="أي ملاحظات..."></textarea>
                 </div>
 
             </div>
@@ -195,31 +194,31 @@
             @* ── SUMMARY BOX ── *@
             <div class="invoice-summary-box">
                 <div class="invoice-summary-title">
-                    <i class="fas fa-calculator"></i> ملخص الفاتورة
+                    <i class="fas fa-calculator"></i> <span data-lang="invoice_summary">ملخص الفاتورة</span>
                 </div>
                 <div class="invoice-summary-grid">
                     <div class="invoice-summary-item">
-                        <div class="invoice-summary-label">المجموع قبل الضريبة</div>
+                        <div class="invoice-summary-label" data-lang="total_before_tax">المجموع قبل الضريبة</div>
                         <div class="invoice-summary-value" id="dispTotal">0.00 ج.م</div>
                     </div>
                     <div class="invoice-summary-item">
-                        <div class="invoice-summary-label">الضريبة</div>
+                        <div class="invoice-summary-label" data-lang="tax">الضريبة</div>
                         <div class="invoice-summary-value tax-value" id="dispTax">0.00 ج.م</div>
                     </div>
                     <div class="invoice-summary-item">
-                        <div class="invoice-summary-label">الخصم</div>
+                        <div class="invoice-summary-label" data-lang="discount">الخصم</div>
                         <div class="invoice-summary-value disc-value" id="dispDisc">0.00 ج.م</div>
                     </div>
                     <div class="invoice-summary-item invoice-summary-final">
-                        <div class="invoice-summary-label">الصافي النهائي</div>
+                        <div class="invoice-summary-label" data-lang="net_final">الصافي النهائي</div>
                         <div class="invoice-summary-value" id="dispFinal">0.00 ج.م</div>
                     </div>
                     <div class="invoice-summary-item invoice-summary-final" id="rowRemaining" style="display:none;">
-                        <div class="invoice-summary-label" style="color:#c62828;">المبلغ المتبقي</div>
+                        <div class="invoice-summary-label" style="color:#c62828;" data-lang="remaining_amount">المبلغ المتبقي</div>
                         <div class="invoice-summary-value" id="dispRemaining" style="color:#c62828;">0.00 ج.م</div>
                     </div>
                     <div class="invoice-summary-item" id="rowPaid" style="display:none;">
-                        <div class="invoice-summary-label" style="color:#2e7d32;">المبلغ المدفوع</div>
+                        <div class="invoice-summary-label" style="color:#2e7d32;" data-lang="amount_paid">المبلغ المدفوع</div>
                         <div class="invoice-summary-value" id="dispPaid" style="color:#2e7d32;">0.00 ج.م</div>
                     </div>
                 </div>
@@ -230,18 +229,18 @@
                 @if (fromMaterial)
                 {
                     <button type="button" class="btn-cancel-invoice" onclick="confirmCancelInvoice()">
-                        <i class="fas fa-ban"></i> إلغاء الفاتورة
+                        <i class="fas fa-ban"></i> <span data-lang="cancel_invoice">إلغاء الفاتورة</span>
                     </button>
                 }
                 else
                 {
                     <a asp-action="Index" class="btn-bonyan-primary">
-                        <i class="fas fa-times"></i> إلغاء
+                        <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
                     </a>
                 }
 
                 <button type="submit" class="btn-bonyan-secondary">
-                    <i class="fas fa-save"></i> حفظ الفاتورة
+                    <i class="fas fa-save"></i> <span data-lang="save_invoice">حفظ الفاتورة</span>
                 </button>
             </div>
 
@@ -269,18 +268,17 @@
             <div class="cancel-modal-icon">
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
-            <h4 class="cancel-modal-title">تحذير: إلغاء الفاتورة</h4>
+            <h4 class="cancel-modal-title" data-lang="cancel_invoice_warning">تحذير: إلغاء الفاتورة</h4>
             <p class="cancel-modal-body">
-                سيتم <strong>حذف المادة المرتبطة بهذه الفاتورة</strong> بشكل نهائي من قاعدة البيانات.
-                هل أنت متأكد من الإلغاء؟
+                <span data-lang="cancel_invoice_body">سيتم حذف المادة المرتبطة بهذه الفاتورة بشكل نهائي من قاعدة البيانات. هل أنت متأكد من الإلغاء؟</span>
             </p>
             <div class="cancel-modal-actions">
                 <button class="btn-modal-back" onclick="closeCancelModal()">
-                    <i class="fas fa-arrow-right"></i> لا، ارجع
+                    <i class="fas fa-arrow-right"></i> <span data-lang="no_go_back">لا، ارجع</span>
                 </button>
                 <button class="btn-modal-confirm-delete"
                         onclick="document.getElementById('cancelInvoiceForm').submit()">
-                    <i class="fas fa-trash"></i> نعم، احذف المادة وألغِ الفاتورة
+                    <i class="fas fa-trash"></i> <span data-lang="yes_delete_cancel">نعم، احذف المادة وألغِ الفاتورة</span>
                 </button>
             </div>
         </div>

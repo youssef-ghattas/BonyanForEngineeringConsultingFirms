@@ -14,18 +14,18 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-edit" style="color:var(--secondary)"></i>
-            تعديل فاتورة #@Model.MaterialInvoiceID
+            <span data-lang="edit_invoice_hash">تعديل فاتورة #</span>@Model.MaterialInvoiceID
         </h2>
     </div>
     <a asp-action="Details" asp-route-id="@Model.MaterialInvoiceID" class="btn-bonyan-primary">
-        <i class="fas fa-arrow-right"></i> رجوع
+        <i class="fas fa-arrow-right"></i> <span data-lang="back">رجوع</span>
     </a>
 </div>
 
 <div class="upload-card">
     <div class="upload-card-header">
         <i class="fas fa-file-invoice"></i>
-        <h4>تعديل بيانات الفاتورة</h4>
+        <h4 data-lang="edit_invoice_data">تعديل بيانات الفاتورة</h4>
     </div>
     <div class="upload-card-body">
         <form asp-action="Edit" method="post">
@@ -34,7 +34,7 @@
 
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label>المادة <span style="color:red">*</span></label>
+                    <label data-lang="material">المادة</label> <span style="color:red">*</span>
                     <select asp-for="MaterialID" class="form-control" required>
                         @foreach (var m in materials)
                         {
@@ -50,7 +50,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>المورد <span style="color:red">*</span></label>
+                    <label data-lang="supplier">المورد</label> <span style="color:red">*</span>
                     <select asp-for="SupplierID" class="form-control" required>
                         @foreach (var s in suppliers)
                         {
@@ -66,64 +66,64 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>الكمية <span style="color:red">*</span></label>
+                    <label data-lang="quantity">الكمية</label> <span style="color:red">*</span>
                     <input asp-for="Quantity" type="number" step="0.001" min="0.001"
                            class="form-control" required id="qty" oninput="calcAll()" />
                 </div>
                 <div class="form-group">
-                    <label>سعر الوحدة (ج.م) <span style="color:red">*</span></label>
+                    <label data-lang="unit_price_egp">سعر الوحدة (ج.م)</label> <span style="color:red">*</span>
                     <input asp-for="UnitPrice" type="number" step="0.01" min="0"
                            class="form-control" required id="unitPrice" oninput="calcAll()" />
                 </div>
                 <div class="form-group">
-                    <label>نسبة الضريبة (%)</label>
+                    <label data-lang="tax_percent">نسبة الضريبة (%)</label>
                     <input asp-for="TaxPercent" type="number" step="0.01" min="0" max="100"
                            class="form-control" id="tax" oninput="calcAll()" />
                 </div>
                 <div class="form-group">
-                    <label>نسبة الخصم (%)</label>
+                    <label data-lang="discount_percent2">نسبة الخصم (%)</label>
                     <input asp-for="DiscountPercent" type="number" step="0.01" min="0" max="100"
                            class="form-control" id="disc" oninput="calcAll()" />
                 </div>
                 <div class="form-group">
-                    <label>تاريخ الفاتورة</label>
+                    <label data-lang="invoice_date">تاريخ الفاتورة</label>
                     <input asp-for="InvoiceDate" type="date" class="form-control" />
                 </div>
                 <div class="form-group">
-                    <label>تاريخ الاستحقاق</label>
+                    <label data-lang="due_date">تاريخ الاستحقاق</label>
                     <input asp-for="DueDate" type="date" class="form-control" />
                 </div>
                 <div class="form-group">
-                    <label>الحالة</label>
+                    <label data-lang="status">الحالة</label>
                     <select asp-for="Status" class="form-control">
                         @if (Model.Status == InvoiceStatus.Unpaid)
                         {
-                            <option value="1" selected>غير مدفوعة</option>
+                            <option value="1" selected data-lang="invoice_unpaid">غير مدفوعة</option>
                         }
                         else
                         {
-                            <option value="1">غير مدفوعة</option>
+                            <option value="1" data-lang="invoice_unpaid">غير مدفوعة</option>
                         }
                         @if (Model.Status == InvoiceStatus.Paid)
                         {
-                            <option value="0" selected>مدفوعة</option>
+                            <option value="0" selected data-lang="invoice_paid">مدفوعة</option>
                         }
                         else
                         {
-                            <option value="0">مدفوعة</option>
+                            <option value="0" data-lang="invoice_paid">مدفوعة</option>
                         }
                         @if (Model.Status == InvoiceStatus.PartiallyPaid)
                         {
-                            <option value="2" selected>مدفوعة جزئياً</option>
+                            <option value="2" selected data-lang="invoice_partial">مدفوعة جزئياً</option>
                         }
                         else
                         {
-                            <option value="2">مدفوعة جزئياً</option>
+                            <option value="2" data-lang="invoice_partial">مدفوعة جزئياً</option>
                         }
                     </select>
                 </div>
                 <div class="form-group" style="grid-column:1 / -1">
-                    <label>ملاحظات</label>
+                    <label data-lang="notes">ملاحظات</label>
                     <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
                 </div>
             </div>
@@ -131,23 +131,23 @@
             <!-- Summary Box -->
             <div style="background:linear-gradient(135deg,#e8f5e9,#e3f2fd);border-radius:10px;padding:20px;margin:16px 0;border:1px solid #c8e6c9">
                 <div style="font-weight:700;font-size:1rem;color:var(--primary);margin-bottom:14px">
-                    <i class="fas fa-calculator"></i> ملخص الفاتورة
+                    <i class="fas fa-calculator"></i> <span data-lang="invoice_summary">ملخص الفاتورة</span>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;text-align:center">
                     <div>
-                        <div style="font-size:0.76rem;color:#888;margin-bottom:4px">المجموع</div>
+                        <div style="font-size:0.76rem;color:#888;margin-bottom:4px" data-lang="mi_total">المجموع</div>
                         <div style="font-size:1.2rem;font-weight:700;color:#333" id="dispTotal">0.00 ج.م</div>
                     </div>
                     <div>
-                        <div style="font-size:0.76rem;color:#888;margin-bottom:4px">الضريبة</div>
+                        <div style="font-size:0.76rem;color:#888;margin-bottom:4px" data-lang="tax">الضريبة</div>
                         <div style="font-size:1.2rem;font-weight:700;color:#f57c00" id="dispTax">0.00 ج.م</div>
                     </div>
                     <div>
-                        <div style="font-size:0.76rem;color:#888;margin-bottom:4px">الخصم</div>
+                        <div style="font-size:0.76rem;color:#888;margin-bottom:4px" data-lang="discount">الخصم</div>
                         <div style="font-size:1.2rem;font-weight:700;color:#388e3c" id="dispDisc">0.00 ج.م</div>
                     </div>
                     <div style="background:#fff;border-radius:8px;padding:10px;border:2px solid var(--secondary)">
-                        <div style="font-size:0.76rem;color:#888;margin-bottom:4px">الصافي</div>
+                        <div style="font-size:0.76rem;color:#888;margin-bottom:4px" data-lang="net">الصافي</div>
                         <div style="font-size:1.5rem;font-weight:700;color:var(--secondary)" id="dispFinal">0.00 ج.م</div>
                     </div>
                 </div>
@@ -155,10 +155,10 @@
 
             <div class="upload-actions">
                 <a asp-action="Details" asp-route-id="@Model.MaterialInvoiceID" class="btn-bonyan-primary">
-                    <i class="fas fa-times"></i> إلغاء
+                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
                 </a>
                 <button type="submit" class="btn-bonyan-secondary">
-                    <i class="fas fa-save"></i> حفظ التعديلات
+                    <i class="fas fa-save"></i> <span data-lang="save_changes">حفظ التعديلات</span>
                 </button>
             </div>
         </form>
