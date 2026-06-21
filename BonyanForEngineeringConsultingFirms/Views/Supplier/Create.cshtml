@@ -8,15 +8,15 @@
 
 <div class="page-header">
     <div class="page-header-left">
-        <h2><i class="fas fa-plus-circle" style="color:var(--secondary)"></i> إضافة مورد جديد</h2>
+        <h2><i class="fas fa-plus-circle" style="color:var(--secondary)"></i> <span data-lang="add_supplier_new">إضافة مورد جديد</span></h2>
     </div>
     <a asp-action="Index" class="btn-bonyan-primary">
-        <i class="fas fa-arrow-right"></i> رجوع للموردين
+        <i class="fas fa-arrow-right"></i> <span data-lang="back_to_suppliers">رجوع للموردين</span>
     </a>
 </div>
 
 <div class="upload-card">
-    <div class="upload-card-header"><i class="fas fa-industry"></i><h4>بيانات المورد</h4></div>
+    <div class="upload-card-header"><i class="fas fa-industry"></i><h4 data-lang="supplier_data">بيانات المورد</h4></div>
     <div class="upload-card-body">
         <form asp-action="Create" method="post" id="supplierForm">
             @Html.AntiForgeryToken()
@@ -24,7 +24,7 @@
             @if (!ViewData.ModelState.IsValid)
             {
                 <div style="background:#fde8e8; border:1px solid #f5c6cb; border-radius:10px;
-                    padding:14px 18px; margin-bottom:18px; color:#842029;">
+                        padding:14px 18px; margin-bottom:18px; color:#842029;">
                     <strong><i class="fas fa-exclamation-triangle"></i> يوجد أخطاء في النموذج:</strong>
                     <ul style="margin:8px 0 0 0; padding-right:20px">
                         @foreach (var error in ViewData.ModelState.Values
@@ -39,7 +39,7 @@
             @if (ViewBag.ValidationErrors != null)
             {
                 <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:10px;
-                    padding:14px 18px; margin-bottom:18px; color:#664d03;">
+                        padding:14px 18px; margin-bottom:18px; color:#664d03;">
                     <strong><i class="fas fa-bug"></i> تفاصيل الخطأ:</strong>
                     <ul style="margin:8px 0 0 0; padding-right:20px">
                         @foreach (var err in ViewBag.ValidationErrors as List<string>)
@@ -51,26 +51,26 @@
             }
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label>اسم المورد <span style="color:red">*</span></label>
-                    <input asp-for="SupplierName" class="form-control" placeholder="اسم الشركة أو المورد" required />
+                    <label data-lang="supplier_name_label">اسم المورد</label> <span style="color:red">*</span>
+                    <input asp-for="SupplierName" class="form-control" data-lang-placeholder="supplier_name_placeholder" placeholder="اسم الشركة أو المورد" required />
                     <span asp-validation-for="SupplierName" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label>شخص التواصل</label>
-                    <input asp-for="ContactPerson" class="form-control" placeholder="اسم المسؤول" />
+                    <label data-lang="contact_person">شخص التواصل</label>
+                    <input asp-for="ContactPerson" class="form-control" data-lang-placeholder="contact_person_placeholder" placeholder="اسم المسؤول" />
                 </div>
                 <div class="form-group">
-                    <label>البريد الإلكتروني</label>
+                    <label data-lang="email">البريد الإلكتروني</label>
                     <input asp-for="Email" type="email" class="form-control" placeholder="supplier@example.com" />
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label>الهاتف</label>
+                    <label data-lang="phone">الهاتف</label>
                     <input asp-for="Phone" class="form-control" placeholder="01xxxxxxxxx" />
                 </div>
                 <div class="form-group" style="grid-column:1/-1">
-                    <label>العنوان</label>
-                    <textarea asp-for="Address" class="form-control" rows="2" placeholder="عنوان المورد التفصيلي"></textarea>
+                    <label data-lang="address">العنوان</label>
+                    <textarea asp-for="Address" class="form-control" rows="2" data-lang-placeholder="address_placeholder" placeholder="عنوان المورد التفصيلي"></textarea>
                 </div>
             </div>
 
@@ -78,7 +78,7 @@
 
             <div class="form-group">
                 <label style="font-weight:700;color:var(--primary);font-size:1rem">
-                    <i class="fas fa-boxes"></i> المواد التي يورّدها هذا المورد
+                    <i class="fas fa-boxes"></i> <span data-lang="materials_supplied_by">المواد التي يورّدها هذا المورد</span>
                 </label>
 
                 <div style="position:relative;max-width:420px;margin-top:8px">
@@ -87,7 +87,7 @@
                                    padding:12px 16px;text-align:right;cursor:pointer;font-size:0.92rem;
                                    display:flex;justify-content:space-between;align-items:center;
                                    transition:border-color 0.2s">
-                        <span id="dropdownLabel" style="color:#aaa">— اختر المواد التي يورّدها —</span>
+                        <span id="dropdownLabel" style="color:#aaa" data-lang="choose_supplied_materials">— اختر المواد التي يورّدها —</span>
                         <i class="fas fa-chevron-down" id="dropdownArrow"
                            style="color:#aaa;transition:transform 0.25s"></i>
                     </button>
@@ -107,8 +107,8 @@
                         {
                             <label id="lbl_@item.Val" onclick="onTypeChange('@item.Val')"
                                    style="display:flex;align-items:center;gap:14px;padding:13px 18px;
-                                              cursor:pointer;border-bottom:1px solid #f5f5f5;margin:0;
-                                              transition:background 0.15s;user-select:none">
+                                                  cursor:pointer;border-bottom:1px solid #f5f5f5;margin:0;
+                                                  transition:background 0.15s;user-select:none">
                                 <input type="checkbox" name="selectedMaterialTypes" value="@item.Val"
                                        id="chk_@item.Val" class="mat-type-cb"
                                        style="width:18px;height:18px;cursor:pointer;accent-color:@item.Color"
@@ -122,16 +122,16 @@
 
                 <div id="othersBox" style="display:none;margin-top:10px;max-width:420px">
                     <input type="text" name="othersText" id="othersText" class="form-control"
-                           placeholder="اكتب نوع المادة الأخرى (مثال: رخام، زجاج، خشب...)" />
+                           data-lang-placeholder="other_material_placeholder" placeholder="اكتب نوع المادة الأخرى (مثال: رخام، زجاج، خشب...)" />
                 </div>
 
                 <div id="selectedChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
             </div>
 
             <div class="upload-actions" style="margin-top:28px">
-                <a asp-action="Index" class="btn-bonyan-primary"><i class="fas fa-times"></i> إلغاء</a>
+                <a asp-action="Index" class="btn-bonyan-primary"><i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span></a>
                 <button type="submit" class="btn-bonyan-secondary">
-                    <i class="fas fa-save"></i> حفظ المورد
+                    <i class="fas fa-save"></i> <span data-lang="save_supplier">حفظ المورد</span>
                 </button>
             </div>
         </form>

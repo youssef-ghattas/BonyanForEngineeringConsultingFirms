@@ -3,15 +3,15 @@
 @using Bonyan.DAL.Enums
 @{
     ViewData["Title"] = "فواتير المواد";
-    var materials  = ViewBag.Materials as List<Bonyan.DAL.Models.Material> ?? new();
-    var suppliers  = ViewBag.Suppliers as List<Bonyan.DAL.Models.Supplier> ?? new();
-    int? selMat    = ViewBag.SelectedMaterialId;
-    int? selSup    = ViewBag.SelectedSupplierId;
-    int? selStat   = ViewBag.SelectedStatus;
-    decimal totalAmt  = ViewBag.TotalAmount  != null ? (decimal)ViewBag.TotalAmount  : 0;
+    var materials = ViewBag.Materials as List<Bonyan.DAL.Models.Material> ?? new();
+    var suppliers = ViewBag.Suppliers as List<Bonyan.DAL.Models.Supplier> ?? new();
+    int? selMat = ViewBag.SelectedMaterialId;
+    int? selSup = ViewBag.SelectedSupplierId;
+    int? selStat = ViewBag.SelectedStatus;
+    decimal totalAmt = ViewBag.TotalAmount != null ? (decimal)ViewBag.TotalAmount : 0;
     decimal unpaidAmt = ViewBag.UnpaidAmount != null ? (decimal)ViewBag.UnpaidAmount : 0;
-    int totalCount    = ViewBag.TotalInvoices != null ? (int)ViewBag.TotalInvoices   : 0;
-    decimal paidAmt   = totalAmt - unpaidAmt;
+    int totalCount = ViewBag.TotalInvoices != null ? (int)ViewBag.TotalInvoices : 0;
+    decimal paidAmt = totalAmt - unpaidAmt;
 }
 
 <link rel="stylesheet" href="~/css/material.css" />
@@ -30,10 +30,10 @@
     <div class="mi-header">
         <h2>
             <i class="fas fa-file-invoice-dollar"></i>
-            فواتير المواد
+            <span data-lang="material_invoices">فواتير المواد</span>
         </h2>
         <a asp-action="Create" class="btn-bonyan-secondary">
-            <i class="fas fa-plus"></i> فاتورة جديدة
+            <i class="fas fa-plus"></i> <span data-lang="new_invoice">فاتورة جديدة</span>
         </a>
     </div>
 
@@ -42,14 +42,14 @@
         <div class="mi-kpi blue">
             <div class="mi-kpi-icon"><i class="fas fa-file-invoice"></i></div>
             <div>
-                <div class="mi-kpi-label">إجمالي الفواتير</div>
+                <div class="mi-kpi-label" data-lang="total_invoices">إجمالي الفواتير</div>
                 <div class="mi-kpi-value">@totalCount</div>
             </div>
         </div>
         <div class="mi-kpi green">
             <div class="mi-kpi-icon"><i class="fas fa-coins"></i></div>
             <div>
-                <div class="mi-kpi-label">إجمالي المبالغ</div>
+                <div class="mi-kpi-label" data-lang="total_amounts">إجمالي المبالغ</div>
                 <div class="mi-kpi-value">
                     @totalAmt.ToString("N2") <small style="font-size:.6em; font-weight:600">ج.م</small>
                 </div>
@@ -58,7 +58,7 @@
         <div class="mi-kpi red">
             <div class="mi-kpi-icon"><i class="fas fa-exclamation-circle"></i></div>
             <div>
-                <div class="mi-kpi-label">غير مدفوع</div>
+                <div class="mi-kpi-label" data-lang="unpaid">غير مدفوع</div>
                 <div class="mi-kpi-value" style="color:#c62828">
                     @unpaidAmt.ToString("N2") <small style="font-size:.6em; font-weight:600">ج.م</small>
                 </div>
@@ -67,7 +67,7 @@
         <div class="mi-kpi amber">
             <div class="mi-kpi-icon"><i class="fas fa-check-double"></i></div>
             <div>
-                <div class="mi-kpi-label">مدفوع</div>
+                <div class="mi-kpi-label" data-lang="paid">مدفوع</div>
                 <div class="mi-kpi-value" style="color:#2e7d32">
                     @paidAmt.ToString("N2") <small style="font-size:.6em; font-weight:600">ج.م</small>
                 </div>
@@ -79,7 +79,7 @@
     <div class="mi-filter">
         <form method="get" asp-action="Index">
             <select name="materialId" style="min-width:170px">
-                <option value="">— كل المواد —</option>
+                <option value="" data-lang="all_materials_option">— كل المواد —</option>
                 @foreach (var m in materials)
                 {
                     if (selMat == m.MaterialID)
@@ -94,7 +94,7 @@
             </select>
 
             <select name="supplierId" style="min-width:170px">
-                <option value="">— كل الموردين —</option>
+                <option value="" data-lang="all_suppliers_option">— كل الموردين —</option>
                 @foreach (var s in suppliers)
                 {
                     if (selSup == s.SupplierID)
@@ -109,39 +109,39 @@
             </select>
 
             <select name="status" style="min-width:150px">
-                <option value="">— كل الحالات —</option>
+                <option value="" data-lang="all_statuses_option">— كل الحالات —</option>
                 @if (selStat == 0)
                 {
-                    <option value="0" selected="selected">✅ مدفوعة</option>
+                    <option value="0" selected="selected" data-lang="invoice_paid">✅ مدفوعة</option>
                 }
                 else
                 {
-                    <option value="0">✅ مدفوعة</option>
+                    <option value="0" data-lang="invoice_paid">✅ مدفوعة</option>
                 }
                 @if (selStat == 1)
                 {
-                    <option value="1" selected="selected">❌ غير مدفوعة</option>
+                    <option value="1" selected="selected" data-lang="invoice_unpaid">❌ غير مدفوعة</option>
                 }
                 else
                 {
-                    <option value="1">❌ غير مدفوعة</option>
+                    <option value="1" data-lang="invoice_unpaid">❌ غير مدفوعة</option>
                 }
                 @if (selStat == 2)
                 {
-                    <option value="2" selected="selected">⚡ مدفوعة جزئياً</option>
+                    <option value="2" selected="selected" data-lang="invoice_partial">⚡ مدفوعة جزئياً</option>
                 }
                 else
                 {
-                    <option value="2">⚡ مدفوعة جزئياً</option>
+                    <option value="2" data-lang="invoice_partial">⚡ مدفوعة جزئياً</option>
                 }
             </select>
 
             <button type="submit" class="btn-bonyan-secondary" style="height:42px; padding:0 20px">
-                <i class="fas fa-filter"></i> تصفية
+                <i class="fas fa-filter"></i> <span data-lang="filter">تصفية</span>
             </button>
             <a asp-action="Index" class="btn-bonyan-primary"
                style="height:42px; padding:0 16px; display:flex; align-items:center; gap:6px">
-                <i class="fas fa-undo"></i> إعادة تعيين
+                <i class="fas fa-undo"></i> <span data-lang="reset">إعادة تعيين</span>
             </a>
         </form>
     </div>
@@ -150,7 +150,7 @@
     <div class="mi-card">
         <div class="mi-card-head">
             <i class="fas fa-list-alt"></i>
-            قائمة الفواتير
+            <span data-lang="invoices_list">قائمة الفواتير</span>
             <span class="count-badge">@Model.Count فاتورة</span>
         </div>
 
@@ -161,44 +161,47 @@
                     <thead>
                         <tr>
                             <th><i class="fas fa-hashtag"></i> #</th>
-                            <th><i class="fas fa-box"></i> المادة</th>
-                            <th><i class="fas fa-truck"></i> المورد</th>
-                            <th><i class="fas fa-cubes"></i> الكمية</th>
-                            <th><i class="fas fa-tag"></i> سعر الوحدة</th>
-                            <th><i class="fas fa-calculator"></i> المجموع</th>
-                            <th><i class="fas fa-percent"></i> ضريبة</th>
-                            <th><i class="fas fa-percent"></i> خصم</th>
-                            <th><i class="fas fa-coins"></i> الصافي</th>
-                            <th><i class="fas fa-calendar-alt"></i> تاريخ الفاتورة</th>
-                            <th><i class="fas fa-clock"></i> الاستحقاق</th>
-                            <th><i class="fas fa-circle"></i> الحالة</th>
-                            <th>إجراءات</th>
+                            <th><i class="fas fa-box"></i> <span data-lang="material">المادة</span></th>
+                            <th><i class="fas fa-truck"></i> <span data-lang="supplier">المورد</span></th>
+                            <th><i class="fas fa-cubes"></i> <span data-lang="quantity">الكمية</span></th>
+                            <th><i class="fas fa-tag"></i> <span data-lang="unit_price">سعر الوحدة</span></th>
+                            <th><i class="fas fa-calculator"></i> <span data-lang="mi_total">المجموع</span></th>
+                            <th><i class="fas fa-percent"></i> <span data-lang="tax">ضريبة</span></th>
+                            <th><i class="fas fa-percent"></i> <span data-lang="discount">خصم</span></th>
+                            <th><i class="fas fa-coins"></i> <span data-lang="net">الصافي</span></th>
+                            <th><i class="fas fa-calendar-alt"></i> <span data-lang="invoice_date">تاريخ الفاتورة</span></th>
+                            <th><i class="fas fa-clock"></i> <span data-lang="due">الاستحقاق</span></th>
+                            <th><i class="fas fa-circle"></i> <span data-lang="status">الحالة</span></th>
+                            <th data-lang="actions">إجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var inv in Model)
                         {
-                            string statusLabel = inv.Status switch {
-                                InvoiceStatus.Paid          => "مدفوعة",
-                                InvoiceStatus.Unpaid        => "غير مدفوعة",
+                            string statusLabel = inv.Status switch
+                            {
+                                InvoiceStatus.Paid => "مدفوعة",
+                                InvoiceStatus.Unpaid => "غير مدفوعة",
                                 InvoiceStatus.PartiallyPaid => "مدفوعة جزئياً",
                                 _ => inv.Status.ToString()
                             };
-                            string statusClass = inv.Status switch {
-                                InvoiceStatus.Paid          => "status-paid",
-                                InvoiceStatus.Unpaid        => "status-unpaid",
+                            string statusClass = inv.Status switch
+                            {
+                                InvoiceStatus.Paid => "status-paid",
+                                InvoiceStatus.Unpaid => "status-unpaid",
                                 InvoiceStatus.PartiallyPaid => "status-partial",
                                 _ => ""
                             };
-                            string statusIcon = inv.Status switch {
-                                InvoiceStatus.Paid          => "fas fa-check-circle",
-                                InvoiceStatus.Unpaid        => "fas fa-times-circle",
+                            string statusIcon = inv.Status switch
+                            {
+                                InvoiceStatus.Paid => "fas fa-check-circle",
+                                InvoiceStatus.Unpaid => "fas fa-times-circle",
                                 InvoiceStatus.PartiallyPaid => "fas fa-adjust",
                                 _ => ""
                             };
                             bool overdue = inv.Status != InvoiceStatus.Paid &&
-                                           inv.DueDate.HasValue &&
-                                           inv.DueDate.Value < DateTime.Today;
+                            inv.DueDate.HasValue &&
+                            inv.DueDate.Value < DateTime.Today;
 
                             <tr>
                                 <td style="font-weight:700; color:#aaa; font-size:0.8rem">
@@ -208,7 +211,7 @@
                                     <div class="mat-name">@(inv.Material?.MaterialName ?? "—")</div>
                                     @if (!string.IsNullOrEmpty(inv.Material?.Unit))
                                     {
-                                        <div class="sup-name">الوحدة: @inv.Material.Unit</div>
+                                        <div class="sup-name"><span data-lang="unit_colon">الوحدة:</span> @inv.Material.Unit</div>
                                     }
                                 </td>
                                 <td>
@@ -243,7 +246,7 @@
                                     {
                                         if (overdue)
                                         {
-                                            <span class="overdue-tag">متأخر!</span>
+                                            <span class="overdue-tag" data-lang="overdue">متأخر!</span>
                                         }
                                         @inv.DueDate.Value.ToString("yyyy-MM-dd")
                                     }
@@ -254,7 +257,7 @@
                                 </td>
                                 <td>
                                     <span class="status-badge @statusClass">
-                                        <i class="@statusIcon"></i> @statusLabel
+                                        <i class="@statusIcon"></i> <span data-en="@inv.Status.ToString()" data-ar="@statusLabel">@statusLabel</span>
                                     </span>
                                 </td>
                                 <td>
@@ -287,7 +290,7 @@
         {
             <div class="mi-empty">
                 <i class="fas fa-file-invoice-dollar"></i>
-                <p>لا توجد فواتير تطابق معايير البحث</p>
+                <p data-lang="no_matching_invoices">لا توجد فواتير تطابق معايير البحث</p>
             </div>
         }
     </div>

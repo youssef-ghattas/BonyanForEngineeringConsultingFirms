@@ -187,20 +187,24 @@
         border-bottom: 2px solid #eee;
     }
 
-    .doc-table tbody tr {
-        border-bottom: 1px solid #F4F6F9;
-        transition: background 0.15s;
+[dir="ltr"] .doc-table thead th {
+    text-align: left;
+}
+
+.doc-table tbody tr {
+    border-bottom: 1px solid #F4F6F9;
+    transition: background 0.15s;
+}
+
+    .doc-table tbody tr:hover {
+        background: #fafbff;
     }
 
-        .doc-table tbody tr:hover {
-            background: #fafbff;
-        }
-
-    .doc-table td {
-        padding: 11px 14px;
-        color: #444;
-        vertical-align: middle;
-    }
+.doc-table td {
+    padding: 11px 14px;
+    color: #444;
+    vertical-align: middle;
+}
 
 /* File type badge */
 .file-type-badge {
@@ -291,4 +295,302 @@
         border-color: var(--secondary, #8B5E3C);
         outline: none;
         box-shadow: 0 0 0 3px rgba(139,94,60,0.1);
+    }
+
+/* ══════════════════════════════════════════════
+   Document/Index revamp — additional classes
+══════════════════════════════════════════════ */
+
+/* ── Page Wrapper ─────────────────────────────────── */
+.doc-page {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+/* ── KPI Strip ─────────────────────────────────────── */
+.doc-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.doc-kpi {
+    border-radius: 16px;
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+    .doc-kpi::after {
+        content: '';
+        position: absolute;
+        top: -22px;
+        left: -22px;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        opacity: 0.12;
+    }
+
+    .doc-kpi:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+    }
+
+    .doc-kpi.navy {
+        background: linear-gradient(135deg, #e9eef6, #cfdaee);
+    }
+
+    .doc-kpi.blue {
+        background: linear-gradient(135deg, #e8f0fe, #c5d8ff);
+    }
+
+    .doc-kpi.gold {
+        background: linear-gradient(135deg, #fdf3e3, #f6dca8);
+    }
+
+    .doc-kpi.green {
+        background: linear-gradient(135deg, #e8f5e9, #b9f0c2);
+    }
+
+    .doc-kpi.navy::after {
+        background: #1B3A6B;
+    }
+
+    .doc-kpi.blue::after {
+        background: #1a73e8;
+    }
+
+    .doc-kpi.gold::after {
+        background: #C8922A;
+    }
+
+    .doc-kpi.green::after {
+        background: #2e7d32;
+    }
+
+.doc-kpi-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.doc-kpi.navy .doc-kpi-icon {
+    background: #1B3A6B;
+    color: #fff;
+}
+
+.doc-kpi.blue .doc-kpi-icon {
+    background: #1a73e8;
+    color: #fff;
+}
+
+.doc-kpi.gold .doc-kpi-icon {
+    background: #C8922A;
+    color: #fff;
+}
+
+.doc-kpi.green .doc-kpi-icon {
+    background: #2e7d32;
+    color: #fff;
+}
+
+.doc-kpi-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #5b637a;
+    margin-bottom: 4px;
+}
+
+.doc-kpi-value {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+/* ── Filter bar (project form + reset) ───────────────────────────── */
+.filter-bar-project {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-bar-label {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--primary, #1B3A6B);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+    .filter-bar-label i {
+        color: var(--secondary, #8B5E3C);
+    }
+
+.filter-reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(27, 58, 107, 0.07);
+    color: var(--primary, #1B3A6B);
+    border: none;
+    border-radius: 9px;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+    .filter-reset:hover {
+        background: var(--primary, #1B3A6B);
+        color: #fff;
+    }
+
+/* ── Table Card (replaces plain .details-card wrapper) ───────────── */
+.table-card {
+    background: var(--white, #fff);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+    overflow: hidden;
+    border: 1px solid #f0f0f8;
+}
+
+.table-card-header {
+    padding: 16px 22px;
+    border-bottom: 2px solid #f5f5f5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
+}
+
+    .table-card-header h5 {
+        font-size: 0.97rem;
+        font-weight: 800;
+        color: var(--primary, #1B3A6B);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .table-card-header h5 i {
+            color: var(--secondary, #8B5E3C);
+        }
+
+    .table-card-header .count-badge {
+        background: var(--secondary, #8B5E3C);
+        color: #fff;
+        border-radius: 20px;
+        padding: 3px 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-right: auto;
+    }
+
+[dir="ltr"] .table-card-header .count-badge {
+    margin-right: 0;
+    margin-left: auto;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* ── Document table cell upgrades ─────────────────────────────────── */
+.doc-title-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    color: var(--text, #1F2937);
+}
+
+.doc-file-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: rgba(139, 94, 60, 0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--secondary, #8B5E3C);
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+
+.doc-project-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(27, 58, 107, 0.07);
+    color: var(--primary, #1B3A6B);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+    .doc-project-pill i {
+        color: var(--secondary, #8B5E3C);
+        font-size: 0.7rem;
+    }
+
+.doc-uploader-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.doc-uploader-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary, #1B3A6B), #2a5298);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.68rem;
+    flex-shrink: 0;
+}
+
+/* ── Action button group ─────────────────────────────────────────── */
+.action-btns {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* ── Richer empty state (keeps original markup style as fallback) ── */
+.table-card .empty-state {
+    text-align: center;
+    padding: 56px 20px;
+    color: #aaa;
+}
+
+    .table-card .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 14px;
+        display: block;
+        opacity: 0.5;
     }

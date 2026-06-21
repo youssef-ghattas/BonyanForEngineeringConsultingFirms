@@ -12,18 +12,18 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-edit" style="color:var(--secondary)"></i>
-            تعديل: @Model.MaterialName
+            <span data-lang="edit_colon">تعديل:</span> @Model.MaterialName
         </h2>
     </div>
     <a asp-action="Details" asp-route-id="@Model.MaterialID" class="btn-bonyan-primary">
-        <i class="fas fa-arrow-right"></i> رجوع للتفاصيل
+        <i class="fas fa-arrow-right"></i> <span data-lang="back_to_details">رجوع للتفاصيل</span>
     </a>
 </div>
 
 <div class="upload-card">
     <div class="upload-card-header">
         <i class="fas fa-cube"></i>
-        <h4>تعديل بيانات المادة</h4>
+        <h4 data-lang="edit_material_data">تعديل بيانات المادة</h4>
     </div>
     <div class="upload-card-body">
         <form asp-action="Edit" method="post">
@@ -32,42 +32,42 @@
 
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label>اسم المادة <span style="color:red">*</span></label>
+                    <label data-lang="material_name_label">اسم المادة</label> <span style="color:red">*</span>
                     <input asp-for="MaterialName" class="form-control" required />
                     <span asp-validation-for="MaterialName" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label>وحدة القياس</label>
+                    <label data-lang="measurement_unit">وحدة القياس</label>
                     <select asp-for="Unit" class="form-control">
-                        <option value="">-- اختر الوحدة --</option>
-                        <option value="Kg">كيلوجرام</option>
-                        <option value="Ton">طن</option>
-                        <option value="Meter">متر</option>
-                        <option value="SquareMeter">متر مربع</option>
-                        <option value="CubicMeter">متر مكعب</option>
-                        <option value="Piece">قطعة</option>
+                        <option value="" data-lang="choose_unit_option">-- اختر الوحدة --</option>
+                        <option value="Kg" data-lang="unit_kg">كيلوجرام</option>
+                        <option value="Ton" data-lang="unit_ton">طن</option>
+                        <option value="Meter" data-lang="unit_meter">متر</option>
+                        <option value="SquareMeter" data-lang="unit_sqmeter">متر مربع</option>
+                        <option value="CubicMeter" data-lang="unit_cubmeter">متر مكعب</option>
+                        <option value="Piece" data-lang="unit_piece">قطعة</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>سعر الوحدة (ج.م)</label>
+                    <label data-lang="unit_price">سعر الوحدة (ج.م)</label>
                     <input asp-for="UnitPrice" type="number" step="0.01" min="0"
                            class="form-control" id="unitPrice" oninput="calcTotal()" />
                 </div>
                 <div class="form-group">
-                    <label>الكمية</label>
+                    <label data-lang="quantity">الكمية</label>
                     <input asp-for="Quantity" type="number" step="0.001" min="0"
                            class="form-control" id="quantity" oninput="calcTotal()" />
                 </div>
                 <div class="form-group">
-                    <label>الإجمالي (ج.م)</label>
+                    <label data-lang="total_egp">الإجمالي (ج.م)</label>
                     <input type="text" id="totalAmount" class="form-control" readonly
                            style="background:#f5f5f5; font-weight:700; color:var(--primary)"
                            value="@((Model.UnitPrice ?? 0) * (Model.Quantity ?? 0))" />
                 </div>
                 <div class="form-group">
-                    <label>المورد المفضل</label>
+                    <label data-lang="preferred_supplier">المورد المفضل</label>
                     <select asp-for="PreferredSupplierID" class="form-control">
-                        <option value="">-- اختر المورد --</option>
+                        <option value="" data-lang="choose_supplier_option">-- اختر المورد --</option>
                         @foreach (var s in suppliers)
                         {
                             if (Model.PreferredSupplierID == s.SupplierID)
@@ -82,9 +82,9 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>المخزن المستهدف</label>
+                    <label data-lang="target_warehouse">المخزن المستهدف</label>
                     <select asp-for="TargetInventoryID" class="form-control">
-                        <option value="">-- اختر المخزن --</option>
+                        <option value="" data-lang="choose_warehouse_option">-- اختر المخزن --</option>
                         @foreach (var inv in inventories)
                         {
                             if (Model.TargetInventoryID == inv.InventoryID)
@@ -103,17 +103,17 @@
                     </select>
                 </div>
                 <div class="form-group" style="grid-column:1 / -1">
-                    <label>الوصف</label>
+                    <label data-lang="description">الوصف</label>
                     <textarea asp-for="Description" class="form-control" rows="3"></textarea>
                 </div>
             </div>
 
             <div class="upload-actions">
                 <a asp-action="Details" asp-route-id="@Model.MaterialID" class="btn-bonyan-primary">
-                    <i class="fas fa-times"></i> إلغاء
+                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
                 </a>
                 <button type="submit" class="btn-bonyan-secondary">
-                    <i class="fas fa-save"></i> حفظ التعديلات
+                    <i class="fas fa-save"></i> <span data-lang="save_changes">حفظ التعديلات</span>
                 </button>
             </div>
         </form>

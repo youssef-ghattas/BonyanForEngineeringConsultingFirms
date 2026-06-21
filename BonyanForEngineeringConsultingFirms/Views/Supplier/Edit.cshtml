@@ -20,18 +20,18 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-edit" style="color:var(--secondary)"></i>
-            تعديل: @Model.SupplierName
+            <span data-lang="edit_colon">تعديل:</span> @Model.SupplierName
         </h2>
     </div>
     <a asp-action="Details" asp-route-id="@Model.SupplierID" class="btn-bonyan-primary">
-        <i class="fas fa-arrow-right"></i> رجوع للتفاصيل
+        <i class="fas fa-arrow-right"></i> <span data-lang="back_to_details">رجوع للتفاصيل</span>
     </a>
 </div>
 
 <div class="upload-card">
     <div class="upload-card-header">
         <i class="fas fa-industry"></i>
-        <h4>تعديل بيانات المورد</h4>
+        <h4 data-lang="edit_supplier_data">تعديل بيانات المورد</h4>
     </div>
     <div class="upload-card-body">
         <form asp-action="Edit" method="post" id="supplierForm">
@@ -40,25 +40,25 @@
 
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label>اسم المورد <span style="color:red">*</span></label>
+                    <label data-lang="supplier_name_label">اسم المورد</label> <span style="color:red">*</span>
                     <input asp-for="SupplierName" class="form-control" required />
                     <span asp-validation-for="SupplierName" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label>شخص التواصل</label>
+                    <label data-lang="contact_person">شخص التواصل</label>
                     <input asp-for="ContactPerson" class="form-control" />
                 </div>
                 <div class="form-group">
-                    <label>البريد الإلكتروني</label>
+                    <label data-lang="email">البريد الإلكتروني</label>
                     <input asp-for="Email" type="email" class="form-control" />
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label>الهاتف</label>
+                    <label data-lang="phone">الهاتف</label>
                     <input asp-for="Phone" class="form-control" />
                 </div>
                 <div class="form-group" style="grid-column:1 / -1">
-                    <label>العنوان</label>
+                    <label data-lang="address">العنوان</label>
                     <textarea asp-for="Address" class="form-control" rows="2"></textarea>
                 </div>
             </div>
@@ -67,7 +67,7 @@
 
             <div class="form-group">
                 <label style="font-weight:700; color:var(--primary)">
-                    <i class="fas fa-boxes"></i> المواد التي يورّدها هذا المورد
+                    <i class="fas fa-boxes"></i> <span data-lang="materials_supplied_by">المواد التي يورّدها هذا المورد</span>
                 </label>
 
                 <div style="position:relative; max-width:400px">
@@ -90,9 +90,9 @@
                             bool isChecked2 = checkedTypes.Contains(type);
                             <label id="label_@type"
                                    style="display:flex;align-items:center;gap:12px;padding:12px 16px;
-                                              cursor:pointer;border-bottom:1px solid #f0f0f0;margin:0;
-                                              background:@(isChecked2 ? "#e8f5e9" : "#fff");
-                                              transition:background 0.15s;font-size:0.92rem">
+                                                  cursor:pointer;border-bottom:1px solid #f0f0f0;margin:0;
+                                                  background:@(isChecked2 ? "#e8f5e9" : "#fff");
+                                                  transition:background 0.15s;font-size:0.92rem">
                                 <input type="checkbox" name="selectedMaterialTypes" value="@type"
                                        id="chk_@type" class="mat-type-cb"
                                        @(isChecked2 ? "checked" : "")
@@ -107,7 +107,7 @@
                 <div id="othersBox" style="display:@(checkedTypes.Contains("Others") ? "block" : "none");margin-top:10px;max-width:400px">
                     <input type="text" name="othersText" id="othersText"
                            class="form-control" value="@othersValue"
-                           placeholder="اكتب نوع المادة الأخرى..." />
+                           data-lang-placeholder="other_material_placeholder2" placeholder="اكتب نوع المادة الأخرى..." />
                 </div>
 
                 <div id="selectedChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
@@ -115,10 +115,10 @@
 
             <div class="upload-actions" style="margin-top:24px">
                 <a asp-action="Details" asp-route-id="@Model.SupplierID" class="btn-bonyan-primary">
-                    <i class="fas fa-times"></i> إلغاء
+                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
                 </a>
                 <button type="submit" class="btn-bonyan-secondary">
-                    <i class="fas fa-save"></i> حفظ التعديلات
+                    <i class="fas fa-save"></i> <span data-lang="save_changes">حفظ التعديلات</span>
                 </button>
             </div>
         </form>

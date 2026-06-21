@@ -14,13 +14,13 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-truck" style="color:var(--secondary)"></i>
-            الموردون
+            <span data-lang="suppliers">الموردون</span>
         </h2>
     </div>
     @if (role == "Admin")
     {
         <a asp-action="Create" class="btn-bonyan-secondary">
-            <i class="fas fa-plus"></i> إضافة مورد
+            <i class="fas fa-plus"></i> <span data-lang="add_supplier">إضافة مورد</span>
         </a>
     }
 </div>
@@ -38,16 +38,16 @@
     <form method="get" asp-action="Index" style="display:flex; align-items:center; gap:10px; width:100%; max-width:420px">
         <div style="position:relative; flex:1">
             <i class="fas fa-search" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#aaa; z-index:1"></i>
-            <input type="text" name="search" value="@search" placeholder="بحث بالاسم أو البريد..."
+            <input type="text" name="search" value="@search" data-lang-placeholder="search_supplier" placeholder="بحث بالاسم أو البريد..."
                    class="form-control" style="padding-right:36px" />
         </div>
         <button type="submit" class="btn-bonyan-secondary" style="padding:8px 16px">
-            <i class="fas fa-search"></i> بحث
+            <i class="fas fa-search"></i> <span data-lang="search">بحث</span>
         </button>
         @if (!string.IsNullOrEmpty(search))
         {
             <a asp-action="Index" class="btn-bonyan-primary" style="padding:8px 16px">
-                <i class="fas fa-times"></i> إلغاء
+                <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
             </a>
         }
     </form>
@@ -59,12 +59,12 @@
         <table class="mat-table">
             <thead>
                 <tr>
-                    <th>اسم المورد</th>
-                    <th>شخص التواصل</th>
-                    <th>البريد الإلكتروني</th>
-                    <th>الهاتف</th>
-                    <th>المواد المورَّدة</th>
-                    <th>إجراءات</th>
+                    <th data-lang="supplier_name_label">اسم المورد</th>
+                    <th data-lang="contact_person">شخص التواصل</th>
+                    <th data-lang="email">البريد الإلكتروني</th>
+                    <th data-lang="phone">الهاتف</th>
+                    <th data-lang="supplied_materials">المواد المورَّدة</th>
+                    <th data-lang="actions">إجراءات</th>
                 </tr>
             </thead>
             <tbody>
@@ -126,7 +126,7 @@
     {
         <div class="empty-state">
             <i class="fas fa-truck"></i>
-            <p>لا يوجد موردون @(!string.IsNullOrEmpty(search) ? "تطابق البحث" : "حتى الآن")</p>
+            <p>@(!string.IsNullOrEmpty(search) ? Html.Raw("<span data-lang=\"no_suppliers_match\">لا يوجد موردون تطابق البحث</span>") : Html.Raw("<span data-lang=\"no_suppliers\">لا يوجد موردون حتى الآن</span>"))</p>
         </div>
     }
 </div>

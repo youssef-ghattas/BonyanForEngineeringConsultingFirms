@@ -431,6 +431,27 @@
     color: var(--text, #1F2937);
 }
 
+.task-name-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    color: var(--text, #1F2937);
+    text-decoration: none;
+}
+
+    .task-name-link:hover {
+        color: var(--primary, #1B3A6B);
+    }
+
+.filter-bar-project {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 260px;
+}
+
 .task-project-pill {
     display: inline-flex;
     align-items: center;

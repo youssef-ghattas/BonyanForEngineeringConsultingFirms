@@ -16,12 +16,12 @@
     </div>
     <div style="display:flex; gap:10px">
         <a asp-action="Index" class="btn-bonyan-primary">
-            <i class="fas fa-arrow-right"></i> رجوع للموردين
+            <i class="fas fa-arrow-right"></i> <span data-lang="back_to_suppliers">رجوع للموردين</span>
         </a>
         @if (role == "Admin")
         {
             <a asp-action="Edit" asp-route-id="@Model.SupplierID" class="btn-bonyan-secondary">
-                <i class="fas fa-edit"></i> تعديل
+                <i class="fas fa-edit"></i> <span data-lang="edit">تعديل</span>
             </a>
         }
     </div>
@@ -35,33 +35,33 @@
 <!-- Supplier Info Card -->
 <div class="details-card" style="margin-bottom:20px">
     <div class="details-section-title">
-        <i class="fas fa-info-circle"></i> بيانات المورد
+        <i class="fas fa-info-circle"></i> <span data-lang="supplier_data">بيانات المورد</span>
     </div>
     <div class="mat-info-grid">
         <div class="mat-info-item">
-            <span class="mat-info-label">اسم المورد</span>
+            <span class="mat-info-label" data-lang="supplier_name_label">اسم المورد</span>
             <span class="mat-info-value">@Model.SupplierName</span>
         </div>
         <div class="mat-info-item">
-            <span class="mat-info-label">شخص التواصل</span>
+            <span class="mat-info-label" data-lang="contact_person">شخص التواصل</span>
             <span class="mat-info-value">@(Model.ContactPerson ?? "—")</span>
         </div>
         <div class="mat-info-item">
-            <span class="mat-info-label">البريد الإلكتروني</span>
+            <span class="mat-info-label" data-lang="email">البريد الإلكتروني</span>
             <span class="mat-info-value">
                 <a href="mailto:@Model.Email" style="color:var(--secondary)">@(Model.Email ?? "—")</a>
             </span>
         </div>
         <div class="mat-info-item">
-            <span class="mat-info-label">الهاتف</span>
+            <span class="mat-info-label" data-lang="phone">الهاتف</span>
             <span class="mat-info-value">@(Model.Phone ?? "—")</span>
         </div>
         <div class="mat-info-item" style="grid-column:1 / -1">
-            <span class="mat-info-label">العنوان</span>
+            <span class="mat-info-label" data-lang="address">العنوان</span>
             <span class="mat-info-value">@(Model.Address ?? "—")</span>
         </div>
         <div class="mat-info-item" style="grid-column:1 / -1">
-            <span class="mat-info-label">المواد المورَّدة</span>
+            <span class="mat-info-label" data-lang="supplied_materials">المواد المورَّدة</span>
             <span class="mat-info-value">
                 @{
                     var types = (Model.SuppliedMaterialTypes ?? "")
@@ -80,8 +80,8 @@
                         string bgColor = t == "Steel" ? "#607d8b" : t == "Sand" ? "#ffa726" :
                         t == "Cement" ? "#90a4ae" : t == "Bricks" ? "#ef5350" : "#ab47bc";
                         <span style="display:inline-flex;align-items:center;gap:6px;
-                                     background:@bgColor;color:#fff;padding:3px 10px;
-                                     border-radius:16px;font-size:0.82rem;margin-left:6px;font-weight:600">
+                                             background:@bgColor;color:#fff;padding:3px 10px;
+                                             border-radius:16px;font-size:0.82rem;margin-left:6px;font-weight:600">
                             @display
                         </span>
                     }
@@ -98,7 +98,7 @@
 <!-- Supplied Materials -->
 <div class="details-card">
     <div class="details-section-title">
-        <i class="fas fa-boxes"></i> المواد المورَّدة
+        <i class="fas fa-boxes"></i> <span data-lang="supplied_materials">المواد المورَّدة</span>
         <span class="tab-count">@Model.SuppliedMaterials.Count</span>
     </div>
 
@@ -107,11 +107,11 @@
         <table class="mat-table">
             <thead>
                 <tr>
-                    <th>اسم المادة</th>
-                    <th>وحدة القياس</th>
-                    <th>سعر التوريد</th>
-                    <th>آخر توريد</th>
-                    <th>تفاصيل</th>
+                    <th data-lang="material_name_label">اسم المادة</th>
+                    <th data-lang="measurement_unit">وحدة القياس</th>
+                    <th data-lang="supply_price">سعر التوريد</th>
+                    <th data-lang="last_supply">آخر توريد</th>
+                    <th data-lang="details">تفاصيل</th>
                 </tr>
             </thead>
             <tbody>
@@ -152,6 +152,6 @@
     }
     else
     {
-        <p style="color:#aaa; font-size:0.88rem">لا توجد مواد مرتبطة بهذا المورد بعد</p>
+        <p style="color:#aaa; font-size:0.88rem" data-lang="no_linked_materials">لا توجد مواد مرتبطة بهذا المورد بعد</p>
     }
 </div>

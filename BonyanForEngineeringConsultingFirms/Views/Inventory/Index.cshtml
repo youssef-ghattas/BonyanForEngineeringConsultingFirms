@@ -11,13 +11,13 @@
     <div class="page-header-left">
         <h2>
             <i class="fas fa-warehouse" style="color:var(--secondary)"></i>
-            المخازن
+            <span data-lang="warehouses">المخازن</span>
         </h2>
     </div>
     @if (role == "Admin")
     {
         <a asp-action="Create" class="btn-bonyan-secondary">
-            <i class="fas fa-plus"></i> إضافة مخزن
+            <i class="fas fa-plus"></i> <span data-lang="add_warehouse">إضافة مخزن</span>
         </a>
     }
 </div>
@@ -41,12 +41,12 @@
         <table class="mat-table">
             <thead>
                 <tr>
-                    <th>اسم المخزن</th>
-                    <th>الموقع</th>
-                    <th>السعة</th>
-                    <th>عدد المواد</th>
-                    <th>آخر تحديث</th>
-                    <th>إجراءات</th>
+                    <th data-lang="warehouse_name_label">اسم المخزن</th>
+                    <th data-lang="location">الموقع</th>
+                    <th data-lang="capacity">السعة</th>
+                    <th data-lang="material_count">عدد المواد</th>
+                    <th data-lang="last_updated">آخر تحديث</th>
+                    <th data-lang="actions">إجراءات</th>
                 </tr>
             </thead>
             <tbody>
@@ -98,7 +98,7 @@
     {
         <div class="empty-state">
             <i class="fas fa-warehouse"></i>
-            <p>لا توجد مخازن حتى الآن</p>
+            <p data-lang="no_warehouses">لا توجد مخازن حتى الآن</p>
         </div>
     }
 </div>

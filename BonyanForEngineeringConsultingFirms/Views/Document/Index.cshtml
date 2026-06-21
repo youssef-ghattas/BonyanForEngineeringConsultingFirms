@@ -4,120 +4,194 @@
     var role = Context.Session.GetString("Role");
     var projects = ViewBag.Projects as List<Bonyan.DAL.Models.Project> ?? new();
     int? selectedProjectId = ViewBag.SelectedProjectId as int?;
+
+    var docList = Model.ToList();
+    var totalCount = docList.Count;
+    var typeGroups = docList
+        .Where(d => !string.IsNullOrEmpty(d.FileType))
+        .GroupBy(d => d.FileType)
+        .OrderByDescending(g => g.Count())
+        .ToList();
+    var topTypeCount = typeGroups.Any() ? typeGroups.First().Count() : 0;
+    var topTypeName = typeGroups.Any() ? typeGroups.First().Key : "—";
+    var distinctProjectsCount = docList.Select(d => d.ProjectId).Distinct().Count();
+    var thisMonthCount = docList.Count(d => d.UploadDate.Month == DateTime.Today.Month && d.UploadDate.Year == DateTime.Today.Year);
 }
 
 <link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
 
-<div class="page-header">
-    <div class="page-header-left">
-        <h2>
-            <i class="fas fa-folder-open" style="color:var(--secondary)"></i>
-            <span data-lang="documents">المستندات</span>
-        </h2>
+<div class="doc-page">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h2>
+                <i class="fas fa-folder-open" style="color:var(--secondary)"></i>
+                <span data-lang="documents">المستندات</span>
+            </h2>
+        </div>
     </div>
-</div>
 
-@if (projects.Any())
-{
-    <div class="filter-bar">
-        <form method="get" asp-action="Index" style="display:flex; align-items:center; gap:10px">
-            <label style="font-weight:600; font-size:0.88rem; color:#444">
-                <i class="fas fa-filter" style="color:var(--secondary)"></i>
-                <span data-lang="filter_by_project">تصفية حسب المشروع:</span>
-            </label>
-            <select name="projectId" class="form-select filter-select"
-                    onchange="this.form.submit()">
-                <option value="" data-lang="all_projects_option">-- جميع المشاريع --</option>
-                @foreach (var p in projects)
-                {
-                    if (selectedProjectId == p.ProjectId)
-                    {
-                        <option value="@p.ProjectId" selected>@p.ProjectName</option>
-                    }
-                    else
-                    {
-                        <option value="@p.ProjectId">@p.ProjectName</option>
-                    }
-                }
-            </select>
-            @if (selectedProjectId.HasValue)
-            {
-                <a asp-action="Index" class="btn-bonyan-primary"
-                   style="font-size:0.82rem; padding:7px 12px">
-                    <i class="fas fa-times"></i> <span data-lang="clear_filter">إلغاء التصفية</span>
-                </a>
-            }
-        </form>
+    <div class="doc-kpi-grid">
+        <div class="doc-kpi navy">
+            <div class="doc-kpi-icon"><i class="fas fa-folder-open"></i></div>
+            <div>
+                <div class="doc-kpi-label" data-lang="total_documents">إجمالي المستندات</div>
+                <div class="doc-kpi-value">@totalCount</div>
+            </div>
+        </div>
+        <div class="doc-kpi blue">
+            <div class="doc-kpi-icon"><i class="fas fa-diagram-project"></i></div>
+            <div>
+                <div class="doc-kpi-label" data-lang="projects_with_docs">المشاريع المرتبطة</div>
+                <div class="doc-kpi-value">@distinctProjectsCount</div>
+            </div>
+        </div>
+        <div class="doc-kpi gold">
+            <div class="doc-kpi-icon"><i class="fas fa-file-circle-check"></i></div>
+            <div>
+                <div class="doc-kpi-label" data-lang="most_common_type">النوع الأكثر شيوعًا</div>
+                <div class="doc-kpi-value">@topTypeName (@topTypeCount)</div>
+            </div>
+        </div>
+        <div class="doc-kpi green">
+            <div class="doc-kpi-icon"><i class="fas fa-calendar-check"></i></div>
+            <div>
+                <div class="doc-kpi-label" data-lang="uploaded_this_month">رُفع هذا الشهر</div>
+                <div class="doc-kpi-value">@thisMonthCount</div>
+            </div>
+        </div>
     </div>
-}
 
-<div class="details-card">
-    @if (Model.Any())
+    @if (projects.Any())
     {
-        <table class="doc-table">
-            <thead>
-                <tr>
-                    <th data-lang="doc_title">عنوان المستند</th>
-                    <th data-lang="project">المشروع</th>
-                    <th data-lang="file_type">النوع</th>
-                    <th data-lang="category">التصنيف</th>
-                    <th data-lang="upload_date">تاريخ الرفع</th>
-                    <th data-lang="actions">إجراءات</th>
-                    <th data-lang="uploaded_by">رُفع بواسطة</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var doc in Model)
+        <div class="filter-bar">
+            <form method="get" asp-action="Index" class="filter-bar-project">
+                <label class="filter-bar-label">
+                    <i class="fas fa-filter"></i>
+                    <span data-lang="filter_by_project">تصفية حسب المشروع:</span>
+                </label>
+                <select name="projectId" class="filter-select"
+                        onchange="this.form.submit()">
+                    <option value="" data-lang="all_projects_option">-- جميع المشاريع --</option>
+                    @foreach (var p in projects)
+                    {
+                        if (selectedProjectId == p.ProjectId)
+                        {
+                            <option value="@p.ProjectId" selected>@p.ProjectName</option>
+                        }
+                        else
+                        {
+                            <option value="@p.ProjectId">@p.ProjectName</option>
+                        }
+                    }
+                </select>
+                @if (selectedProjectId.HasValue)
                 {
-                    <tr>
-                        <td>
-                            <i class="fas fa-file-alt"
-                               style="color:var(--secondary); margin-left:6px"></i>
-                            @doc.DocTitle
-                        </td>
-                        <td>@(doc.Project?.ProjectName ?? "—")</td>
-                        <td>
-                            @if (!string.IsNullOrEmpty(doc.FileType))
-                            {
-                                <span class="file-type-badge">@doc.FileType</span>
-                            }
-                            else
-                            {
-
-                                <span>—</span>
-                            }
-                        </td>
-                        <td>@(doc.Category ?? "—")</td>
-                        <td>@doc.UploadDate.ToString("yyyy-MM-dd")</td>
-                        <td>@(doc.Employee?.FirstName + " " + doc.Employee?.LastName ?? "—")</td>
-                        <td>
-                            <a href="@doc.FilePath" target="_blank"
-                               class="btn-action view" title="تحميل">
-                                <i class="fas fa-download"></i>
-                            </a>
-                            @if (role == "ProjectManager" || role == "Engineer")
-                            {
-                                <form asp-action="Delete" asp-route-id="@doc.DocId"
-                                      method="post" style="display:inline"
-                                      onsubmit="return confirm('هل أنت متأكد من حذف هذا المستند؟')">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-action delete" title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            }
-                        </td>
-                    </tr>
+                    <a asp-action="Index" class="filter-reset">
+                        <i class="fas fa-times"></i> <span data-lang="clear_filter">إلغاء التصفية</span>
+                    </a>
                 }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div style="text-align:center; padding:40px; color:#aaa">
-            <i class="fas fa-folder-open"
-               style="font-size:3rem; margin-bottom:14px; display:block"></i>
-            <p data-lang="no_documents">لا توجد مستندات مرفوعة حتى الآن</p>
+            </form>
         </div>
     }
+
+    <div class="table-card">
+        <div class="table-card-header">
+            <h5><i class="fas fa-list"></i> <span data-lang="document_list">قائمة المستندات</span></h5>
+            <span class="count-badge">@totalCount</span>
+        </div>
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="doc-table">
+                    <thead>
+                        <tr>
+                            <th data-lang="doc_title">عنوان المستند</th>
+                            <th data-lang="project">المشروع</th>
+                            <th data-lang="file_type">النوع</th>
+                            <th data-lang="category">التصنيف</th>
+                            <th data-lang="upload_date">تاريخ الرفع</th>
+                            <th data-lang="uploaded_by">رُفع بواسطة</th>
+                            <th data-lang="actions">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="doc-title-cell">
+                                        <span class="doc-file-icon"><i class="fas fa-file-alt"></i></span>
+                                        @doc.DocTitle
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (doc.Project != null)
+                                    {
+                                        <span class="doc-project-pill"><i class="fas fa-diagram-project"></i> @doc.Project.ProjectName</span>
+                                    }
+                                    else
+                                    {
+                                        <span>—</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(doc.FileType))
+                                    {
+                                        <span class="file-type-badge">@doc.FileType</span>
+                                    }
+                                    else
+                                    {
+
+                                        <span>—</span>
+                                    }
+                                </td>
+                                <td>@(doc.Category ?? "—")</td>
+                                <td>@doc.UploadDate.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    @if (doc.Employee != null)
+                                    {
+                                        <div class="doc-uploader-cell">
+                                            <div class="doc-uploader-avatar">@($"{(string.IsNullOrEmpty(doc.Employee.FirstName) ? "" : doc.Employee.FirstName.Substring(0, 1))}{(string.IsNullOrEmpty(doc.Employee.LastName) ? "" : doc.Employee.LastName.Substring(0, 1))}".ToUpper())</div>
+                                            <span>@doc.Employee.FirstName @doc.Employee.LastName</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span>—</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="action-btns">
+                                        <a href="@doc.FilePath" target="_blank"
+                                           class="btn-action view" title="تحميل">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        @if (role == "ProjectManager" || role == "Engineer")
+                                        {
+                                            <form asp-action="Delete" asp-route-id="@doc.DocId"
+                                                  method="post" style="display:inline"
+                                                  onsubmit="return confirm('هل أنت متأكد من حذف هذا المستند؟')">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn-action delete" title="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <p data-lang="no_documents">لا توجد مستندات مرفوعة حتى الآن</p>
+            </div>
+        }
+    </div>
 </div>
