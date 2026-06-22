@@ -4,9 +4,7 @@
     int projectId = ViewBag.ProjectId ?? 0;
     string projectName = ViewBag.ProjectName ?? "—";
 }
-
-<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
-
+<link rel="stylesheet" href="~/css/employee.css" />
 <div class="page-header">
     <div class="page-header-left">
         <h2>
@@ -19,29 +17,23 @@
         <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
     </a>
 </div>
-
-<div class="upload-card">
-    <div class="upload-card-header">
+<div class="form-card">
+    <div class="form-card-header">
         <i class="fas fa-images"></i>
         <h4 data-lang="photo_data">بيانات الصورة</h4>
     </div>
-
-    <div class="upload-card-body">
-
+    <div class="form-card-body">
         <div class="project-badge">
             <i class="fas fa-project-diagram"></i>
             @projectName
         </div>
-
         <form asp-action="Create" method="post"
               enctype="multipart/form-data">
             @Html.AntiForgeryToken()
-
             <input type="hidden" asp-for="ProjectId" value="@projectId" />
-
-            <!-- Image drop zone with live preview -->
+            <div class="form-section-title" data-lang="photo">الصورة</div>
             <div class="form-group">
-                <label data-lang="photo">الصورة</label> <span style="color:red">*</span>
+                <label data-lang="photo">الصورة</label> <span class="required">*</span>
                 <div class="file-drop-zone" id="dropZone"
                      style="min-height:160px">
                     <div id="dropContent">
@@ -49,7 +41,6 @@
                         <p data-lang="drag_drop_photo">اسحب الصورة هنا أو انقر للاختيار</p>
                         <span>JPG, PNG, GIF, WEBP, SVG</span>
                     </div>
-                    <!-- Image preview inside zone -->
                     <img id="imgPreview"
                          style="display:none; max-height:180px;
                                 border-radius:8px; margin-top:10px"
@@ -62,44 +53,38 @@
                     @Html.ValidationMessage("uploadedFile")
                 </span>
             </div>
-
-            <!-- Title -->
-            <div class="form-group">
-                <label data-lang="photo_title">عنوان الصورة</label> <span style="color:red">*</span>
-                <input asp-for="DrawingTitle" class="form-control"
-                       data-lang-placeholder="photo_title_placeholder" placeholder="وصف مختصر للصورة" required />
-                <span asp-validation-for="DrawingTitle" class="text-danger"></span>
+            <div class="form-section-title" data-lang="data">البيانات</div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label data-lang="photo_title">عنوان الصورة</label> <span class="required">*</span>
+                    <input asp-for="DrawingTitle" class="form-control"
+                           data-lang-placeholder="photo_title_placeholder" placeholder="وصف مختصر للصورة" required />
+                    <span asp-validation-for="DrawingTitle" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label data-lang="version">الإصدار</label>
+                    <input asp-for="Version" class="form-control"
+                           data-lang-placeholder="version_placeholder" placeholder="مثال: 1.0" />
+                </div>
+                <div class="form-group">
+                    <label data-lang="category">التصنيف</label>
+                    <select asp-for="Category" class="form-select">
+                        <option value="" data-lang="choose_category_option">-- اختر التصنيف --</option>
+                        <option value="موقع" data-lang="cat_site_photos">صور الموقع</option>
+                        <option value="تقدم" data-lang="cat_progress">تقدم الأعمال</option>
+                        <option value="مشاكل" data-lang="cat_issues">مشاكل وعيوب</option>
+                        <option value="اكتمال" data-lang="cat_completion">صور اكتمال</option>
+                        <option value="أخرى" data-lang="cat_other">أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label data-lang="notes">ملاحظات</label>
+                    <textarea asp-for="Notes" class="form-control"
+                              rows="2"
+                              data-lang-placeholder="notes_placeholder" placeholder="أي ملاحظات..."></textarea>
+                </div>
             </div>
-
-            <!-- Version -->
-            <div class="form-group">
-                <label data-lang="version">الإصدار</label>
-                <input asp-for="Version" class="form-control"
-                       data-lang-placeholder="version_placeholder" placeholder="مثال: 1.0" />
-            </div>
-
-            <!-- Category -->
-            <div class="form-group">
-                <label data-lang="category">التصنيف</label>
-                <select asp-for="Category" class="form-select">
-                    <option value="" data-lang="choose_category_option">-- اختر التصنيف --</option>
-                    <option value="موقع" data-lang="cat_site_photos">صور الموقع</option>
-                    <option value="تقدم" data-lang="cat_progress">تقدم الأعمال</option>
-                    <option value="مشاكل" data-lang="cat_issues">مشاكل وعيوب</option>
-                    <option value="اكتمال" data-lang="cat_completion">صور اكتمال</option>
-                    <option value="أخرى" data-lang="cat_other">أخرى</option>
-                </select>
-            </div>
-
-            <!-- Notes -->
-            <div class="form-group">
-                <label data-lang="notes">ملاحظات</label>
-                <textarea asp-for="Notes" class="form-control"
-                          rows="2"
-                          data-lang-placeholder="notes_placeholder" placeholder="أي ملاحظات..."></textarea>
-            </div>
-
-            <div class="upload-actions">
+            <div class="form-actions">
                 <a asp-controller="Project" asp-action="Details"
                    asp-route-id="@projectId"
                    class="btn-bonyan-primary">
@@ -112,7 +97,6 @@
         </form>
     </div>
 </div>
-
 @section Scripts {
     <script>
         function previewImage(input) {
@@ -129,7 +113,6 @@
                 reader.readAsDataURL(input.files[0]);
             }
         }
-
         const zone = document.getElementById('dropZone');
         zone.addEventListener('dragover',  e => {
             e.preventDefault();

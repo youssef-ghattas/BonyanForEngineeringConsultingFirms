@@ -6,7 +6,7 @@
     var engineers = ViewBag.Engineers as List<Bonyan.DAL.Models.Employee> ?? new List<Bonyan.DAL.Models.Employee>();
 }
 
-<link rel="stylesheet" href="~/css/task.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
 
 <div class="page-header">
     <div class="page-header-left">
@@ -21,12 +21,12 @@
     </a>
 </div>
 
-<div class="upload-card">
-    <div class="upload-card-header">
+<div class="form-card">
+    <div class="form-card-header">
         <i class="fas fa-edit"></i>
         <h4 data-lang="edit_task_data">تعديل بيانات المهمة</h4>
     </div>
-    <div class="upload-card-body">
+    <div class="form-card-body">
 
         <div class="project-badge">
             <i class="fas fa-project-diagram"></i>
@@ -40,52 +40,55 @@
             <input type="hidden" asp-for="CreatedBy_UserID" />
             <input type="hidden" asp-for="CreatedAt" />
 
-            <div class="form-group">
-                <label data-lang="task_name_label">اسم المهمة</label> <span style="color:red">*</span>
-                <input asp-for="Task_Name" class="form-control" required />
-                <span asp-validation-for="Task_Name" class="text-danger"></span>
-            </div>
+            <div class="form-section-title" data-lang="task_data">بيانات المهمة</div>
+            <div class="form-grid-2">
+                <div class="form-group" style="grid-column:1/-1">
+                    <label data-lang="task_name_label">اسم المهمة</label> <span style="color:red">*</span>
+                    <input asp-for="Task_Name" class="form-control" required />
+                    <span asp-validation-for="Task_Name" class="text-danger"></span>
+                </div>
 
-            <div class="form-group">
-                <label data-lang="assign_to_engineer">تعيين إلى مهندس</label>
-                <select asp-for="AssignedToEmployeeId" class="form-select">
-                    <option value="" data-lang="no_assignment_option">-- بدون تعيين --</option>
-                    @foreach (var eng in engineers)
-                    {
-                        if (Model.AssignedToEmployeeId == eng.EmployeeId)
+                <div class="form-group">
+                    <label data-lang="assign_to_engineer">تعيين إلى مهندس</label>
+                    <select asp-for="AssignedToEmployeeId" class="form-select">
+                        <option value="" data-lang="no_assignment_option">-- بدون تعيين --</option>
+                        @foreach (var eng in engineers)
                         {
-                            <option value="@eng.EmployeeId" selected>@eng.FirstName @eng.LastName</option>
+                            if (Model.AssignedToEmployeeId == eng.EmployeeId)
+                            {
+                                <option value="@eng.EmployeeId" selected>@eng.FirstName @eng.LastName</option>
+                            }
+                            else
+                            {
+                                <option value="@eng.EmployeeId">@eng.FirstName @eng.LastName</option>
+                            }
                         }
-                        else
-                        {
-                            <option value="@eng.EmployeeId">@eng.FirstName @eng.LastName</option>
-                        }
-                    }
-                </select>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label data-lang="status">الحالة</label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="0" data-lang="task_status_pending">معلق</option>
+                        <option value="1" data-lang="task_status_inprogress">جاري</option>
+                        <option value="2" data-lang="task_status_underreview">قيد المراجعة</option>
+                        <option value="3" data-lang="task_status_completed">مكتمل</option>
+                        <option value="4" data-lang="task_status_cancelled">ملغي</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label data-lang="due_date">الموعد النهائي</label>
+                    <input asp-for="DueDate" type="date" class="form-control" />
+                </div>
+
+                <div class="form-group" style="grid-column:1/-1">
+                    <label data-lang="notes">ملاحظات</label>
+                    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label data-lang="status">الحالة</label>
-                <select asp-for="Status" class="form-select">
-                    <option value="0" data-lang="task_status_pending">معلق</option>
-                    <option value="1" data-lang="task_status_inprogress">جاري</option>
-                    <option value="2" data-lang="task_status_underreview">قيد المراجعة</option>
-                    <option value="3" data-lang="task_status_completed">مكتمل</option>
-                    <option value="4" data-lang="task_status_cancelled">ملغي</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label data-lang="due_date">الموعد النهائي</label>
-                <input asp-for="DueDate" type="date" class="form-control" />
-            </div>
-
-            <div class="form-group">
-                <label data-lang="notes">ملاحظات</label>
-                <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
-            </div>
-
-            <div class="upload-actions">
+            <div class="form-actions">
                 <a asp-controller="Project" asp-action="Details"
                    asp-route-id="@Model.ProjectId" class="btn-bonyan-primary">
                     <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>

@@ -19,7 +19,7 @@
     };
 }
 
-<link rel="stylesheet" href="~/css/sitevisit.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
 
 <div class="page-header">
     <div class="page-header-left">
@@ -38,51 +38,54 @@
     </div>
 </div>
 
-<div class="details-card" style="max-width:660px; margin:0 auto">
-    <div class="visit-detail-header">
-        <h3>
-            <i class="fas fa-calendar-check" style="font-size:1rem; margin-left:6px; color:var(--secondary)"></i>
-            <span data-lang="visit_dated">زيارة بتاريخ</span> @Model.VisitDate.ToString("yyyy-MM-dd")
-        </h3>
-        <span class="@safetyClass" data-en="@Model.SafetyStatus.ToString()" data-ar="@safetyLabel">@safetyLabel</span>
-    </div>
-
-    <div class="visit-detail-body">
-        <div class="visit-detail-row">
-            <span class="visit-detail-label"><i class="fas fa-project-diagram"></i> <span data-lang="project">المشروع</span></span>
-            <span>@(Model.Project?.ProjectName ?? "—")</span>
-        </div>
-        <div class="visit-detail-row">
-            <span class="visit-detail-label"><i class="fas fa-user-hard-hat"></i> <span data-lang="engineer">المهندس</span></span>
-            <span>@(Model.Employee != null ? Model.Employee.FirstName + " " + Model.Employee.LastName : "—")</span>
-        </div>
-        <div class="visit-detail-row">
-            <span class="visit-detail-label"><i class="fas fa-calendar-alt"></i> <span data-lang="visit_date">تاريخ الزيارة</span></span>
-            <span>@Model.VisitDate.ToString("yyyy-MM-dd")</span>
-        </div>
-        <div class="visit-detail-row">
-            <span class="visit-detail-label"><i class="fas fa-shield-alt"></i> <span data-lang="safety_status">حالة السلامة</span></span>
-            <span class="@safetyClass" data-en="@Model.SafetyStatus.ToString()" data-ar="@safetyLabel">@safetyLabel</span>
+<div class="details-card">
+    <div class="details-body">
+        <div class="details-section">
+            <div class="details-section-title" data-lang="sitevisit_info">معلومات الزيارة</div>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <label data-lang="project">المشروع</label>
+                    <p>@(Model.Project?.ProjectName ?? "—")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="engineer">المهندس</label>
+                    <p>@(Model.Employee != null ? Model.Employee.FirstName + " " + Model.Employee.LastName : "—")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="visit_date">تاريخ الزيارة</label>
+                    <p>@Model.VisitDate.ToString("yyyy-MM-dd")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="safety_status">حالة السلامة</label>
+                    <p><span class="@safetyClass" data-en="@Model.SafetyStatus.ToString()" data-ar="@safetyLabel">@safetyLabel</span></p>
+                </div>
+            </div>
         </div>
         @if (!string.IsNullOrEmpty(Model.Report))
         {
-            <div class="visit-detail-row" style="flex-direction:column; align-items:flex-start; gap:8px">
-                <span class="visit-detail-label"><i class="fas fa-file-alt"></i> <span data-lang="visit_report">تقرير الزيارة</span></span>
-                <p style="margin:0; color:#555; font-size:0.9rem; line-height:1.7; white-space:pre-wrap">@Model.Report</p>
+            <div class="details-section">
+                <div class="details-section-title" data-lang="visit_report">تقرير الزيارة</div>
+                <div class="details-grid">
+                    <div class="detail-item" style="grid-column:1/-1">
+                        <p style="margin:0; color:#555; font-size:0.9rem; line-height:1.7; white-space:pre-wrap">@Model.Report</p>
+                    </div>
+                </div>
             </div>
         }
         @if (!string.IsNullOrEmpty(Model.VisitPhotos))
         {
-            <div class="visit-detail-row" style="flex-direction:column; align-items:flex-start; gap:8px">
-                <span class="visit-detail-label"><i class="fas fa-camera"></i> <span data-lang="site_photo">صورة الموقع</span></span>
-                <img src="@Model.VisitPhotos" class="visit-thumb"
-                     style="width:120px; height:120px; cursor:pointer"
-                     onclick="openLightbox('@Model.VisitPhotos')"
-                     onerror="this.style.display='none'" alt="صورة الزيارة" />
-                <a href="@Model.VisitPhotos" target="_blank"
-                   class="btn-bonyan-primary" style="font-size:0.82rem; padding:6px 12px">
-                    <i class="fas fa-download"></i> <span data-lang="download_photo">تحميل الصورة</span>
-                </a>
+            <div class="details-section">
+                <div class="details-section-title" data-lang="site_photo">صورة الموقع</div>
+                <div class="details-grid">
+                    <div class="detail-item" style="grid-column:1/-1">
+                        <img src="@Model.VisitPhotos" style="width:120px; height:120px; cursor:pointer; border-radius:8px; object-fit:cover" onclick="openLightbox('@Model.VisitPhotos')" onerror="this.style.display='none'" alt="صورة الزيارة" />
+                        <div style="margin-top:8px">
+                            <a href="@Model.VisitPhotos" target="_blank" class="btn-bonyan-primary" style="font-size:0.82rem; padding:6px 12px">
+                                <i class="fas fa-download"></i> <span data-lang="download_photo">تحميل الصورة</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         }
     </div>

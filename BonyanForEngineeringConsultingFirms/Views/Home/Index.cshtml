@@ -474,8 +474,8 @@
 @section Scripts {
     <script>
         // ── Date pill + role badge: switch AR/EN on lang toggle ─────────
-        document.addEventListener('bonyanLangChanged', function (e) {
-            const lang = e.detail;
+        document.addEventListener('languageChanged', function (e) {
+            const lang = e.detail.lang;
 
             // Date pill
             document.querySelectorAll('[data-lang-text]').forEach(el => {

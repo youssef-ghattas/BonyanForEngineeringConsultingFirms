@@ -1,23 +1,21 @@
-﻿@* Views/Supplier/Create.cshtml *@
-@model Bonyan.DAL.Models.Supplier
+﻿@model Bonyan.DAL.Models.Supplier
 @{
     ViewData["Title"] = "إضافة مورد";
 }
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/material.css" />
-
 
 <div class="page-header">
     <div class="page-header-left">
         <h2><i class="fas fa-plus-circle" style="color:var(--secondary)"></i> <span data-lang="add_supplier_new">إضافة مورد جديد</span></h2>
+        <p data-lang="add_supplier_new_sub"></p>
     </div>
-    <a asp-action="Index" class="btn-bonyan-primary">
-        <i class="fas fa-arrow-right"></i> <span data-lang="back_to_suppliers">رجوع للموردين</span>
-    </a>
+    <a asp-action="Index" class="btn-bonyan-primary"><i class="fas fa-arrow-right"></i> <span data-lang="back_to_suppliers">رجوع للموردين</span></a>
 </div>
 
-<div class="upload-card">
-    <div class="upload-card-header"><i class="fas fa-industry"></i><h4 data-lang="supplier_data">بيانات المورد</h4></div>
-    <div class="upload-card-body">
+<div class="form-card">
+    <div class="form-card-header"><i class="fas fa-industry"></i> <h4 data-lang="supplier_data">بيانات المورد</h4></div>
+    <div class="form-card-body">
         <form asp-action="Create" method="post" id="supplierForm">
             @Html.AntiForgeryToken()
 
@@ -49,9 +47,11 @@
                     </ul>
                 </div>
             }
+
+            <div class="form-section-title" data-lang="supplier_data">بيانات المورد</div>
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label data-lang="supplier_name_label">اسم المورد</label> <span style="color:red">*</span>
+                    <label><span data-lang="supplier_name_label">اسم المورد</span> <span class="required">*</span></label>
                     <input asp-for="SupplierName" class="form-control" data-lang-placeholder="supplier_name_placeholder" placeholder="اسم الشركة أو المورد" required />
                     <span asp-validation-for="SupplierName" class="text-danger"></span>
                 </div>
@@ -128,7 +128,7 @@
                 <div id="selectedChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
             </div>
 
-            <div class="upload-actions" style="margin-top:28px">
+            <div class="form-actions" style="margin-top:28px">
                 <a asp-action="Index" class="btn-bonyan-primary"><i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span></a>
                 <button type="submit" class="btn-bonyan-secondary">
                     <i class="fas fa-save"></i> <span data-lang="save_supplier">حفظ المورد</span>

@@ -162,7 +162,7 @@ namespace Bonyan.Web.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                TempData["SuccessMessage"] = "تم إنشاء المشروع بنجاح";
+                TempData["SuccessMessageKey"] = "msg_project_created";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -314,7 +314,7 @@ namespace Bonyan.Web.Controllers
             {
                 _context.Projects.Remove(project);
                 await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "تم حذف المشروع بنجاح";
+                TempData["SuccessMessageKey"] = "msg_project_deleted";
             }
 
             return RedirectToAction(nameof(Index));

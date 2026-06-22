@@ -24,7 +24,7 @@
     };
 }
 
-<link rel="stylesheet" href="~/css/task.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
 
 <div class="page-header">
     <div class="page-header-left">
@@ -49,45 +49,41 @@
 </div>
 
 <div class="details-card" style="max-width:640px; margin:0 auto">
-    <div class="task-detail-header">
-        <h3>@Model.Task_Name</h3>
-        <span class="task-status-badge @statusClass" data-en="@Model.Status.ToString()" data-ar="@statusLabel">@statusLabel</span>
-    </div>
-
-    <div class="task-detail-body">
-        <div class="task-detail-row">
-            <span class="task-detail-label"><i class="fas fa-project-diagram"></i> <span data-lang="project">المشروع</span></span>
-            <span>@(Model.Project?.ProjectName ?? "—")</span>
-        </div>
-        <div class="task-detail-row">
-            <span class="task-detail-label">
-                <i class="fas fa-user-hard-hat"></i> <span data-lang="assigned_to">مُعيَّن إلى</span>
-            </span>
-            <span>
-                @if (Model.AssignedToEmployee != null)
-                {
-                    @(Model.AssignedToEmployee.FirstName + " " + Model.AssignedToEmployee.LastName)
-                }
-                else
-                {
-                    <text>—</text>
-                }
-            </span>
-        </div>
-        <div class="task-detail-row">
-            <span class="task-detail-label"><i class="fas fa-calendar-alt"></i> <span data-lang="due_date">الموعد النهائي</span></span>
-            <span>@(Model.DueDate.HasValue? Model.DueDate.Value.ToString("yyyy-MM-dd") : "—")</span>
-        </div>
-        <div class="task-detail-row">
-            <span class="task-detail-label"><i class="fas fa-clock"></i> <span data-lang="created_at">تاريخ الإنشاء</span></span>
-            <span>@Model.CreatedAt.ToString("yyyy-MM-dd")</span>
-        </div>
-        @if (!string.IsNullOrEmpty(Model.Notes))
-        {
-            <div class="task-detail-row" style="flex-direction:column; align-items:flex-start; gap:6px">
-                <span class="task-detail-label"><i class="fas fa-sticky-note"></i> <span data-lang="notes">ملاحظات</span></span>
-                <p style="margin:0; color:#555; font-size:0.9rem; line-height:1.6">@Model.Notes</p>
+    <div class="details-body">
+        <div class="details-section">
+            <div class="details-section-title">
+                <i class="fas fa-info-circle"></i> <span data-lang="task_details">تفاصيل المهمة</span>
+                <span class="task-status-badge @statusClass" style="margin-right:12px" data-en="@Model.Status.ToString()" data-ar="@statusLabel">@statusLabel</span>
             </div>
-        }
+            <div class="details-grid">
+                <div class="detail-item" style="grid-column:1/-1">
+                    <label data-lang="task_name_label">اسم المهمة</label>
+                    <p style="font-size:1.2rem; font-weight:700; color:var(--primary)">@Model.Task_Name</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="project">المشروع</label>
+                    <p>@(Model.Project?.ProjectName ?? "—")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="assigned_to">مُعيَّن إلى</label>
+                    <p>@(Model.AssignedToEmployee != null ? Model.AssignedToEmployee.FirstName + " " + Model.AssignedToEmployee.LastName : "—")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="due_date">الموعد النهائي</label>
+                    <p>@(Model.DueDate.HasValue? Model.DueDate.Value.ToString("yyyy-MM-dd") : "—")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="created_at">تاريخ الإنشاء</label>
+                    <p>@Model.CreatedAt.ToString("yyyy-MM-dd")</p>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                    <div class="detail-item" style="grid-column:1/-1">
+                        <label data-lang="notes">ملاحظات</label>
+                        <p style="color:#555; font-size:0.9rem; line-height:1.6">@Model.Notes</p>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
 </div>

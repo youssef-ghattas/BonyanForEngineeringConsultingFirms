@@ -5,174 +5,303 @@
     var role = Context.Session.GetString("Role");
     var projects = ViewBag.Projects as List<Bonyan.DAL.Models.Project> ?? new();
     int? selectedProjectId = ViewBag.SelectedProjectId as int?;
+
+    var visitsList = Model?.ToList() ?? new List<Bonyan.DAL.Models.SiteVisit>();
+    int projectsCovered = visitsList.Select(v => v.ProjId).Distinct().Count();
+    int safeCount = visitsList.Count(v => v.SafetyStatus == SafetyStatus.Safe);
+    int attentionCount = visitsList.Count(v => v.SafetyStatus == SafetyStatus.NeedAttention);
 }
 
-<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
 
-<div class="page-header">
-    <div class="page-header-left">
-        <h2>
-            <i class="fas fa-hard-hat" style="color:var(--secondary)"></i>
-            <span data-lang="sitevisits">زيارات الموقع</span>
-        </h2>
-    </div>
-</div>
+<div class="emp-page">
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div style="background:#d1e7dd; color:#146c43; border-radius:8px;
-                        padding:12px 18px; margin-bottom:16px; font-weight:600">
-        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-    </div>
-}
-
-@if (projects.Any())
-{
-    <div class="filter-bar">
-        <form method="get" asp-action="Index"
-              style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
-            <label style="font-weight:600; font-size:0.88rem; color:#444">
-                <i class="fas fa-filter" style="color:var(--secondary)"></i>
-                <span data-lang="filter_by_project">تصفية حسب المشروع:</span>
-            </label>
-            <select name="projectId" class="form-select filter-select"
-                    onchange="this.form.submit()">
-                <option value="" data-lang="all_projects_option">-- جميع المشاريع --</option>
-                @foreach (var p in projects)
-                {
-                    if (selectedProjectId == p.ProjectId)
-                    {
-                        <option value="@p.ProjectId" selected>@p.ProjectName</option>
-                    }
-                    else
-                    {
-                        <option value="@p.ProjectId">@p.ProjectName</option>
-                    }
-                }
-            </select>
-            @if (selectedProjectId.HasValue)
-            {
-                <a asp-action="Index" class="btn-bonyan-primary"
-                   style="font-size:0.82rem; padding:7px 12px">
-                    <i class="fas fa-times"></i> <span data-lang="clear_filter">إلغاء التصفية</span>
-                </a>
-            }
-        </form>
-    </div>
-}
-
-<div class="details-card">
-    @if (Model.Any())
-    {
-        <table class="doc-table">
-            <thead>
-                <tr>
-                    <th data-lang="project">المشروع</th>
-                    <th data-lang="performed_by">أُجريت بواسطة</th>
-                    <th data-lang="role">الدور الوظيفي</th>
-                    <th data-lang="visit_date">تاريخ الزيارة</th>
-                    <th data-lang="safety_status">حالة السلامة</th>
-                    <th data-lang="report_summary">ملخص التقرير</th>
-                    <th data-lang="photo">صورة</th>
-                    @if (role == "Admin")
-                    {
-                        <th data-lang="actions">إجراءات</th>
-                    }
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var sv in Model)
-                {
-                    string safetyLabel = sv.SafetyStatus switch
-                    {
-                        SafetyStatus.Safe => "آمن",
-                        SafetyStatus.NeedAttention => "يحتاج انتباه",
-                        SafetyStatus.Critical => "حرج",
-                        _ => sv.SafetyStatus.ToString()
-                    };
-                    string safetyColor = sv.SafetyStatus switch
-                    {
-                        SafetyStatus.Safe => "#146c43",
-                        SafetyStatus.NeedAttention => "#7c4a00",
-                        SafetyStatus.Critical => "#842029",
-                        _ => "#666"
-                    };
-                    string safetyBg = sv.SafetyStatus switch
-                    {
-                        SafetyStatus.Safe => "#d1e7dd",
-                        SafetyStatus.NeedAttention => "#fff3cd",
-                        SafetyStatus.Critical => "#f8d7da",
-                        _ => "#eee"
-                    };
-                    bool empIsPM = sv.Employee?.UserAccount?.Role == UserRole.ProjectManager;
-                    string empRoleLabel = empIsPM ? "مدير مشروع" : "مهندس";
-                    string empRoleEn = empIsPM ? "Project Manager" : "Engineer";
-
-                    <tr>
-                        <td><strong>@(sv.Project?.ProjectName ?? "—")</strong></td>
-                        <td>
-                            <span style="font-weight:600; color:var(--primary)">
-                                @(sv.Employee != null
-                                                        ? sv.Employee.FirstName + " " + sv.Employee.LastName
-                                                        : "—")
-                    </span>
-                </td>
-                <td>
-                    <span style="font-size:0.75rem; background:#EEF2FF; color:#3730a3;
-                                         padding:2px 8px; border-radius:10px; font-weight:600">
-                        <span data-en="@empRoleEn" data-ar="@empRoleLabel">@empRoleLabel</span>
-                    </span>
-                </td>
-                <td>@sv.VisitDate.ToString("yyyy-MM-dd HH:mm")</td>
-                <td>
-                    <span style="background:@safetyBg; color:@safetyColor;
-                                         padding:3px 10px; border-radius:12px;
-                                         font-size:0.75rem; font-weight:700">
-                        <span data-en="@sv.SafetyStatus.ToString()" data-ar="@safetyLabel">@safetyLabel</span>
-                    </span>
-                </td>
-                <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis"
-                    title="@sv.Report">
-                    @(sv.Report?.Length > 50 ? sv.Report.Substring(0, 50) + "..." : sv.Report ?? "—")
-                </td>
-                <td>
-                    @if (!string.IsNullOrEmpty(sv.VisitPhotos))
-                            {
-                                <a href="@sv.VisitPhotos" target="_blank">
-                                    <img src="@sv.VisitPhotos" alt="صورة"
-                                         style="width:44px; height:44px; object-fit:cover;
-                                                                        border-radius:6px; border:1px solid #eee"
-                                         onerror="this.style.display='none'" />
-                                </a>
-                            }
-                            else
-                            {
-                                <span style="color:#aaa; font-size:0.8rem">—</span>
-                            }
-                        </td>
-                        @if (role == "Admin")
-                        {
-                            <td>
-                                <form asp-action="Delete" asp-route-id="@sv.VisitId"
-                                      method="post" style="display:inline"
-                                      onsubmit="return confirm('هل أنت متأكد من حذف هذه الزيارة؟')">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-action delete" title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        }
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div style="text-align:center; padding:40px; color:#aaa">
-            <i class="fas fa-hard-hat" style="font-size:3rem; margin-bottom:14px; display:block"></i>
-            <p data-lang="no_sitevisits">لا توجد زيارات موقع حتى الآن</p>
+    <!-- ── Header ─────────────────────────────────── -->
+    <div class="emp-header">
+        <div class="emp-header-title">
+            <h2><i class="fas fa-hard-hat"></i> <span data-lang="sitevisits">زيارات الموقع</span></h2>
         </div>
-    }
+        @if (selectedProjectId.HasValue && role != "Admin")
+        {
+            <div class="emp-header-actions">
+                <a asp-action="Create" asp-route-projectId="@selectedProjectId" class="btn-emp btn-emp-primary">
+                    <i class="fas fa-plus"></i> <span data-lang="sv_add_btn">إضافة زيارة موقع</span>
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- ── Alerts ─────────────────────────────────── -->
+    <partial name="_AlertMessages" />
+
+    <!-- ── KPI Strip ──────────────────────────────── -->
+    <div class="emp-kpi-grid">
+        <div class="emp-kpi navy">
+            <div class="emp-kpi-icon"><i class="fas fa-hard-hat"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="sv_stat_total">إجمالي الزيارات</div>
+                <div class="emp-kpi-value">@visitsList.Count</div>
+            </div>
+        </div>
+        <div class="emp-kpi blue">
+            <div class="emp-kpi-icon"><i class="fas fa-diagram-project"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="sv_stat_projects">المشاريع المغطّاة</div>
+                <div class="emp-kpi-value">@projectsCovered</div>
+            </div>
+        </div>
+        <div class="emp-kpi green">
+            <div class="emp-kpi-icon"><i class="fas fa-check-circle"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="sv_stat_safe">زيارات آمنة</div>
+                <div class="emp-kpi-value">@safeCount</div>
+            </div>
+        </div>
+        <div class="emp-kpi gold">
+            <div class="emp-kpi-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="sv_stat_attention">تحتاج انتباهاً</div>
+                <div class="emp-kpi-value">@attentionCount</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Filter Bar ──────────────────────────────── -->
+    <div class="filter-bar">
+        @if (projects.Any())
+        {
+            <form method="get" asp-action="Index" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+                <label style="font-weight:600; font-size:0.85rem; color:var(--primary); white-space:nowrap; display:flex; align-items:center; gap:6px">
+                    <i class="fas fa-filter" style="color:var(--secondary)"></i>
+                    <span data-lang="filter_by_project">تصفية حسب المشروع:</span>
+                </label>
+                <select name="projectId" class="filter-select" onchange="this.form.submit()">
+                    <option value="" data-lang="all_projects_option">-- جميع المشاريع --</option>
+                    @foreach (var p in projects)
+                    {
+                        if (selectedProjectId == p.ProjectId)
+                        {
+                            <option value="@p.ProjectId" selected>@p.ProjectName</option>
+                        }
+                        else
+                        {
+                            <option value="@p.ProjectId">@p.ProjectName</option>
+                        }
+                    }
+                </select>
+                @if (selectedProjectId.HasValue)
+                {
+                    <a asp-action="Index" class="btn-emp btn-emp-outline" style="font-size:0.82rem; padding:7px 12px">
+                        <i class="fas fa-times"></i> <span data-lang="clear_filter">إلغاء التصفية</span>
+                    </a>
+                }
+            </form>
+        }
+
+        <div class="filter-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="svSearchInput"
+                   data-lang-placeholder="sv_search_placeholder"
+                   placeholder="ابحث باسم المشروع أو الموظف..." autocomplete="off" />
+        </div>
+
+        <button type="button" class="filter-reset" id="resetFiltersBtn">
+            <i class="fas fa-rotate-left"></i> <span data-lang="reset_filters">إعادة تعيين</span>
+        </button>
+    </div>
+
+    <!-- ── Site Visits Table ───────────────────────── -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h5><i class="fas fa-hard-hat"></i> <span data-lang="sitevisits">زيارات الموقع</span></h5>
+            <span class="count-badge" id="visibleCount">@visitsList.Count</span>
+        </div>
+
+        @if (visitsList.Any())
+        {
+            <div class="table-responsive">
+                <table class="emp-table" id="svTable">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-diagram-project"></i> <span data-lang="project">المشروع</span></th>
+                            <th><i class="fas fa-user"></i> <span data-lang="performed_by">أُجريت بواسطة</span></th>
+                            <th><i class="fas fa-user-shield"></i> <span data-lang="role">الدور الوظيفي</span></th>
+                            <th><i class="fas fa-calendar-day"></i> <span data-lang="visit_date">تاريخ الزيارة</span></th>
+                            <th><i class="fas fa-shield"></i> <span data-lang="safety_status">حالة السلامة</span></th>
+                            <th><i class="fas fa-file-lines"></i> <span data-lang="report_summary">ملخص التقرير</span></th>
+                            <th><i class="fas fa-camera"></i> <span data-lang="photo">صورة</span></th>
+                            @if (role == "Admin")
+                            {
+                                <th><i class="fas fa-cog"></i> <span data-lang="actions">إجراءات</span></th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sv in visitsList)
+                        {
+                            string safetyLabel = sv.SafetyStatus switch
+                            {
+                                SafetyStatus.Safe => "آمن",
+                                SafetyStatus.NeedAttention => "يحتاج انتباه",
+                                SafetyStatus.Critical => "حرج",
+                                _ => sv.SafetyStatus.ToString()
+                            };
+                            string safetyEn = sv.SafetyStatus switch
+                            {
+                                SafetyStatus.Safe => "Safe",
+                                SafetyStatus.NeedAttention => "Needs Attention",
+                                SafetyStatus.Critical => "Critical",
+                                _ => sv.SafetyStatus.ToString()
+                            };
+                            var safetyClass = sv.SafetyStatus switch
+                            {
+                                SafetyStatus.Safe => "badge-male",
+                                SafetyStatus.NeedAttention => "badge-female",
+                                SafetyStatus.Critical => "spec-civil",
+                                _ => ""
+                            };
+                            bool empIsPM = sv.Employee?.UserAccount?.Role == UserRole.ProjectManager;
+                            string empRoleLabel = empIsPM ? "مدير مشروع" : "مهندس";
+                            string empRoleEn = empIsPM ? "Project Manager" : "Engineer";
+
+                            <tr data-project="@(sv.Project?.ProjectName ?? "")"
+                                data-employee="@(sv.Employee != null ? sv.Employee.FirstName + " " + sv.Employee.LastName : "")"
+                                data-report="@(sv.Report ?? "")">
+                                <td><strong>@(sv.Project?.ProjectName ?? "—")</strong></td>
+                                <td>
+                                    <div class="emp-contact-cell" style="background:transparent; padding:0">
+                                        <span style="font-weight:600; color:var(--primary); margin:0">
+                                            <i class="fas fa-user"></i>
+                                            @(sv.Employee != null ? sv.Employee.FirstName + " " + sv.Employee.LastName : "—")
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="role-pill @(empIsPM ? "pm" : "")"
+                                          data-ar="@empRoleLabel" data-en="@empRoleEn">
+                                        <i class="fas @(empIsPM ? "fa-user-tie" : "fa-hard-hat")"></i> @empRoleLabel
+                                    </span>
+                                </td>
+                                <td>@sv.VisitDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    <span class="badge-spec @safetyClass"
+                                          data-ar="@safetyLabel" data-en="@safetyEn">
+                                        <i class="fas @(sv.SafetyStatus == SafetyStatus.Safe ? "fa-check-circle" : sv.SafetyStatus == SafetyStatus.Critical ? "fa-bolt" : "fa-exclamation")"></i>
+                                        @safetyLabel
+                                    </span>
+                                </td>
+                                <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis"
+                                    title="@sv.Report">
+                                    @(sv.Report?.Length > 50 ? sv.Report.Substring(0, 50) + "..." : sv.Report ?? "—")
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(sv.VisitPhotos))
+                                    {
+                                        <a href="@sv.VisitPhotos" target="_blank">
+                                            <img src="@sv.VisitPhotos" alt="Site photo"
+                                                 style="width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid #eee"
+                                                 onerror="this.style.display='none'" />
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#aaa; font-size:0.8rem">—</span>
+                                    }
+                                </td>
+                                @if (role == "Admin")
+                                {
+                                    <td>
+                                        <div class="action-btns">
+                                            <form asp-action="Delete" asp-route-id="@sv.VisitId"
+                                                  method="post" style="display:inline"
+                                                  onsubmit="return svConfirmDelete()">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn-action delete"
+                                                        data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="noResultsState" style="display:none">
+                <i class="fas fa-hard-hat"></i>
+                <h6 data-lang="no_match_results">لا توجد نتائج مطابقة</h6>
+                <p data-lang="try_adjust_filters">جرّب تعديل كلمات البحث أو الفلاتر المستخدمة</p>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-hard-hat"></i>
+                <p data-lang="no_sitevisits">لا توجد زيارات موقع حتى الآن</p>
+            </div>
+        }
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var searchInput = document.getElementById('svSearchInput');
+            var resetBtn = document.getElementById('resetFiltersBtn');
+            var table = document.getElementById('svTable');
+            var visibleCountEl = document.getElementById('visibleCount');
+            var noResultsState = document.getElementById('noResultsState');
+
+            if (!table) return;
+
+            var rows = Array.prototype.slice.call(table.querySelectorAll('tbody tr'));
+
+            function applyFilters() {
+                var term = (searchInput.value || '').trim().toLowerCase();
+                var visible = 0;
+
+                rows.forEach(function (row) {
+                    var matchesTerm = !term ||
+                        (row.dataset.project || '').toLowerCase().indexOf(term) !== -1 ||
+                        (row.dataset.employee || '').toLowerCase().indexOf(term) !== -1 ||
+                        (row.dataset.report || '').toLowerCase().indexOf(term) !== -1;
+
+                    var show = matchesTerm;
+                    row.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
+
+                visibleCountEl.textContent = visible;
+                if (noResultsState) {
+                    noResultsState.style.display = visible === 0 ? 'block' : 'none';
+                }
+            }
+
+            searchInput.addEventListener('input', applyFilters);
+            resetBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                applyFilters();
+            });
+
+            // Update tooltips on language change
+            document.addEventListener('languageChanged', function (e) {
+                var lang = e.detail.lang;
+                document.querySelectorAll('[data-tip-ar]').forEach(function (el) {
+                    el.setAttribute('data-tip', lang === 'ar' ? el.dataset.tipAr : el.dataset.tipEn);
+                });
+            });
+        })();
+
+        // ── Bilingual delete confirmation ─────────────────────────
+        function svConfirmDelete() {
+            var lang = localStorage.getItem('lang') || 'ar';
+            var msg = lang === 'ar'
+                ? 'هل أنت متأكد من حذف هذه الزيارة؟'
+                : 'Are you sure you want to delete this site visit?';
+            return confirm(msg);
+        }
+    </script>
+}

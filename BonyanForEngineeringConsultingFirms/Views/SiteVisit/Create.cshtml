@@ -6,7 +6,7 @@
     string projectName = ViewBag.ProjectName as string ?? "—";
 }
 
-<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
 
 <div class="page-header">
     <div class="page-header-left">
@@ -30,13 +30,13 @@
     </div>
 }
 
-<div class="upload-card">
-    <div class="upload-card-header">
+<div class="form-card">
+    <div class="form-card-header">
         <i class="fas fa-map-marker-alt"></i>
         <h4 data-lang="sitevisit_data">بيانات زيارة الموقع</h4>
     </div>
 
-    <div class="upload-card-body">
+    <div class="form-card-body">
         <div class="project-badge">
             <i class="fas fa-project-diagram"></i>
             @projectName
@@ -69,7 +69,7 @@
                 <small style="color:#888" data-lang="allowed_formats_img">الصيغ المسموح بها: jpg, jpeg, png, gif, webp</small>
             </div>
 
-            <div class="upload-actions">
+            <div class="form-actions">
                 <a asp-controller="Project" asp-action="Details"
                    asp-route-id="@projectId" class="btn-bonyan-primary">
                     <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>

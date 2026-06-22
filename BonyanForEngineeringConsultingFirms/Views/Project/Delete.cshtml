@@ -11,9 +11,18 @@
         ProjectStatus.Cancelled => "ملغي",
         _ => Model.Status.ToString()
     };
+    string statusEn = Model.Status switch
+    {
+        ProjectStatus.Planning => "Planning",
+        ProjectStatus.InProgress => "In Progress",
+        ProjectStatus.Completed => "Completed",
+        ProjectStatus.OnHold => "On Hold",
+        ProjectStatus.Cancelled => "Cancelled",
+        _ => Model.Status.ToString()
+    };
 }
 
-<link rel="stylesheet" href="~/css/project.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
 
 <div class="delete-card">
     <div class="delete-card-header">
@@ -40,7 +49,7 @@
             </p>
             <p>
                 <strong data-lang="status">الحالة: </strong>
-                @statusAr
+                <span data-ar="@statusAr" data-en="@statusEn">@statusAr</span>
             </p>
         </div>
 

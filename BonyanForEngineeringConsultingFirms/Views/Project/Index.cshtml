@@ -209,7 +209,11 @@
                             </div>
                             <div class="project-meta-item">
                                 <label><i class="fas fa-coins"></i> <span data-lang="budget">الموازنة</span></label>
-                                <span class="project-budget-value">@(proj.Budget.HasValue? proj.Budget.Value.ToString("N0") + " ج.م" : "—")</span>
+                                <span class="project-budget-value">@(proj.Budget.HasValue ? proj.Budget.Value.ToString("N0") : "—")</span>
+                                @if (proj.Budget.HasValue)
+                                {
+                                    <span data-lang="currency_egp">ج.م</span>
+                                }
                             </div>
                         </div>
                     </div>

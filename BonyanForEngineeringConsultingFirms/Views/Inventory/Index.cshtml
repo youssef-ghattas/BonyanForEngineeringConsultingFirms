@@ -1,104 +1,173 @@
-﻿@* Views/Inventory/Index.cshtml *@
-@model IEnumerable<Bonyan.DAL.Models.Inventory>
+﻿@model IEnumerable<Bonyan.DAL.Models.Inventory>
 @{
     ViewData["Title"] = "المخازن";
     var role = Context.Session.GetString("Role");
+
+    var inventoriesList = Model?.ToList() ?? new List<Bonyan.DAL.Models.Inventory>();
+    int totalCount = inventoriesList.Count;
+    int withLocation = inventoriesList.Count(i => !string.IsNullOrWhiteSpace(i.Location));
+    decimal totalCapacity = inventoriesList.Sum(i => i.Capacity ?? 0);
+    int totalMaterialItems = inventoriesList.Sum(i => i.MaterialInventories.Count);
 }
 
 <link rel="stylesheet" href="~/css/material.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
 
-<div class="page-header">
-    <div class="page-header-left">
-        <h2>
-            <i class="fas fa-warehouse" style="color:var(--secondary)"></i>
-            <span data-lang="warehouses">المخازن</span>
-        </h2>
-    </div>
-    @if (role == "Admin")
-    {
-        <a asp-action="Create" class="btn-bonyan-secondary">
-            <i class="fas fa-plus"></i> <span data-lang="add_warehouse">إضافة مخزن</span>
-        </a>
-    }
-</div>
+<style>
+    [dir="ltr"] .emp-table thead th { text-align: left; }
+    [dir="ltr"] .emp-table thead th i { margin-left: 0; margin-right: 5px; }
+</style>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert-success-msg">
-        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-    </div>
-}
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert-error-msg">
-        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
-    </div>
-}
+<div class="emp-page">
 
-<div class="details-card">
-    @if (Model.Any())
-    {
-        <table class="mat-table">
-            <thead>
-                <tr>
-                    <th data-lang="warehouse_name_label">اسم المخزن</th>
-                    <th data-lang="location">الموقع</th>
-                    <th data-lang="capacity">السعة</th>
-                    <th data-lang="material_count">عدد المواد</th>
-                    <th data-lang="last_updated">آخر تحديث</th>
-                    <th data-lang="actions">إجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var inv in Model)
-                {
-                    <tr>
-                        <td>
-                            <a asp-action="Details" asp-route-id="@inv.InventoryID"
-                               style="color:var(--primary); font-weight:600; text-decoration:none">
-                                <i class="fas fa-warehouse" style="font-size:0.65rem; color:var(--secondary); margin-left:6px"></i>
-                                @inv.InventoryName
-                            </a>
-                        </td>
-                        <td>@(inv.Location ?? "—")</td>
-                        <td>@(inv.Capacity.HasValue? inv.Capacity.Value.ToString("N0") : "—")</td>
-                        <td>
-                            <span class="count-badge inv">
-                                <i class="fas fa-boxes"></i> @inv.MaterialInventories.Count
-                            </span>
-                        </td>
-                        <td>@inv.LastUpdatedDate.ToString("yyyy-MM-dd")</td>
-                        <td>
-                            <a asp-action="Details" asp-route-id="@inv.InventoryID"
-                               class="btn-action view" title="عرض">
-                                <i class="fas fa-eye"></i>
-                            </a>
+    <!-- ── Header ─────────────────────────────────── -->
+    <div class="emp-header">
+        <div class="emp-header-title">
+            <h2><i class="fas fa-warehouse"></i> <span data-lang="warehouses">المخازن</span></h2>
+            <p data-lang="warehouses_sub">إدارة المخازن والمواد المخزّنة</p>
+        </div>
+        @if (role == "Admin")
+        {
+            <div class="emp-header-actions">
+                <a asp-action="Create" class="btn-emp btn-emp-primary">
+                    <i class="fas fa-plus"></i> <span data-lang="add_warehouse">إضافة مخزن</span>
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- ── Alerts ─────────────────────────────────── -->
+    <partial name="_AlertMessages" />
+
+    <!-- ── KPI Strip ──────────────────────────────── -->
+    <div class="emp-kpi-grid">
+        <div class="emp-kpi navy">
+            <div class="emp-kpi-icon"><i class="fas fa-warehouse"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="inv_stat_total">إجمالي المخازن</div>
+                <div class="emp-kpi-value">@totalCount</div>
+            </div>
+        </div>
+        <div class="emp-kpi blue">
+            <div class="emp-kpi-icon"><i class="fas fa-map-marker-alt"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="inv_stat_located">محدد الموقع</div>
+                <div class="emp-kpi-value">@withLocation</div>
+            </div>
+        </div>
+        <div class="emp-kpi gold">
+            <div class="emp-kpi-icon"><i class="fas fa-weight-hanging"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="inv_stat_capacity">السعة الإجمالية</div>
+                <div class="emp-kpi-value">@totalCapacity.ToString("N0")</div>
+            </div>
+        </div>
+        <div class="emp-kpi green">
+            <div class="emp-kpi-icon"><i class="fas fa-boxes"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="inv_stat_materials">المواد المخزّنة</div>
+                <div class="emp-kpi-value">@totalMaterialItems</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Warehouses Table ───────────────────────── -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h5><i class="fas fa-warehouse"></i> <span data-lang="warehouses">المخازن</span></h5>
+            <span class="count-badge">@totalCount</span>
+        </div>
+
+        @if (inventoriesList.Any())
+        {
+            <div class="table-responsive">
+                <table class="emp-table mat-table" style="min-width:800px">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-warehouse"></i> <span data-lang="warehouse_name_label">اسم المخزن</span></th>
+                            <th><i class="fas fa-map-marker-alt"></i> <span data-lang="location">الموقع</span></th>
+                            <th><i class="fas fa-weight-hanging"></i> <span data-lang="capacity">السعة</span></th>
+                            <th><i class="fas fa-boxes"></i> <span data-lang="material_count">عدد المواد</span></th>
+                            <th><i class="fas fa-calendar-alt"></i> <span data-lang="last_updated">آخر تحديث</span></th>
                             @if (role == "Admin")
                             {
-                                <a asp-action="Edit" asp-route-id="@inv.InventoryID"
-                                   class="btn-action edit" title="تعديل">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form asp-action="Delete" asp-route-id="@inv.InventoryID" method="post"
-                                      style="display:inline"
-                                      onsubmit="return confirm('هل أنت متأكد من حذف هذا المخزن؟')">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-action delete" title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                <th><i class="fas fa-cog"></i> <span data-lang="actions">إجراءات</span></th>
                             }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div class="empty-state">
-            <i class="fas fa-warehouse"></i>
-            <p data-lang="no_warehouses">لا توجد مخازن حتى الآن</p>
-        </div>
-    }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var inv in inventoriesList)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="emp-name-cell">
+                                        <div class="emp-avatar" style="background:linear-gradient(135deg,#2e7d32,#43a047); font-size:0.7rem">
+                                            <i class="fas fa-warehouse"></i>
+                                        </div>
+                                        <div class="emp-info">
+                                            <a asp-action="Details" asp-route-id="@inv.InventoryID"
+                                               style="color:var(--primary); font-weight:700; text-decoration:none">
+                                                @inv.InventoryName
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@(inv.Location ?? "—")</td>
+                                <td style="font-weight:700">@(inv.Capacity.HasValue ? inv.Capacity.Value.ToString("N0") : "—")</td>
+                                <td>
+                                    <span class="badge-spec spec-architectural">
+                                        <i class="fas fa-boxes"></i> @inv.MaterialInventories.Count
+                                    </span>
+                                </td>
+                                <td style="white-space:nowrap">@inv.LastUpdatedDate.ToString("yyyy-MM-dd")</td>
+                                @if (role == "Admin")
+                                {
+                                    <td>
+                                        <div class="action-btns">
+                                            <a asp-action="Details" asp-route-id="@inv.InventoryID"
+                                               class="btn-action view" data-tip-ar="عرض" data-tip-en="View" data-tip="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@inv.InventoryID"
+                                               class="btn-action edit" data-tip-ar="تعديل" data-tip-en="Edit" data-tip="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form asp-action="Delete" asp-route-id="@inv.InventoryID" method="post"
+                                                  style="display:inline"
+                                                  onsubmit="return confirm('Are you sure you want to delete this warehouse?')">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn-action delete"
+                                                        data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-warehouse"></i>
+                <p data-lang="no_warehouses">لا توجد مخازن حتى الآن</p>
+            </div>
+        }
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('languageChanged', function (e) {
+            var lang = e.detail.lang;
+            document.querySelectorAll('[data-tip-ar]').forEach(function (el) {
+                el.setAttribute('data-tip', lang === 'ar' ? el.dataset.tipAr : el.dataset.tipEn);
+            });
+        });
+    </script>
+}

@@ -5,155 +5,256 @@
     var role = Context.Session.GetString("Role");
     var projects = ViewBag.Projects as List<Bonyan.DAL.Models.Project> ?? new();
     int? selectedProjectId = ViewBag.SelectedProjectId as int?;
+
+    var invoicesList = Model?.ToList() ?? new List<Bonyan.DAL.Models.Invoice>();
+    int totalCount = invoicesList.Count;
+    decimal totalAmount = invoicesList.Sum(i => i.Total_Amount ?? 0);
+    int unpaidCount = invoicesList.Count(i => i.Invoice_Status == InvoiceStatus.Unpaid);
+    int overdueCount = invoicesList.Count(i => i.Invoice_Status != InvoiceStatus.Paid
+        && i.Due_Date.HasValue && i.Due_Date.Value < DateTime.Today);
+    decimal totalPaid = invoicesList.Sum(i => i.Paid_Amount ?? 0);
+    decimal totalRemaining = invoicesList.Sum(i => i.RemainingAmount ?? 0);
 }
 
-<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
+<link rel="stylesheet" href="~/css/material.css" />
+<link rel="stylesheet" href="~/css/materialinvoice.css" />
 
-<div class="page-header">
-    <div class="page-header-left">
+<style>
+    [dir="ltr"] .mi-table thead th {
+        text-align: left;
+    }
+    [dir="ltr"] .mi-table thead th i {
+        margin-left: 0;
+        margin-right: 5px;
+    }
+    [dir="ltr"] .mi-table tbody td {
+        text-align: left;
+    }
+</style>
+
+<div class="mi-page">
+
+    @* Alerts *@
+    <partial name="_AlertMessages" />
+
+    <!-- ── Header ──────────────────────────────────────── -->
+    <div class="mi-header">
         <h2>
-            <i class="fas fa-file-invoice-dollar" style="color:var(--secondary)"></i>
+            <i class="fas fa-file-invoice-dollar"></i>
             <span data-lang="invoices">الفواتير</span>
         </h2>
+        @if (selectedProjectId.HasValue)
+        {
+            <a asp-action="Create" asp-route-projectId="@selectedProjectId" class="btn-bonyan-secondary">
+                <i class="fas fa-plus"></i> <span data-lang="new_invoice">فاتورة جديدة</span>
+            </a>
+        }
     </div>
-</div>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div style="background:#d1e7dd; color:#146c43; border-radius:8px;
-                        padding:12px 18px; margin-bottom:16px; font-weight:600">
-        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+    <!-- ── KPI Cards ───────────────────────────────────── -->
+    <div class="mi-kpi-grid">
+        <div class="mi-kpi blue">
+            <div class="mi-kpi-icon"><i class="fas fa-file-invoice"></i></div>
+            <div>
+                <div class="mi-kpi-label" data-lang="total_invoices">إجمالي الفواتير</div>
+                <div class="mi-kpi-value">@totalCount</div>
+            </div>
+        </div>
+        <div class="mi-kpi green">
+            <div class="mi-kpi-icon"><i class="fas fa-coins"></i></div>
+            <div>
+                <div class="mi-kpi-label" data-lang="total_amounts">إجمالي المبالغ</div>
+                <div class="mi-kpi-value">
+                    @totalAmount.ToString("N2") <small style="font-size:.6em; font-weight:600">ج.م</small>
+                </div>
+            </div>
+        </div>
+        <div class="mi-kpi red">
+            <div class="mi-kpi-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <div>
+                <div class="mi-kpi-label" data-lang="unpaid">غير مدفوع</div>
+                <div class="mi-kpi-value" style="color:#c62828">@unpaidCount</div>
+            </div>
+        </div>
+        <div class="mi-kpi amber">
+            <div class="mi-kpi-icon"><i class="fas fa-clock"></i></div>
+            <div>
+                <div class="mi-kpi-label" data-lang="overdue">متأخرة</div>
+                <div class="mi-kpi-value" style="color:#e65100">@overdueCount</div>
+            </div>
+        </div>
     </div>
-}
 
-@if (projects.Any())
-{
-    <div class="filter-bar">
-        <form method="get" asp-action="Index"
-              style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
-            <label style="font-weight:600; font-size:0.88rem; color:#444">
-                <i class="fas fa-filter" style="color:var(--secondary)"></i>
-                <span data-lang="filter_by_project">تصفية حسب المشروع:</span>
-            </label>
-            <select name="projectId" class="form-select filter-select"
-                    onchange="this.form.submit()">
-                <option value="" data-lang="all_projects_option">-- جميع المشاريع --</option>
-                @foreach (var p in projects)
-                {
-                    if (selectedProjectId == p.ProjectId)
-                    {
-                        <option value="@p.ProjectId" selected>@p.ProjectName</option>
-                    }
-                    else
-                    {
-                        <option value="@p.ProjectId">@p.ProjectName</option>
-                    }
-                }
-            </select>
-            @if (selectedProjectId.HasValue)
-            {
-                <a asp-action="Index" class="btn-bonyan-primary"
-                   style="font-size:0.82rem; padding:7px 12px">
-                    <i class="fas fa-times"></i> <span data-lang="clear_filter">إلغاء التصفية</span>
-                </a>
-            }
-        </form>
-    </div>
-}
-
-<div class="details-card">
-    @if (Model.Any())
+    <!-- ── Filter Bar ──────────────────────────────────── -->
+    @if (projects.Any())
     {
-        <table class="doc-table">
-            <thead>
-                <tr>
-                    <th data-lang="invoice_number">رقم الفاتورة</th>
-                    <th data-lang="project">المشروع</th>
-                    <th data-lang="total">الإجمالي</th>
-                    <th data-lang="status">الحالة</th>
-                    <th data-lang="issue_date">تاريخ الإصدار</th>
-                    <th data-lang="due_date">تاريخ الاستحقاق</th>
-                    <th data-lang="actions">إجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var inv in Model)
+        <div class="mi-filter">
+            <form method="get" asp-action="Index">
+                <i class="fas fa-filter" style="color:var(--secondary); font-size:0.95rem"></i>
+                <span style="font-weight:600; font-size:0.88rem; color:var(--primary); margin-right:4px">
+                    <span data-lang="filter_by_project">تصفية حسب المشروع:</span>
+                </span>
+                <select name="projectId" style="min-width:170px" onchange="this.form.submit()">
+                    <option value="" data-lang="all_projects_option">-- جميع المشاريع --</option>
+                    @foreach (var p in projects)
+                    {
+                        if (selectedProjectId == p.ProjectId)
+                        {
+                            <option value="@p.ProjectId" selected>@p.ProjectName</option>
+                        }
+                        else
+                        {
+                            <option value="@p.ProjectId">@p.ProjectName</option>
+                        }
+                    }
+                </select>
+                @if (selectedProjectId.HasValue)
                 {
-                    string statusLabel = inv.Invoice_Status switch
-                    {
-                        InvoiceStatus.Paid => "مدفوعة",
-                        InvoiceStatus.Unpaid => "غير مدفوعة",
-                        InvoiceStatus.PartiallyPaid => "مدفوعة جزئياً",
-                        _ => inv.Invoice_Status.ToString()
-                    };
-                    string statusColor = inv.Invoice_Status switch
-                    {
-                        InvoiceStatus.Paid => "#146c43",
-                        InvoiceStatus.Unpaid => "#842029",
-                        InvoiceStatus.PartiallyPaid => "#7c4a00",
-                        _ => "#666"
-                    };
-                    string statusBg = inv.Invoice_Status switch
-                    {
-                        InvoiceStatus.Paid => "#d1e7dd",
-                        InvoiceStatus.Unpaid => "#f8d7da",
-                        InvoiceStatus.PartiallyPaid => "#fff3cd",
-                        _ => "#eee"
-                    };
-                    <tr>
-                        <td>
-                            <a asp-action="Details" asp-route-id="@inv.Invoice_ID"
-                               style="color:var(--primary); font-weight:600; text-decoration:none">
-                                #@inv.Invoice_ID
-                            </a>
-                        </td>
-                        <td>@(inv.Project?.ProjectName ?? "—")</td>
-                        <td>
-                            @(inv.Total_Amount.HasValue
-                                                ? inv.Total_Amount.Value.ToString("N0") + " ج.م"
-                                                : "—")
-                </td>
-                <td>
-                    <span style="background:@statusBg; color:@statusColor;
-                                         padding:3px 10px; border-radius:12px;
-                                         font-size:0.75rem; font-weight:700">
-                        <span data-en="@inv.Invoice_Status.ToString()" data-ar="@statusLabel">@statusLabel</span>
-                    </span>
-                </td>
-                <td>@inv.Invoice_Date.ToString("yyyy-MM-dd")</td>
-                <td>@(inv.Due_Date.HasValue? inv.Due_Date.Value.ToString("yyyy-MM-dd") : "—")</td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@inv.Invoice_ID"
-                       class="btn-action view" title="تفاصيل">
-                        <i class="fas fa-eye"></i>
+                    <a asp-action="Index" asp-route-projectId="" class="btn-bonyan-primary"
+                       style="height:42px; padding:0 16px; display:inline-flex; align-items:center; gap:6px">
+                        <i class="fas fa-undo"></i> <span data-lang="reset">إعادة تعيين</span>
                     </a>
-                    @if (role == "Admin")
-                            {
-                                <a asp-action="Edit" asp-route-id="@inv.Invoice_ID"
-                                   class="btn-action edit" title="تعديل">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form asp-action="Delete" asp-route-id="@inv.Invoice_ID"
-                                      method="post" style="display:inline"
-                                      onsubmit="return confirm('هل أنت متأكد من حذف هذه الفاتورة؟')">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-action delete" title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            }
-                        </td>
-                    </tr>
                 }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div style="text-align:center; padding:40px; color:#aaa">
-            <i class="fas fa-file-invoice-dollar"
-               style="font-size:3rem; margin-bottom:14px; display:block"></i>
-            <p data-lang="no_invoices">لا توجد فواتير حتى الآن</p>
+            </form>
         </div>
     }
+
+    <!-- ── Table Card ──────────────────────────────────── -->
+    <div class="mi-card">
+        <div class="mi-card-head">
+            <i class="fas fa-list-alt"></i>
+            <span data-lang="invoices_list">قائمة الفواتير</span>
+            <span class="count-badge">@totalCount</span>
+        </div>
+
+        @if (invoicesList.Any())
+        {
+            <div style="overflow-x:auto">
+                <table class="mi-table" style="min-width:1000px">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag"></i> #</th>
+                            <th><i class="fas fa-diagram-project"></i> <span data-lang="project">المشروع</span></th>
+                            <th><i class="fas fa-coins"></i> <span data-lang="total">الإجمالي</span></th>
+                            <th><i class="fas fa-percent"></i> <span data-lang="tax">ضريبة</span></th>
+                            <th><i class="fas fa-percent"></i> <span data-lang="discount">خصم</span></th>
+                            <th><i class="fas fa-credit-card"></i> <span data-lang="paid">المدفوع</span></th>
+                            <th><i class="fas fa-circle"></i> <span data-lang="status">الحالة</span></th>
+                            <th><i class="fas fa-calendar-alt"></i> <span data-lang="issue_date">تاريخ الإصدار</span></th>
+                            <th><i class="fas fa-clock"></i> <span data-lang="due_date">تاريخ الاستحقاق</span></th>
+                            <th data-lang="actions">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var inv in invoicesList)
+                        {
+                            string statusLabel = inv.Invoice_Status switch
+                            {
+                                InvoiceStatus.Paid => "مدفوعة",
+                                InvoiceStatus.Unpaid => "غير مدفوعة",
+                                InvoiceStatus.PartiallyPaid => "مدفوعة جزئياً",
+                                _ => inv.Invoice_Status.ToString()
+                            };
+                            string statusClass = inv.Invoice_Status switch
+                            {
+                                InvoiceStatus.Paid => "status-paid",
+                                InvoiceStatus.Unpaid => "status-unpaid",
+                                InvoiceStatus.PartiallyPaid => "status-partial",
+                                _ => ""
+                            };
+                            string statusIcon = inv.Invoice_Status switch
+                            {
+                                InvoiceStatus.Paid => "fas fa-check-circle",
+                                InvoiceStatus.Unpaid => "fas fa-times-circle",
+                                InvoiceStatus.PartiallyPaid => "fas fa-adjust",
+                                _ => ""
+                            };
+                            bool overdue = inv.Invoice_Status != InvoiceStatus.Paid
+                                && inv.Due_Date.HasValue
+                                && inv.Due_Date.Value < DateTime.Today;
+
+                            <tr>
+                                <td style="font-weight:700; color:#aaa; font-size:0.8rem">
+                                    #@inv.Invoice_ID
+                                </td>
+                                <td>
+                                    <div class="mat-name">@(inv.Project?.ProjectName ?? "—")</div>
+                                </td>
+                                <td class="mi-amount">
+                                    @if (inv.Total_Amount.HasValue)
+                                    {
+                                        @inv.Total_Amount.Value.ToString("N2")
+                                    }
+                                    else
+                                    {
+                                        @:—
+                                    }
+                                </td>
+                                <td style="color:#e65100; font-weight:600">
+                                    @(inv.Tax?.ToString("N1") ?? "0")%
+                                </td>
+                                <td style="color:#2e7d32; font-weight:600">
+                                    @(inv.Discount?.ToString("N1") ?? "0")%
+                                </td>
+                                <td class="mi-amount" style="color:#2e7d32">
+                                    @(inv.Paid_Amount?.ToString("N2") ?? "0.00")
+                                </td>
+                                <td>
+                                    <span class="status-badge @statusClass">
+                                        <i class="@statusIcon"></i>
+                                        <span data-en="@inv.Invoice_Status.ToString()" data-ar="@statusLabel">@statusLabel</span>
+                                    </span>
+                                </td>
+                                <td style="white-space:nowrap">@inv.Invoice_Date.ToString("yyyy-MM-dd")</td>
+                                <td style="white-space:nowrap">
+                                    @if (inv.Due_Date.HasValue)
+                                    {
+                                        if (overdue)
+                                        {
+                                            <span class="overdue-tag" data-lang="overdue">متأخر!</span>
+                                        }
+                                        @inv.Due_Date.Value.ToString("yyyy-MM-dd")
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#bbb">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="mi-btn-group">
+                                        <a asp-action="Details" asp-route-id="@inv.Invoice_ID"
+                                           class="mi-action view" title="عرض التفاصيل">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        @if (role == "Admin")
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@inv.Invoice_ID"
+                                               class="mi-action edit" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form asp-action="Delete" asp-route-id="@inv.Invoice_ID"
+                                                  method="post" style="display:inline"
+                                                  onsubmit="return confirm('Are you sure you want to delete this invoice?')">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="mi-action delete" title="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="mi-empty">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <p data-lang="no_invoices">لا توجد فواتير حتى الآن</p>
+            </div>
+        }
+    </div>
 </div>

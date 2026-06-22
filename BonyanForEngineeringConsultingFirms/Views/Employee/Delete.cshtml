@@ -10,6 +10,14 @@
         Specialization.Architectural => "معماري",
         _ => Model.Specialization.ToString()
     };
+    string specEn = Model.Specialization switch
+    {
+        Specialization.Civil => "Civil",
+        Specialization.Mechanical => "Mechanical",
+        Specialization.Electrical => "Electrical",
+        Specialization.Architectural => "Architectural",
+        _ => Model.Specialization.ToString()
+    };
 }
 
 <link rel="stylesheet" href="~/css/employee.css" />
@@ -40,7 +48,7 @@
             </p>
             <p>
                 <strong data-lang="specialization">التخصص: </strong>
-                @specAr
+                <span data-ar="@specAr" data-en="@specEn">@specAr</span>
             </p>
         </div>
 

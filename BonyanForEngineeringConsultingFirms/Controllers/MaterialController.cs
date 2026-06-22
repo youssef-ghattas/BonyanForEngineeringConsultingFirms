@@ -246,7 +246,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				});
 			}
 
-			TempData["SuccessMessage"] = "تمت إضافة المادة بنجاح";
+			TempData["SuccessMessageKey"] = "msg_material_created";
 			return RedirectToAction(nameof(Index));
 		}
 		// ── EDIT GET ──────────────────────────────────────────────
@@ -302,7 +302,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تم تحديث بيانات المادة بنجاح";
+			TempData["SuccessMessageKey"] = "msg_material_updated";
 			return RedirectToAction(nameof(Index));
 		}
 
@@ -324,7 +324,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			if (material.MaterialTasks.Any())
 			{
-				TempData["ErrorMessage"] = "لا يمكن حذف المادة لأنها مرتبطة بطلبات مهام.";
+				TempData["ErrorMessageKey"] = "err_material_delete_linked";
 				return RedirectToAction(nameof(Index));
 			}
 
@@ -334,7 +334,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context.Materials.Remove(material);
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تم حذف المادة بنجاح";
+			TempData["SuccessMessageKey"] = "msg_material_deleted";
 			return RedirectToAction(nameof(Index));
 		}
 

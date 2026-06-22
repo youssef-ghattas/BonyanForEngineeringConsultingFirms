@@ -102,9 +102,9 @@
                     <select asp-for="Gender" class="form-select">
                         @foreach (var g in Enum.GetValues(typeof(Gender)))
                         {
-                            <option value="@g">
-                                @(g.ToString() == "Male" ? "ذكر" : "أنثى")
-                            </option>
+                            var gAr = g.ToString() == "Male" ? "ذكر" : "أنثى";
+                            var gEn = g.ToString() == "Male" ? "Male" : "Female";
+                            <option value="@g" data-ar="@gAr" data-en="@gEn">@gAr</option>
                         }
                     </select>
                     <span asp-validation-for="Gender" class="text-danger"></span>
@@ -125,7 +125,8 @@
                                 "Architectural" => "معماري",
                                 _ => s.ToString()
                             };
-                            <option value="@s">@specAr</option>
+                            string specEn = s.ToString();
+                            <option value="@s" data-ar="@specAr" data-en="@specEn">@specAr</option>
                         }
                     </select>
                     <span asp-validation-for="Specialization" class="text-danger"></span>
@@ -150,11 +151,13 @@
                     </label>
                     <select name="Role" class="form-select" required>
                         <option value="Engineer"
-                                selected="@(ViewBag.CurrentRole?.ToString() == "Engineer")">
+                                selected="@(ViewBag.CurrentRole?.ToString() == "Engineer")"
+                                data-ar="مهندس" data-en="Engineer">
                             مهندس
                         </option>
                         <option value="ProjectManager"
-                                selected="@(ViewBag.CurrentRole?.ToString() == "ProjectManager")">
+                                selected="@(ViewBag.CurrentRole?.ToString() == "ProjectManager")"
+                                data-ar="مدير مشروع" data-en="Project Manager">
                             مدير مشروع
                         </option>
                     </select>
@@ -162,7 +165,7 @@
                 <div class="form-group">
                     <label>
                         <span data-lang="new_password">كلمة مرور جديدة</span>
-                        <span style="color:#888; font-size:0.78rem">
+                        <span style="color:#888; font-size:0.78rem" data-lang="leave_blank_hint">
                             (اتركها فارغة إذا لم تريد التغيير)
                         </span>
                     </label>

@@ -719,6 +719,53 @@ html[dir="ltr"] .bonyan-sidebar.collapsed ~ .bonyan-content {
         margin-left: 0 !important;
     }
 }
+/* ── Dark-mode button overrides (global, matches employee pattern) ── */
+body.dark-mode .btn-bonyan-primary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+    body.dark-mode .btn-bonyan-primary:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+    }
+
+body.dark-mode .btn-bonyan-secondary {
+    background: var(--secondary, #C8922A);
+    color: #fff;
+    border: 1px solid var(--secondary, #C8922A);
+}
+
+    body.dark-mode .btn-bonyan-secondary:hover {
+        background: #a87520;
+        color: #fff;
+        border-color: #a87520;
+    }
+
+body.dark-mode .btn-bonyan-danger {
+    background: #c62828;
+    color: #fff;
+    border: 1px solid #c62828;
+}
+
+    body.dark-mode .btn-bonyan-danger:hover {
+        background: #a11d1d;
+        color: #fff;
+        border-color: #a11d1d;
+    }
+
+body.dark-mode .btn-outline-bonyan {
+    background: transparent;
+    color: var(--secondary, #C8922A);
+    border: 1.5px solid var(--secondary, #C8922A);
+}
+
+    body.dark-mode .btn-outline-bonyan:hover {
+        background: var(--secondary, #C8922A);
+        color: #fff;
+    }
+
 /* ════════════════════════════════════════════════════════
    ENGINEERING TOOLS BACKGROUND WATERMARK
 ════════════════════════════════════════════════════════ */

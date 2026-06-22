@@ -30,10 +30,7 @@
                   * (1 + (Model.Tax ?? 0) / 100)
                   * (1 - (Model.Discount ?? 0) / 100);
 }
-
-<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
-<link rel="stylesheet" href="~/css/invoice.css" />
-
+<link rel="stylesheet" href="~/css/employee.css" />
 <div class="page-header">
     <div class="page-header-left">
         <h2>
@@ -55,111 +52,113 @@
         }
     </div>
 </div>
-
-<div class="invoice-card">
-
-    <!-- Header row -->
-    <div class="invoice-header">
-        <div>
-            <div class="invoice-num"><span data-lang="invoice_hash">فاتورة #</span>@Model.Invoice_ID</div>
-            <div class="invoice-project">
-                <i class="fas fa-project-diagram"></i>
-                @(Model.Project?.ProjectName ?? "—")
+<div class="details-card">
+    <div class="details-body">
+        <div class="details-section">
+            <div class="details-section-title" data-lang="invoice_data">بيانات الفاتورة</div>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <label data-lang="invoice_number">رقم الفاتورة</label>
+                    <p>@Model.Invoice_ID</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="project">المشروع</label>
+                    <p>@(Model.Project?.ProjectName ?? "—")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="status">الحالة</label>
+                    <p><span class="invoice-status-badge"
+                          style="display:inline-block; padding:2px 10px; border-radius:12px; background:@statusBg; color:@statusColor"
+                          data-en="@Model.Invoice_Status.ToString()" data-ar="@statusLabel">@statusLabel</span></p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="issue_date">تاريخ الإصدار</label>
+                    <p>@Model.Invoice_Date.ToString("yyyy-MM-dd")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="due_date">تاريخ الاستحقاق</label>
+                    <p>@(Model.Due_Date.HasValue ? Model.Due_Date.Value.ToString("yyyy-MM-dd") : "—")</p>
+                </div>
             </div>
         </div>
-        <span class="invoice-status-badge"
-              style="background:@statusBg; color:@statusColor"
-              data-en="@Model.Invoice_Status.ToString()" data-ar="@statusLabel">
-            @statusLabel
-        </span>
-    </div>
-
-    <!-- Amounts -->
-    <div class="invoice-amounts">
-        <div class="inv-amount-row">
-            <span data-lang="base_amount">المبلغ الأساسي</span>
-            <span>@((Model.Total_Amount ?? 0).ToString("N2")) ج.م</span>
-        </div>
-        <div class="inv-amount-row">
-            <span><span data-lang="tax">الضريبة</span> (@((Model.Tax ?? 0).ToString("N1"))%)</span>
-            <span>+@(((Model.Total_Amount ?? 0) * (Model.Tax ?? 0) / 100).ToString("N2")) ج.م</span>
-        </div>
-        <div class="inv-amount-row">
-            <span><span data-lang="discount">الخصم</span> (@((Model.Discount ?? 0).ToString("N1"))%)</span>
-            <span>-@(((Model.Total_Amount ?? 0) * (Model.Discount ?? 0) / 100).ToString("N2")) ج.م</span>
-        </div>
-        <div class="inv-amount-row inv-total">
-            <span data-lang="final_total">الإجمالي النهائي</span>
-            <span>@net.ToString("N2") ج.م</span>
-        </div>
-    </div>
-
-    <!-- Dates -->
-    <div class="invoice-dates">
-        <div class="inv-date-item">
-            <span class="inv-date-label"><i class="fas fa-calendar-alt"></i> <span data-lang="issue_date">تاريخ الإصدار</span></span>
-            <span>@Model.Invoice_Date.ToString("yyyy-MM-dd")</span>
-        </div>
-        <div class="inv-date-item">
-            <span class="inv-date-label"><i class="fas fa-calendar-check"></i> <span data-lang="due_date">تاريخ الاستحقاق</span></span>
-            <span>@(Model.Due_Date.HasValue ? Model.Due_Date.Value.ToString("yyyy-MM-dd") : "—")</span>
-        </div>
-    </div>
-
-    <!-- Payments -->
-    @if (Model.Payments != null && Model.Payments.Any())
-    {
-        <div class="invoice-payments">
-            <div class="inv-section-title">
-                <i class="fas fa-money-bill-wave"></i> <span data-lang="payments">المدفوعات</span>
+        <div class="details-section">
+            <div class="details-section-title" data-lang="amount_details">تفاصيل المبلغ</div>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <label data-lang="base_amount">المبلغ الأساسي</label>
+                    <p>@((Model.Total_Amount ?? 0).ToString("N2")) <span data-lang="currency_egp">ج.م</span></p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="tax">الضريبة (@((Model.Tax ?? 0).ToString("N1"))%)</label>
+                    <p>+@(((Model.Total_Amount ?? 0) * (Model.Tax ?? 0) / 100).ToString("N2")) <span data-lang="currency_egp">ج.م</span></p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="discount">الخصم (@((Model.Discount ?? 0).ToString("N1"))%)</label>
+                    <p>-@(((Model.Total_Amount ?? 0) * (Model.Discount ?? 0) / 100).ToString("N2")) <span data-lang="currency_egp">ج.م</span></p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="final_total">الإجمالي النهائي</label>
+                    <p><strong>@net.ToString("N2") <span data-lang="currency_egp">ج.م</span></strong></p>
+                </div>
             </div>
-            <table class="doc-table">
-                <thead>
-                    <tr>
-                        <th data-lang="amount">المبلغ</th>
-                        <th data-lang="payment_method">طريقة الدفع</th>
-                        <th data-lang="status">الحالة</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var p in Model.Payments)
-                    {
+        </div>
+        @if (Model.Payments != null && Model.Payments.Any())
+        {
+            <div class="details-section">
+                <div class="details-section-title">
+                    <i class="fas fa-money-bill-wave"></i> <span data-lang="payments">المدفوعات</span>
+                </div>
+                <table class="doc-table">
+                    <thead>
                         <tr>
-                            <td>@p.PaymentAmount.ToString("N2") ج.م</td>
-                            <td>
-                                @(p.PaymentMethod switch {
-                                    Bonyan.DAL.Enums.PaymentMethod.Cash => "نقدي",
-                                    Bonyan.DAL.Enums.PaymentMethod.CreditCard => "بطاقة ائتمان",
-                                    Bonyan.DAL.Enums.PaymentMethod.BankTransfer => "تحويل بنكي",
-                                    _ => p.PaymentMethod.ToString()
-                                })
-                            </td>
-                            <td>
-                                @(p.Payment_Status switch {
-                                    Bonyan.DAL.Enums.PaymentStatus.Completed => "مكتمل",
-                                    Bonyan.DAL.Enums.PaymentStatus.Pending => "معلق",
-                                    Bonyan.DAL.Enums.PaymentStatus.Failed => "فشل",
-                                    _ => p.Payment_Status.ToString()
-                                })
-                            </td>
+                            <th data-lang="amount">المبلغ</th>
+                            <th data-lang="payment_method">طريقة الدفع</th>
+                            <th data-lang="status">الحالة</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-
-    @if (role == "Admin")
-    {
-        <div style="margin-top:24px; padding-top:16px; border-top:1px solid #eee">
-            <form asp-action="Delete" asp-route-id="@Model.Invoice_ID" method="post"
-                  style="display:inline"
-                  onsubmit="return confirm('هل أنت متأكد من حذف هذه الفاتورة؟')">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="btn-bonyan-danger">
-                    <i class="fas fa-trash"></i> <span data-lang="delete_invoice">حذف الفاتورة</span>
-                </button>
-            </form>
-        </div>
-    }
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.Payments)
+                        {
+                            string pmtMethodLabel = p.PaymentMethod switch
+                            {
+                                Bonyan.DAL.Enums.PaymentMethod.Cash => "نقدي",
+                                Bonyan.DAL.Enums.PaymentMethod.CreditCard => "بطاقة ائتمان",
+                                Bonyan.DAL.Enums.PaymentMethod.BankTransfer => "تحويل بنكي",
+                                _ => p.PaymentMethod.ToString()
+                            };
+                            string pmtStatusLabel = p.Payment_Status switch
+                            {
+                                Bonyan.DAL.Enums.PaymentStatus.Completed => "مكتمل",
+                                Bonyan.DAL.Enums.PaymentStatus.Pending => "معلق",
+                                Bonyan.DAL.Enums.PaymentStatus.Failed => "فشل",
+                                _ => p.Payment_Status.ToString()
+                            };
+                            <tr>
+                                <td>@p.PaymentAmount.ToString("N2") <span data-lang="currency_egp">ج.م</span></td>
+                                <td>
+                                    <span data-en="@p.PaymentMethod.ToString()" data-ar="@pmtMethodLabel">@pmtMethodLabel</span>
+                                </td>
+                                <td>
+                                    <span data-en="@p.Payment_Status.ToString()" data-ar="@pmtStatusLabel">@pmtStatusLabel</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        @if (role == "Admin")
+        {
+            <div style="margin-top:24px; padding-top:16px; border-top:1px solid #eee">
+                <form asp-action="Delete" asp-route-id="@Model.Invoice_ID" method="post"
+                      style="display:inline"
+                      onsubmit="return confirm('Are you sure you want to delete this invoice?')">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-bonyan-danger">
+                        <i class="fas fa-trash"></i> <span data-lang="delete_invoice">حذف الفاتورة</span>
+                    </button>
+                </form>
+            </div>
+        }
+    </div>
 </div>

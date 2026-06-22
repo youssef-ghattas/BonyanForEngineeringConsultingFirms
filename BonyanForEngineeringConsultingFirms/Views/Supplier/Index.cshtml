@@ -1,132 +1,222 @@
-﻿@* ══════════════════════════════════════════════════
-   SAVE AS: Views/Supplier/Index.cshtml
-══════════════════════════════════════════════════ *@
-@model IEnumerable<Bonyan.DAL.Models.Supplier>
+﻿@model IEnumerable<Bonyan.DAL.Models.Supplier>
 @{
     ViewData["Title"] = "الموردون";
     var role = Context.Session.GetString("Role");
     string search = ViewBag.Search ?? "";
+
+    var suppliersList = Model?.ToList() ?? new List<Bonyan.DAL.Models.Supplier>();
+    int totalCount = suppliersList.Count;
+    int withContact = suppliersList.Count(s => !string.IsNullOrWhiteSpace(s.ContactPerson));
+    int withPhone = suppliersList.Count(s => !string.IsNullOrWhiteSpace(s.Phone));
+    int totalMaterialLinks = suppliersList.Sum(s => s.SuppliedMaterials.Count);
 }
 
 <link rel="stylesheet" href="~/css/material.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
 
-<div class="page-header">
-    <div class="page-header-left">
-        <h2>
-            <i class="fas fa-truck" style="color:var(--secondary)"></i>
-            <span data-lang="suppliers">الموردون</span>
-        </h2>
-    </div>
-    @if (role == "Admin")
-    {
-        <a asp-action="Create" class="btn-bonyan-secondary">
-            <i class="fas fa-plus"></i> <span data-lang="add_supplier">إضافة مورد</span>
-        </a>
-    }
-</div>
+<style>
+    [dir="ltr"] .emp-table thead th { text-align: left; }
+    [dir="ltr"] .emp-table thead th i { margin-left: 0; margin-right: 5px; }
+</style>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert-success-msg"><i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]</div>
-}
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert-error-msg"><i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]</div>
-}
+<div class="emp-page">
 
-<div class="filter-bar">
-    <form method="get" asp-action="Index" style="display:flex; align-items:center; gap:10px; width:100%; max-width:420px">
-        <div style="position:relative; flex:1">
-            <i class="fas fa-search" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#aaa; z-index:1"></i>
-            <input type="text" name="search" value="@search" data-lang-placeholder="search_supplier" placeholder="بحث بالاسم أو البريد..."
-                   class="form-control" style="padding-right:36px" />
+    <!-- ── Header ─────────────────────────────────── -->
+    <div class="emp-header">
+        <div class="emp-header-title">
+            <h2><i class="fas fa-truck"></i> <span data-lang="suppliers">الموردون</span></h2>
+            <p data-lang="suppliers_sub">إدارة الموردين والمواد المورّدة</p>
         </div>
-        <button type="submit" class="btn-bonyan-secondary" style="padding:8px 16px">
-            <i class="fas fa-search"></i> <span data-lang="search">بحث</span>
-        </button>
-        @if (!string.IsNullOrEmpty(search))
+        @if (role == "Admin")
         {
-            <a asp-action="Index" class="btn-bonyan-primary" style="padding:8px 16px">
-                <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
-            </a>
+            <div class="emp-header-actions">
+                <a asp-action="Create" class="btn-emp btn-emp-primary">
+                    <i class="fas fa-plus"></i> <span data-lang="add_supplier">إضافة مورد</span>
+                </a>
+            </div>
         }
-    </form>
-</div>
+    </div>
 
-<div class="details-card">
-    @if (Model.Any())
-    {
-        <table class="mat-table">
-            <thead>
-                <tr>
-                    <th data-lang="supplier_name_label">اسم المورد</th>
-                    <th data-lang="contact_person">شخص التواصل</th>
-                    <th data-lang="email">البريد الإلكتروني</th>
-                    <th data-lang="phone">الهاتف</th>
-                    <th data-lang="supplied_materials">المواد المورَّدة</th>
-                    <th data-lang="actions">إجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var s in Model)
-                {
-                    <tr>
-                        <td>
-                            <a asp-action="Details" asp-route-id="@s.SupplierID"
-                               style="color:var(--primary); font-weight:600; text-decoration:none">
-                                <i class="fas fa-industry" style="font-size:0.65rem; color:var(--secondary); margin-left:6px"></i>
-                                @s.SupplierName
-                            </a>
-                            @if (!string.IsNullOrWhiteSpace(s.Address))
-                            {
-                                <div style="font-size:0.78rem; color:#888; margin-top:2px">
-                                    <i class="fas fa-map-marker-alt"></i> @s.Address
-                                </div>
-                            }
-                        </td>
-                        <td>@(s.ContactPerson ?? "—")</td>
-                        <td>
-                            <a href="mailto:@s.Email" style="color:var(--secondary); text-decoration:none">
-                                @(s.Email ?? "—")
-                            </a>
-                        </td>
-                        <td>@(s.Phone ?? "—")</td>
-                        <td>
-                            <span class="count-badge">
-                                <i class="fas fa-boxes"></i> @s.SuppliedMaterials.Count
-                            </span>
-                        </td>
-                        <td>
-                            <a asp-action="Details" asp-route-id="@s.SupplierID"
-                               class="btn-action view" title="عرض">
-                                <i class="fas fa-eye"></i>
-                            </a>
+    <!-- ── Alerts ─────────────────────────────────── -->
+    <partial name="_AlertMessages" />
+
+    <!-- ── KPI Strip ──────────────────────────────── -->
+    <div class="emp-kpi-grid">
+        <div class="emp-kpi navy">
+            <div class="emp-kpi-icon"><i class="fas fa-truck"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="sup_stat_total">إجمالي الموردين</div>
+                <div class="emp-kpi-value">@totalCount</div>
+            </div>
+        </div>
+        <div class="emp-kpi blue">
+            <div class="emp-kpi-icon"><i class="fas fa-user"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="sup_stat_contact">جهات تواصل</div>
+                <div class="emp-kpi-value">@withContact</div>
+            </div>
+        </div>
+        <div class="emp-kpi gold">
+            <div class="emp-kpi-icon"><i class="fas fa-phone"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="phone">الهاتف</div>
+                <div class="emp-kpi-value">@withPhone</div>
+            </div>
+        </div>
+        <div class="emp-kpi green">
+            <div class="emp-kpi-icon"><i class="fas fa-boxes"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="sup_stat_materials">مواد مورّدة</div>
+                <div class="emp-kpi-value">@totalMaterialLinks</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Filter Bar ──────────────────────────────── -->
+    <div class="filter-bar">
+        <form method="get" asp-action="Index" style="display:flex; align-items:center; gap:10px; flex:1">
+            <div class="filter-search" style="flex:1">
+                <i class="fas fa-search"></i>
+                <input type="text" name="search" value="@search"
+                       data-lang-placeholder="search_supplier"
+                       placeholder="بحث بالاسم أو البريد..." autocomplete="off" />
+            </div>
+            <button type="submit" class="btn-emp btn-emp-primary" style="padding:9px 18px; border:none; border-radius:11px">
+                <i class="fas fa-search"></i> <span data-lang="search">بحث</span>
+            </button>
+            @if (!string.IsNullOrEmpty(search))
+            {
+                <a asp-action="Index" class="btn-emp btn-emp-outline" style="padding:9px 16px">
+                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+                </a>
+            }
+        </form>
+    </div>
+
+    <!-- ── Suppliers Table ────────────────────────── -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h5><i class="fas fa-truck"></i> <span data-lang="suppliers">الموردون</span></h5>
+            <span class="count-badge">@totalCount</span>
+        </div>
+
+        @if (suppliersList.Any())
+        {
+            <div class="table-responsive">
+                <table class="emp-table mat-table" style="min-width:800px">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-industry"></i> <span data-lang="supplier_name_label">اسم المورد</span></th>
+                            <th><i class="fas fa-user"></i> <span data-lang="contact_person">شخص التواصل</span></th>
+                            <th><i class="fas fa-envelope"></i> <span data-lang="email">البريد الإلكتروني</span></th>
+                            <th><i class="fas fa-phone"></i> <span data-lang="phone">الهاتف</span></th>
+                            <th><i class="fas fa-boxes"></i> <span data-lang="supplied_materials">المواد المورَّدة</span></th>
                             @if (role == "Admin")
                             {
-                                <a asp-action="Edit" asp-route-id="@s.SupplierID"
-                                   class="btn-action edit" title="تعديل">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form asp-action="Delete" asp-route-id="@s.SupplierID" method="post"
-                                      style="display:inline"
-                                      onsubmit="return confirm('هل أنت متأكد من حذف هذا المورد؟')">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-action delete" title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                <th><i class="fas fa-cog"></i> <span data-lang="actions">إجراءات</span></th>
                             }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div class="empty-state">
-            <i class="fas fa-truck"></i>
-            <p>@(!string.IsNullOrEmpty(search) ? Html.Raw("<span data-lang=\"no_suppliers_match\">لا يوجد موردون تطابق البحث</span>") : Html.Raw("<span data-lang=\"no_suppliers\">لا يوجد موردون حتى الآن</span>"))</p>
-        </div>
-    }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in suppliersList)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="emp-name-cell">
+                                        <div class="emp-avatar" style="background:linear-gradient(135deg,#1B3A6B,#2a5298); font-size:0.7rem">
+                                            <i class="fas fa-industry"></i>
+                                        </div>
+                                        <div class="emp-info">
+                                            <a asp-action="Details" asp-route-id="@s.SupplierID"
+                                               style="color:var(--primary); font-weight:700; text-decoration:none">
+                                                @s.SupplierName
+                                            </a>
+                                            @if (!string.IsNullOrWhiteSpace(s.Address))
+                                            {
+                                                <span><i class="fas fa-map-marker-alt"></i> @s.Address</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@(s.ContactPerson ?? "—")</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(s.Email))
+                                    {
+                                        <a href="mailto:@s.Email" style="color:var(--secondary); text-decoration:none; font-weight:600">
+                                            @s.Email
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        @:—
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(s.Phone))
+                                    {
+                                        <span style="display:flex; align-items:center; gap:5px">
+                                            <i class="fas fa-phone-alt" style="font-size:0.7rem; color:var(--secondary)"></i>
+                                            @s.Phone
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        @:—
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge-spec spec-civil">
+                                        <i class="fas fa-boxes"></i> @s.SuppliedMaterials.Count
+                                    </span>
+                                </td>
+                                @if (role == "Admin")
+                                {
+                                    <td>
+                                        <div class="action-btns">
+                                            <a asp-action="Details" asp-route-id="@s.SupplierID"
+                                               class="btn-action view" data-tip-ar="عرض" data-tip-en="View" data-tip="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@s.SupplierID"
+                                               class="btn-action edit" data-tip-ar="تعديل" data-tip-en="Edit" data-tip="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form asp-action="Delete" asp-route-id="@s.SupplierID" method="post"
+                                                  style="display:inline"
+                                                  onsubmit="return confirm('Are you sure you want to delete this supplier?')">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn-action delete"
+                                                        data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-truck"></i>
+                <p>@(!string.IsNullOrEmpty(search) ? Html.Raw("<span data-lang=\"no_suppliers_match\">لا يوجد موردون تطابق البحث</span>") : Html.Raw("<span data-lang=\"no_suppliers\">لا يوجد موردون حتى الآن</span>"))</p>
+            </div>
+        }
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('languageChanged', function (e) {
+            var lang = e.detail.lang;
+            document.querySelectorAll('[data-tip-ar]').forEach(function (el) {
+                el.setAttribute('data-tip', lang === 'ar' ? el.dataset.tipAr : el.dataset.tipEn);
+            });
+        });
+    </script>
+}

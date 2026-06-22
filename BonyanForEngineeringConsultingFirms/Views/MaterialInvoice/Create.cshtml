@@ -8,6 +8,7 @@
     bool fromMaterial = ViewBag.FromMaterial == true;
 }
 
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/invoice.css" />
 <link rel="stylesheet" href="~/css/material.css" />
 <link rel="stylesheet" href="~/css/materialinvoice.css" />
@@ -37,15 +38,16 @@
     </div>
 }
 
-<div class="upload-card">
-    <div class="upload-card-header">
+<div class="form-card">
+    <div class="form-card-header">
         <i class="fas fa-file-invoice"></i>
         <h4 data-lang="invoice_data">بيانات الفاتورة</h4>
     </div>
-    <div class="upload-card-body">
+    <div class="form-card-body">
         <form asp-action="Create" method="post" id="invForm">
             @Html.AntiForgeryToken()
 
+            <div class="form-section-title" data-lang="invoice_data">بيانات الفاتورة</div>
             <div class="form-grid-2">
 
                 @* ── MATERIAL ── *@
@@ -225,7 +227,7 @@
             </div>
 
             @* ── ACTION BUTTONS ── *@
-            <div class="invoice-actions">
+            <div class="form-actions">
                 @if (fromMaterial)
                 {
                     <button type="button" class="btn-cancel-invoice" onclick="confirmCancelInvoice()">

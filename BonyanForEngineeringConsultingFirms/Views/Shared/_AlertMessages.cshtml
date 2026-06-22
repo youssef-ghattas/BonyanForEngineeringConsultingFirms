@@ -1,0 +1,26 @@
+@if (TempData["SuccessMessageKey"] != null)
+{
+    <div class="alert-success-msg">
+        <i class="fas fa-check-circle"></i>
+        <span data-lang="@TempData["SuccessMessageKey"]"></span>
+    </div>
+}
+@if (TempData["ErrorMessageKey"] != null)
+{
+    <div class="alert-error-msg">
+        <i class="fas fa-exclamation-circle"></i>
+        <span data-lang="@TempData["ErrorMessageKey"]"></span>
+    </div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-success-msg">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert-error-msg">
+        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+    </div>
+}

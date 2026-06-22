@@ -1,35 +1,26 @@
-﻿@* ── SAVE AS: Views/Inventory/Edit.cshtml ── *@
-@model Bonyan.DAL.Models.Inventory
+﻿@model Bonyan.DAL.Models.Inventory
 @{
     ViewData["Title"] = "تعديل مخزن";
 }
-
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/material.css" />
-
 <div class="page-header">
     <div class="page-header-left">
-        <h2>
-            <i class="fas fa-edit" style="color:var(--secondary)"></i>
-            <span data-lang="edit_colon">تعديل:</span> @Model.InventoryName
-        </h2>
+        <h2><i class="fas fa-edit" style="color:var(--secondary)"></i> <span data-lang="edit_colon">تعديل:</span> @Model.InventoryName</h2>
+        <p data-lang="edit_warehouse_sub">تعديل بيانات المخزن</p>
     </div>
-    <a asp-action="Details" asp-route-id="@Model.InventoryID" class="btn-bonyan-primary">
-        <i class="fas fa-arrow-right"></i> <span data-lang="back_to_details">رجوع للتفاصيل</span>
-    </a>
+    <a asp-action="Details" asp-route-id="@Model.InventoryID" class="btn-bonyan-primary"><i class="fas fa-arrow-right"></i> <span data-lang="back_to_details">رجوع للتفاصيل</span></a>
 </div>
-
-<div class="upload-card">
-    <div class="upload-card-header">
-        <i class="fas fa-warehouse"></i>
-        <h4 data-lang="edit_warehouse_data">تعديل بيانات المخزن</h4>
-    </div>
-    <div class="upload-card-body">
+<div class="form-card">
+    <div class="form-card-header"><i class="fas fa-warehouse"></i> <h4 data-lang="edit_warehouse_data">تعديل بيانات المخزن</h4></div>
+    <div class="form-card-body">
         <form asp-action="Edit" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="InventoryID" />
+            <div class="form-section-title" data-lang="edit_warehouse_data">تعديل بيانات المخزن</div>
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label data-lang="warehouse_name_label">اسم المخزن</label> <span style="color:red">*</span>
+                    <label><span data-lang="warehouse_name_label">اسم المخزن</span> <span class="required">*</span></label>
                     <input asp-for="InventoryName" class="form-control" required />
                     <span asp-validation-for="InventoryName" class="text-danger"></span>
                 </div>
@@ -44,14 +35,13 @@
                     <span asp-validation-for="Capacity" class="text-danger"></span>
                 </div>
             </div>
-            <div class="upload-actions">
-                <a asp-action="Details" asp-route-id="@Model.InventoryID" class="btn-bonyan-primary">
-                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
-                </a>
-                <button type="submit" class="btn-bonyan-secondary">
-                    <i class="fas fa-save"></i> <span data-lang="save_changes">حفظ التعديلات</span>
-                </button>
+            <div class="form-actions">
+                <a asp-action="Details" asp-route-id="@Model.InventoryID" class="btn-bonyan-primary"><i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span></a>
+                <button type="submit" class="btn-bonyan-secondary"><i class="fas fa-save"></i> <span data-lang="save_changes">حفظ التعديلات</span></button>
             </div>
         </form>
     </div>
 </div>
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

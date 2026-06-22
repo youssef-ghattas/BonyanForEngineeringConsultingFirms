@@ -669,3 +669,35 @@ body.dark-mode .inv-section-title { color: #E8EDF5 !important; }
 body.dark-mode .inv-label { color: #8FA3BF !important; }
 body.dark-mode .inv-value { color: #E8EDF5 !important; }
 body.dark-mode .inv-divider { border-color: #2A3B58 !important; }
+
+/* Buttons (employee dark-mode pattern) */
+body.dark-mode .btn-cancel-invoice {
+    background: #c62828 !important;
+    color: #fff !important;
+    border: 1px solid #c62828 !important;
+}
+
+    body.dark-mode .btn-cancel-invoice:hover {
+        background: #a11d1d !important;
+    }
+
+body.dark-mode .btn-modal-back {
+    background: #1a2840 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #aab8d0 !important;
+}
+
+    body.dark-mode .btn-modal-back:hover {
+        background: rgba(255, 255, 255, 0.14) !important;
+        color: #fff !important;
+    }
+
+body.dark-mode .btn-modal-confirm-delete {
+    background: #c62828 !important;
+    color: #fff !important;
+    border: 1px solid #c62828 !important;
+}
+
+    body.dark-mode .btn-modal-confirm-delete:hover {
+        background: #a11d1d !important;
+    }

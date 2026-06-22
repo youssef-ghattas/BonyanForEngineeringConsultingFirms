@@ -49,13 +49,21 @@
                 <div class="info-card">
                     <div class="info-label"><i class="fas fa-hard-hat me-2"></i><span data-lang="specialization">التخصص</span></div>
                     <div class="info-value">
-                        @(Model.Specialization?.ToString() switch {
+                        <span data-en="@(Model.Specialization?.ToString())" data-ar="@(Model.Specialization?.ToString() switch {
                             "Civil"         => "هندسة مدنية",
                             "Mechanical"    => "هندسة ميكانيكية",
                             "Electrical"    => "هندسة كهربائية",
                             "Architectural" => "هندسة معمارية",
-                            _               => Model.Specialization?.ToString()
-                        })
+                            _               => (Model.Specialization?.ToString() ?? "")
+                        })">
+                            @(Model.Specialization?.ToString() switch {
+                                "Civil"         => "هندسة مدنية",
+                                "Mechanical"    => "هندسة ميكانيكية",
+                                "Electrical"    => "هندسة كهربائية",
+                                "Architectural" => "هندسة معمارية",
+                                _               => Model.Specialization?.ToString()
+                            })
+                        </span>
                     </div>
                 </div>
                 <div class="info-card">

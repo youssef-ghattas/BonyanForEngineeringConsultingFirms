@@ -1205,13 +1205,14 @@ body.dark-mode .page-header p {
 }
 
 body.dark-mode .btn-proj-primary {
-    background: linear-gradient(135deg, #1a3a6c, #122b52);
-    border-color: rgba(255,255,255,0.1);
-    color: #d0dff0;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
     body.dark-mode .btn-proj-primary:hover {
-        background: linear-gradient(135deg, #1e4480, #163566);
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
     }
 
 /* KPI Cards */
@@ -1329,21 +1330,39 @@ body.dark-mode .empty-state {
         color: #2a3a55;
     }
 
-/* Action buttons */
+/* Action buttons (employee dark-mode pattern) */
 body.dark-mode .btn-action.view {
-    background: rgba(30, 80, 160, 0.3);
-    color: #7ab0e8;
-    border-color: rgba(30, 80, 160, 0.4);
+    background: #1a2840;
+    color: #aab8d0;
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
+
+    body.dark-mode .btn-action.view:hover {
+        background: #1a73e8;
+        color: #fff;
+        border-color: transparent;
+    }
 
 body.dark-mode .btn-action.edit {
-    background: rgba(180, 120, 20, 0.3);
-    color: #e8b84a;
-    border-color: rgba(180, 120, 20, 0.4);
+    background: #1a2840;
+    color: #aab8d0;
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+    body.dark-mode .btn-action.edit:hover {
+        background: var(--secondary, #C8922A);
+        color: #fff;
+        border-color: transparent;
+    }
+
 body.dark-mode .btn-action.delete {
-    background: rgba(160, 30, 30, 0.3);
-    color: #e87070;
-    border-color: rgba(160, 30, 30, 0.4);
+    background: #1a2840;
+    color: #aab8d0;
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
+
+    body.dark-mode .btn-action.delete:hover {
+        background: #d93025;
+        color: #fff;
+        border-color: transparent;
+    }

@@ -5,7 +5,7 @@
     string projectName = ViewBag.ProjectName ?? "—";
 }
 
-<link rel="stylesheet" href="~/css/sitevisit.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
 
 <div class="page-header">
     <div class="page-header-left">
@@ -16,12 +16,12 @@
     </a>
 </div>
 
-<div class="upload-card">
-    <div class="upload-card-header">
+<div class="form-card">
+    <div class="form-card-header">
         <i class="fas fa-edit"></i>
         <h4 data-lang="edit_sitevisit_data">تعديل بيانات الزيارة</h4>
     </div>
-    <div class="upload-card-body">
+    <div class="form-card-body">
         <div class="project-badge">
             <i class="fas fa-project-diagram"></i> @projectName
         </div>
@@ -77,7 +77,7 @@
                 <span class="text-danger">@Html.ValidationMessage("visitPhoto")</span>
             </div>
 
-            <div class="upload-actions">
+            <div class="form-actions">
                 <a asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjId" class="btn-bonyan-primary">
                     <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
                 </a>

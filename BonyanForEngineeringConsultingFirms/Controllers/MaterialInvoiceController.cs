@@ -203,7 +203,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تم تحديث الفاتورة بنجاح";
+			TempData["SuccessMessageKey"] = "msg_material_invoice_updated";
 			return RedirectToAction(nameof(Details), new { id = invoice.MaterialInvoiceID });
 		}
 
@@ -220,7 +220,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context.MaterialInvoices.Remove(invoice);
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تم حذف الفاتورة";
+			TempData["SuccessMessageKey"] = "msg_material_invoice_deleted";
 			return RedirectToAction(nameof(Index));
 		}
 
@@ -247,7 +247,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تم إلغاء الفاتورة وحذف المادة بنجاح";
+			TempData["SuccessMessageKey"] = "msg_material_invoice_cancelled";
 			return RedirectToAction("Index", "Material");
 		}
 

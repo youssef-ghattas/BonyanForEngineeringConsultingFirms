@@ -105,7 +105,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             _context.UserAccounts.Add(userAccount);
             _context.SaveChanges();
 
-            TempData["Success"] = "تم إضافة الموظف بنجاح";
+            TempData["SuccessMessageKey"] = "msg_employee_created";
             return RedirectToAction(nameof(Index));
         }
 
@@ -189,7 +189,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
             _context.SaveChanges();
 
-            TempData["Success"] = "تم تعديل بيانات الموظف بنجاح";
+            TempData["SuccessMessageKey"] = "msg_employee_updated";
             return RedirectToAction(nameof(Index));
         }
 
@@ -232,7 +232,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             _context.Employees.Remove(employee);
             _context.SaveChanges();
 
-            TempData["Success"] = "تم حذف الموظف بنجاح";
+            TempData["SuccessMessageKey"] = "msg_employee_deleted";
             return RedirectToAction(nameof(Index));
         }
     }

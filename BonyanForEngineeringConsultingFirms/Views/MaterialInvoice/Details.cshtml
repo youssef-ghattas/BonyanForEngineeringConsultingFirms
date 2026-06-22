@@ -19,6 +19,7 @@
     };
 }
 
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/invoice.css" />
 <link rel="stylesheet" href="~/css/material.css" />
 
@@ -37,52 +38,41 @@
     </div>
 </div>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert-success-msg"><i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]</div>
-}
+@await Html.PartialAsync("_AlertMessages")
 
 <!-- Invoice Card -->
 <div class="details-card" style="margin-bottom:20px">
-    <div class="details-section-title"><i class="fas fa-info-circle"></i> <span data-lang="invoice_data">بيانات الفاتورة</span></div>
-    <div class="mat-info-grid">
-        <div class="mat-info-item">
-            <span class="mat-info-label" data-lang="material">المادة</span>
-            <span class="mat-info-value">
-                <a asp-controller="Material" asp-action="Details" asp-route-id="@Model.MaterialID"
-                   style="color:var(--primary);font-weight:600;text-decoration:none">
-                    @(Model.Material?.MaterialName ?? "—")
-                </a>
-                @if (!string.IsNullOrEmpty(Model.Material?.Unit))
-                {
-                    <span class="unit-badge">@Model.Material.Unit</span>
-                }
-            </span>
-        </div>
-        <div class="mat-info-item">
-            <span class="mat-info-label" data-lang="supplier">المورد</span>
-            <span class="mat-info-value">
-                <a asp-controller="Supplier" asp-action="Details" asp-route-id="@Model.SupplierID"
-                   style="color:var(--primary);font-weight:600;text-decoration:none">
-                    @(Model.Supplier?.SupplierName ?? "—")
-                </a>
-            </span>
-        </div>
-        <div class="mat-info-item">
-            <span class="mat-info-label" data-lang="invoice_date">تاريخ الفاتورة</span>
-            <span class="mat-info-value">@Model.InvoiceDate.ToString("yyyy-MM-dd")</span>
-        </div>
-        <div class="mat-info-item">
-            <span class="mat-info-label" data-lang="due_date">تاريخ الاستحقاق</span>
-            <span class="mat-info-value">@(Model.DueDate.HasValue? Model.DueDate.Value.ToString("yyyy-MM-dd") : "—")</span>
-        </div>
-        <div class="mat-info-item">
-            <span class="mat-info-label" data-lang="status">الحالة</span>
-            <span class="mat-info-value"><span class="task-status-badge @statusClass" data-en="@Model.Status.ToString()" data-ar="@statusLabel">@statusLabel</span></span>
-        </div>
-        <div class="mat-info-item">
-            <span class="mat-info-label" data-lang="notes">ملاحظات</span>
-            <span class="mat-info-value">@(string.IsNullOrEmpty(Model.Notes) ? "—" : Model.Notes)</span>
+    <div class="details-body">
+        <div class="details-section">
+            <div class="details-section-title"><i class="fas fa-info-circle"></i> <span data-lang="invoice_data">بيانات الفاتورة</span></div>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <label data-lang="material">المادة</label>
+                    <p>
+                        <a asp-controller="Material" asp-action="Details" asp-route-id="@Model.MaterialID"
+                           style="color:var(--primary);font-weight:600;text-decoration:none">
+                            @(Model.Material?.MaterialName ?? "—")
+                        </a>
+                        @if (!string.IsNullOrEmpty(Model.Material?.Unit))
+                        {
+                            <span class="unit-badge">@Model.Material.Unit</span>
+                        }
+                    </p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="supplier">المورد</label>
+                    <p>
+                        <a asp-controller="Supplier" asp-action="Details" asp-route-id="@Model.SupplierID"
+                           style="color:var(--primary);font-weight:600;text-decoration:none">
+                            @(Model.Supplier?.SupplierName ?? "—")
+                        </a>
+                    </p>
+                </div>
+                <div class="detail-item"><label data-lang="invoice_date">تاريخ الفاتورة</label><p>@Model.InvoiceDate.ToString("yyyy-MM-dd")</p></div>
+                <div class="detail-item"><label data-lang="due_date">تاريخ الاستحقاق</label><p>@(Model.DueDate.HasValue? Model.DueDate.Value.ToString("yyyy-MM-dd") : "—")</p></div>
+                <div class="detail-item"><label data-lang="status">الحالة</label><p><span class="task-status-badge @statusClass" data-en="@Model.Status.ToString()" data-ar="@statusLabel">@statusLabel</span></p></div>
+                <div class="detail-item"><label data-lang="notes">ملاحظات</label><p>@(string.IsNullOrEmpty(Model.Notes) ? "—" : Model.Notes)</p></div>
+            </div>
         </div>
     </div>
 </div>

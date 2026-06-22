@@ -12,7 +12,16 @@
         Specialization.Architectural => "معماري",
         _ => Model.Specialization.ToString()
     };
+    string specEn = Model.Specialization switch
+    {
+        Specialization.Civil => "Civil",
+        Specialization.Mechanical => "Mechanical",
+        Specialization.Electrical => "Electrical",
+        Specialization.Architectural => "Architectural",
+        _ => Model.Specialization.ToString()
+    };
     string genderAr = Model.Gender == Gender.Male ? "ذكر" : "أنثى";
+    string genderEn = Model.Gender == Gender.Male ? "Male" : "Female";
 }
 
 <link rel="stylesheet" href="~/css/employee.css" />
@@ -42,7 +51,7 @@
         <div class="details-avatar">@initials</div>
         <div class="details-header-info">
             <h3>@Model.FirstName @Model.LastName</h3>
-            <span>@specAr — @genderAr</span>
+            <span><span data-ar="@specAr" data-en="@specEn">@specAr</span> — <span data-ar="@genderAr" data-en="@genderEn">@genderAr</span></span>
         </div>
     </div>
 
@@ -63,7 +72,7 @@
                 </div>
                 <div class="detail-item">
                     <label data-lang="gender">الجنس</label>
-                    <p>@genderAr</p>
+                    <p><span data-ar="@genderAr" data-en="@genderEn">@genderAr</span></p>
                 </div>
                 <div class="detail-item">
                     <label data-lang="email">البريد الإلكتروني</label>
@@ -88,11 +97,11 @@
             <div class="details-grid">
                 <div class="detail-item">
                     <label data-lang="specialization">التخصص</label>
-                    <p>@specAr</p>
+                    <p><span data-ar="@specAr" data-en="@specEn">@specAr</span></p>
                 </div>
                 <div class="detail-item">
                     <label data-lang="salary">الراتب</label>
-                    <p>@Model.Salary.ToString("N2") ج.م</p>
+                    <p>@Model.Salary.ToString("N2") <span data-lang="currency_egp">ج.م</span></p>
                 </div>
                 <div class="detail-item">
                     <label data-lang="hiredate">تاريخ التعيين</label>

@@ -25,7 +25,7 @@
 body.dark-mode {
     --bg: #0f1923;
     --white: #1a2535;
-    --text: #e2e8f0;
+    --text: #ffffff;
     --card-border: rgba(255, 255, 255, 0.07);
     --muted: #8899aa;
     --input-bg: #1e2d40;
@@ -428,7 +428,7 @@ body.dark-mode .hsc-trend.neu {
 }
 
 body.dark-mode .hsc-number {
-    color: #e2e8f0;
+    color: #ffffff;
 }
 
 .hsc-bottom {
@@ -471,7 +471,7 @@ body.dark-mode .hsc-number {
 }
 
 body.dark-mode .home-section-title {
-    color: #e2e8f0;
+    color: #ffffff;
 }
 
 .home-section-title i {
@@ -612,7 +612,7 @@ body.dark-mode .qa-btn {
 }
 
 body.dark-mode .qa-label {
-    color: #c8d3df;
+    color: #ffffff;
 }
 
 /* ════════════════════════════════════════════════════
@@ -721,7 +721,7 @@ body.dark-mode .rp-card {
 }
 
 body.dark-mode .rp-card-name {
-    color: #d0dce8;
+    color: #ffffff;
 }
 
 .rp-card-client {

@@ -101,7 +101,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context.Inventories.Add(inventory);
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تمت إضافة المخزن بنجاح";
+			TempData["SuccessMessageKey"] = "msg_inventory_created";
 			return RedirectToAction(nameof(Index));
 		}
 
@@ -132,7 +132,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تم تحديث بيانات المخزن بنجاح";
+			TempData["SuccessMessageKey"] = "msg_inventory_updated";
 			return RedirectToAction(nameof(Index));
 		}
 
@@ -153,7 +153,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context.Inventories.Remove(inventory);
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تم حذف المخزن بنجاح";
+			TempData["SuccessMessageKey"] = "msg_inventory_deleted";
 			return RedirectToAction(nameof(Index));
 		}
 
@@ -177,7 +177,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			if (already)
 			{
-				TempData["ErrorMessage"] = "هذه المادة موجودة مسبقاً في هذا المخزن.";
+				TempData["ErrorMessageKey"] = "err_material_exists_warehouse";
 				return RedirectToAction(nameof(Details), new { id = inventoryId });
 			}
 
@@ -195,10 +195,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				// ── FULL: no space at all ──
 				if (remaining <= 0)
 				{
-					TempData["ErrorMessage"] =
-						$"⛔ المخزن \"{inv.InventoryName}\" وصل إلى طاقته الاستيعابية الكاملة " +
-						$"({inv.Capacity.Value:N2} م³). لا يمكن إضافة أي مواد جديدة. " +
-						$"يرجى اختيار مخزن آخر لديه مساحة كافية.";
+					TempData["ErrorMessageKey"] = "err_warehouse_full";
 					TempData["ShowInventoryRedirect"] = true;
 					return RedirectToAction(nameof(Details), new { id = inventoryId });
 				}
@@ -206,10 +203,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				// ── EXCEEDS REMAINING SPACE ──
 				if (currentUsed + newVolume > inv.Capacity.Value)
 				{
-					TempData["ErrorMessage"] =
-						$"⛔ لا يمكن إضافة هذه الكمية! الحجم المطلوب ({newVolume:N2} م³) " +
-						$"يتجاوز السعة المتبقية ({remaining:N2} م³). " +
-						$"الحد الأقصى الذي يمكن إضافته الآن هو {remaining / material.VolumeFactorM3:N3} {material.Unit ?? "وحدة"}.";
+					TempData["ErrorMessageKey"] = "err_warehouse_capacity";
 					return RedirectToAction(nameof(Details), new { id = inventoryId });
 				}
 			}
@@ -227,7 +221,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			inv.LastUpdatedDate = DateTime.Now;
 			await _context.SaveChangesAsync();
-			TempData["SuccessMessage"] = "تمت إضافة المادة للمخزن بنجاح";
+			TempData["SuccessMessageKey"] = "msg_material_added_warehouse";
 
 			return RedirectToAction(nameof(Details), new { id = inventoryId });
 		}
@@ -259,10 +253,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 				if (otherVolume + newVolume > inv.Capacity.Value)
 				{
-					TempData["ErrorMessage"] =
-						$"⛔ لا يمكن تحديث الكمية! الحجم الكلي ({otherVolume + newVolume:N2} م³) " +
-						$"يتجاوز سعة المخزن ({inv.Capacity.Value:N2} م³). " +
-						$"الحد الأقصى المسموح به لهذه المادة هو {maxAllowed / material.VolumeFactorM3:N3} {material.Unit ?? "وحدة"}.";
+					TempData["ErrorMessageKey"] = "err_warehouse_capacity";
 					return RedirectToAction(nameof(Details), new { id = inventoryId });
 				}
 			}
@@ -274,7 +265,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			if (inv != null) inv.LastUpdatedDate = DateTime.Now;
 			await _context.SaveChangesAsync();
-			TempData["SuccessMessage"] = "تم تحديث الكمية بنجاح";
+			TempData["SuccessMessageKey"] = "msg_quantity_updated";
 			return RedirectToAction(nameof(Details), new { id = inventoryId });
 		}
 
@@ -291,7 +282,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			{
 				_context.MaterialInventories.Remove(entry);
 				await _context.SaveChangesAsync();
-				TempData["SuccessMessage"] = "تم إزالة المادة من المخزن";
+				TempData["SuccessMessageKey"] = "msg_material_removed_warehouse";
 			}
 			return RedirectToAction(nameof(Details), new { id = inventoryId });
 		}
