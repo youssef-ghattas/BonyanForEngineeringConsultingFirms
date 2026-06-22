@@ -50,6 +50,15 @@ function applyLanguage(lang) {
         if (data[key]) el.setAttribute("placeholder", data[key]);
     });
 
+    // 5a. Update aria-label-only elements (icon-only buttons, e.g. lightbox close)
+    document.querySelectorAll("[data-lang-aria]").forEach(function (el) {
+        var key = el.getAttribute("data-lang-aria");
+        if (data[key]) {
+            el.setAttribute("aria-label", data[key]);
+            el.setAttribute("title", data[key]);
+        }
+    });
+
     // 5b. Translate dynamic per-row values (status badges, roles, etc.)
     //     These carry their own pre-computed Arabic/English text via
     //     data-ar / data-en attributes (set server-side) instead of a

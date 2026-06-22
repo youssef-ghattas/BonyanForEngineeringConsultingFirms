@@ -755,3 +755,25 @@
     color: #8fa3be;
     font-size: 12px;
 }
+
+/* ══════════════════════════════════════════════
+   sitevisit-index.css — Dark Mode
+══════════════════════════════════════════════ */
+body.dark-mode .svi-header h2 { color: #E8EDF5 !important; }
+body.dark-mode .svi-header p { color: #8FA3BF !important; }
+body.dark-mode .svi-card,
+body.dark-mode .svi-filter-bar { background: #19283F !important; border-color: #2A3B58 !important; box-shadow: 0 4px 18px rgba(0,0,0,0.3) !important; }
+body.dark-mode .svi-search,
+body.dark-mode .svi-filter-select { background: #0F1E30 !important; border-color: #2A3B58 !important; color: #E8EDF5 !important; }
+body.dark-mode .svi-search::placeholder { color: #5A7A9A !important; }
+body.dark-mode .svi-table thead tr { background: #0F1E30 !important; }
+body.dark-mode .svi-table th { color: #8FA3BF !important; border-color: #2A3B58 !important; }
+body.dark-mode .svi-table tbody tr { border-color: #2A3B58 !important; }
+body.dark-mode .svi-table tbody tr:hover { background: #1E3050 !important; }
+body.dark-mode .svi-table td { color: #C8D6E8 !important; }
+body.dark-mode .svi-kpi { background: #1A2940 !important; box-shadow: 0 4px 18px rgba(0,0,0,0.35) !important; }
+body.dark-mode .svi-kpi-label { color: #8FA3BF !important; }
+body.dark-mode .svi-kpi-value { color: #E8EDF5 !important; }
+body.dark-mode .svi-empty h6 { color: #E8EDF5 !important; }
+body.dark-mode .svi-empty p { color: #8FA3BF !important; }
+body.dark-mode .svi-badge { filter: brightness(0.85) saturate(0.9); }

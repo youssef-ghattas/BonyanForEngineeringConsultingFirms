@@ -43,3 +43,25 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ── Dark Mode — Register ─────────────────── */
+body.dark-mode .register-wrapper {
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .register-right {
+    background: #19283F !important;
+}
+
+    body.dark-mode .register-right h2 { color: #E8EDF5 !important; }
+    body.dark-mode .register-right p  { color: #8FA3BF !important; }
+
+body.dark-mode .auth-form-label    { color: #8FA3BF !important; }
+body.dark-mode .auth-input,
+body.dark-mode .input-group .form-control { background: #0F1E30 !important; border-color: #2A3B58 !important; color: #E8EDF5 !important; }
+body.dark-mode .auth-input::placeholder,
+body.dark-mode .input-group .form-control::placeholder { color: #5A7A9A !important; }
+body.dark-mode .input-group-text { background: #0F1E30 !important; border-color: #2A3B58 !important; color: #8FA3BF !important; }
+body.dark-mode .text-muted        { color: #5A7A9A !important; }
+body.dark-mode .text-danger       { color: #EF9A9A !important; }
+body.dark-mode .register-link     { color: #E9B949 !important; }

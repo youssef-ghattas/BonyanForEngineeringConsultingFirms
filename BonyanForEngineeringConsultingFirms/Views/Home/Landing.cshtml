@@ -19,6 +19,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>بنيان | Bonyan - منصة إدارة المكاتب الهندسية</title>
 
+    <script>
+        (function () {
+            const savedLang = localStorage.getItem("lang") || "ar";
+            document.documentElement.setAttribute("lang", savedLang);
+            document.documentElement.setAttribute("dir", savedLang === "ar" ? "rtl" : "ltr");
+        })();
+    </script>
+
     <!-- Bootstrap RTL -->
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" />
@@ -39,6 +47,16 @@
     <link rel="stylesheet" href="~/css/landing.css" />
 </head>
 <body class="landing-body">
+    <script>
+        // Restore dark/light preference BEFORE first paint (shares the same
+        // "bonyan-dark" key as the rest of the app, so the theme picked here
+        // stays consistent after logging in).
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === '1' || (saved === null && prefersDark)) document.body.classList.add('dark-mode');
+        })();
+    </script>
 
     <div class="bonyan-bg-tools" aria-hidden="true">
         <i class="fas fa-wrench bg-tool tool-1"></i>
@@ -619,20 +637,30 @@
             const body = document.body;
             const icon = document.getElementById('themeIcon');
             const isDark = body.classList.toggle('dark-mode');
-
             icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-
-            // Persist preference across page refreshes
-            localStorage.setItem('bonyan-theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('bonyan-dark', isDark ? '1' : '0');
         }
 
-        // Apply saved theme on page load
+        // Sync icon with pre-paint class that was already applied
         (function () {
-            const saved = localStorage.getItem('bonyan-theme');
-            if (saved === 'dark') {
-                document.body.classList.add('dark-mode');
-                const icon = document.getElementById('themeIcon');
-                if (icon) icon.className = 'fas fa-sun';
+            const icon = document.getElementById('themeIcon');
+            if (icon && document.body.classList.contains('dark-mode')) {
+                icon.className = 'fas fa-sun';
+            }
+            // Sync langBtn text to stored preference
+            const savedLang = localStorage.getItem("lang") || "ar";
+            const btn = document.getElementById("langBtn");
+            if (btn) btn.textContent = savedLang === "ar" ? "English" : "العربية";
+            // Apply landing translations if language is English on load
+            if (savedLang === "en") {
+                document.documentElement.lang = "en";
+                document.documentElement.dir = "ltr";
+                document.querySelectorAll("[data-lang]").forEach(el => {
+                    const key = el.getAttribute("data-lang");
+                    if (landingTranslations["en"] && landingTranslations["en"][key]) {
+                        el.textContent = landingTranslations["en"][key];
+                    }
+                });
             }
         })();
         function toggleLanding() {
@@ -642,11 +670,12 @@
 
             html.lang = newLang;
             html.dir = newLang === "ar" ? "rtl" : "ltr";
+            localStorage.setItem("lang", newLang);
             document.getElementById("langBtn").textContent = newLang === "ar" ? "English" : "العربية";
 
             document.querySelectorAll("[data-lang]").forEach(el => {
                 const key = el.getAttribute("data-lang");
-                if (landingTranslations[newLang][key]) {
+                if (landingTranslations[newLang] && landingTranslations[newLang][key]) {
                     el.textContent = landingTranslations[newLang][key];
                 }
             });

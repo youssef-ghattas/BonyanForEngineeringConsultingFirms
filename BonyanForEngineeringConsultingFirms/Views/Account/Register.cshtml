@@ -20,10 +20,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/login.css" />
     <link rel="stylesheet" href="~/css/register.css" />
+    <link rel="stylesheet" href="~/css/auth-theme.css" />
 </head>
 <body>
+    <script>
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === '1' || (saved === null && prefersDark)) document.body.classList.add('dark-mode');
+        })();
+    </script>
     <button id="langBtn" onclick="toggleLanguage()"
-            style="position:fixed; top:18px; left:18px; z-index:50; background:#fff;
+            style="position:fixed; top:22px; left:76px; z-index:999; background:#fff;
                    border:1px solid #ddd; border-radius:20px; padding:7px 16px;
                    font-size:0.85rem; font-weight:600; color:#333; cursor:pointer;
                    box-shadow:0 2px 8px rgba(0,0,0,0.08); display:flex; align-items:center; gap:6px;">
@@ -189,5 +197,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/translations.js"></script>
     <script src="~/js/lang-switch.js"></script>
+    <script src="~/js/auth-theme.js"></script>
 </body>
 </html>

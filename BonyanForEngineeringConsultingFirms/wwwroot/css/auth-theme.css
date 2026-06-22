@@ -190,6 +190,21 @@ body.dark-mode .auth-theme-toggle {
     box-shadow: 0 4px 18px rgba(0,0,0,0.4);
 }
 
+#langBtn {
+    transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+
+body.dark-mode #langBtn {
+    background: #19283F !important;
+    border-color: #2A3B58 !important;
+    color: #E8EDF5 !important;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4) !important;
+}
+
+    body.dark-mode #langBtn i {
+        color: #E9B949;
+    }
+
 @media (max-width: 768px) {
     .auth-theme-toggle {
         top: 14px;
