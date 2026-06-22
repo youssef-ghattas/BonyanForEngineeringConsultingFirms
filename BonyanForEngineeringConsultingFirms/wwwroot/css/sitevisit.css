@@ -415,3 +415,31 @@ textarea.form-control {
     line-height: 1;
     z-index: 10000;
 }
+
+/* ══════════════════════════════════════════════
+   sitevisit.css — Dark Mode
+══════════════════════════════════════════════ */
+body.dark-mode .details-card,
+body.dark-mode .filter-bar,
+body.dark-mode .sv-card { background: #19283F !important; border-color: #2A3B58 !important; box-shadow: 0 4px 18px rgba(0,0,0,0.3) !important; }
+body.dark-mode .page-header-left h2 { color: #E8EDF5 !important; }
+body.dark-mode .page-header-left p { color: #8FA3BF !important; }
+body.dark-mode .filter-select { background: #0F1E30 !important; border-color: #2A3B58 !important; color: #E8EDF5 !important; }
+body.dark-mode .sv-table thead tr,
+body.dark-mode .details-card table thead tr { background: #0F1E30 !important; }
+body.dark-mode .sv-table th,
+body.dark-mode .details-card table th { color: #8FA3BF !important; border-color: #2A3B58 !important; }
+body.dark-mode .sv-table tbody tr,
+body.dark-mode .details-card table tbody tr { border-color: #2A3B58 !important; }
+body.dark-mode .sv-table tbody tr:hover,
+body.dark-mode .details-card table tbody tr:hover { background: #1E3050 !important; }
+body.dark-mode .sv-table td,
+body.dark-mode .details-card table td { color: #C8D6E8 !important; }
+body.dark-mode .sv-label { color: #8FA3BF !important; }
+body.dark-mode .sv-value { color: #E8EDF5 !important; }
+body.dark-mode .sv-section-title { color: #E8EDF5 !important; border-color: #2A3B58 !important; }
+body.dark-mode .sv-empty { color: #8FA3BF !important; }
+body.dark-mode .sv-badge { filter: brightness(0.85) saturate(0.9); }
+body.dark-mode .sv-stat-card { background: #1A2940 !important; box-shadow: 0 4px 18px rgba(0,0,0,0.35) !important; }
+body.dark-mode .sv-stat-label { color: #8FA3BF !important; }
+body.dark-mode .sv-stat-value { color: #E8EDF5 !important; }

@@ -897,3 +897,28 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ══════════════════════════════════════════════
+   Task.css — Dark Mode
+══════════════════════════════════════════════ */
+body.dark-mode .task-kpi { background: #1A2940 !important; box-shadow: 0 4px 18px rgba(0,0,0,0.35); }
+body.dark-mode .task-kpi-label { color: #8FA3BF !important; }
+body.dark-mode .task-kpi-value { color: #E8EDF5 !important; }
+body.dark-mode .task-table-card,
+body.dark-mode .task-filter-bar { background: #19283F !important; border-color: #2A3B58 !important; box-shadow: 0 4px 18px rgba(0,0,0,0.3) !important; }
+body.dark-mode .page-header-left h2 { color: #E8EDF5 !important; }
+body.dark-mode .page-header-left p { color: #8FA3BF !important; }
+body.dark-mode .task-search-input,
+body.dark-mode .task-filter-select { background: #0F1E30 !important; border-color: #2A3B58 !important; color: #E8EDF5 !important; }
+body.dark-mode .task-search-input::placeholder { color: #5A7A9A !important; }
+body.dark-mode .task-table thead tr { background: #0F1E30 !important; }
+body.dark-mode .task-table th { color: #8FA3BF !important; border-color: #2A3B58 !important; }
+body.dark-mode .task-table tbody tr { border-color: #2A3B58 !important; }
+body.dark-mode .task-table tbody tr:hover { background: #1E3050 !important; }
+body.dark-mode .task-table td { color: #C8D6E8 !important; }
+body.dark-mode .task-empty-state { background: #19283F !important; color: #8FA3BF !important; border-color: #2A3B58 !important; }
+body.dark-mode .task-empty-state h6 { color: #E8EDF5 !important; }
+body.dark-mode .task-status-badge { filter: brightness(0.85) saturate(0.9); }
+body.dark-mode .alert-success-msg { background: linear-gradient(90deg, #1A3A2A, #1E3B2E) !important; border-color: #2E7D32 !important; color: #81C784 !important; }
+body.dark-mode .task-pagination .page-link { background: #1A2940 !important; border-color: #2A3B58 !important; color: #8FA3BF !important; }
+body.dark-mode .task-pagination .page-item.active .page-link { background: var(--secondary,#C8922A) !important; border-color: var(--secondary,#C8922A) !important; color: #fff !important; }

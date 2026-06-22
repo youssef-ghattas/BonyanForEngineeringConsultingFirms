@@ -648,3 +648,24 @@
     .btn-modal-confirm-delete:hover {
         background: #a93226;
     }
+/* ══════════════════════════════════════════════
+   invoice.css — Dark Mode
+══════════════════════════════════════════════ */
+body.dark-mode .invoice-card { background: #19283F !important; box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important; }
+body.dark-mode .invoice-header { border-color: #2A3B58 !important; }
+body.dark-mode .invoice-num { color: #E8EDF5 !important; }
+body.dark-mode .invoice-project { color: #8FA3BF !important; }
+body.dark-mode .invoice-amounts { background: #0F1E30 !important; border-color: #2A3B58 !important; }
+body.dark-mode .invoice-amounts td,
+body.dark-mode .invoice-amounts th { color: #C8D6E8 !important; border-color: #2A3B58 !important; }
+body.dark-mode .invoice-total-row { background: #162438 !important; }
+body.dark-mode .invoice-notes { background: #0F1E30 !important; border-color: #2A3B58 !important; color: #8FA3BF !important; }
+body.dark-mode .invoice-items-table thead tr { background: #0F1E30 !important; }
+body.dark-mode .invoice-items-table th { color: #8FA3BF !important; border-color: #2A3B58 !important; }
+body.dark-mode .invoice-items-table tbody tr { border-color: #2A3B58 !important; }
+body.dark-mode .invoice-items-table tbody tr:hover { background: #1E3050 !important; }
+body.dark-mode .invoice-items-table td { color: #C8D6E8 !important; }
+body.dark-mode .inv-section-title { color: #E8EDF5 !important; }
+body.dark-mode .inv-label { color: #8FA3BF !important; }
+body.dark-mode .inv-value { color: #E8EDF5 !important; }
+body.dark-mode .inv-divider { border-color: #2A3B58 !important; }

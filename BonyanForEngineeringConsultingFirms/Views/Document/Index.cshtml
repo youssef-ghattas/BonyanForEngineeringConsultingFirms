@@ -170,7 +170,7 @@
 
         <span class="results-count" id="resultsCount">
             <strong>@totalCount</strong>
-            <span data-lang="results_label">مستند</span>
+            <span data-lang="doc_results_label">مستند</span>
         </span>
     </div>
 
@@ -351,17 +351,12 @@
             <div class="empty-state">
                 <i class="fas fa-folder-open"></i>
                 <h6 data-lang="no_docs_title">لا توجد مستندات بعد</h6>
-                <p data-lang="no_docs_sub">
-                    @if (selectedProjectId.HasValue && (role == "ProjectManager" || role == "Engineer"))
-                    {
-                        <text>ابدأ برفع مستند جديد للمشروع</text>
-                    }
-                    else
-                    {
-
-                        <text>لم يتم رفع أي مستندات حتى الآن</text>
-                    }
-                </p>
+                @{
+                    bool canUpload = selectedProjectId.HasValue && (role == "ProjectManager" || role == "Engineer");
+                    string noDocsAr = canUpload ? "ابدأ برفع مستند جديد للمشروع" : "لم يتم رفع أي مستندات حتى الآن";
+                    string noDocsEn = canUpload ? "Start by uploading a new document for the project" : "No documents have been uploaded yet";
+                }
+                <p data-ar="@noDocsAr" data-en="@noDocsEn">@noDocsAr</p>
             </div>
         }
     </div>

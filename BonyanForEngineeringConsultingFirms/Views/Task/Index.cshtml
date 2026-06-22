@@ -18,7 +18,6 @@
 }
 
 <link rel="stylesheet" href="~/css/task.css" />
-<link rel="stylesheet" href="~/css//theme-pro.css" />
 
 <div class="task-page">
 
@@ -36,17 +35,15 @@
                     <span data-lang="all_tasks">جميع المهام</span>
                 }
             </h2>
-            <p data-lang="task_subtitle">
-                @if (projectId.HasValue)
-                {
-                    <text>استعراض وإدارة مهام مشروع @projectName</text>
-                }
-                else
-                {
-
-                    <text>استعراض وإدارة جميع مهام النظام</text>
-                }
-            </p>
+            @{
+                string taskSubtitleAr = projectId.HasValue
+                    ? $"استعراض وإدارة مهام مشروع {projectName}"
+                    : "استعراض وإدارة جميع مهام النظام";
+                string taskSubtitleEn = projectId.HasValue
+                    ? $"Browse and manage tasks for project {projectName}"
+                    : "Browse and manage all tasks in the system";
+            }
+            <p data-ar="@taskSubtitleAr" data-en="@taskSubtitleEn">@taskSubtitleAr</p>
         </div>
         <div class="page-header-actions">
             @if (projectId.HasValue)
@@ -379,17 +376,12 @@
             <div class="empty-state">
                 <i class="fas fa-clipboard-list"></i>
                 <h6 data-lang="no_tasks_title">لا توجد مهام بعد</h6>
-                <p data-lang="no_tasks_yet">
-                    @if (role == "ProjectManager" && projectId.HasValue)
-                    {
-                        <text>ابدأ بإضافة مهمة جديدة للمشروع</text>
-                    }
-                    else
-                    {
-
-                        <text>لا توجد مهام مسجّلة حتى الآن</text>
-                    }
-                </p>
+                @{
+                    bool canAddTask = role == "ProjectManager" && projectId.HasValue;
+                    string noTasksAr = canAddTask ? "ابدأ بإضافة مهمة جديدة للمشروع" : "لا توجد مهام مسجّلة حتى الآن";
+                    string noTasksEn = canAddTask ? "Start by adding a new task for the project" : "No tasks have been recorded yet";
+                }
+                <p data-ar="@noTasksAr" data-en="@noTasksEn">@noTasksAr</p>
             </div>
         }
     </div>

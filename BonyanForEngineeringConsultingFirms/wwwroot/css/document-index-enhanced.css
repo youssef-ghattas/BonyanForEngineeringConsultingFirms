@@ -731,3 +731,26 @@
         color: #8a9ab5;
     }
 }
+/* ══════════════════════════════════════════════
+   document-index-enhanced.css — Dark Mode
+══════════════════════════════════════════════ */
+body.dark-mode .di-header-card { background: linear-gradient(135deg, #0F1E30 0%, #1A2940 100%) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important; }
+body.dark-mode .di-stat-card { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.08) !important; }
+body.dark-mode .di-stat-label { color: rgba(200,210,230,0.75) !important; }
+body.dark-mode .di-filter-bar { background: #19283F !important; border-color: #2A3B58 !important; box-shadow: 0 4px 18px rgba(0,0,0,0.3) !important; }
+body.dark-mode .di-search-input,
+body.dark-mode .di-filter-select { background: #0F1E30 !important; border-color: #2A3B58 !important; color: #E8EDF5 !important; }
+body.dark-mode .di-search-input::placeholder { color: #5A7A9A !important; }
+body.dark-mode .di-table-card { background: #19283F !important; border-color: #2A3B58 !important; box-shadow: 0 4px 18px rgba(0,0,0,0.3) !important; }
+body.dark-mode .di-table thead tr { background: #0F1E30 !important; }
+body.dark-mode .di-table th { color: #8FA3BF !important; border-color: #2A3B58 !important; }
+body.dark-mode .di-table tbody tr { border-color: #2A3B58 !important; }
+body.dark-mode .di-table tbody tr:hover { background: #1E3050 !important; }
+body.dark-mode .di-table td { color: #C8D6E8 !important; }
+body.dark-mode .di-filename { color: #E8EDF5 !important; }
+body.dark-mode .di-filename-sub { color: #8FA3BF !important; }
+body.dark-mode .di-type-badge { filter: brightness(0.85) saturate(0.9); }
+body.dark-mode .di-empty { background: #19283F !important; color: #8FA3BF !important; }
+body.dark-mode .di-empty h5 { color: #E8EDF5 !important; }
+body.dark-mode .di-pagination .page-link { background: #1A2940 !important; border-color: #2A3B58 !important; color: #8FA3BF !important; }
+body.dark-mode .di-pagination .page-item.active .page-link { background: var(--secondary,#C8922A) !important; border-color: var(--secondary,#C8922A) !important; color: #fff !important; }
