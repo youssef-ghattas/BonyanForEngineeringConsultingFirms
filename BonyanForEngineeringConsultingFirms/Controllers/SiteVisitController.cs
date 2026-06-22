@@ -143,7 +143,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             _context.SiteVisits.Add(siteVisit);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تمت إضافة زيارة الموقع بنجاح";
+            TempData["SuccessMessageKey"] = "msg_sitevisit_created";
             return RedirectToAction("Details", "Project", new { id = siteVisit.ProjId });
         }
 
@@ -170,7 +170,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             _context.SiteVisits.Remove(sv);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تم حذف زيارة الموقع بنجاح";
+            TempData["SuccessMessageKey"] = "msg_sitevisit_deleted";
             return RedirectToAction("Index");
         }
     }

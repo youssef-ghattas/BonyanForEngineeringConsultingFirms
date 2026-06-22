@@ -6,6 +6,7 @@
     var availableSuppliers = ViewBag.AvailableSuppliers as List<Bonyan.DAL.Models.Supplier> ?? new();
 }
 
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/material.css" />
 
 <div class="page-header">
@@ -28,36 +29,19 @@
     </div>
 </div>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert-success-msg">
-        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-    </div>
-}
+@await Html.PartialAsync("_AlertMessages")
 
 <!-- Info Card -->
 <div class="details-card" style="margin-bottom:20px">
-    <div class="details-section-title">
-        <i class="fas fa-info-circle"></i> <span data-lang="material_data">بيانات المادة</span>
-    </div>
-    <div class="mat-info-grid">
-        <div class="mat-info-item">
-            <span class="mat-info-label" data-lang="material_name_label">اسم المادة</span>
-            <span class="mat-info-value">@Model.MaterialName</span>
-        </div>
-        <div class="mat-info-item">
-            <span class="mat-info-label" data-lang="measurement_unit">وحدة القياس</span>
-            <span class="mat-info-value">
-                <span class="unit-badge">@(Model.Unit ?? "—")</span>
-            </span>
-        </div>
-        <div class="mat-info-item">
-            <span class="mat-info-label" data-lang="unit_price">سعر الوحدة</span>
-            <span class="mat-info-value">@(Model.UnitPrice.HasValue? Model.UnitPrice.Value.ToString("N2") + " ج.م" : "—")</span>
-        </div>
-        <div class="mat-info-item" style="grid-column: 1 / -1">
-            <span class="mat-info-label" data-lang="description">الوصف</span>
-            <span class="mat-info-value">@(string.IsNullOrWhiteSpace(Model.Description) ? "—" : Model.Description)</span>
+    <div class="details-body">
+        <div class="details-section">
+            <div class="details-section-title"><i class="fas fa-info-circle"></i> <span data-lang="material_data">بيانات المادة</span></div>
+            <div class="details-grid">
+                <div class="detail-item"><label data-lang="material_name_label">اسم المادة</label><p>@Model.MaterialName</p></div>
+                <div class="detail-item"><label data-lang="measurement_unit">وحدة القياس</label><p><span class="unit-badge">@(Model.Unit ?? "—")</span></p></div>
+                <div class="detail-item"><label data-lang="unit_price">سعر الوحدة</label><p>@(Model.UnitPrice.HasValue? Model.UnitPrice.Value.ToString("N2") + " ج.م" : "—")</p></div>
+                <div class="detail-item" style="grid-column:1/-1"><label data-lang="description">الوصف</label><p>@(string.IsNullOrWhiteSpace(Model.Description) ? "—" : Model.Description)</p></div>
+            </div>
         </div>
     </div>
 </div>

@@ -18,16 +18,28 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/login.css" />
+    <link rel="stylesheet" href="~/css/auth-theme.css" />
+    <script>
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === '1' || (saved === null && prefersDark)) document.body.classList.add('dark-mode');
+        })();
+    </script>
 </head>
 <body>
-    <button id="langBtn" onclick="toggleLanguage()"
-            style="position:fixed; top:18px; left:18px; z-index:50; background:#fff;
-                   border:1px solid #ddd; border-radius:20px; padding:7px 16px;
-                   font-size:0.85rem; font-weight:600; color:#333; cursor:pointer;
-                   box-shadow:0 2px 8px rgba(0,0,0,0.08); display:flex; align-items:center; gap:6px;">
-        <i class="fas fa-globe"></i>
-        <span id="langBtnText">English</span>
-    </button>
+    <div style="position:fixed; top:22px; left:22px; z-index:999; display:flex; align-items:center; gap:10px;">
+        <button id="langBtn" onclick="toggleLanguage()"
+                style="padding:8px 18px; border-radius:20px; font-size:0.85rem; font-weight:600; border:none; display:flex; align-items:center; gap:6px; cursor:pointer; background:rgba(255,255,255,0.9); color:var(--auth-primary, #1B3A6B); box-shadow:0 4px 18px rgba(15,28,55,0.18); transition:all .25s ease;">
+            <i class="fas fa-globe"></i>
+            <span id="langBtnText">English</span>
+        </button>
+        <button id="themeToggleBtn" onclick="toggleTheme()"
+                class="auth-theme-toggle"
+                style="position:static; width:42px; height:42px;">
+            <i class="fas fa-moon" id="themeIcon"></i>
+        </button>
+    </div>
     <div class="login-wrapper">
 
         <!-- Left Panel -->
@@ -45,7 +57,16 @@
             <h2 data-lang="login_welcome">مرحباً بك 👋</h2>
             <p data-lang="login_continue">قم بتسجيل الدخول للمتابعة</p>
 
-            @if (TempData["Success"] != null)
+            @if (TempData["SuccessMessageKey"] != null)
+            {
+                <div style="background:#EEFAF2; border:1px solid #C3EDD0; border-radius:10px;
+                        padding:12px 16px; color:#28A745; font-size:0.88rem;
+                        margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-check-circle"></i>
+                    <span data-lang="@TempData["SuccessMessageKey"]"></span>
+                </div>
+            }
+            else if (TempData["Success"] != null)
             {
                 <div style="background:#EEFAF2; border:1px solid #C3EDD0; border-radius:10px;
                         padding:12px 16px; color:#28A745; font-size:0.88rem;
@@ -98,10 +119,7 @@
                 </a>
             </div>
 
-            <div class="switch-link">
-                <span data-lang="no_account">ليس لديك حساب؟</span>
-                <a asp-action="AdminRegister" asp-controller="Account" data-lang="create_new_account">إنشاء حساب جديد</a>
-            </div>
+
         </div>
     </div>
 
@@ -109,5 +127,20 @@
     <script src="~/js/show-password.js"></script>
     <script src="~/js/translations.js"></script>
     <script src="~/js/lang-switch.js"></script>
+    <script>
+        function toggleTheme() {
+            var body = document.body;
+            var icon = document.getElementById('themeIcon');
+            var isDark = body.classList.toggle('dark-mode');
+            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('bonyan-dark', isDark ? '1' : '0');
+        }
+        (function () {
+            var icon = document.getElementById('themeIcon');
+            if (icon && document.body.classList.contains('dark-mode')) {
+                icon.className = 'fas fa-sun';
+            }
+        })();
+    </script>
 </body>
 </html>

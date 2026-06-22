@@ -13,7 +13,7 @@
             <i class="fas fa-user-plus" style="color:var(--secondary)"></i>
             <span data-lang="add_employee">إضافة موظف جديد</span>
         </h2>
-        <p data-lang="add_employee_sub">أدخل بيانات الموظف الجديد</p>
+        <p data-lang="add_employee_sub"></p>
     </div>
     <a asp-action="Index" class="btn-bonyan-primary">
         <i class="fas fa-arrow-right"></i>
@@ -42,7 +42,7 @@
                         <span data-lang="first_name">الاسم الأول</span>
                         <span class="required">*</span>
                     </label>
-                    <input asp-for="FirstName" class="form-control" placeholder="الاسم الأول" />
+                    <input asp-for="FirstName" class="form-control" data-lang-placeholder="first_name" placeholder="الاسم الأول" />
                     <span asp-validation-for="FirstName" class="text-danger"></span>
                 </div>
                 <div class="form-group">
@@ -50,7 +50,7 @@
                         <span data-lang="last_name">الاسم الأخير</span>
                         <span class="required">*</span>
                     </label>
-                    <input asp-for="LastName" class="form-control" placeholder="الاسم الأخير" />
+                    <input asp-for="LastName" class="form-control" data-lang-placeholder="last_name" placeholder="الاسم الأخير" />
                     <span asp-validation-for="LastName" class="text-danger"></span>
                 </div>
             </div>
@@ -77,7 +77,7 @@
                         <span data-lang="ssn">الرقم القومي</span>
                         <span class="required">*</span>
                     </label>
-                    <input asp-for="SSN" class="form-control" placeholder="الرقم القومي" />
+                    <input asp-for="SSN" class="form-control" data-lang-placeholder="ssn" placeholder="الرقم القومي" />
                     <span asp-validation-for="SSN" class="text-danger"></span>
                 </div>
                 <div class="form-group">
@@ -105,9 +105,9 @@
                         <option value="" data-lang="select">-- اختر --</option>
                         @foreach (var g in Enum.GetValues(typeof(Gender)))
                         {
-                            <option value="@g">
-                                @(g.ToString() == "Male" ? "ذكر" : "أنثى")
-                            </option>
+                            var gAr = g.ToString() == "Male" ? "ذكر" : "أنثى";
+                            var gEn = g.ToString() == "Male" ? "Male" : "Female";
+                            <option value="@g" data-ar="@gAr" data-en="@gEn">@gAr</option>
                         }
                     </select>
                     <span asp-validation-for="Gender" class="text-danger"></span>
@@ -129,7 +129,8 @@
                                 "Architectural" => "معماري",
                                 _ => s.ToString()
                             };
-                            <option value="@s">@specAr</option>
+                            string specEn = s.ToString();
+                            <option value="@s" data-ar="@specAr" data-en="@specEn">@specAr</option>
                         }
                     </select>
                     <span asp-validation-for="Specialization" class="text-danger"></span>
@@ -141,9 +142,9 @@
                         <span class="required">*</span>
                     </label>
                     <select name="Role" class="form-select" required>
-                        <option value="">-- اختر الدور --</option>
-                        <option value="Engineer">مهندس</option>
-                        <option value="ProjectManager">مدير مشروع</option>
+                        <option value="" data-lang="select_role_option">-- اختر الدور --</option>
+                        <option value="Engineer" data-ar="مهندس" data-en="Engineer">مهندس</option>
+                        <option value="ProjectManager" data-ar="مدير مشروع" data-en="Project Manager">مدير مشروع</option>
                     </select>
                 </div>
             </div>
@@ -164,7 +165,7 @@
                         <span data-lang="password">كلمة المرور</span>
                         <span class="required">*</span>
                     </label>
-                    <input type="password" name="Password" class="form-control" placeholder="أدخل كلمة المرور" required />
+                    <input type="password" name="Password" class="form-control" data-lang-placeholder="password" placeholder="أدخل كلمة المرور" required />
                 </div>
             </div>
 

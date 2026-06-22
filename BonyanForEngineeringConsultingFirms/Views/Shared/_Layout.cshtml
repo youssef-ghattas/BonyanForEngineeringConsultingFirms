@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bonyan - بنيان</title>
+    <title>@(ViewData["Title"] ?? "Bonyan") - بنيان</title>
 
     <script>
         (function () {
@@ -478,6 +478,7 @@
         </aside>
 
         <main class="bonyan-content" id="mainContent">
+            <partial name="_AlertMessages" />
             @RenderBody()
         </main>
     </div>

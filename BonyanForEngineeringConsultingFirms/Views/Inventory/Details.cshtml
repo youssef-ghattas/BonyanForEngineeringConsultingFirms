@@ -14,6 +14,7 @@
     string barColor = fillRate >= 100 ? "#e53935" : fillRate >= 85 ? "#f57c00" : "#4caf50";
 }
 
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/material.css" />
 
 <div class="page-header">
@@ -42,22 +43,7 @@
     </div>
 </div>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert-success-msg"><i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]</div>
-}
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert-error-msg"><i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]</div>
-}
-@if (TempData["WarningMessage"] != null)
-{
-    <div style="background:#fff3e0;border:2px solid #ff9800;border-radius:10px;padding:14px 18px;
-                        margin-bottom:18px;display:flex;align-items:flex-start;gap:12px">
-        <i class="fas fa-exclamation-triangle" style="font-size:1.5rem;color:#ff9800;margin-top:2px"></i>
-        <div style="font-size:0.9rem;color:#555">@TempData["WarningMessage"]</div>
-    </div>
-}
+@await Html.PartialAsync("_AlertMessages")
 
 <!-- ══ FULL CAPACITY ALERT ════════════════════════════ -->
 @if (isFull && hasCapacity)

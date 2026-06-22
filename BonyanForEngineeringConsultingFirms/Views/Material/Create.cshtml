@@ -6,6 +6,7 @@
     var inventories = ViewBag.Inventories as List<Bonyan.DAL.Models.Inventory> ?? new();
 }
 
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/material.css" />
 
 @if (ViewBag.ShowSuccess == true)
@@ -61,12 +62,12 @@
     </a>
 </div>
 
-<div class="upload-card">
-    <div class="upload-card-header">
+<div class="form-card">
+    <div class="form-card-header">
         <i class="fas fa-cube"></i>
         <h4 data-lang="material_data">بيانات المادة</h4>
     </div>
-    <div class="upload-card-body">
+    <div class="form-card-body">
         <form asp-action="Create" method="post" id="matForm">
             @Html.AntiForgeryToken()
 
@@ -76,6 +77,7 @@
             <input type="hidden" name="splitQtyPrimary" id="hdnSplitPrimary" value="" />
             <input type="hidden" name="splitQtySecondary" id="hdnSplitSecondary" value="" />
 
+            <div class="form-section-title" data-lang="material_data">بيانات المادة</div>
             <div class="form-grid-2">
 
                 <div class="form-group">
@@ -205,7 +207,7 @@
                 </div>
             </div>
 
-            <div class="upload-actions">
+            <div class="form-actions">
                 <a asp-action="Index" class="btn-bonyan-primary">
                     <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
                 </a>

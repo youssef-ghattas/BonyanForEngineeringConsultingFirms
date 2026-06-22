@@ -79,7 +79,7 @@
         </div>
 
         <div class="navbar-right">
-            <button id="langBtn" class="lang-btn" onclick="toggleLanding()">English</button>
+            <button id="langBtn" class="lang-btn" onclick="toggleLanguage()"><span id="langBtnText">English</span></button>
 
             <!-- Dark / Light Toggle -->
             <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="تبديل الوضع">
@@ -483,157 +483,11 @@
         </a>
     </section>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/translations.js"></script>
+    <script src="~/js/lang-switch.js"></script>
 
-    <!-- Landing Language Switch -->
     <script>
-                       const landingTranslations = {
-            ar: {
-                brand_name: "بنيان",
-                nav_login: "تسجيل الدخول",
-                nav_login: "تسجيل الدخول",
-                nav_subscribe: "الاشتراك",
-                hero_badge: "مميزات المنصة",
-                hero_title_1: "مستقبل",
-                hero_title_2: "إدارة المكاتب الهندسية",
-                hero_subtitle: "منصة رقمية متكاملة تُحدث نقلة في طريقة إدارة المكاتب الهندسية لمشاريعها ومخططاتها وعملائها وعقودها ومهامها وفرقها — كل ذلك من لوحة تحكم واحدة قوية.",
-                hero_cta: "تسجيل دخول ←",
-                mockup_badge: "مشروع مسجّل في المنصة",
-
-                stat_offices_label:   "مكتب هندسي مشترك",
-                stat_completed_label: "مشروع مُسلَّم بنجاح",
-                stat_projects_label:  "إجمالي المشاريع المسجّلة",
-                stat_documents_label: "مستند ومخطط هندسي",
-
-                chart_planning:   "تخطيط · Planning",
-                chart_inprogress: "قيد التنفيذ · Active",
-                chart_completed:  "مكتمل · Delivered",
-                chart_onhold:     "متوقف · On Hold",
-
-                features_title:    "كل ما يحتاجه مكتبك الهندسي",
-                features_subtitle: "مجموعة متكاملة من الأدوات لإدارة مكتبك الهندسي بكفاءة وسهولة",
-                feat1_title: "إدارة المشاريع",
-                feat1_desc:  "تتبع كل مشروع منذ البداية وحتى التسليم. راقب الحالة والميزانيات والجداول الزمنية والمعالم الرئيسية لحظة بلحظة.",
-                feat2_title: "إسناد المهام",
-                feat2_desc:  "أسند المهام للمهندسين، حدد المواعيد النهائية، وتابع التقدم والمهام المتأخرة بتنبيهات تلقائية.",
-                feat3_title: "إدارة المستندات",
-                feat3_desc:  "ارفع ونظّم وحمّل المخططات والرسومات والمستندات المرتبطة مباشرة بكل مشروع.",
-                feat4_title: "إدارة العملاء والعقود",
-                feat4_desc:  "احتفظ بسجلات كاملة للعملاء والعقود والميزانيات. اربط العملاء مباشرة بمشاريعهم.",
-                feat5_title: "الموارد البشرية",
-                feat5_desc:  "أدر فريق المهندسين والأدوار وصلاحيات الوصول. أضف أعضاء جدد ببيانات دخول تُنشأ تلقائياً.",
-                feat6_title: "ثنائي اللغة (عربي/إنجليزي)",
-                feat6_desc:  "دعم كامل للغة العربية (RTL) والإنجليزية (LTR) مع تبديل فوري للغة عبر المنصة بالكامل.",
-
-                // ── Pricing section (previously missing) ──────
-                pricing_badge:    "خطط الأسعار",
-                pricing_title:    "اختر الخطة المناسبة لمكتبك",
-                pricing_subtitle: "جميع الخطط تتضمن كافة مميزات المنصة كاملةً — الفرق الوحيد هو حجم الاستخدام المسموح.",
-                popular_badge:    "الأكثر طلباً · Most Popular",
-
-                plan1_name: "Startup", plan1_name_ar: "الباقة الناشئة",
-                plan1_price: "٤,٠٠٠", plan1_currency: "ج.م / شهرياً",
-                plan1_desc: "مثالية للمكاتب الناشئة والفرق الصغيرة التي تبدأ رحلتها الرقمية.",
-
-                plan2_name: "Growth", plan2_name_ar: "باقة النمو",
-                plan2_price: "٨,٠٠٠", plan2_currency: "ج.م / شهرياً",
-                plan2_desc: "للمكاتب المتوسطة التي تدير عدداً أكبر من المشاريع والفرق.",
-
-                plan3_name: "Scale", plan3_name_ar: "باقة المؤسسات",
-                plan3_price: "١٦,٠٠٠", plan3_currency: "ج.م / شهرياً",
-                plan3_desc: "للمؤسسات الكبرى التي تحتاج إلى أعلى سقف من المهندسين والمشاريع.",
-
-                limit_engineers: "مهندس",
-                limit_projects:  "مشاريع نشطة",
-
-                feat_kanban:  "لوحة إدارة وتكليف المهام",
-                feat_archive: "الأرشيف السحابي الآمن للمخططات",
-                feat_hr:      "إدارة الموارد البشرية وتتبع الإنتاجية",
-                feat_finance: "النظام المالي وإصدار الفواتير",
-                feat_portal:  "بوابة ملاك المشاريع الرقمية",
-
-                pricing_cta:  "ابدأ الآن",
-                pricing_note: "جميع الخطط تشمل كافة المميزات دون قيود — الفرق فقط في عدد المهندسين والمشاريع المسموح بها.",
-
-                cta_title:    "هل أنت مستعد لتطوير مكتبك الهندسي؟",
-                cta_subtitle: "سجّل الدخول للوصول إلى مساحة العمل المتكاملة لإدارة مكتبك الهندسي.",
-                cta_button:   "تسجيل دخول ←"
-            },
-
-            en: {
-                brand_name: "Bonyan",
-                nav_login: "Login",
-                nav_login: "Login",
-                nav_subscribe: "Subscribe",
-                hero_badge: "Platform Features",
-                hero_title_1: "The Future of",
-                hero_title_2: "Engineering Office Management",
-                hero_subtitle: "An integrated digital platform that transforms how engineering offices manage projects, blueprints, clients, contracts, tasks, and teams — all from one powerful dashboard.",
-                hero_cta: "Login →",
-                mockup_badge: "Projects registered on the platform",
-
-                stat_offices_label:   "Subscribed engineering offices",
-                stat_completed_label: "Successfully delivered projects",
-                stat_projects_label:  "Total registered projects",
-                stat_documents_label: "Technical docs & drawings",
-
-                chart_planning:   "Planning · تخطيط",
-                chart_inprogress: "Active · قيد التنفيذ",
-                chart_completed:  "Delivered · مكتمل",
-                chart_onhold:     "On Hold · متوقف",
-
-                features_title:    "Everything Your Engineering Office Needs",
-                features_subtitle: "A complete suite of tools to manage every aspect of your engineering office efficiently.",
-                feat1_title: "Project Management",
-                feat1_desc:  "Track every project from inception to delivery. Monitor status, budgets, timelines, and milestones in real-time.",
-                feat2_title: "Task Assignment",
-                feat2_desc:  "Assign tasks to engineers, set deadlines, track progress and overdue items with automatic alerts.",
-                feat3_title: "Document Control",
-                feat3_desc:  "Upload, organize, and download blueprints, drawings, and documents linked directly to each project.",
-                feat4_title: "Client & Contract Management",
-                feat4_desc:  "Maintain complete client records, contracts, and budgets. Link clients directly to their projects.",
-                feat5_title: "Human Resources",
-                feat5_desc:  "Manage engineering staff, roles, and access. Onboard new team members with auto-generated credentials.",
-                feat6_title: "Bilingual (AR / EN)",
-                feat6_desc:  "Full Arabic RTL and English LTR support with one-click language switching across the entire platform.",
-
-                pricing_badge:    "Pricing Plans",
-                pricing_title:    "Choose the Plan That Fits Your Office",
-                pricing_subtitle: "All plans include the full platform feature set — the only difference is your usage limits.",
-                popular_badge:    "Most Popular · الأكثر طلباً",
-
-                plan1_name: "Startup", plan1_name_ar: "Startup Plan",
-                plan1_price: "4,000", plan1_currency: "EGP / month",
-                plan1_desc: "Ideal for new offices and small teams starting their digital journey.",
-
-                plan2_name: "Growth", plan2_name_ar: "Growth Plan",
-                plan2_price: "8,000", plan2_currency: "EGP / month",
-                plan2_desc: "For mid-sized offices managing a larger number of projects and teams.",
-
-                plan3_name: "Scale", plan3_name_ar: "Enterprise Plan",
-                plan3_price: "16,000", plan3_currency: "EGP / month",
-                plan3_desc: "For large organizations needing the highest limits on engineers and projects.",
-
-                limit_engineers: "Engineers",
-                limit_projects:  "Active Projects",
-
-                feat_kanban:  "Task management & assignment board",
-                feat_archive: "Secure cloud archive for drawings",
-                feat_hr:      "HR management & productivity tracking",
-                feat_finance: "Financial system & invoicing",
-                feat_portal:  "Digital client/owner portal",
-
-                pricing_cta:  "Get Started",
-                pricing_note: "All plans include every feature with no restrictions — the only difference is the number of engineers and projects allowed.",
-
-                cta_title:    "Ready to Transform Your Engineering Office?",
-                cta_subtitle: "Log in to access your complete engineering management workspace.",
-                cta_button:   "Login →"
-            }
-        };
-
-                function toggleTheme() {
+        function toggleTheme() {
             const body = document.body;
             const icon = document.getElementById('themeIcon');
             const isDark = body.classList.toggle('dark-mode');
@@ -641,45 +495,12 @@
             localStorage.setItem('bonyan-dark', isDark ? '1' : '0');
         }
 
-        // Sync icon with pre-paint class that was already applied
         (function () {
             const icon = document.getElementById('themeIcon');
             if (icon && document.body.classList.contains('dark-mode')) {
                 icon.className = 'fas fa-sun';
             }
-            // Sync langBtn text to stored preference
-            const savedLang = localStorage.getItem("lang") || "ar";
-            const btn = document.getElementById("langBtn");
-            if (btn) btn.textContent = savedLang === "ar" ? "English" : "العربية";
-            // Apply landing translations if language is English on load
-            if (savedLang === "en") {
-                document.documentElement.lang = "en";
-                document.documentElement.dir = "ltr";
-                document.querySelectorAll("[data-lang]").forEach(el => {
-                    const key = el.getAttribute("data-lang");
-                    if (landingTranslations["en"] && landingTranslations["en"][key]) {
-                        el.textContent = landingTranslations["en"][key];
-                    }
-                });
-            }
         })();
-        function toggleLanding() {
-            const html = document.documentElement;
-            const isAr = html.lang === "ar";
-            const newLang = isAr ? "en" : "ar";
-
-            html.lang = newLang;
-            html.dir = newLang === "ar" ? "rtl" : "ltr";
-            localStorage.setItem("lang", newLang);
-            document.getElementById("langBtn").textContent = newLang === "ar" ? "English" : "العربية";
-
-            document.querySelectorAll("[data-lang]").forEach(el => {
-                const key = el.getAttribute("data-lang");
-                if (landingTranslations[newLang] && landingTranslations[newLang][key]) {
-                    el.textContent = landingTranslations[newLang][key];
-                }
-            });
-        }
     </script>
 </body>
 </html>

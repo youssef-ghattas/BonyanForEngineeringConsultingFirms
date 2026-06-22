@@ -443,3 +443,46 @@ body.dark-mode .sv-badge { filter: brightness(0.85) saturate(0.9); }
 body.dark-mode .sv-stat-card { background: #1A2940 !important; box-shadow: 0 4px 18px rgba(0,0,0,0.35) !important; }
 body.dark-mode .sv-stat-label { color: #8FA3BF !important; }
 body.dark-mode .sv-stat-value { color: #E8EDF5 !important; }
+
+/* Action buttons (employee dark-mode pattern) */
+body.dark-mode .btn-action {
+    background: #1a2840 !important;
+    color: #aab8d0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+    body.dark-mode .btn-action.view {
+        background: #1a2840 !important;
+        color: #aab8d0 !important;
+        border-color: rgba(255, 255, 255, 0.06) !important;
+    }
+
+        body.dark-mode .btn-action.view:hover {
+            background: #1a73e8 !important;
+            color: #fff !important;
+            border-color: transparent !important;
+        }
+
+    body.dark-mode .btn-action.edit {
+        background: #1a2840 !important;
+        color: #aab8d0 !important;
+        border-color: rgba(255, 255, 255, 0.06) !important;
+    }
+
+        body.dark-mode .btn-action.edit:hover {
+            background: var(--secondary, #C8922A) !important;
+            color: #fff !important;
+            border-color: transparent !important;
+        }
+
+    body.dark-mode .btn-action.delete {
+        background: #1a2840 !important;
+        color: #aab8d0 !important;
+        border-color: rgba(255, 255, 255, 0.06) !important;
+    }
+
+        body.dark-mode .btn-action.delete:hover {
+            background: #d93025 !important;
+            color: #fff !important;
+            border-color: transparent !important;
+        }

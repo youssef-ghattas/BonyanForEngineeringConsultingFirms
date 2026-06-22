@@ -109,7 +109,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			{
 				_context.Suppliers.Add(supplier);
 				await _context.SaveChangesAsync();
-				TempData["SuccessMessage"] = "تمت إضافة المورد بنجاح";
+				TempData["SuccessMessageKey"] = "msg_supplier_created";
 				return RedirectToAction(nameof(Index));
 			}
 			catch (Exception ex)
@@ -185,7 +185,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			try
 			{
 				await _context.SaveChangesAsync();
-				TempData["SuccessMessage"] = "تم تحديث بيانات المورد بنجاح";
+				TempData["SuccessMessageKey"] = "msg_supplier_updated";
 				return RedirectToAction(nameof(Index));
 			}
 			catch (Exception ex)
@@ -222,7 +222,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context.Suppliers.Remove(supplier);
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تم حذف المورد بنجاح";
+			TempData["SuccessMessageKey"] = "msg_supplier_deleted";
 			return RedirectToAction(nameof(Index));
 		}
 	}

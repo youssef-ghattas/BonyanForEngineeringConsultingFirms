@@ -130,7 +130,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             _context.Tasks.Add(task);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تمت إضافة المهمة بنجاح";
+            TempData["SuccessMessageKey"] = "msg_task_created";
             return RedirectToAction("Details", "Project", new { id = task.ProjectId });
         }
 
@@ -185,7 +185,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             _context.Tasks.Update(task);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تم تحديث المهمة بنجاح";
+            TempData["SuccessMessageKey"] = "msg_task_updated";
             return RedirectToAction("Details", "Project", new { id = task.ProjectId });
         }
 
@@ -203,7 +203,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             _context.Tasks.Remove(task);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تم حذف المهمة";
+            TempData["SuccessMessageKey"] = "msg_task_deleted";
             return RedirectToAction("Details", "Project", new { id = projectId });
         }
     }

@@ -28,7 +28,14 @@
     </div>
 }
 
-@if (TempData["Success"] != null)
+@if (TempData["SuccessMessageKey"] != null)
+{
+    <div class="admin-register-success">
+        <i class="fas fa-check-circle"></i>
+        <span data-lang="@TempData["SuccessMessageKey"]"></span>
+    </div>
+}
+else if (TempData["Success"] != null)
 {
     <div class="admin-register-success">
         <i class="fas fa-check-circle"></i>

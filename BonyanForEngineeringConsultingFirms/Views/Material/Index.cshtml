@@ -3,9 +3,22 @@
     ViewData["Title"] = "المواد";
     var role = Context.Session.GetString("Role");
     string search = ViewBag.Search ?? "";
+
+    var materialsList = Model?.ToList() ?? new List<Bonyan.DAL.Models.Material>();
+    int totalCount = materialsList.Count;
+    int withSuppliers = materialsList.Count(m => m.MaterialSuppliers.Any());
+    int totalSupplierLinks = materialsList.Sum(m => m.MaterialSuppliers.Count);
+    int totalInventoryEntries = materialsList.Sum(m => m.MaterialInventories.Count);
 }
 
 <link rel="stylesheet" href="~/css/material.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<style>
+    [dir="ltr"] .emp-table thead th { text-align: left; }
+    [dir="ltr"] .emp-table thead th i { margin-left: 0; margin-right: 5px; }
+</style>
 
 @* ── DEBUG LOG — remove this block after fixing the issue ── *@
 @if (TempData["DebugLog"] != null)
@@ -29,137 +42,196 @@
 }
 @* ── END DEBUG LOG ── *@
 
-<div class="page-header">
-    <div class="page-header-left">
-        <h2>
-            <i class="fas fa-boxes" style="color:var(--secondary)"></i>
-            <span data-lang="materials">المواد</span>
-        </h2>
-    </div>
-    @if (role == "Admin")
-    {
-        <a asp-action="Create" class="btn-bonyan-secondary">
-            <i class="fas fa-plus"></i> <span data-lang="add_material">إضافة مادة</span>
-        </a>
-    }
-</div>
+<div class="emp-page">
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert-success-msg">
-        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-    </div>
-}
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert-error-msg">
-        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
-    </div>
-}
-
-<!-- Search -->
-<div class="filter-bar">
-    <form method="get" asp-action="Index"
-          style="display:flex; align-items:center; gap:10px; width:100%; max-width:420px">
-        <div class="input-group" style="flex:1; position:relative;">
-            <i class="fas fa-search"
-               style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
-                      color:#aaa; z-index:1"></i>
-            <input type="text" name="search" value="@search"
-                   data-lang-placeholder="search_material" placeholder="بحث بالاسم أو الوصف..."
-                   class="form-control" style="padding-right:36px" />
+    <!-- ── Header ─────────────────────────────────── -->
+    <div class="emp-header">
+        <div class="emp-header-title">
+            <h2><i class="fas fa-boxes"></i> <span data-lang="materials">المواد</span></h2>
+            <p data-lang="materials_sub">إدارة المواد والمخزون والموردين</p>
         </div>
-        <button type="submit" class="btn-bonyan-secondary" style="padding:8px 16px">
-            <i class="fas fa-search"></i> <span data-lang="search">بحث</span>
-        </button>
-        @if (!string.IsNullOrEmpty(search))
+        @if (role == "Admin")
         {
-            <a asp-action="Index" class="btn-bonyan-primary" style="padding:8px 16px">
-                <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
-            </a>
+            <div class="emp-header-actions">
+                <a asp-action="Create" class="btn-emp btn-emp-primary">
+                    <i class="fas fa-plus"></i> <span data-lang="add_material">إضافة مادة</span>
+                </a>
+            </div>
         }
-    </form>
-</div>
+    </div>
 
-<div class="details-card">
-    @if (Model.Any())
-    {
-        <table class="mat-table">
-            <thead>
-                <tr>
-                    <th data-lang="material_name_label">اسم المادة</th>
-                    <th data-lang="unit">الوحدة</th>
-                    <th data-lang="unit_price">سعر الوحدة</th>
-                    <th data-lang="suppliers">الموردون</th>
-                    <th data-lang="warehouses">المخازن</th>
-                    <th data-lang="actions">إجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var m in Model)
-                {
-                    <tr>
-                        <td>
-                            <a asp-action="Details" asp-route-id="@m.MaterialID"
-                               style="color:var(--primary); font-weight:600; text-decoration:none">
-                                <i class="fas fa-cube"
-                                   style="font-size:0.65rem; color:var(--secondary); margin-left:6px"></i>
-                                @m.MaterialName
-                            </a>
-                            @if (!string.IsNullOrWhiteSpace(m.Description))
-                            {
-                                <div style="font-size:0.78rem; color:#888; margin-top:2px">
-                                    @m.Description
-                                </div>
-                            }
-                        </td>
-                        <td>
-                            <span class="unit-badge">@(m.Unit ?? "—")</span>
-                        </td>
-                        <td>
-                            @(m.UnitPrice.HasValue? m.UnitPrice.Value.ToString("N2") + " ج.م" : "—")
-                        </td>
-                        <td>
-                            <span class="count-badge">
-                                <i class="fas fa-truck"></i> @m.MaterialSuppliers.Count
-                            </span>
-                        </td>
-                        <td>
-                            <span class="count-badge inv">
-                                <i class="fas fa-warehouse"></i> @m.MaterialInventories.Count
-                            </span>
-                        </td>
-                        <td>
-                            <a asp-action="Details" asp-route-id="@m.MaterialID"
-                               class="btn-action view" title="عرض">
-                                <i class="fas fa-eye"></i>
-                            </a>
+    <!-- ── Alerts ─────────────────────────────────── -->
+    <partial name="_AlertMessages" />
+
+    <!-- ── KPI Strip ──────────────────────────────── -->
+    <div class="emp-kpi-grid">
+        <div class="emp-kpi navy">
+            <div class="emp-kpi-icon"><i class="fas fa-boxes"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="mat_stat_total">إجمالي المواد</div>
+                <div class="emp-kpi-value">@totalCount</div>
+            </div>
+        </div>
+        <div class="emp-kpi blue">
+            <div class="emp-kpi-icon"><i class="fas fa-truck"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="mat_stat_supplied">مواد مزوّدة</div>
+                <div class="emp-kpi-value">@withSuppliers</div>
+            </div>
+        </div>
+        <div class="emp-kpi gold">
+            <div class="emp-kpi-icon"><i class="fas fa-handshake"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="mat_stat_suppliers">الموردون</div>
+                <div class="emp-kpi-value">@totalSupplierLinks</div>
+            </div>
+        </div>
+        <div class="emp-kpi green">
+            <div class="emp-kpi-icon"><i class="fas fa-warehouse"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="mat_stat_inventory">المخزون</div>
+                <div class="emp-kpi-value">@totalInventoryEntries</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Filter Bar ──────────────────────────────── -->
+    <div class="filter-bar">
+        <form method="get" asp-action="Index" style="display:flex; align-items:center; gap:10px; flex:1">
+            <div class="filter-search" style="flex:1">
+                <i class="fas fa-search"></i>
+                <input type="text" name="search" value="@search"
+                       data-lang-placeholder="search_material"
+                       placeholder="بحث بالاسم أو الوصف..." autocomplete="off" />
+            </div>
+            <button type="submit" class="btn-emp btn-emp-primary" style="padding:9px 18px; border:none; border-radius:11px">
+                <i class="fas fa-search"></i> <span data-lang="search">بحث</span>
+            </button>
+            @if (!string.IsNullOrEmpty(search))
+            {
+                <a asp-action="Index" class="btn-emp btn-emp-outline" style="padding:9px 16px">
+                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+                </a>
+            }
+        </form>
+    </div>
+
+    <!-- ── Materials Table ────────────────────────── -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h5><i class="fas fa-boxes"></i> <span data-lang="materials">المواد</span></h5>
+            <span class="count-badge">@totalCount</span>
+        </div>
+
+        @if (materialsList.Any())
+        {
+            <div class="table-responsive">
+                <table class="emp-table mat-table" style="min-width:700px">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-cube"></i> <span data-lang="material_name_label">اسم المادة</span></th>
+                            <th><i class="fas fa-ruler"></i> <span data-lang="unit">الوحدة</span></th>
+                            <th><i class="fas fa-tag"></i> <span data-lang="unit_price">سعر الوحدة</span></th>
+                            <th><i class="fas fa-truck"></i> <span data-lang="suppliers">الموردون</span></th>
+                            <th><i class="fas fa-warehouse"></i> <span data-lang="warehouses">المخازن</span></th>
                             @if (role == "Admin")
                             {
-                                <a asp-action="Edit" asp-route-id="@m.MaterialID"
-                                   class="btn-action edit" title="تعديل">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form asp-action="Delete" asp-route-id="@m.MaterialID"
-                                      method="post" style="display:inline"
-                                      onsubmit="return confirm('هل أنت متأكد من حذف هذه المادة؟')">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-action delete" title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                <th><i class="fas fa-cog"></i> <span data-lang="actions">إجراءات</span></th>
                             }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div class="empty-state">
-            <i class="fas fa-boxes"></i>
-            <p>@(!string.IsNullOrEmpty(search) ? Html.Raw("<span data-lang=\"no_materials_match\">لا توجد مواد تطابق البحث</span>") : Html.Raw("<span data-lang=\"no_materials\">لا توجد مواد حتى الآن</span>"))</p>
-        </div>
-    }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in materialsList)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="emp-name-cell">
+                                        <div class="emp-avatar" style="background:linear-gradient(135deg,#C8922A,#DCAA4D); font-size:0.7rem">
+                                            <i class="fas fa-cube"></i>
+                                        </div>
+                                        <div class="emp-info">
+                                            <a asp-action="Details" asp-route-id="@m.MaterialID"
+                                               style="color:var(--primary); font-weight:700; text-decoration:none">
+                                                @m.MaterialName
+                                            </a>
+                                            @if (!string.IsNullOrWhiteSpace(m.Description))
+                                            {
+                                                <span style="font-size:0.78rem; color:#888">@m.Description</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="unit-badge" style="font-size:0.82rem; padding:4px 12px">@(m.Unit ?? "—")</span>
+                                </td>
+                                <td class="mi-amount" style="font-weight:700">
+                                    @if (m.UnitPrice.HasValue)
+                                    {
+                                        @m.UnitPrice.Value.ToString("N2")
+                                        <span style="font-size:0.72rem; color:#9aa2b5; font-weight:600" data-lang="currency_egp">ج.م</span>
+                                    }
+                                    else
+                                    {
+                                        @:—
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge-spec spec-civil">
+                                        <i class="fas fa-truck"></i> @m.MaterialSuppliers.Count
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge-spec spec-architectural">
+                                        <i class="fas fa-warehouse"></i> @m.MaterialInventories.Count
+                                    </span>
+                                </td>
+                                @if (role == "Admin")
+                                {
+                                    <td>
+                                        <div class="action-btns">
+                                            <a asp-action="Details" asp-route-id="@m.MaterialID"
+                                               class="btn-action view" data-tip-ar="عرض" data-tip-en="View" data-tip="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@m.MaterialID"
+                                               class="btn-action edit" data-tip-ar="تعديل" data-tip-en="Edit" data-tip="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form asp-action="Delete" asp-route-id="@m.MaterialID"
+                                                  method="post" style="display:inline"
+                                                  onsubmit="return confirm('Are you sure you want to delete this material?')">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn-action delete"
+                                                        data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-boxes"></i>
+                <p>@(!string.IsNullOrEmpty(search) ? Html.Raw("<span data-lang=\"no_materials_match\">لا توجد مواد تطابق البحث</span>") : Html.Raw("<span data-lang=\"no_materials\">لا توجد مواد حتى الآن</span>"))</p>
+            </div>
+        }
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('languageChanged', function (e) {
+            var lang = e.detail.lang;
+            document.querySelectorAll('[data-tip-ar]').forEach(function (el) {
+                el.setAttribute('data-tip', lang === 'ar' ? el.dataset.tipAr : el.dataset.tipEn);
+            });
+        });
+    </script>
+}

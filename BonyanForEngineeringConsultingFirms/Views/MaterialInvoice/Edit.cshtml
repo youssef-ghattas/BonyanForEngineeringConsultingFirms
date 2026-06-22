@@ -7,6 +7,7 @@
     var suppliers = ViewBag.Suppliers as List<Bonyan.DAL.Models.Supplier> ?? new();
 }
 
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/invoice.css" />
 <link rel="stylesheet" href="~/css/material.css" />
 
@@ -22,16 +23,17 @@
     </a>
 </div>
 
-<div class="upload-card">
-    <div class="upload-card-header">
+<div class="form-card">
+    <div class="form-card-header">
         <i class="fas fa-file-invoice"></i>
         <h4 data-lang="edit_invoice_data">تعديل بيانات الفاتورة</h4>
     </div>
-    <div class="upload-card-body">
+    <div class="form-card-body">
         <form asp-action="Edit" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="MaterialInvoiceID" />
 
+            <div class="form-section-title" data-lang="invoice_data">بيانات الفاتورة</div>
             <div class="form-grid-2">
                 <div class="form-group">
                     <label data-lang="material">المادة</label> <span style="color:red">*</span>
@@ -153,7 +155,7 @@
                 </div>
             </div>
 
-            <div class="upload-actions">
+            <div class="form-actions">
                 <a asp-action="Details" asp-route-id="@Model.MaterialInvoiceID" class="btn-bonyan-primary">
                     <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
                 </a>

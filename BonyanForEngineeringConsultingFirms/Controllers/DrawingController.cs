@@ -95,7 +95,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
             if (employeeId == null)
             {
-                TempData["ErrorMessage"] = "لم يتم العثور على بيانات المستخدم، يرجى تسجيل الدخول مجدداً.";
+                TempData["ErrorMessageKey"] = "err_user_not_found";
                 return RedirectToAction("Login", "Account");
             }
 
@@ -137,7 +137,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             _context.Drawings.Add(drawing);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تم رفع الصورة بنجاح";
+            TempData["SuccessMessageKey"] = "msg_drawing_uploaded";
             return RedirectToAction("Details", "Project", new { id = drawing.ProjectId });
         }
 
@@ -162,7 +162,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             _context.Drawings.Remove(drawing);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تم حذف الصورة بنجاح";
+            TempData["SuccessMessageKey"] = "msg_drawing_deleted";
             return RedirectToAction("Details", "Project", new { id = projectId });
         }
     }

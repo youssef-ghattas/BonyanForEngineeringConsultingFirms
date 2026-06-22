@@ -145,7 +145,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				_context.SaveChanges();
 			}
 
-			TempData["Success"] = "تم تغيير كلمة المرور بنجاح";
+			TempData["SuccessMessageKey"] = "msg_password_changed";
 			return RedirectToAction("Index", "Home");
 		}
 
@@ -200,7 +200,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context.AdminAccounts.Add(adminAccount);
 			_context.SaveChanges();
 
-			TempData["Success"] = "تم إنشاء حساب الأدمن بنجاح";
+			TempData["SuccessMessageKey"] = "msg_account_created";
 			return RedirectToAction("Index", "Employee");
 		}
 
@@ -348,7 +348,8 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 			_emailService.SendEmail(targetEmail, targetName, "كلمة المرور الجديدة - بنيان", userBody);
 
-			TempData["Success"] = $"تم إعادة تعيين كلمة مرور {targetName} وإرسالها إليه بنجاح";
+			TempData["SuccessMessageKey"] = "msg_password_reset_sent";
+			TempData["SuccessMessage"] = $"تم إعادة تعيين كلمة مرور {targetName} وإرسالها إليه بنجاح";
 			return RedirectToAction("Index", "Employee");
 		}
 		// ════════════════════════════════════════════════

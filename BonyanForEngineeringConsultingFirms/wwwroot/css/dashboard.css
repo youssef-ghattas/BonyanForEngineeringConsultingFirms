@@ -8,7 +8,7 @@ body.dark-mode {
     --db-card: #1a2535;
     --db-border: rgba(255,255,255,0.07);
     --db-muted: #8899aa;
-    --db-text: #e2e8f0;
+    --db-text: #ffffff;
     --db-hover: rgba(255,255,255,0.03);
     --db-sub: #0f1923;
 }
@@ -45,7 +45,7 @@ body:not(.dark-mode) {
 }
 
 body.dark-mode .db-page-title {
-    color: #e2e8f0;
+    color: #ffffff;
 }
 
 .db-page-title i {
@@ -120,7 +120,7 @@ body.dark-mode .db-page-title {
 }
 
 body.dark-mode .db-mc-number {
-    color: #e2e8f0;
+    color: #ffffff;
 }
 
 .db-mc-budget {
@@ -293,7 +293,7 @@ body.dark-mode .db-mc-badge.green {
 }
 
 body.dark-mode .db-panel-title {
-    color: #e2e8f0;
+    color: #ffffff;
 }
 
 .db-panel-title i {
@@ -409,7 +409,7 @@ body.dark-mode .db-table tbody tr:hover {
 }
 
 body.dark-mode .db-proj-link {
-    color: #90b8e8;
+    color: #ffffff;
 }
 
 .db-proj-link:hover {
@@ -441,7 +441,7 @@ body.dark-mode .db-proj-link {
 
 body.dark-mode .db-task-count {
     background: rgba(144,184,232,0.15);
-    color: #90b8e8;
+    color: #ffffff;
 }
 
 /* ════════════════════════════════════════════════════

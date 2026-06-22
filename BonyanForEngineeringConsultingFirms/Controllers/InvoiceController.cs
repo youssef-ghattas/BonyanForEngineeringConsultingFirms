@@ -94,7 +94,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context.Invoices.Add(invoice);
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تمت إضافة الفاتورة بنجاح";
+			TempData["SuccessMessageKey"] = "msg_invoice_created";
             return RedirectToAction("Details", "Project", new { id = invoice.ProjectId });
         }
 
@@ -132,7 +132,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			_context.Invoices.Update(invoice);
 			await _context.SaveChangesAsync();
 
-			TempData["SuccessMessage"] = "تم تحديث الفاتورة بنجاح";
+			TempData["SuccessMessageKey"] = "msg_invoice_updated";
             return RedirectToAction("Details", "Project", new { id = invoice.ProjectId });
         }
 
@@ -150,7 +150,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             _context.Invoices.Remove(invoice);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "تم حذف الفاتورة بنجاح";
+            TempData["SuccessMessageKey"] = "msg_invoice_deleted";
             return RedirectToAction("Details", "Project", new { id = projectId });
         }
 		private void CalculateInvoicePayment(Invoice invoice)
