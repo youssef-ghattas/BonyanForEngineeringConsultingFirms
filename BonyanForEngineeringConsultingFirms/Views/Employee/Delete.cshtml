@@ -21,6 +21,7 @@
 }
 
 <link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
 
 <div class="delete-card">
     <div class="delete-card-header">
@@ -52,7 +53,7 @@
             </p>
         </div>
 
-        <<form asp-action="Delete" method="post"
+        <form asp-action="Delete" method="post"
                style="display:flex; gap:12px; justify-content:center">
             @Html.AntiForgeryToken()
             <input type="hidden" name="id" value="@Model.EmployeeId" />

@@ -189,13 +189,10 @@
                             </a>
                             @if (role == "ProjectManager" || role == "Engineer")
                             {
-                                <form asp-action="Delete" asp-route-id="@dr.DrawingId" method="post"
-                                      style="display:inline" onsubmit="return drConfirmDelete()">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-action delete" data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                <a asp-action="Delete" asp-route-id="@dr.DrawingId"
+                                   class="btn-action delete" data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </a>
                             }
                         </div>
                     </div>
@@ -259,14 +256,11 @@
                                         </a>
                                         @if (role == "ProjectManager" || role == "Engineer")
                                         {
-                                            <form asp-action="Delete" asp-route-id="@dr.DrawingId" method="post"
-                                                  style="display:inline" onsubmit="return drConfirmDelete()">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn-action delete"
-                                                        data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            <a asp-action="Delete" asp-route-id="@dr.DrawingId"
+                                               class="btn-action delete"
+                                               data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
                                         }
                                     </div>
                                 </td>

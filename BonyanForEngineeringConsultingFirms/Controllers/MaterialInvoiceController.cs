@@ -207,10 +207,21 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			return RedirectToAction(nameof(Details), new { id = invoice.MaterialInvoiceID });
 		}
 
-		// ── DELETE POST ───────────────────────────────────────────
-		[HttpPost]
-		[ValidateAntiForgeryToken]
+		// ── DELETE GET ────────────────────────────────────────────
+		[HttpGet]
 		public async Task<IActionResult> Delete(int id)
+		{
+			if (!IsAdmin()) return RedirectToAction("Login", "Account");
+
+			var invoice = await _context.MaterialInvoices.FindAsync(id);
+			if (invoice == null) return NotFound();
+			return View(invoice);
+		}
+
+		// ── DELETE POST ───────────────────────────────────────────
+		[HttpPost, ActionName("Delete")]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
 			if (!IsAdmin()) return RedirectToAction("Login", "Account");
 

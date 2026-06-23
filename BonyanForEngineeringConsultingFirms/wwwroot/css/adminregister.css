@@ -49,7 +49,6 @@
 
     .pw-wrapper .toggle-password {
         position: absolute;
-        left: 14px;
         top: 50%;
         transform: translateY(-50%);
         color: #888;
@@ -58,6 +57,14 @@
         font-size: 0.95rem;
         transition: color 0.2s;
     }
+
+[dir="rtl"] .pw-wrapper .toggle-password {
+    left: 14px;
+}
+
+[dir="ltr"] .pw-wrapper .toggle-password {
+    right: 42px;
+}
 
         .pw-wrapper .toggle-password:hover {
             color: #1B3A6B;

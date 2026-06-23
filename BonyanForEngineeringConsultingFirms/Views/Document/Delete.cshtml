@@ -1,0 +1,42 @@
+@model Bonyan.DAL.Models.Document
+@{
+    ViewData["Title"] = "حذف مستند";
+}
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="delete-card">
+    <div class="delete-card-header">
+        <i class="fas fa-trash-alt"></i>
+        <h4 data-lang="delete_document">حذف مستند</h4>
+    </div>
+    <div class="delete-card-body">
+        <div class="delete-icon">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <h5 data-lang="delete_confirm">هل أنت متأكد من الحذف؟</h5>
+        <p data-lang="delete_warning">لا يمكن التراجع عن هذا الإجراء بعد تأكيده</p>
+
+        <div class="delete-info-box">
+            <p>
+                <strong data-lang="doc_title">العنوان: </strong>
+                @Model.DocTitle
+            </p>
+            <p>
+                <strong data-lang="category">التصنيف: </strong>
+                @(Model.Category ?? "—")
+            </p>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.DocId" />
+            <a asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjectId" class="btn-bonyan-primary">
+                <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+            </a>
+            <button type="submit" class="btn-bonyan-danger">
+                <i class="fas fa-trash"></i> <span data-lang="delete_confirm_btn">نعم، احذف</span>
+            </button>
+        </form>
+    </div>
+</div>

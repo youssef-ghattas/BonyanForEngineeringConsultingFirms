@@ -121,6 +121,114 @@
         margin-left: 6px;
     }
 
+/* ── Page header actions ──────────────────────────── */
+.page-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ── Material Invoice Details ────────────────────── */
+.mi-link {
+    color: var(--primary, #1B3A6B);
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+    .mi-link:hover {
+        color: var(--secondary, #C8922A);
+        text-decoration: underline;
+    }
+
+.mi-breakdown-table {
+    width: 100%;
+    max-width: 500px;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+    .mi-breakdown-table tbody tr {
+        border-bottom: 1px dashed #eef1f8;
+    }
+
+        .mi-breakdown-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+    .mi-breakdown-table td {
+        padding: 12px 0;
+        vertical-align: middle;
+    }
+
+.mi-bd-label {
+    font-weight: 700;
+    color: #4a5270;
+    font-size: 0.85rem;
+}
+
+    .mi-bd-label i {
+        color: var(--secondary, #C8922A);
+        width: 18px;
+        margin-left: 6px;
+        text-align: center;
+    }
+
+.mi-bd-value {
+    text-align: left;
+    font-weight: 700;
+    color: var(--text, #1F2937);
+    direction: ltr;
+}
+
+[dir="rtl"] .mi-bd-value {
+    text-align: left;
+}
+
+.mi-tax-label i {
+    color: #d97706;
+}
+
+.mi-tax-value {
+    color: #b45309;
+}
+
+.mi-discount-label i {
+    color: #059669;
+}
+
+.mi-discount-value {
+    color: #059669;
+}
+
+.mi-bd-net-row {
+    background: #f0faf4;
+}
+
+    .mi-bd-net-row td {
+        padding-top: 16px;
+        padding-bottom: 16px;
+        border-top: 2px solid #2d6a4f;
+    }
+
+    .mi-bd-net-row .mi-bd-label {
+        font-size: 1.05rem;
+        color: #1a3a2a;
+    }
+
+    .mi-bd-net-row .mi-bd-value {
+        font-size: 1.15rem;
+        color: #2d6a4f;
+    }
+
+.mi-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid #f0f2f8;
+}
+
 /* ══════════════════════════════════════════
    Material Invoice Page Styles
 ══════════════════════════════════════════ */
@@ -701,3 +809,56 @@ body.dark-mode .btn-modal-confirm-delete {
     body.dark-mode .btn-modal-confirm-delete:hover {
         background: #a11d1d !important;
     }
+
+/* ── Dark mode: Material Invoice Details ─────────── */
+body.dark-mode .mi-link {
+    color: #8ab4f8;
+}
+
+    body.dark-mode .mi-link:hover {
+        color: #fdd663;
+    }
+
+body.dark-mode .mi-breakdown-table tbody tr {
+    border-bottom-color: rgba(255,255,255,0.06);
+}
+
+body.dark-mode .mi-bd-label {
+    color: #8899b8;
+}
+
+    body.dark-mode .mi-bd-label i {
+        color: #d4a84b;
+    }
+
+body.dark-mode .mi-bd-value {
+    color: #dde6f8;
+}
+
+body.dark-mode .mi-tax-value {
+    color: #fbbf24;
+}
+
+body.dark-mode .mi-discount-value {
+    color: #34d399;
+}
+
+body.dark-mode .mi-bd-net-row {
+    background: rgba(45,106,79,0.12);
+}
+
+    body.dark-mode .mi-bd-net-row .mi-bd-label {
+        color: #a7f3d0;
+    }
+
+    body.dark-mode .mi-bd-net-row .mi-bd-value {
+        color: #6ee7b7;
+    }
+
+    body.dark-mode .mi-bd-net-row td {
+        border-top-color: #2d6a4f;
+    }
+
+body.dark-mode .mi-actions {
+    border-top-color: rgba(255,255,255,0.08);
+}

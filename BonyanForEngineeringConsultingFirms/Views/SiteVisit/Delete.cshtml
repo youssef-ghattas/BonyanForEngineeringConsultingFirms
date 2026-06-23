@@ -1,0 +1,57 @@
+@model Bonyan.DAL.Models.SiteVisit
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "حذف زيارة موقع";
+    string safetyAr = Model.SafetyStatus switch
+    {
+        SafetyStatus.Safe => "آمن",
+        SafetyStatus.NeedAttention => "يحتاج انتباه",
+        SafetyStatus.Critical => "حرج",
+        _ => Model.SafetyStatus.ToString()
+    };
+    string safetyEn = Model.SafetyStatus switch
+    {
+        SafetyStatus.Safe => "Safe",
+        SafetyStatus.NeedAttention => "Needs Attention",
+        SafetyStatus.Critical => "Critical",
+        _ => Model.SafetyStatus.ToString()
+    };
+}
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="delete-card">
+    <div class="delete-card-header">
+        <i class="fas fa-trash-alt"></i>
+        <h4 data-lang="delete_sitevisit">حذف زيارة موقع</h4>
+    </div>
+    <div class="delete-card-body">
+        <div class="delete-icon">
+            <i class="fas fa-hard-hat"></i>
+        </div>
+        <h5 data-lang="delete_confirm">هل أنت متأكد من الحذف؟</h5>
+        <p data-lang="delete_warning">لا يمكن التراجع عن هذا الإجراء بعد تأكيده</p>
+
+        <div class="delete-info-box">
+            <p>
+                <strong data-lang="visit_report">التقرير: </strong>
+                @(Model.Report?.Length > 80 ? Model.Report[..80] + "..." : Model.Report ?? "—")
+            </p>
+            <p>
+                <strong data-lang="safety_status">حالة السلامة: </strong>
+                <span data-ar="@safetyAr" data-en="@safetyEn">@safetyAr</span>
+            </p>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.VisitId" />
+            <a asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjId" class="btn-bonyan-primary">
+                <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+            </a>
+            <button type="submit" class="btn-bonyan-danger">
+                <i class="fas fa-trash"></i> <span data-lang="delete_confirm_btn">نعم، احذف</span>
+            </button>
+        </form>
+    </div>
+</div>

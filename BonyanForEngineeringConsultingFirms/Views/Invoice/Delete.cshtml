@@ -1,0 +1,61 @@
+@model Bonyan.DAL.Models.Invoice
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "حذف فاتورة";
+    string statusAr = Model.Invoice_Status switch
+    {
+        InvoiceStatus.Paid => "مدفوعة",
+        InvoiceStatus.Unpaid => "غير مدفوعة",
+        InvoiceStatus.PartiallyPaid => "مدفوعة جزئياً",
+        _ => Model.Invoice_Status.ToString()
+    };
+    string statusEn = Model.Invoice_Status switch
+    {
+        InvoiceStatus.Paid => "Paid",
+        InvoiceStatus.Unpaid => "Unpaid",
+        InvoiceStatus.PartiallyPaid => "Partially Paid",
+        _ => Model.Invoice_Status.ToString()
+    };
+}
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="delete-card">
+    <div class="delete-card-header">
+        <i class="fas fa-trash-alt"></i>
+        <h4 data-lang="delete_invoice">حذف فاتورة</h4>
+    </div>
+    <div class="delete-card-body">
+        <div class="delete-icon">
+            <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <h5 data-lang="delete_confirm">هل أنت متأكد من الحذف؟</h5>
+        <p data-lang="delete_warning">لا يمكن التراجع عن هذا الإجراء بعد تأكيده</p>
+
+        <div class="delete-info-box">
+            <p>
+                <strong data-lang="total_amount">المبلغ: </strong>
+                @(Model.Total_Amount.HasValue ? Model.Total_Amount.Value.ToString("N2") + " ج.م" : "—")
+            </p>
+            <p>
+                <strong data-lang="status">الحالة: </strong>
+                <span data-ar="@statusAr" data-en="@statusEn">@statusAr</span>
+            </p>
+            <p>
+                <strong data-lang="due_date">تاريخ الاستحقاق: </strong>
+                @(Model.Due_Date.HasValue ? Model.Due_Date.Value.ToString("yyyy-MM-dd") : "—")
+            </p>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Invoice_ID" />
+            <a asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjectId" class="btn-bonyan-primary">
+                <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+            </a>
+            <button type="submit" class="btn-bonyan-danger">
+                <i class="fas fa-trash"></i> <span data-lang="delete_confirm_btn">نعم، احذف</span>
+            </button>
+        </form>
+    </div>
+</div>

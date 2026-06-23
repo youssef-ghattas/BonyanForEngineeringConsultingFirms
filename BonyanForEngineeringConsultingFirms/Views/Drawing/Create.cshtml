@@ -5,12 +5,15 @@
     string projectName = ViewBag.ProjectName ?? "—";
 }
 <link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+<link rel="stylesheet" href="~/css/document.css" />
 <div class="page-header">
     <div class="page-header-left">
         <h2>
             <i class="fas fa-camera" style="color:var(--secondary)"></i>
             <span data-lang="upload_project_photo">رفع صورة للمشروع</span>
         </h2>
+        <p data-lang="photo_create_sub">رفع صورة للمشروع مع البيانات الوصفية</p>
     </div>
     <a asp-controller="Project" asp-action="Details"
        asp-route-id="@projectId" class="btn-bonyan-primary">

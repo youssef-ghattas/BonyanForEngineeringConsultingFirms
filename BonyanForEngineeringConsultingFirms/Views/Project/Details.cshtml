@@ -40,8 +40,11 @@
             <i class="fas fa-project-diagram" style="color:var(--secondary)"></i>
             <span data-lang="project_details">تفاصيل المشروع</span>
         </h2>
+        <p data-lang="project_details_sub">
+            @Model.ProjectName — @(Model.Client_Name ?? "")
+        </p>
     </div>
-    <div style="display:flex; gap:10px">
+    <div class="page-header-actions">
         @if (role == "Admin")
         {
             <a asp-action="Edit" asp-route-id="@Model.ProjectId"
@@ -118,7 +121,7 @@
     @if (role == "Admin")
     {
         <div class="assign-card">
-            <div class="assign-card-header">
+            <div class="assign-card-header gradient">
                 <i class="fas fa-users"></i>
                 <h5 data-lang="assign_employees">تعيين الموظفين</h5>
             </div>
@@ -264,64 +267,65 @@
 <div style="margin-top:28px">
 
     <!-- Tab Buttons -->
-    <div style="display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap">
+    <div class="details-tab-bar">
         <button onclick="showTab('tab-tasks')" id="btn-tab-tasks"
-                class="tab-btn active-tab">
+                class="details-tab-btn active">
             <i class="fas fa-tasks"></i>
             <span data-lang="tasks">المهام</span>
-            <span class="tab-count">@Model.Tasks.Count</span>
+            <span class="details-tab-count">@Model.Tasks.Count</span>
         </button>
         <button onclick="showTab('tab-docs')" id="btn-tab-docs"
-                class="tab-btn">
+                class="details-tab-btn">
             <i class="fas fa-file-alt"></i>
             <span data-lang="documents">المستندات</span>
-            <span class="tab-count">@Model.Documents.Count</span>
+            <span class="details-tab-count">@Model.Documents.Count</span>
         </button>
         <button onclick="showTab('tab-photos')" id="btn-tab-photos"
-                class="tab-btn">
+                class="details-tab-btn">
             <i class="fas fa-images"></i>
             <span data-lang="images">الصور</span>
-            <span class="tab-count">@Model.Drawings.Count</span>
+            <span class="details-tab-count">@Model.Drawings.Count</span>
         </button>
         <button onclick="showTab('tab-invoices')" id="btn-tab-invoices"
-                class="tab-btn">
+                class="details-tab-btn">
             <i class="fas fa-file-invoice-dollar"></i>
             <span data-lang="invoices">الفواتير</span>
-            <span class="tab-count">@projectInvoices.Count</span>
+            <span class="details-tab-count">@projectInvoices.Count</span>
         </button>
         <button onclick="showTab('tab-sitevisits')" id="btn-tab-sitevisits"
-                class="tab-btn">
+                class="details-tab-btn">
             <i class="fas fa-hard-hat"></i>
             <span data-lang="sitevisits">زيارات الموقع</span>
-            <span class="tab-count">@Model.SiteVisits.Count</span>
+            <span class="details-tab-count">@Model.SiteVisits.Count</span>
         </button>
     </div>
 
     <!-- ── TASKS TAB ────────────────────────────── -->
     <div id="tab-tasks" class="tab-panel">
         <div class="details-card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+            <div class="section-header">
                 <div class="details-section-title" style="margin-bottom:0" data-lang="tasks">مهام المشروع</div>
                 @if (role == "ProjectManager")
                 {
                     <a asp-controller="Task" asp-action="Create"
                        asp-route-projectId="@Model.ProjectId"
-                       class="btn-bonyan-secondary" style="font-size:0.82rem; padding:7px 14px">
+                       class="btn-bonyan-secondary btn-sm">
                         <i class="fas fa-plus"></i> <span data-lang="add_task">إضافة مهمة</span>
                     </a>
                 }
             </div>
             @if (Model.Tasks != null && Model.Tasks.Any())
             {
-                <table style="width:100%; border-collapse:collapse; font-size:0.88rem">
+                <div class="details-table-wrap">
+                <table class="details-table">
                     <thead>
-                        <tr style="background:#F8F9FC">
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="task_name">المهمة</span></th>
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="status">الحالة</span></th>
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="due_date">الموعد النهائي</span></th>
+                        <tr>
+                            <th><span data-lang="task_name">المهمة</span></th>
+                            <th><span data-lang="status">الحالة</span></th>
+                            <th><span data-lang="due_date">الموعد النهائي</span></th>
                             @if (role == "ProjectManager")
                             {
-                                <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="actions">إجراءات</span></th>
+                                <th><span data-lang="actions">إجراءات</span></th>
                             }
                         </tr>
                     </thead>
@@ -348,57 +352,54 @@
                             };
                             string tsBadge = t.Status switch
                             {
-                                TasksStatus.Pending => "badge-pending",
-                                TasksStatus.InProgress => "badge-inprogress",
-                                TasksStatus.UnderReview => "badge-review",
-                                TasksStatus.Completed => "badge-completed",
-                                TasksStatus.Cancelled => "badge-cancelled",
+                                TasksStatus.Pending => "task-badge-pending",
+                                TasksStatus.InProgress => "task-badge-inprogress",
+                                TasksStatus.UnderReview => "task-badge-review",
+                                TasksStatus.Completed => "task-badge-completed",
+                                TasksStatus.Cancelled => "task-badge-cancelled",
                                 _ => ""
                             };
-                            <tr style="border-bottom:1px solid #F4F6F9">
-                                <td style="padding:10px">
+                            <tr>
+                                <td>
                                     <a asp-controller="Task" asp-action="Details"
                                        asp-route-id="@t.TaskId"
-                                       style="color:var(--primary); font-weight:600; text-decoration:none">
+                                       class="task-link">
                                         @t.Task_Name
                                     </a>
                                 </td>
-                                <td style="padding:10px">
-                                    <span class="task-status-badge @tsBadge"
+                                <td>
+                                    <span class="task-badge @tsBadge"
                                           data-en="@tsEn" data-ar="@ts">@ts</span>
                                 </td>
-                                <td style="padding:10px">
+                                <td>
                                     @(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")
                                 </td>
                                 @if (role == "ProjectManager")
                                 {
-                                    <td style="padding:10px">
+                                    <td>
                                         <a asp-controller="Task" asp-action="Edit"
                                            asp-route-id="@t.TaskId"
-                                           class="btn-action edit" title="Edit">
+                                           class="details-action edit" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form asp-controller="Task" asp-action="Delete"
-                                              asp-route-id="@t.TaskId" method="post"
-                                              style="display:inline"
-                                              onsubmit="return confirm('Are you sure you want to delete this task?')">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn-action delete" title="Delete">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        <a asp-controller="Task" asp-action="Delete"
+                                           asp-route-id="@t.TaskId" class="details-action delete" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
                                     </td>
                                 }
                             </tr>
                         }
                     </tbody>
                 </table>
+                </div>
             }
             else
             {
-                <p style="color:#aaa; font-size:0.88rem" data-lang="no_tasks">
-                    لا توجد مهام لهذا المشروع
-                </p>
+                <div class="details-table-empty">
+                    <i class="fas fa-tasks"></i>
+                    <p data-lang="no_tasks">لا توجد مهام لهذا المشروع</p>
+                </div>
             }
         </div>
     </div>
@@ -406,43 +407,43 @@
     <!-- ── DOCUMENTS TAB ────────────────────────── -->
     <div id="tab-docs" class="tab-panel" style="display:none">
         <div class="details-card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+            <div class="section-header">
                 <div class="details-section-title" style="margin-bottom:0" data-lang="documents">مستندات المشروع</div>
                 @if (role == "Engineer" || role == "ProjectManager")
                 {
                     <a asp-controller="Document" asp-action="Create"
                        asp-route-projectId="@Model.ProjectId"
-                       class="btn-bonyan-secondary" style="font-size:0.82rem; padding:7px 14px">
+                       class="btn-bonyan-secondary btn-sm">
                         <i class="fas fa-upload"></i> <span data-lang="upload_document">رفع مستند</span>
                     </a>
                 }
             </div>
             @if (Model.Documents != null && Model.Documents.Any())
             {
-                <table style="width:100%; border-collapse:collapse; font-size:0.88rem">
+                <div class="details-table-wrap">
+                <table class="details-table">
                     <thead>
-                        <tr style="background:#F8F9FC">
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="doc_title">العنوان</span></th>
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="file_type">النوع</span></th>
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="upload_date">تاريخ الرفع</span></th>
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="uploaded_by">رُفع بواسطة</span></th>
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="download_photo">تحميل</span></th>
-
+                        <tr>
+                            <th><span data-lang="doc_title">العنوان</span></th>
+                            <th><span data-lang="file_type">النوع</span></th>
+                            <th><span data-lang="upload_date">تاريخ الرفع</span></th>
+                            <th><span data-lang="uploaded_by">رُفع بواسطة</span></th>
+                            <th><span data-lang="download_photo">تحميل</span></th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var d in Model.Documents)
                         {
-                            <tr style="border-bottom:1px solid #F4F6F9">
-                                <td style="padding:10px">@d.DocTitle</td>
-                                <td style="padding:10px">@(d.FileType ?? "—")</td>
-                                <td style="padding:10px">@d.UploadDate.ToString("yyyy-MM-dd")</td>
-                                <td style="padding:10px">
+                            <tr>
+                                <td>@d.DocTitle</td>
+                                <td>@(d.FileType ?? "—")</td>
+                                <td>@d.UploadDate.ToString("yyyy-MM-dd")</td>
+                                <td>
                                     @(d.Employee != null ? d.Employee.FirstName + " " + d.Employee.LastName : "—")
                                 </td>
-                                <td style="padding:10px">
+                                <td>
                                     <a href="@d.FilePath" target="_blank"
-                                       class="btn-action view" title="تحميل">
+                                       class="details-action view" title="تحميل">
                                         <i class="fas fa-download"></i>
                                     </a>
                                 </td>
@@ -450,10 +451,14 @@
                         }
                     </tbody>
                 </table>
+                </div>
             }
             else
             {
-                <p style="color:#aaa; font-size:0.88rem" data-lang="no_documents">لا توجد مستندات لهذا المشروع</p>
+                <div class="details-table-empty">
+                    <i class="fas fa-file-alt"></i>
+                    <p data-lang="no_documents">لا توجد مستندات لهذا المشروع</p>
+                </div>
             }
         </div>
     </div>
@@ -461,48 +466,44 @@
     <!-- ── PHOTOS TAB ────────────────────────────── -->
     <div id="tab-photos" class="tab-panel" style="display:none">
         <div class="details-card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+            <div class="section-header">
                 <div class="details-section-title" style="margin-bottom:0" data-lang="images">صور المشروع</div>
                 @if (role == "Engineer" || role == "ProjectManager")
                 {
                     <a asp-controller="Drawing" asp-action="Create"
                        asp-route-projectId="@Model.ProjectId"
-                       class="btn-bonyan-secondary" style="font-size:0.82rem; padding:7px 14px">
+                       class="btn-bonyan-secondary btn-sm">
                         <i class="fas fa-camera"></i> <span data-lang="upload_photo">رفع صورة</span>
                     </a>
                 }
             </div>
             @if (Model.Drawings != null && Model.Drawings.Any())
             {
-                <div style="display:grid;
-                                    grid-template-columns:repeat(auto-fill, minmax(160px,1fr));
-                                    gap:14px">
+                <div class="photo-grid">
                     @foreach (var dr in Model.Drawings)
                     {
-                        <div style="border:1px solid #eee; border-radius:8px;
-                                                    overflow:hidden; text-align:center;
-                                                    box-shadow:0 1px 4px rgba(0,0,0,0.07)">
+                        <div class="photo-card">
                             <img src="@dr.FilePath"
                                  alt="@dr.DrawingTitle"
-                                 style="width:100%; height:120px; object-fit:cover"
                                  onerror="this.src='/images/placeholder.png'" />
-                            <p style="padding:6px; font-size:0.78rem; color:#555; margin:0">
-                                @dr.DrawingTitle
-                            <p style="padding:0 6px 4px; font-size:0.72rem; color:#888; margin:0">
-                                <i class="fas fa-user" style="font-size:0.65rem"></i>
-                                @(dr.Employee != null ? dr.Employee.FirstName + " " + dr.Employee.LastName : "—")
-                            </p>
-                            </p>
-                            <p style="padding:0 6px 6px; font-size:0.72rem; color:#aaa; margin:0">
-                                @dr.UploadDate.ToString("yyyy-MM-dd")
-                            </p>
+                            <div class="photo-card-body">
+                                <p class="photo-card-title">@dr.DrawingTitle</p>
+                                <p class="photo-card-meta">
+                                    <i class="fas fa-user"></i>
+                                    @(dr.Employee != null ? dr.Employee.FirstName + " " + dr.Employee.LastName : "—")
+                                    &nbsp;·&nbsp; @dr.UploadDate.ToString("yyyy-MM-dd")
+                                </p>
+                            </div>
                         </div>
                     }
                 </div>
             }
             else
             {
-                <p style="color:#aaa; font-size:0.88rem" data-lang="no_photos">لا توجد صور لهذا المشروع</p>
+                <div class="details-table-empty">
+                    <i class="fas fa-images"></i>
+                    <p data-lang="no_photos">لا توجد صور لهذا المشروع</p>
+                </div>
             }
         </div>
     </div>
@@ -510,27 +511,28 @@
     <!-- ── INVOICES TAB ──────────────────────────── -->
     <div id="tab-invoices" class="tab-panel" style="display:none">
         <div class="details-card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+            <div class="section-header">
                 <div class="details-section-title" style="margin-bottom:0" data-lang="invoices">فواتير المشروع</div>
                 @if (role == "Engineer" || role == "ProjectManager")
                 {
                     <a asp-controller="Invoice" asp-action="Create"
                        asp-route-projectId="@Model.ProjectId"
-                       class="btn-bonyan-secondary" style="font-size:0.82rem; padding:7px 14px">
+                       class="btn-bonyan-secondary btn-sm">
                         <i class="fas fa-plus"></i> <span data-lang="add_invoice">إضافة فاتورة</span>
                     </a>
                 }
             </div>
             @if (projectInvoices.Any())
             {
-                <table style="width:100%; border-collapse:collapse; font-size:0.88rem">
+                <div class="details-table-wrap">
+                <table class="details-table">
                     <thead>
-                        <tr style="background:#F8F9FC">
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="invoice_number">رقم الفاتورة</span></th>
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="amount">المبلغ</span></th>
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="status">الحالة</span></th>
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="issue_date">تاريخ الإصدار</span></th>
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="due_date">تاريخ الاستحقاق</span></th>
+                        <tr>
+                            <th><span data-lang="invoice_number">رقم الفاتورة</span></th>
+                            <th><span data-lang="amount">المبلغ</span></th>
+                            <th><span data-lang="status">الحالة</span></th>
+                            <th><span data-lang="issue_date">تاريخ الإصدار</span></th>
+                            <th><span data-lang="due_date">تاريخ الاستحقاق</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -550,42 +552,46 @@
                                 InvoiceStatus.PartiallyPaid => "Partially Paid",
                                 _ => inv.Invoice_Status.ToString()
                             };
-                            string statusColor = inv.Invoice_Status switch
+                            string statusClass = inv.Invoice_Status switch
                             {
-                                InvoiceStatus.Paid => "#28a745",
-                                InvoiceStatus.Unpaid => "#dc3545",
-                                InvoiceStatus.PartiallyPaid => "#fd7e14",
-                                _ => "#666"
+                                InvoiceStatus.Paid => "invoice-status-paid",
+                                InvoiceStatus.Unpaid => "invoice-status-unpaid",
+                                InvoiceStatus.PartiallyPaid => "invoice-status-partial",
+                                _ => ""
                             };
-                            <tr style="border-bottom:1px solid #F4F6F9">
-                                <td style="padding:10px">#@inv.Invoice_ID</td>
-                                <td style="padding:10px">
+                            <tr>
+                                <td><strong>#@inv.Invoice_ID</strong></td>
+                                <td>
                                     @(inv.Total_Amount.HasValue
-                                                                ? inv.Total_Amount.Value.ToString("N0") + " ج.م"
-                                                                : "—")
-                                                                  </td>
-                                                                  <td style="padding:10px">
-                                                                      <span style="color:@statusColor; font-weight:600"
-                                                                            data-en="@invStatusEn" data-ar="@invStatus">
-                                                                          @invStatus
-                                                                      </span>
-                                                                  </td>
-                                                                  <td style="padding:10px">
-                                                                      @inv.Invoice_Date.ToString("yyyy-MM-dd")
-                                                                  </td>
-                                                                  <td style="padding:10px">
+                                        ? inv.Total_Amount.Value.ToString("N0") + " ج.م"
+                                        : "—")
+                                </td>
+                                <td>
+                                    <span class="invoice-status @statusClass"
+                                           data-en="@invStatusEn" data-ar="@invStatus">
+                                        @invStatus
+                                    </span>
+                                </td>
+                                <td>
+                                    @inv.Invoice_Date.ToString("yyyy-MM-dd")
+                                </td>
+                                <td>
                                     @(inv.Due_Date.HasValue
-                                                                ? inv.Due_Date.Value.ToString("yyyy-MM-dd")
-                                                                : "—")
-                        </td>
-                    </tr>
-                                        }
+                                        ? inv.Due_Date.Value.ToString("yyyy-MM-dd")
+                                        : "—")
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
+                </div>
             }
             else
             {
-                <p style="color:#aaa; font-size:0.88rem" data-lang="no_invoices">لا توجد فواتير لهذا المشروع</p>
+                <div class="details-table-empty">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <p data-lang="no_invoices">لا توجد فواتير لهذا المشروع</p>
+                </div>
             }
         </div>
     </div>
@@ -595,13 +601,13 @@
 <!-- ── SITE VISITS TAB ──────────────────────────── -->
 <div id="tab-sitevisits" class="tab-panel" style="display:none">
     <div class="details-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+        <div class="section-header">
             <div class="details-section-title" style="margin-bottom:0" data-lang="sitevisits">زيارات الموقع</div>
             @if (role == "Engineer" || role == "ProjectManager")
             {
                 <a asp-controller="SiteVisit" asp-action="Create"
                    asp-route-projectId="@Model.ProjectId"
-                   class="btn-bonyan-secondary" style="font-size:0.82rem; padding:7px 14px">
+                   class="btn-bonyan-secondary btn-sm">
                     <i class="fas fa-plus"></i> <span data-lang="add_sitevisit">إضافة زيارة موقع</span>
                 </a>
             }
@@ -609,18 +615,19 @@
 
         @if (Model.SiteVisits != null && Model.SiteVisits.Any())
         {
-            <table style="width:100%; border-collapse:collapse; font-size:0.88rem">
+            <div class="details-table-wrap">
+            <table class="details-table">
                 <thead>
-                    <tr style="background:#F8F9FC">
-                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="visit_date">تاريخ الزيارة</span></th>
-                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="performed_by">أُجريت بواسطة</span></th>
-                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="role">الدور</span></th>
-                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="safety_status">حالة السلامة</span></th>
-                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="report_summary">التقرير</span></th>
-                        <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="photo">الصورة</span></th>
+                    <tr>
+                        <th><span data-lang="visit_date">تاريخ الزيارة</span></th>
+                        <th><span data-lang="performed_by">أُجريت بواسطة</span></th>
+                        <th><span data-lang="role">الدور</span></th>
+                        <th><span data-lang="safety_status">حالة السلامة</span></th>
+                        <th><span data-lang="report_summary">التقرير</span></th>
+                        <th><span data-lang="photo">الصورة</span></th>
                         @if (role == "Admin")
                         {
-                            <th style="padding:10px; text-align:right; color:#666; font-size:0.78rem"><span data-lang="delete">حذف</span></th>
+                            <th><span data-lang="delete">حذف</span></th>
                         }
                     </tr>
                 </thead>
@@ -659,121 +666,72 @@
                         string empRoleAr = empIsPM ? "مدير مشروع" : "مهندس";
                         string empRoleEn = empIsPM ? "Project Manager" : "Engineer";
 
-                        <tr style="border-bottom:1px solid #F4F6F9">
-                            <td style="padding:10px">@sv.VisitDate.ToString("yyyy-MM-dd HH:mm")</td>
-                            <td style="padding:10px; font-weight:600">
-                                @(sv.Employee != null ? sv.Employee.FirstName + " " + sv.Employee.LastName : "—")
-                            </td>
-                            <td style="padding:10px">
-                                <span style="font-size:0.75rem; background:#EEF2FF; color:#3730a3;
-                                                             padding:2px 8px; border-radius:10px; font-weight:600"
+                        <tr>
+                            <td>@sv.VisitDate.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td><strong>@(sv.Employee != null ? sv.Employee.FirstName + " " + sv.Employee.LastName : "—")</strong></td>
+                            <td>
+                                <span class="role-badge"
                                       data-en="@empRoleEn" data-ar="@empRoleAr">
                                     @empRoleAr
                                 </span>
                             </td>
-                            <td style="padding:10px">
-                                <span style="background:@safetyBg; color:@safetyColor;
-                                                             padding:3px 10px; border-radius:12px;
-                                                             font-size:0.75rem; font-weight:700"
+                            <td>
+                                <span class="safety-badge" style="background:@safetyBg; color:@safetyColor"
                                       data-en="@safetyEn" data-ar="@safetyAr">
                                     @safetyAr
                                 </span>
                             </td>
-                            <td style="padding:10px; max-width:220px; white-space:nowrap;
-                                                       overflow:hidden; text-overflow:ellipsis" title="@sv.Report">
+                            <td class="report-cell" title="@sv.Report">
                                 @(sv.Report?.Length > 60 ? sv.Report.Substring(0, 60) + "..." : sv.Report ?? "—")
                             </td>
-                            <td style="padding:10px">
+                            <td>
                                 @if (!string.IsNullOrEmpty(sv.VisitPhotos))
                                 {
                                     <a href="@sv.VisitPhotos" target="_blank">
                                         <img src="@sv.VisitPhotos" alt="صورة الزيارة"
-                                             style="width:48px; height:48px; object-fit:cover;
-                                                                            border-radius:6px; border:1px solid #eee"
+                                             class="visit-thumb"
                                              onerror="this.style.display='none'" />
                                     </a>
                                 }
                                 else
                                 {
-                                    <span style="color:#aaa; font-size:0.8rem" data-lang="no_data">لا توجد</span>
+                                    <span class="no-data-text" data-lang="no_data">لا توجد</span>
                                 }
                             </td>
                             @if (role == "Admin")
                             {
-                                <td style="padding:10px">
-                                    <form asp-controller="SiteVisit" asp-action="Delete"
-                                          asp-route-id="@sv.VisitId" method="post"
-                                          style="display:inline"
-                                          onsubmit="return confirm('هل أنت متأكد من حذف هذه الزيارة؟')">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn-action delete" title="حذف">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                <td>
+                                    <a asp-controller="SiteVisit" asp-action="Delete"
+                                       asp-route-id="@sv.VisitId" class="details-action delete" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
                                 </td>
                             }
                         </tr>
                     }
                 </tbody>
             </table>
+            </div>
         }
         else
         {
-            <div style="text-align:center; padding:40px; color:#aaa">
-                <i class="fas fa-hard-hat" style="font-size:3rem; margin-bottom:14px; display:block"></i>
+            <div class="details-table-empty">
+                <i class="fas fa-hard-hat"></i>
                 <p data-lang="no_sitevisits">لا توجد زيارات موقع لهذا المشروع حتى الآن</p>
             </div>
         }
     </div>
 </div>
 
-<!-- Tab Styles -->
-<style>
-    .tab-btn {
-        padding: 9px 18px;
-        border: 1px solid #ddd;
-        border-radius: 20px;
-        background: #fff;
-        cursor: pointer;
-        font-size: 0.88rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        transition: all 0.2s;
-        color: #555;
-    }
-
-        .tab-btn:hover {
-            background: #f5f5f5;
-        }
-
-    .active-tab {
-        background: var(--secondary, #8B5E3C) !important;
-        color: #fff !important;
-        border-color: var(--secondary, #8B5E3C) !important;
-    }
-
-    .tab-count {
-        background: rgba(0,0,0,0.12);
-        border-radius: 10px;
-        padding: 1px 8px;
-        font-size: 0.76rem;
-    }
-
-    .active-tab .tab-count {
-        background: rgba(255,255,255,0.3);
-    }
-</style>
-
 @section Scripts {
     <script>
         function showTab(tabId) {
             document.querySelectorAll('.tab-panel')
                     .forEach(p => p.style.display = 'none');
-            document.querySelectorAll('.tab-btn')
-                    .forEach(b => b.classList.remove('active-tab'));
+            document.querySelectorAll('.details-tab-btn')
+                    .forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).style.display = 'block';
-            document.getElementById('btn-' + tabId).classList.add('active-tab');
+            document.getElementById('btn-' + tabId).classList.add('active');
         }
     </script>
 }

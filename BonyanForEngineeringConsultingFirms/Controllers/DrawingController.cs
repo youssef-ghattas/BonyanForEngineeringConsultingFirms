@@ -63,7 +63,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             // Distinct, non-empty categories for the filter dropdown
             ViewBag.Categories = drawings
                 .Select(d => d.Category)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Where(c => !string.IsNullOrWhiteSpace(c) && c.Trim() != "موقع")
                 .Select(c => c!.Trim())
                 .Distinct()
                 .OrderBy(c => c)
@@ -141,9 +141,21 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             return RedirectToAction("Details", "Project", new { id = drawing.ProjectId });
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // ── DELETE GET ────────────────────────────────────────────
+        [HttpGet]
         public async Task<IActionResult> Delete(int id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role == null) return RedirectToAction("Login", "Account");
+
+            var drawing = await _context.Drawings.FindAsync(id);
+            if (drawing == null) return NotFound();
+            return View(drawing);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var role = HttpContext.Session.GetString("Role");
             if (role == null) return RedirectToAction("Login", "Account");

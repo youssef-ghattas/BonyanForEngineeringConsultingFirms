@@ -20,6 +20,7 @@
         .ToDictionary(g => g.Key, g => g.Count());
 }
 
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/document.css" />
 
 <div class="doc-page">
@@ -38,9 +39,9 @@
             {
                 <a asp-controller="Document" asp-action="Create"
                    asp-route-projectId="@selectedProjectId"
-                   class="btn-bonyan-secondary">
+                   class="btn-emp btn-emp-primary">
                     <i class="fas fa-upload"></i>
-                    <span data-lang="upload_doc">رفع مستند</span>
+                    <span data-lang="upload_doc">إضافة مستند</span>
                 </a>
             }
         </div>
@@ -318,18 +319,14 @@
                                            data-tip-en="Download">
                                             <i class="fas fa-download"></i>
                                         </a>
-                                        @if (role == "ProjectManager" || role == "Engineer")
+            @if (selectedProjectId.HasValue && (role == "ProjectManager" || role == "Engineer"))
                                         {
-                                            <form asp-action="Delete" asp-route-id="@doc.DocId"
-                                                  method="post" style="display:inline"
-                                                  onsubmit="return confirm('هل أنت متأكد من حذف هذا المستند؟')">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn-action delete"
-                                                        data-tip="حذف"
-                                                        data-tip-en="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            <a asp-action="Delete" asp-route-id="@doc.DocId"
+                                               class="btn-action delete"
+                                               data-tip="حذف"
+                                               data-tip-en="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
                                         }
                                     </div>
                                 </td>

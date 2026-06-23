@@ -14,6 +14,7 @@
     decimal paidAmt = totalAmt - unpaidAmt;
 }
 
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/material.css" />
 <link rel="stylesheet" href="~/css/materialinvoice.css" />
 
@@ -32,8 +33,8 @@
             <i class="fas fa-file-invoice-dollar"></i>
             <span data-lang="material_invoices">فواتير المواد</span>
         </h2>
-        <a asp-action="Create" class="btn-bonyan-secondary">
-            <i class="fas fa-plus"></i> <span data-lang="new_invoice">فاتورة جديدة</span>
+        <a asp-action="Create" class="btn-emp btn-emp-primary">
+            <i class="fas fa-plus"></i> <span data-lang="add_invoice">إضافة فاتورة</span>
         </a>
     </div>
 
@@ -270,14 +271,10 @@
                                            class="mi-action edit" title="تعديل">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form asp-action="Delete" asp-route-id="@inv.MaterialInvoiceID"
-                                              method="post" style="display:inline"
-                                              onsubmit="return confirm('هل أنت متأكد من حذف هذه الفاتورة؟')">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="mi-action delete" title="حذف">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        <a asp-action="Delete" asp-route-id="@inv.MaterialInvoiceID"
+                                           class="mi-action delete" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

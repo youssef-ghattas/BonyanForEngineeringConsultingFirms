@@ -17,6 +17,7 @@
                         && t.Status != TasksStatus.Completed && t.Status != TasksStatus.Cancelled);
 }
 
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/task.css" />
 
 <div class="task-page">
@@ -57,7 +58,7 @@
             @if (role == "ProjectManager" && projectId.HasValue)
             {
                 <a asp-action="Create" asp-route-projectId="@projectId"
-                   class="btn-bonyan-secondary">
+                   class="btn-emp btn-emp-primary">
                     <i class="fas fa-plus"></i>
                     <span data-lang="add_task">إضافة مهمة</span>
                 </a>
@@ -345,16 +346,12 @@
                                                data-tip-en="Edit">
                                                 <i class="fas fa-pen"></i>
                                             </a>
-                                            <form asp-action="Delete" asp-route-id="@t.TaskId"
-                                                  method="post" style="display:inline"
-                                                  onsubmit="return confirm('هل أنت متأكد من حذف هذه المهمة؟')">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn-action delete"
-                                                        data-tip="حذف"
-                                                        data-tip-en="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            <a asp-action="Delete" asp-route-id="@t.TaskId"
+                                               class="btn-action delete"
+                                               data-tip="حذف"
+                                               data-tip-en="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
                                         </div>
                                     </td>
                                 }

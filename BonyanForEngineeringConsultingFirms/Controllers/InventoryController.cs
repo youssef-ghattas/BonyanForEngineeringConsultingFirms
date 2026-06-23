@@ -136,10 +136,21 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			return RedirectToAction(nameof(Index));
 		}
 
-		// ── DELETE POST ───────────────────────────────────────────
-		[HttpPost]
-		[ValidateAntiForgeryToken]
+		// ── DELETE GET ────────────────────────────────────────────
+		[HttpGet]
 		public async Task<IActionResult> Delete(int id)
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
+
+			var inventory = await _context.Inventories.FindAsync(id);
+			if (inventory == null) return NotFound();
+			return View(inventory);
+		}
+
+		// ── DELETE POST ───────────────────────────────────────────
+		[HttpPost, ActionName("Delete")]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
 			if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
