@@ -117,11 +117,15 @@ body {
 .form-control {
     border: 1.5px solid #E0E0E0;
     border-radius: 10px;
-    padding: 12px 42px 12px 14px;
+    padding: 12px 42px;
     font-family: 'Cairo', sans-serif;
     font-size: 0.92rem;
     transition: all 0.3s;
     width: 100%;
+}
+
+[dir="rtl"] .form-control {
+    direction: rtl;
 }
 
     .form-control:focus {
@@ -204,7 +208,6 @@ body {
 /* ── Show/Hide Password Toggle ─────────────────── */
 .toggle-password {
     position: absolute;
-    left: 14px;
     top: 50%;
     transform: translateY(-50%);
     color: #888;
@@ -215,6 +218,14 @@ body {
     padding: 0;
     font-size: 0.95rem;
     transition: color 0.2s;
+}
+
+[dir="rtl"] .toggle-password {
+    left: 14px;
+}
+
+[dir="ltr"] .toggle-password {
+    right: 42px;
 }
 
     .toggle-password:hover {

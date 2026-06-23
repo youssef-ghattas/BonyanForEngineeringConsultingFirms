@@ -120,9 +120,21 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             return RedirectToAction("Details", "Project", new { id = document.ProjectId });
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // ── DELETE GET ────────────────────────────────────────────
+        [HttpGet]
         public async Task<IActionResult> Delete(int id)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role == null) return RedirectToAction("Login", "Account");
+
+            var doc = await _context.Documents.FindAsync(id);
+            if (doc == null) return NotFound();
+            return View(doc);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var role = HttpContext.Session.GetString("Role");
             if (role == null) return RedirectToAction("Login", "Account");

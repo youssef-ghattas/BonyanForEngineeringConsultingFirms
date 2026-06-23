@@ -6,12 +6,15 @@
     string projectName = ViewBag.ProjectName ?? "—";
 }
 <link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+<link rel="stylesheet" href="~/css/invoice.css" />
 <div class="page-header">
     <div class="page-header-left">
         <h2>
             <i class="fas fa-file-invoice-dollar" style="color:var(--secondary)"></i>
             <span data-lang="add_invoice_new">إضافة فاتورة جديدة</span>
         </h2>
+        <p data-lang="invoice_create_sub">إضافة فاتورة جديدة للمشروع مع تفاصيل المبلغ والضريبة</p>
     </div>
     <a asp-controller="Project" asp-action="Details"
        asp-route-id="@projectId" class="btn-bonyan-primary">

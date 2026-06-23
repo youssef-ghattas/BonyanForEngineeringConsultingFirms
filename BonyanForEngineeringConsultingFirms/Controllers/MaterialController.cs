@@ -306,6 +306,17 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			return RedirectToAction(nameof(Index));
 		}
 
+		// ── DELETE GET ────────────────────────────────────────────
+		[HttpGet]
+		public async Task<IActionResult> Delete(int id)
+		{
+			if (!IsAdmin()) return RedirectToAction("Index", "Home");
+
+			var material = await _context.Materials.FindAsync(id);
+			if (material == null) return NotFound();
+			return View(material);
+		}
+
 		// ── DELETE POST ───────────────────────────────────────────
 		[HttpPost, ActionName("Delete")]
 		[ValidateAntiForgeryToken]

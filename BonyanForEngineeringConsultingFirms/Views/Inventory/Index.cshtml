@@ -133,15 +133,11 @@
                                                class="btn-action edit" data-tip-ar="تعديل" data-tip-en="Edit" data-tip="تعديل">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <form asp-action="Delete" asp-route-id="@inv.InventoryID" method="post"
-                                                  style="display:inline"
-                                                  onsubmit="return confirm('Are you sure you want to delete this warehouse?')">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn-action delete"
-                                                        data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            <a asp-action="Delete" asp-route-id="@inv.InventoryID"
+                                               class="btn-action delete"
+                                               data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
                                         </div>
                                     </td>
                                 }

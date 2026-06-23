@@ -5,12 +5,15 @@
     string projectName = ViewBag.ProjectName ?? "—";
 }
 <link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+<link rel="stylesheet" href="~/css/document.css" />
 <div class="page-header">
     <div class="page-header-left">
         <h2>
             <i class="fas fa-file-upload" style="color:var(--secondary)"></i>
             <span data-lang="upload_new_document">رفع مستند جديد</span>
         </h2>
+        <p data-lang="doc_create_sub">رفع وإرفاق مستندات المشروع مع البيانات الوصفية</p>
     </div>
     <a asp-controller="Project" asp-action="Details"
        asp-route-id="@projectId" class="btn-bonyan-primary">

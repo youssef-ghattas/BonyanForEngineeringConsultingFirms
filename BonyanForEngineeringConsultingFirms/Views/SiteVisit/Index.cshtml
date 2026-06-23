@@ -213,15 +213,11 @@
                                 {
                                     <td>
                                         <div class="action-btns">
-                                            <form asp-action="Delete" asp-route-id="@sv.VisitId"
-                                                  method="post" style="display:inline"
-                                                  onsubmit="return svConfirmDelete()">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn-action delete"
-                                                        data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            <a asp-action="Delete" asp-route-id="@sv.VisitId"
+                                               class="btn-action delete"
+                                               data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
                                         </div>
                                     </td>
                                 }

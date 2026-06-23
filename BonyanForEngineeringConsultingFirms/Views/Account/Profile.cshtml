@@ -192,23 +192,54 @@
     else
     {
         <!-- ── Admin Info ───────────────────────────── -->
-        <div class="profile-section">
-            <h2 class="profile-section-title">
-                <i class="fas fa-shield-alt me-2"></i>
-                <span data-lang="admin_info">معلومات المدير</span>
-            </h2>
-            <div class="profile-info-grid">
-                <div class="info-card">
-                    <div class="info-label"><i class="fas fa-envelope me-2"></i><span data-lang="email">البريد الإلكتروني</span></div>
-                    <div class="info-value">@Model.Email</div>
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <div class="admin-card-icon">
+                    <i class="fas fa-shield-alt"></i>
                 </div>
-                <div class="info-card">
-                    <div class="info-label"><i class="fas fa-phone me-2"></i><span data-lang="phone_number">رقم الهاتف</span></div>
-                    <div class="info-value">@(string.IsNullOrEmpty(Model.PhoneNum) ? "—" : Model.PhoneNum)</div>
+                <div class="admin-card-header-text">
+                    <h3 data-lang="admin_info">معلومات المدير</h3>
+                    <p data-lang="full_admin_permission">مدير النظام الكامل — صلاحية غير محدودة</p>
                 </div>
-                <div class="info-card">
-                    <div class="info-label"><i class="fas fa-user-shield me-2"></i><span data-lang="permission">الصلاحية</span></div>
-                    <div class="info-value" data-lang="full_admin_permission">مدير النظام الكامل</div>
+            </div>
+            <div class="admin-card-body">
+                <div class="admin-info-grid">
+                    <div class="admin-info-item">
+                        <div class="admin-info-icon bg-email">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="admin-info-content">
+                            <span class="admin-info-label" data-lang="email">البريد الإلكتروني</span>
+                            <span class="admin-info-value">@Model.Email</span>
+                        </div>
+                    </div>
+                    <div class="admin-info-item">
+                        <div class="admin-info-icon bg-phone">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="admin-info-content">
+                            <span class="admin-info-label" data-lang="phone_number">رقم الهاتف</span>
+                            <span class="admin-info-value">@(string.IsNullOrEmpty(Model.PhoneNum) ? "—" : Model.PhoneNum)</span>
+                        </div>
+                    </div>
+                    <div class="admin-info-item">
+                        <div class="admin-info-icon bg-shield">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="admin-info-content">
+                            <span class="admin-info-label" data-lang="permission">الصلاحية</span>
+                            <span class="admin-info-value" data-lang="full_admin_permission">مدير النظام الكامل</span>
+                        </div>
+                    </div>
+                    <div class="admin-info-item">
+                        <div class="admin-info-icon bg-calendar">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="admin-info-content">
+                            <span class="admin-info-label" data-lang="account_created">تاريخ الإنشاء</span>
+                            <span class="admin-info-value">—</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

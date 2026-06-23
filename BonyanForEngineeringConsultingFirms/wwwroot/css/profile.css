@@ -129,6 +129,174 @@
     color: var(--bonyan-text, #111827);
 }
 
+/* ── Admin Card ───────────────────────────────────── */
+.admin-card {
+    background: var(--bonyan-card, #fff);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+}
+
+.admin-card-header {
+    background: linear-gradient(135deg, #1B3A6B, #2a5298);
+    padding: 28px 30px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+    .admin-card-header::after {
+        content: '';
+        position: absolute;
+        top: -40px;
+        left: -40px;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: rgba(200, 146, 42, 0.12);
+    }
+
+.admin-card-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    background: rgba(200, 146, 42, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--secondary, #C8922A);
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.admin-card-header-text {
+    position: relative;
+    z-index: 1;
+}
+
+    .admin-card-header-text h3 {
+        color: #fff;
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin: 0 0 4px;
+    }
+
+    .admin-card-header-text p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+.admin-card-body {
+    padding: 28px 30px;
+}
+
+.admin-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.admin-info-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bonyan-bg, #f9fafb);
+    border-radius: 12px;
+    padding: 16px 18px;
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+    .admin-info-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(30, 77, 183, 0.1);
+    }
+
+.admin-info-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.bg-email {
+    background: linear-gradient(135deg, #1e4db7, #3b82f6);
+}
+
+.bg-phone {
+    background: linear-gradient(135deg, #065f46, #10b981);
+}
+
+.bg-shield {
+    background: linear-gradient(135deg, #92400e, #f59e0b);
+}
+
+.bg-calendar {
+    background: linear-gradient(135deg, #4c1d95, #8b5cf6);
+}
+
+.admin-info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.admin-info-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--bonyan-muted, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.admin-info-value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--bonyan-text, #111827);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Dark mode: Admin Card ────────────────────────── */
+body.dark-mode .admin-card {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+body.dark-mode .admin-card-header {
+    background: linear-gradient(135deg, #0f1a2e, #152238);
+}
+
+body.dark-mode .admin-info-item {
+    background: #111827;
+    border-color: #374151;
+}
+
+    body.dark-mode .admin-info-item:hover {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+
+body.dark-mode .admin-info-label {
+    color: #9ca3af;
+}
+
+body.dark-mode .admin-info-value {
+    color: #f9fafb;
+}
+
 /* ── Task stat cards ──────────────────────────────── */
 .task-stats-grid {
     display: grid;
@@ -398,6 +566,12 @@ body.dark-mode .btn-profile-action {
 }
 
 /* ── Responsive ───────────────────────────────────── */
+@media (max-width: 768px) {
+    .admin-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 640px) {
     .profile-header-card {
         flex-direction: column;
@@ -415,5 +589,13 @@ body.dark-mode .btn-profile-action {
 
     .profile-actions-row {
         padding: 1rem;
+    }
+
+    .admin-card-body {
+        padding: 18px;
+    }
+
+    .admin-card-header {
+        padding: 20px;
     }
 }

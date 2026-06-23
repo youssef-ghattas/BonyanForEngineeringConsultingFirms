@@ -16,6 +16,7 @@
     decimal totalRemaining = invoicesList.Sum(i => i.RemainingAmount ?? 0);
 }
 
+<link rel="stylesheet" href="~/css/employee.css" />
 <link rel="stylesheet" href="~/css/material.css" />
 <link rel="stylesheet" href="~/css/materialinvoice.css" />
 
@@ -43,10 +44,10 @@
             <i class="fas fa-file-invoice-dollar"></i>
             <span data-lang="invoices">الفواتير</span>
         </h2>
-        @if (selectedProjectId.HasValue)
+        @if (selectedProjectId.HasValue && role != "Admin")
         {
-            <a asp-action="Create" asp-route-projectId="@selectedProjectId" class="btn-bonyan-secondary">
-                <i class="fas fa-plus"></i> <span data-lang="new_invoice">فاتورة جديدة</span>
+            <a asp-action="Create" asp-route-projectId="@selectedProjectId" class="btn-emp btn-emp-primary">
+                <i class="fas fa-plus"></i> <span data-lang="add_invoice">إضافة فاتورة</span>
             </a>
         }
     </div>
@@ -108,7 +109,7 @@
                         }
                     }
                 </select>
-                @if (selectedProjectId.HasValue)
+        @if (selectedProjectId.HasValue && role != "Admin")
                 {
                     <a asp-action="Index" asp-route-projectId="" class="btn-bonyan-primary"
                        style="height:42px; padding:0 16px; display:inline-flex; align-items:center; gap:6px">
@@ -232,14 +233,10 @@
                                                class="mi-action edit" title="تعديل">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <form asp-action="Delete" asp-route-id="@inv.Invoice_ID"
-                                                  method="post" style="display:inline"
-                                                  onsubmit="return confirm('Are you sure you want to delete this invoice?')">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="mi-action delete" title="حذف">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            <a asp-action="Delete" asp-route-id="@inv.Invoice_ID"
+                                               class="mi-action delete" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
                                         }
                                     </div>
                                 </td>
