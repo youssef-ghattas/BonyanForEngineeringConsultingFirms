@@ -30,16 +30,18 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		//  LOGIN
 		// ════════════════════════════════════════════════
 
-		public IActionResult Login()
+		public IActionResult Login(string returnUrl = null)
 		{
 			if (HttpContext.Session.GetString("Email") != null)
 				return RedirectToAction("Index", "Home");
+
+			ViewBag.ReturnUrl = returnUrl;
 			return View();
 		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public IActionResult Login(string email, string password)
+		public IActionResult Login(string email, string password, string returnUrl = null)
 		{
 			var hashedPassword = PasswordHelper.HashMD5(password);
 
@@ -81,6 +83,9 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				// First login → force password change
 				if (admin.IsFirstLogin)
 					return RedirectToAction("ChangePassword");
+
+				if (!string.IsNullOrEmpty(returnUrl))
+					return LocalRedirect(returnUrl);
 
 				return RedirectToAction("Index", "Home");
 			}
@@ -283,7 +288,10 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		{
 			// Only logged-in admins can access this
 			if (HttpContext.Session.GetString("Role") != "Admin")
-				return RedirectToAction("Login");
+			{
+				var returnUrl = Url.Action("ResetPassword", "Account", new { email });
+				return RedirectToAction("Login", new { returnUrl });
+			}
 
 			if (string.IsNullOrEmpty(email))
 				return RedirectToAction("Index", "Employee");
