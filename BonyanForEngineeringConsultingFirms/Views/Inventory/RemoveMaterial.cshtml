@@ -1,0 +1,54 @@
+@model Bonyan.DAL.Models.MaterialInventory
+@{
+    ViewData["Title"] = "إزالة مادة من المخزن";
+}
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="delete-card">
+    <div class="delete-card-header" style="background:linear-gradient(135deg,#e65100,#ff8f00)">
+        <i class="fas fa-minus-circle"></i>
+        <h4 data-lang="remove_material_title">إزالة مادة من المخزن</h4>
+    </div>
+    <div class="delete-card-body">
+        <div class="delete-icon">
+            <i class="fas fa-box-open"></i>
+        </div>
+        <h5 data-lang="remove_material_confirm">هل أنت متأكد من إزالة هذه المادة من المخزن؟</h5>
+        <p data-lang="delete_warning">لا يمكن التراجع عن هذا الإجراء بعد تأكيده</p>
+
+        <div class="delete-info-box">
+            <p>
+                <strong data-lang="material">المادة: </strong>
+                @(Model.Material?.MaterialName ?? "—")
+            </p>
+            <p>
+                <strong data-lang="warehouse">المخزن: </strong>
+                @(Model.Inventory?.InventoryName ?? "—")
+            </p>
+            <p>
+                <strong data-lang="quantity">الكمية الحالية: </strong>
+                @Model.QuantityAvailable.ToString("N3") @(Model.Material?.Unit ?? "")
+            </p>
+            @if (Model.Inventory?.Location != null)
+            {
+                <p>
+                    <strong data-lang="location">الموقع: </strong>
+                    @Model.Inventory.Location
+                </p>
+            }
+        </div>
+
+        <form asp-action="RemoveMaterial" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="inventoryId" value="@Model.InventoryID" />
+            <input type="hidden" name="materialId" value="@Model.MaterialID" />
+            <a asp-action="Details" asp-route-id="@Model.InventoryID" class="btn-bonyan-primary">
+                <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+            </a>
+            <button type="submit" class="btn-bonyan-danger">
+                <i class="fas fa-minus-circle"></i> <span data-lang="remove_material_btn">نعم، أزل المادة</span>
+            </button>
+        </form>
+    </div>
+</div>

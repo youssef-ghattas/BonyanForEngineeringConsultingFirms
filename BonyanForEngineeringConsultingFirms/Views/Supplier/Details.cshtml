@@ -2,19 +2,34 @@
 @{
     ViewData["Title"] = "تفاصيل المورد";
     var role = Context.Session.GetString("Role");
+
+    var types = (Model.SuppliedMaterialTypes ?? "")
+        .Split(',', StringSplitOptions.RemoveEmptyEntries);
+    var typeLabels = new Dictionary<string, string> {
+        {"Steel","حديد"}, {"Sand","رمل"}, {"Cement","أسمنت"}, {"Bricks","طوب"}
+    };
+    var typeIcons = new Dictionary<string, string> {
+        {"Steel","fa-cog"}, {"Sand","fa-mountain"}, {"Cement","fa-cube"}, {"Bricks","fa-th-large"}
+    };
+    var typeColors = new Dictionary<string, string> {
+        {"Steel","#607d8b"}, {"Sand","#f9a825"}, {"Cement","#78909c"}, {"Bricks","#ef5350"}
+    };
 }
 
 <link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
 <link rel="stylesheet" href="~/css/material.css" />
+<link rel="stylesheet" href="~/css/supplier.css" />
 
 <div class="page-header">
     <div class="page-header-left">
         <h2>
-            <i class="fas fa-industry" style="color:var(--secondary)"></i>
+            <i class="fas fa-industry"></i>
             @Model.SupplierName
         </h2>
+        <p data-lang="supplier_data">بيانات المورد</p>
     </div>
-    <div style="display:flex; gap:10px">
+    <div class="page-header-actions">
         <a asp-action="Index" class="btn-bonyan-primary">
             <i class="fas fa-arrow-right"></i> <span data-lang="back_to_suppliers">رجوع للموردين</span>
         </a>
@@ -31,128 +46,125 @@
 
 <!-- Supplier Info Card -->
 <div class="details-card">
+    <div class="details-header" style="background:linear-gradient(135deg,#1B3A6B,#2a5298)">
+        <div class="details-avatar">
+            <i class="fas fa-industry"></i>
+        </div>
+        <div class="details-header-info">
+            <h3><span data-lang="supplier_info">معلومات المورد</span></h3>
+            <span data-lang="supplier_data">بيانات المورد</span>
+        </div>
+    </div>
     <div class="details-body">
-        <div class="details-section">
-            <div class="details-section-title" data-lang="supplier_data">بيانات المورد</div>
-            <div class="details-grid">
-                <div class="detail-item">
-                    <label data-lang="supplier_name_label">اسم المورد</label>
-                    <p>@Model.SupplierName</p>
-                </div>
-                <div class="detail-item">
-                    <label data-lang="contact_person">شخص التواصل</label>
-                    <p>@(Model.ContactPerson ?? "—")</p>
-                </div>
-                <div class="detail-item">
-                    <label data-lang="email">البريد الإلكتروني</label>
-                    <p><a href="mailto:@Model.Email" style="color:var(--secondary)">@(Model.Email ?? "—")</a></p>
-                </div>
-                <div class="detail-item">
-                    <label data-lang="phone">الهاتف</label>
-                    <p>@(Model.Phone ?? "—")</p>
-                </div>
-                <div class="detail-item" style="grid-column:1 / -1">
-                    <label data-lang="address">العنوان</label>
-                    <p>@(Model.Address ?? "—")</p>
-                </div>
-                <div class="detail-item" style="grid-column:1 / -1">
-                    <label data-lang="supplied_materials">المواد المورَّدة</label>
-                    <p>
-                        @{
-                            var types = (Model.SuppliedMaterialTypes ?? "")
-                            .Split(',', StringSplitOptions.RemoveEmptyEntries);
-                            var typeLabels = new Dictionary<string, string> {
-                                        {"Steel","حديد"}, {"Sand","رمل"}, {"Cement","أسمنت"},
-                                        {"Bricks","طوب"}
-                                        };
-                        }
-                        @if (types.Any())
-                        {
-                            foreach (var t in types)
-                            {
-                                string display = t.StartsWith("Others:") ? "أخرى: " + t.Substring(7)
-                                : (typeLabels.ContainsKey(t) ? typeLabels[t] : t);
-                                string bgColor = t == "Steel" ? "#607d8b" : t == "Sand" ? "#ffa726" :
-                                t == "Cement" ? "#90a4ae" : t == "Bricks" ? "#ef5350" : "#ab47bc";
-                                <span style="display:inline-flex;align-items:center;gap:6px;
-                                                     background:@bgColor;color:#fff;padding:3px 10px;
-                                                     border-radius:16px;font-size:0.82rem;margin-left:6px;font-weight:600">
-                                    @display
-                                </span>
-                            }
-                        }
-                        else
-                        {
-                            <span style="color:#aaa">—</span>
-                        }
-                    </p>
-                </div>
+        <div class="details-grid">
+            <div class="detail-item">
+                <label data-lang="supplier_name_label">اسم المورد</label>
+                <p><i class="fas fa-building" style="color:var(--secondary);margin-left:6px;width:16px"></i> @Model.SupplierName</p>
             </div>
+            <div class="detail-item">
+                <label data-lang="contact_person">شخص التواصل</label>
+                <p><i class="fas fa-user-tie" style="color:#4a90d9;margin-left:6px;width:16px"></i> @(Model.ContactPerson ?? "—")</p>
+            </div>
+            <div class="detail-item">
+                <label data-lang="email">البريد الإلكتروني</label>
+                <p><a href="mailto:@Model.Email"><i class="fas fa-envelope" style="color:#C8922A;margin-left:6px;width:16px"></i> @(Model.Email ?? "—")</a></p>
+            </div>
+            <div class="detail-item">
+                <label data-lang="phone">الهاتف</label>
+                <p><i class="fas fa-phone" style="color:#27ae60;margin-left:6px;width:16px"></i> @(Model.Phone ?? "—")</p>
+            </div>
+            <div class="detail-item full-width">
+                <label data-lang="address">العنوان</label>
+                <p><i class="fas fa-map-marker-alt" style="color:#e74c3c;margin-left:6px;width:16px"></i> @(Model.Address ?? "—")</p>
+            </div>
+            @if (types.Any())
+            {
+                <div class="detail-item full-width">
+                    <label data-lang="supplied_materials">المواد المورَّدة</label>
+                    <div class="sup-type-wrapper">
+                        @foreach (var t in types)
+                        {
+                            string display = t.StartsWith("Others:")
+                                ? "أخرى: " + t.Substring(7)
+                                : (typeLabels.ContainsKey(t) ? typeLabels[t] : t);
+                            string bg = typeColors.ContainsKey(t) ? typeColors[t] : "#ab47bc";
+                            string icon = t.StartsWith("Others:")
+                                ? "fa-tag"
+                                : (typeIcons.ContainsKey(t) ? typeIcons[t] : "fa-box");
+                            <span class="sup-type-badge" style="background:@bg">
+                                <i class="fas @icon"></i> @display
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
 
-<!-- Supplied Materials -->
-<div class="details-card">
-    <div class="details-body">
-        <div class="details-section">
-            <div class="details-section-title">
-                <i class="fas fa-boxes"></i> <span data-lang="supplied_materials">المواد المورَّدة</span>
-                <span class="tab-count">@Model.SuppliedMaterials.Count</span>
-            </div>
-
-            @if (Model.SuppliedMaterials != null && Model.SuppliedMaterials.Any())
-            {
-                <table class="mat-table">
-                    <thead>
-                        <tr>
-                            <th data-lang="material_name_label">اسم المادة</th>
-                            <th data-lang="measurement_unit">وحدة القياس</th>
-                            <th data-lang="supply_price">سعر التوريد</th>
-                            <th data-lang="last_supply">آخر توريد</th>
-                            <th data-lang="details">تفاصيل</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var ms in Model.SuppliedMaterials)
-                        {
-                            <tr>
-                                <td>
-                                    <a asp-controller="Material" asp-action="Details"
-                                       asp-route-id="@ms.MaterialID"
-                                       style="color:var(--primary); font-weight:600; text-decoration:none">
-                                        @(ms.Material?.MaterialName ?? "—")
-                                    </a>
-                                </td>
-                                <td>
-                                    @if (ms.Material?.Unit != null)
-                                    {
-                                        <span class="unit-badge">@ms.Material.Unit</span>
-                                    }
-                                    else
-                                    {
-
-                                        <span>—</span>
-                                    }
-                                </td>
-                                <td>@(ms.SupplyPrice.HasValue? ms.SupplyPrice.Value.ToString("N2") + " ج.م" : "—")</td>
-                                <td>@(ms.LastSupplyDate.HasValue? ms.LastSupplyDate.Value.ToString("yyyy-MM-dd") : "—")</td>
-                                <td>
-                                    <a asp-controller="Material" asp-action="Details"
-                                       asp-route-id="@ms.MaterialID"
-                                       class="btn-action view" title="عرض المادة">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-            else
-            {
-                <p style="color:#aaa; font-size:0.88rem" data-lang="no_linked_materials">لا توجد مواد مرتبطة بهذا المورد بعد</p>
-            }
+<!-- Supplied Materials Card -->
+<div class="details-card" style="margin-top:20px">
+    <div class="details-header" style="background:linear-gradient(135deg,#1a3a2a,#2d6a4f)">
+        <div class="details-avatar" style="background:rgba(255,255,255,0.2);color:#fff">
+            <i class="fas fa-boxes"></i>
         </div>
+        <div class="details-header-info">
+            <h3><span data-lang="supplied_materials">المواد المورَّدة</span> <span class="badge-count">@Model.SuppliedMaterials.Count</span></h3>
+            <span data-lang="materials_supplied_by">المواد التي يورّدها هذا المورد</span>
+        </div>
+    </div>
+    <div class="details-body">
+        @if (Model.SuppliedMaterials != null && Model.SuppliedMaterials.Any())
+        {
+            <div class="sup-table-wrap">
+            <table class="mat-table">
+                <thead>
+                    <tr>
+                        <th data-lang="material_name_label">اسم المادة</th>
+                        <th data-lang="measurement_unit">وحدة القياس</th>
+                        <th data-lang="supply_price">سعر التوريد</th>
+                        <th data-lang="last_supply">آخر توريد</th>
+                        <th data-lang="details">تفاصيل</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ms in Model.SuppliedMaterials)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Material" asp-action="Details"
+                                   asp-route-id="@ms.MaterialID" class="sup-link">
+                                    @(ms.Material?.MaterialName ?? "—")
+                                </a>
+                            </td>
+                            <td>
+                                @if (ms.Material?.Unit != null)
+                                {
+                                    <span class="unit-badge">@ms.Material.Unit</span>
+                                }
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </td>
+                            <td class="sup-price">@(ms.SupplyPrice.HasValue ? ms.SupplyPrice.Value.ToString("N2") + " ج.م" : "—")</td>
+                            <td>@(ms.LastSupplyDate.HasValue ? ms.LastSupplyDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                            <td>
+                                <a asp-controller="Material" asp-action="Details"
+                                   asp-route-id="@ms.MaterialID"
+                                   class="btn-action view" title="عرض المادة">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            </div>
+        }
+        else
+        {
+            <div class="sup-empty" data-lang="no_linked_materials">لا توجد مواد مرتبطة بهذا المورد بعد</div>
+        }
     </div>
 </div>

@@ -29,127 +29,150 @@
     decimal net = (Model.Total_Amount ?? 0)
                   * (1 + (Model.Tax ?? 0) / 100)
                   * (1 - (Model.Discount ?? 0) / 100);
+
+    string statusEn = Model.Invoice_Status.ToString();
 }
+
 <link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+<link rel="stylesheet" href="~/css/invoice.css" />
+<link rel="stylesheet" href="~/css/project.css" />
+
 <div class="page-header">
     <div class="page-header-left">
         <h2>
-            <i class="fas fa-file-invoice-dollar" style="color:var(--secondary)"></i>
+            <i class="fas fa-file-invoice-dollar"></i>
             <span data-lang="invoice_hash">فاتورة #</span>@Model.Invoice_ID
         </h2>
+        <p data-lang="invoice_data">بيانات الفاتورة</p>
     </div>
-    <div style="display:flex; gap:10px">
+    <div class="page-header-actions">
         <a asp-controller="Project" asp-action="Details"
            asp-route-id="@Model.ProjectId" class="btn-bonyan-primary">
             <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
         </a>
         @if (role == "Admin")
         {
-            <a asp-action="Edit" asp-route-id="@Model.Invoice_ID"
-               class="btn-bonyan-secondary">
+            <a asp-action="Edit" asp-route-id="@Model.Invoice_ID" class="btn-bonyan-secondary">
                 <i class="fas fa-edit"></i> <span data-lang="edit">تعديل</span>
             </a>
         }
     </div>
 </div>
-<div class="details-card">
+
+<!-- Invoice Info Card -->
+<div class="details-card" style="margin-top:4px">
+    <div class="details-header" style="background:linear-gradient(135deg,#1B3A6B,#2a5298)">
+        <div class="details-avatar" style="background:rgba(255,255,255,0.2);color:#fff">
+            <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div class="details-header-info">
+            <h3><span data-lang="invoice_hash">فاتورة #</span>@Model.Invoice_ID
+                <span class="invoice-status-badge" style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.75rem;background:@statusBg;color:@statusColor;margin-right:10px;vertical-align:middle"
+                      data-en="@statusEn" data-ar="@statusLabel">@statusLabel</span>
+            </h3>
+            <span data-lang="invoice_data">بيانات الفاتورة</span>
+        </div>
+    </div>
     <div class="details-body">
-        <div class="details-section">
-            <div class="details-section-title" data-lang="invoice_data">بيانات الفاتورة</div>
-            <div class="details-grid">
-                <div class="detail-item">
-                    <label data-lang="invoice_number">رقم الفاتورة</label>
-                    <p>@Model.Invoice_ID</p>
-                </div>
-                <div class="detail-item">
-                    <label data-lang="project">المشروع</label>
-                    <p>@(Model.Project?.ProjectName ?? "—")</p>
-                </div>
-                <div class="detail-item">
-                    <label data-lang="status">الحالة</label>
-                    <p><span class="invoice-status-badge"
-                          style="display:inline-block; padding:2px 10px; border-radius:12px; background:@statusBg; color:@statusColor"
-                          data-en="@Model.Invoice_Status.ToString()" data-ar="@statusLabel">@statusLabel</span></p>
-                </div>
-                <div class="detail-item">
-                    <label data-lang="issue_date">تاريخ الإصدار</label>
-                    <p>@Model.Invoice_Date.ToString("yyyy-MM-dd")</p>
-                </div>
-                <div class="detail-item">
-                    <label data-lang="due_date">تاريخ الاستحقاق</label>
-                    <p>@(Model.Due_Date.HasValue ? Model.Due_Date.Value.ToString("yyyy-MM-dd") : "—")</p>
-                </div>
+        <div class="details-grid">
+            <div class="detail-item">
+                <label data-lang="invoice_number">رقم الفاتورة</label>
+                <p><i class="fas fa-hashtag" style="color:var(--secondary);margin-left:6px;width:16px"></i> @Model.Invoice_ID</p>
+            </div>
+            <div class="detail-item">
+                <label data-lang="project">المشروع</label>
+                <p><i class="fas fa-project-diagram" style="color:#4a90d9;margin-left:6px;width:16px"></i> @(Model.Project?.ProjectName ?? "—")</p>
+            </div>
+            <div class="detail-item">
+                <label data-lang="issue_date">تاريخ الإصدار</label>
+                <p><i class="fas fa-calendar-alt" style="color:#27ae60;margin-left:6px;width:16px"></i> @Model.Invoice_Date.ToString("yyyy-MM-dd")</p>
+            </div>
+            <div class="detail-item">
+                <label data-lang="due_date">تاريخ الاستحقاق</label>
+                <p><i class="fas fa-calendar-check" style="color:#e74c3c;margin-left:6px;width:16px"></i> @(Model.Due_Date.HasValue ? Model.Due_Date.Value.ToString("yyyy-MM-dd") : "—")</p>
             </div>
         </div>
-        <div class="details-section">
-            <div class="details-section-title" data-lang="amount_details">تفاصيل المبلغ</div>
-            <div class="details-grid">
-                <div class="detail-item">
-                    <label data-lang="base_amount">المبلغ الأساسي</label>
-                    <p>@((Model.Total_Amount ?? 0).ToString("N2")) <span data-lang="currency_egp">ج.م</span></p>
-                </div>
-                <div class="detail-item">
-                    <label data-lang="tax">الضريبة (@((Model.Tax ?? 0).ToString("N1"))%)</label>
-                    <p>+@(((Model.Total_Amount ?? 0) * (Model.Tax ?? 0) / 100).ToString("N2")) <span data-lang="currency_egp">ج.م</span></p>
-                </div>
-                <div class="detail-item">
-                    <label data-lang="discount">الخصم (@((Model.Discount ?? 0).ToString("N1"))%)</label>
-                    <p>-@(((Model.Total_Amount ?? 0) * (Model.Discount ?? 0) / 100).ToString("N2")) <span data-lang="currency_egp">ج.م</span></p>
-                </div>
-                <div class="detail-item">
-                    <label data-lang="final_total">الإجمالي النهائي</label>
-                    <p><strong>@net.ToString("N2") <span data-lang="currency_egp">ج.م</span></strong></p>
-                </div>
+    </div>
+</div>
+
+<!-- Amount Breakdown Card -->
+<div class="details-card" style="margin-top:20px">
+    <div class="details-header" style="background:linear-gradient(135deg,#2d6a4f,#40916c)">
+        <div class="details-avatar" style="background:rgba(255,255,255,0.2);color:#fff">
+            <i class="fas fa-calculator"></i>
+        </div>
+        <div class="details-header-info">
+            <h3><span data-lang="amount_details">تفاصيل المبلغ</span></h3>
+            <span data-lang="invoice_amount_breakdown">تفاصيل المبلغ</span>
+        </div>
+    </div>
+    <div class="details-body">
+        <div class="details-grid">
+            <div class="detail-item">
+                <label data-lang="base_amount">المبلغ الأساسي</label>
+                <p><strong>@((Model.Total_Amount ?? 0).ToString("N2")) <span data-lang="currency_egp">ج.م</span></strong></p>
+            </div>
+            <div class="detail-item">
+                <label data-lang="tax">الضريبة (@((Model.Tax ?? 0).ToString("N1"))%)</label>
+                <p style="color:#e67e22">+@(((Model.Total_Amount ?? 0) * (Model.Tax ?? 0) / 100).ToString("N2")) <span data-lang="currency_egp">ج.م</span></p>
+            </div>
+            <div class="detail-item">
+                <label data-lang="discount">الخصم (@((Model.Discount ?? 0).ToString("N1"))%)</label>
+                <p style="color:#e53935">-@(((Model.Total_Amount ?? 0) * (Model.Discount ?? 0) / 100).ToString("N2")) <span data-lang="currency_egp">ج.م</span></p>
+            </div>
+            <div class="detail-item">
+                <label data-lang="final_total">الإجمالي النهائي</label>
+                <p style="font-size:1.1rem;color:var(--primary);font-weight:800">@net.ToString("N2") <span data-lang="currency_egp">ج.م</span></p>
             </div>
         </div>
+
         @if (Model.Payments != null && Model.Payments.Any())
         {
-            <div class="details-section">
-                <div class="details-section-title">
-                    <i class="fas fa-money-bill-wave"></i> <span data-lang="payments">المدفوعات</span>
-                </div>
-                <table class="doc-table">
-                    <thead>
-                        <tr>
-                            <th data-lang="amount">المبلغ</th>
-                            <th data-lang="payment_method">طريقة الدفع</th>
-                            <th data-lang="status">الحالة</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var p in Model.Payments)
+            <hr style="margin:20px 0;border:none;border-top:1px solid #f0f2f8" />
+            <div class="details-section-title" style="margin-bottom:14px">
+                <i class="fas fa-money-bill-wave"></i> <span data-lang="payments">المدفوعات</span>
+            </div>
+            <div class="details-table-wrap">
+            <table class="details-table">
+                <thead>
+                    <tr>
+                        <th data-lang="amount">المبلغ</th>
+                        <th data-lang="payment_method">طريقة الدفع</th>
+                        <th data-lang="status">الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.Payments)
+                    {
+                        string pmtMethodLabel = p.PaymentMethod switch
                         {
-                            string pmtMethodLabel = p.PaymentMethod switch
-                            {
-                                Bonyan.DAL.Enums.PaymentMethod.Cash => "نقدي",
-                                Bonyan.DAL.Enums.PaymentMethod.CreditCard => "بطاقة ائتمان",
-                                Bonyan.DAL.Enums.PaymentMethod.BankTransfer => "تحويل بنكي",
-                                _ => p.PaymentMethod.ToString()
-                            };
-                            string pmtStatusLabel = p.Payment_Status switch
-                            {
-                                Bonyan.DAL.Enums.PaymentStatus.Completed => "مكتمل",
-                                Bonyan.DAL.Enums.PaymentStatus.Pending => "معلق",
-                                Bonyan.DAL.Enums.PaymentStatus.Failed => "فشل",
-                                _ => p.Payment_Status.ToString()
-                            };
-                            <tr>
-                                <td>@p.PaymentAmount.ToString("N2") <span data-lang="currency_egp">ج.م</span></td>
-                                <td>
-                                    <span data-en="@p.PaymentMethod.ToString()" data-ar="@pmtMethodLabel">@pmtMethodLabel</span>
-                                </td>
-                                <td>
-                                    <span data-en="@p.Payment_Status.ToString()" data-ar="@pmtStatusLabel">@pmtStatusLabel</span>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                            Bonyan.DAL.Enums.PaymentMethod.Cash => "نقدي",
+                            Bonyan.DAL.Enums.PaymentMethod.CreditCard => "بطاقة ائتمان",
+                            Bonyan.DAL.Enums.PaymentMethod.BankTransfer => "تحويل بنكي",
+                            _ => p.PaymentMethod.ToString()
+                        };
+                        string pmtStatusLabel = p.Payment_Status switch
+                        {
+                            Bonyan.DAL.Enums.PaymentStatus.Completed => "مكتمل",
+                            Bonyan.DAL.Enums.PaymentStatus.Pending => "معلق",
+                            Bonyan.DAL.Enums.PaymentStatus.Failed => "فشل",
+                            _ => p.Payment_Status.ToString()
+                        };
+                        <tr>
+                            <td>@p.PaymentAmount.ToString("N2") <span data-lang="currency_egp">ج.م</span></td>
+                            <td><span data-en="@p.PaymentMethod.ToString()" data-ar="@pmtMethodLabel">@pmtMethodLabel</span></td>
+                            <td><span data-en="@p.Payment_Status.ToString()" data-ar="@pmtStatusLabel">@pmtStatusLabel</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
             </div>
         }
+
         @if (role == "Admin")
         {
-            <div style="margin-top:24px; padding-top:16px; border-top:1px solid #eee">
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #eee">
                 <a asp-action="Delete" asp-route-id="@Model.Invoice_ID" class="btn-bonyan-danger">
                     <i class="fas fa-trash"></i> <span data-lang="delete_invoice">حذف الفاتورة</span>
                 </a>

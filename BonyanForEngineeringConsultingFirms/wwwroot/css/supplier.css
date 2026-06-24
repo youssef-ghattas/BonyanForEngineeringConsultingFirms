@@ -1,0 +1,177 @@
+/* ════════════════════════════════════════════════════════════
+   supplier.css — Supplier Details
+   يتوافق مع نظام بنيان (--primary, --secondary CSS vars)
+════════════════════════════════════════════════════════════ */
+
+/* ── Page header ──────────────────────────────────── */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.page-header-left h2 {
+    color: var(--primary, #1B3A6B);
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .page-header-left h2 i {
+        color: var(--secondary, #C8922A);
+        font-size: 1.3rem;
+    }
+
+.page-header-left p {
+    color: #8A93A6;
+    font-size: 0.88rem;
+    margin: 0;
+}
+
+.page-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ── Supplied material type badges ────────────────── */
+.sup-type-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.sup-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+    .sup-type-badge i {
+        font-size: 0.75rem;
+        opacity: 0.85;
+    }
+
+/* ── Badge count (in gradient headers) ───────────── */
+.badge-count {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    border-radius: 20px;
+    padding: 1px 11px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+/* ── Empty state ─────────────────────────────────── */
+.sup-empty {
+    text-align: center;
+    padding: 28px 16px;
+    color: #aab2c5;
+    font-size: 0.88rem;
+}
+
+/* ── Supplied materials table ────────────────────── */
+.sup-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 4px;
+}
+
+.sup-link {
+    color: var(--primary, #1B3A6B);
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+    .sup-link:hover {
+        color: var(--secondary, #C8922A);
+        text-decoration: underline;
+    }
+
+.sup-price {
+    direction: ltr;
+    text-align: left;
+    font-weight: 700;
+    color: var(--primary, #1B3A6B);
+}
+
+[dir="rtl"] .sup-price {
+    text-align: left;
+}
+
+/* ── Details grid enhancements ────────────────────── */
+.details-grid .detail-item a[href^="mailto"] {
+    color: var(--secondary, #C8922A);
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+    .details-grid .detail-item a[href^="mailto"]:hover {
+        color: var(--primary, #1B3A6B);
+        text-decoration: underline;
+    }
+
+/* ── Address and full-width items ─────────────────── */
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+/* ══════════════════════════════════════════════
+   supplier.css — Dark Mode
+══════════════════════════════════════════════ */
+body.dark-mode .page-header-left h2 {
+    color: #E8EDF5;
+}
+
+    body.dark-mode .page-header-left h2 i {
+        color: #d4a84b;
+    }
+
+body.dark-mode .page-header-left p {
+    color: #8FA3BF;
+}
+
+body.dark-mode .sup-link {
+    color: #8ab4f8;
+}
+
+    body.dark-mode .sup-link:hover {
+        color: #fdd663;
+    }
+
+body.dark-mode .sup-price {
+    color: #fdd663;
+}
+
+body.dark-mode .badge-count {
+    background: rgba(255,255,255,0.15);
+}
+
+body.dark-mode .sup-empty {
+    color: #aab8d0;
+}
+
+body.dark-mode .details-grid .detail-item a[href^="mailto"] {
+    color: #d4a84b;
+}
+
+    body.dark-mode .details-grid .detail-item a[href^="mailto"]:hover {
+        color: #8ab4f8;
+    }
