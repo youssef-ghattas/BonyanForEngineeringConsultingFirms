@@ -140,6 +140,7 @@
                             <th><i class="fas fa-percent"></i> <span data-lang="tax">ضريبة</span></th>
                             <th><i class="fas fa-percent"></i> <span data-lang="discount">خصم</span></th>
                             <th><i class="fas fa-credit-card"></i> <span data-lang="paid">المدفوع</span></th>
+                            <th><i class="fas fa-hourglass-half"></i> <span data-lang="remaining">المتبقي</span></th>
                             <th><i class="fas fa-circle"></i> <span data-lang="status">الحالة</span></th>
                             <th><i class="fas fa-calendar-alt"></i> <span data-lang="issue_date">تاريخ الإصدار</span></th>
                             <th><i class="fas fa-clock"></i> <span data-lang="due_date">تاريخ الاستحقاق</span></th>
@@ -199,6 +200,9 @@
                                 </td>
                                 <td class="mi-amount" style="color:#2e7d32">
                                     @(inv.Paid_Amount?.ToString("N2") ?? "0.00")
+                                </td>
+                                <td class="mi-amount" style="color:#c62828">
+                                    @(inv.RemainingAmount?.ToString("N2") ?? "0.00")
                                 </td>
                                 <td>
                                     <span class="status-badge @statusClass">

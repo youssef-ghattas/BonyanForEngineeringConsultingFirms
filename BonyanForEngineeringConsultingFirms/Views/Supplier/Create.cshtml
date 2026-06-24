@@ -96,7 +96,8 @@
                     <div id="materialDropdown"
                          style="display:none;position:absolute;top:calc(100% + 6px);right:0;left:0;
                                 background:#fff;border:2px solid #e0e0e0;border-radius:10px;
-                                box-shadow:0 8px 24px rgba(0,0,0,0.13);z-index:200;overflow:hidden">
+                                box-shadow:0 8px 24px rgba(0,0,0,0.13);z-index:200;
+                                max-height:250px;overflow-y:auto">
 
                         @foreach (var item in new[] {
                                                 new { Val="Steel",  Icon="fas fa-hard-hat",  Color="#546e7a", Label="حديد تسليح (Steel)" },
@@ -140,6 +141,7 @@
 </div>
 
 <style>
+    .form-card { overflow: visible !important; }
     .mat-chip {
         display: inline-flex;
         align-items: center;
@@ -212,6 +214,19 @@
             updateLabel();
         }
 
+        function removeChip(type){
+            var cb=document.getElementById('chk_'+type);
+            if(cb){ cb.checked=false; }
+            if(type==='Others'){
+                document.getElementById('othersBox').style.display='none';
+                document.getElementById('othersText').value='';
+            }
+            var lbl=document.getElementById('lbl_'+type);
+            if(lbl){ lbl.style.background='#fff'; }
+            updateChips();
+            updateLabel();
+        }
+
         function updateChips(){
             var c=document.getElementById('selectedChips');
             c.innerHTML='';
@@ -221,7 +236,9 @@
                                       :chipLabels[t];
                 var span=document.createElement('span');
                 span.className='mat-chip chip-'+t;
-                span.innerHTML='<i class="fas fa-check-circle"></i> '+text;
+                span.style.cursor='default';
+                span.innerHTML='<i class="fas fa-check-circle"></i> '+text
+                    +' <i class="fas fa-times" style="cursor:pointer;margin-right:4px;font-size:0.75rem;opacity:0.7" onclick="removeChip(\''+t+'\')"></i>';
                 c.appendChild(span);
             });
         }

@@ -50,6 +50,7 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			var query = _context.Materials
 				.Include(m => m.PreferredSupplier)
 				.Include(m => m.TargetInventory)
+				.Include(m => m.MaterialSuppliers)
 				.Include(m => m.MaterialInventories).ThenInclude(mi => mi.Inventory)
 				.AsQueryable();
 
