@@ -23,6 +23,18 @@
         white-space: nowrap;
     }
 
+    .mat-table td {
+        padding: 10px 12px;
+        text-align: right;
+        vertical-align: middle;
+    }
+
+    /* LTR overrides — English */
+    [dir="ltr"] .mat-table th,
+    [dir="ltr"] .mat-table td {
+        text-align: left;
+    }
+
     .mat-table tbody tr {
         border-bottom: 1px solid #F4F6F9;
         transition: background 0.15s;
@@ -31,11 +43,6 @@
         .mat-table tbody tr:hover {
             background: #fafbff;
         }
-
-    .mat-table td {
-        padding: 10px 12px;
-        vertical-align: middle;
-    }
 
 /* ── Badges ──────────────────────────────────────────────── */
 .unit-badge {
@@ -265,6 +272,142 @@
 
 /* ── Reuse existing btn-action classes from the system ───── */
 
+/* ── Page header actions ──────────────────────────── */
+.page-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ── Badge count (in gradient headers) ───────────── */
+.badge-count {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    border-radius: 20px;
+    padding: 1px 11px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+/* ── Material links (table) ──────────────────────── */
+.mat-link {
+    color: var(--primary, #1B3A6B);
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+    .mat-link:hover {
+        color: var(--secondary, #C8922A);
+        text-decoration: underline;
+    }
+
+/* ── Table wrapper (responsive scroll) ───────────── */
+.mat-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 12px;
+}
+
+/* ── Price column ────────────────────────────────── */
+.mat-price {
+    direction: ltr;
+    text-align: left;
+    font-weight: 700;
+    color: var(--primary, #1B3A6B);
+}
+
+[dir="rtl"] .mat-price {
+    text-align: left;
+}
+
+/* ── Quantity column ─────────────────────────────── */
+.mat-qty {
+    direction: ltr;
+    text-align: left;
+    font-weight: 700;
+}
+
+[dir="rtl"] .mat-qty {
+    text-align: left;
+}
+
+/* ── Inline form (remove supplier) ───────────────── */
+.mat-inline-form {
+    display: inline;
+}
+
+/* ── Action button (small icon) ──────────────────── */
+.mat-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+    .mat-action-btn.edit {
+        background: #EBF5FF;
+        color: #1B3A6B;
+        border-color: rgba(27,58,107,0.15);
+    }
+
+        .mat-action-btn.edit:hover {
+            background: #1B3A6B;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(27,58,107,0.3);
+        }
+
+    .mat-action-btn.danger {
+        background: #FDECEC;
+        color: #C62828;
+        border-color: rgba(198,40,40,0.15);
+    }
+
+        .mat-action-btn.danger:hover {
+            background: #C62828;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(198,40,40,0.3);
+        }
+
+/* ── Empty state ─────────────────────────────────── */
+.mat-empty {
+    text-align: center;
+    padding: 28px 16px;
+    color: #aab2c5;
+    font-size: 0.88rem;
+}
+
+/* ── Add supplier section ────────────────────────── */
+.mat-add-section {
+    border-top: 1px solid #f0f2f8;
+    padding: 18px 24px 22px;
+    background: #fafbff;
+}
+
+.mat-add-title {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--primary, #1B3A6B);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .mat-add-title i {
+        color: var(--secondary, #C8922A);
+    }
+
 /* ══════════════════════════════════════════════
    material.css — Dark Mode
 ══════════════════════════════════════════════ */
@@ -286,3 +429,51 @@ body.dark-mode .mat-kpi-value { color: #ffffff !important; }
 body.dark-mode .mat-section-title { color: #ffffff !important; }
 body.dark-mode .mat-empty { color: #aab8d0 !important; background: #19283F !important; }
 body.dark-mode .mat-badge { filter: brightness(0.85) saturate(0.9); }
+
+/* ── Dark mode: Material Details page ────────────── */
+body.dark-mode .mat-link {
+    color: #8ab4f8;
+}
+
+    body.dark-mode .mat-link:hover {
+        color: #fdd663;
+    }
+
+body.dark-mode .mat-price {
+    color: #fdd663;
+}
+
+body.dark-mode .mat-action-btn.edit {
+    background: rgba(27,58,107,0.2);
+    color: #8ab4f8;
+    border-color: rgba(27,58,107,0.3);
+}
+
+    body.dark-mode .mat-action-btn.edit:hover {
+        background: #1B3A6B;
+        color: #fff;
+    }
+
+body.dark-mode .mat-action-btn.danger {
+    background: rgba(198,40,40,0.15);
+    color: #ef9a9a;
+    border-color: rgba(198,40,40,0.25);
+}
+
+    body.dark-mode .mat-action-btn.danger:hover {
+        background: #c62828;
+        color: #fff;
+    }
+
+body.dark-mode .mat-add-section {
+    background: #141e30;
+    border-top-color: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .mat-add-title {
+    color: #dde6f8;
+}
+
+    body.dark-mode .mat-add-title i {
+        color: #d4a84b;
+    }

@@ -281,9 +281,27 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 		}
 
 		// ── REMOVE MATERIAL FROM INVENTORY ────────────────────────
+		[HttpGet]
+		public async Task<IActionResult> RemoveMaterial(int inventoryId, int materialId)
+		{
+			if (!IsAdmin()) return Forbid();
+
+			var entry = await _context.MaterialInventories
+				.Include(mi => mi.Material)
+				.Include(mi => mi.Inventory)
+				.FirstOrDefaultAsync(mi => mi.InventoryID == inventoryId && mi.MaterialID == materialId);
+			if (entry == null)
+			{
+				TempData["ErrorMessageKey"] = "msg_material_not_found_inventory";
+				return RedirectToAction(nameof(Details), new { id = inventoryId });
+			}
+			return View(entry);
+		}
+
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> RemoveMaterial(int inventoryId, int materialId)
+		[ActionName("RemoveMaterial")]
+		public async Task<IActionResult> RemoveMaterialConfirmed(int inventoryId, int materialId)
 		{
 			if (!IsAdmin()) return Forbid();
 

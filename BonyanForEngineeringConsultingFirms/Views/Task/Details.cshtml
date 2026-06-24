@@ -22,43 +22,54 @@
         TasksStatus.Cancelled => "badge-cancelled",
         _ => ""
     };
+    string statusEn = Model.Status.ToString();
 }
 
 <link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
 
 <div class="page-header">
     <div class="page-header-left">
         <h2>
-            <i class="fas fa-tasks" style="color:var(--secondary)"></i>
+            <i class="fas fa-tasks"></i>
             <span data-lang="task_details">تفاصيل المهمة</span>
         </h2>
+        <p>@Model.Task_Name</p>
     </div>
-    <div style="display:flex; gap:10px">
+    <div class="page-header-actions">
         <a asp-controller="Project" asp-action="Details"
            asp-route-id="@Model.ProjectId" class="btn-bonyan-primary">
             <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
         </a>
         @if (role == "Admin")
         {
-            <a asp-action="Edit" asp-route-id="@Model.TaskId"
-               class="btn-bonyan-secondary">
+            <a asp-action="Edit" asp-route-id="@Model.TaskId" class="btn-bonyan-secondary">
                 <i class="fas fa-edit"></i> <span data-lang="edit">تعديل</span>
             </a>
         }
     </div>
 </div>
 
-<div class="details-card" style="max-width:640px; margin:0 auto">
+<div class="details-card" style="max-width:640px">
+    <div class="details-header" style="background:linear-gradient(135deg,#1B3A6B,#2a5298)">
+        <div class="details-avatar" style="background:rgba(200,146,42,0.3);color:#C8922A">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="details-header-info">
+            <h3>@Model.Task_Name</h3>
+            <span><span data-lang="task_details">تفاصيل المهمة</span></span>
+        </div>
+    </div>
     <div class="details-body">
         <div class="details-section">
-            <div class="details-section-title">
+            <div class="details-section-title" style="display:flex;align-items:center;gap:10px">
                 <i class="fas fa-info-circle"></i> <span data-lang="task_details">تفاصيل المهمة</span>
-                <span class="task-status-badge @statusClass" style="margin-right:12px" data-en="@Model.Status.ToString()" data-ar="@statusLabel">@statusLabel</span>
+                <span class="task-status-badge @statusClass" data-en="@statusEn" data-ar="@statusLabel">@statusLabel</span>
             </div>
             <div class="details-grid">
                 <div class="detail-item" style="grid-column:1/-1">
                     <label data-lang="task_name_label">اسم المهمة</label>
-                    <p style="font-size:1.2rem; font-weight:700; color:var(--primary)">@Model.Task_Name</p>
+                    <p style="font-size:1.2rem;font-weight:700;color:var(--primary)">@Model.Task_Name</p>
                 </div>
                 <div class="detail-item">
                     <label data-lang="project">المشروع</label>
@@ -70,7 +81,7 @@
                 </div>
                 <div class="detail-item">
                     <label data-lang="due_date">الموعد النهائي</label>
-                    <p>@(Model.DueDate.HasValue? Model.DueDate.Value.ToString("yyyy-MM-dd") : "—")</p>
+                    <p>@(Model.DueDate.HasValue ? Model.DueDate.Value.ToString("yyyy-MM-dd") : "—")</p>
                 </div>
                 <div class="detail-item">
                     <label data-lang="created_at">تاريخ الإنشاء</label>
@@ -80,7 +91,7 @@
                 {
                     <div class="detail-item" style="grid-column:1/-1">
                         <label data-lang="notes">ملاحظات</label>
-                        <p style="color:#555; font-size:0.9rem; line-height:1.6">@Model.Notes</p>
+                        <p style="color:#555;font-size:0.9rem;line-height:1.6">@Model.Notes</p>
                     </div>
                 }
             </div>
