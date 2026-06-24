@@ -4,6 +4,7 @@ using Bonyan.DAL.Context;
 using Bonyan.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Task = System.Threading.Tasks.Task;
 
 namespace BonyanForEngineeringConsultingFirms.Controllers
 {
@@ -20,6 +21,54 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 
 		private bool IsAdmin() => HttpContext.Session.GetString("Role") == "Admin";
 		private bool IsLoggedIn() => HttpContext.Session.GetString("Role") != null;
+
+		private static string GetMaterialTypeKey(string materialName)
+		{
+			if (string.IsNullOrWhiteSpace(materialName)) return "Others";
+			var n = materialName.ToLower();
+			if (n.Contains("steel") || n.Contains("حديد")) return "Steel";
+			if (n.Contains("sand") || n.Contains("رمل")) return "Sand";
+			if (n.Contains("cement") || n.Contains("أسمنت") || n.Contains("اسمنت")) return "Cement";
+			if (n.Contains("brick") || n.Contains("طوب")) return "Bricks";
+			return "Others";
+		}
+
+		private async Task AutoLinkMaterials(Supplier supplier, List<string> types)
+		{
+			if (types == null || types.Count == 0) return;
+			var allMaterials = await _context.Materials.ToListAsync();
+			var existingIds = (supplier.SuppliedMaterials ?? new List<MaterialSupplier>())
+				.Select(ms => ms.MaterialID).ToHashSet();
+			var toAdd = new List<MaterialSupplier>();
+
+			foreach (var type in types)
+			{
+				if (type.StartsWith("Others:"))
+				{
+					var custom = type.Substring("Others:".Length).Trim().ToLower();
+					if (string.IsNullOrEmpty(custom)) continue;
+					var matches = allMaterials.Where(m =>
+						!existingIds.Contains(m.MaterialID) &&
+						(m.MaterialName.ToLower().Contains(custom) || GetMaterialTypeKey(m.MaterialName) == "Others"));
+					foreach (var m in matches)
+						toAdd.Add(new MaterialSupplier { SupplierID = supplier.SupplierID, MaterialID = m.MaterialID });
+				}
+				else
+				{
+					var matches = allMaterials.Where(m =>
+						!existingIds.Contains(m.MaterialID) &&
+						GetMaterialTypeKey(m.MaterialName) == type);
+					foreach (var m in matches)
+						toAdd.Add(new MaterialSupplier { SupplierID = supplier.SupplierID, MaterialID = m.MaterialID });
+				}
+			}
+
+			if (toAdd.Count > 0)
+			{
+				_context.MaterialSuppliers.AddRange(toAdd);
+				await _context.SaveChangesAsync();
+			}
+		}
 
 		// ── INDEX ─────────────────────────────────────────────────
 		public async Task<IActionResult> Index(string search = "")
@@ -109,6 +158,10 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			{
 				_context.Suppliers.Add(supplier);
 				await _context.SaveChangesAsync();
+
+				if (types.Count > 0)
+					await AutoLinkMaterials(supplier, types);
+
 				TempData["SuccessMessageKey"] = "msg_supplier_created";
 				return RedirectToAction(nameof(Index));
 			}
@@ -156,7 +209,9 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 				return View(supplier);
 			}
 
-			var existing = await _context.Suppliers.FindAsync(supplier.SupplierID);
+			var existing = await _context.Suppliers
+				.Include(s => s.SuppliedMaterials)
+				.FirstOrDefaultAsync(s => s.SupplierID == supplier.SupplierID);
 			if (existing == null) return NotFound();
 
 			existing.SupplierName = supplier.SupplierName;
@@ -185,6 +240,10 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
 			try
 			{
 				await _context.SaveChangesAsync();
+
+				if (types.Count > 0)
+					await AutoLinkMaterials(existing, types);
+
 				TempData["SuccessMessageKey"] = "msg_supplier_updated";
 				return RedirectToAction(nameof(Index));
 			}

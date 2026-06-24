@@ -86,7 +86,8 @@
                     <div id="materialDropdown"
                          style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;
                                 background:#fff;border:1px solid #ddd;border-radius:8px;
-                                box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:100;overflow:hidden">
+                                box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:100;
+                                max-height:250px;overflow-y:auto">
                         @foreach (var type in materialTypes)
                         {
                             bool isChecked2 = checkedTypes.Contains(type);
@@ -128,6 +129,7 @@
 </div>
 
 <style>
+    .form-card { overflow: visible !important; }
     .mat-chip {
         display: inline-flex;
         align-items: center;
@@ -191,6 +193,19 @@
             }
             updateChips(); updateDropdownLabel();
         }
+        function removeChip(type) {
+            var cb = document.getElementById('chk_' + type);
+            if (cb) { cb.checked = false; }
+            if (type === 'Others') {
+                document.getElementById('othersBox').style.display = 'none';
+                document.getElementById('othersText').value = '';
+            }
+            var label = document.getElementById('label_' + type);
+            if (label) { label.style.background = '#fff'; }
+            updateChips();
+            updateDropdownLabel();
+        }
+
         function updateChips() {
             var c = document.getElementById('selectedChips');
             c.innerHTML = '';
@@ -199,7 +214,9 @@
                 var text = type === 'Others' ? 'أخرى: ' + (document.getElementById('othersText').value || '...') : labels[type];
                 var chip = document.createElement('span');
                 chip.className = 'mat-chip ' + (chipClass[type] || '');
-                chip.innerHTML = '<i class="fas fa-check"></i> ' + text;
+                chip.style.cursor = 'default';
+                chip.innerHTML = '<i class="fas fa-check"></i> ' + text
+                    + ' <i class="fas fa-times" style="cursor:pointer;margin-right:4px;font-size:0.75rem;opacity:0.7" onclick="removeChip(\'' + type + '\')"></i>';
                 c.appendChild(chip);
             });
         }
