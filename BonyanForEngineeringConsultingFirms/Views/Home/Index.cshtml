@@ -119,7 +119,7 @@
 ════════════════════════════════════════════════ -->
 <div class="home-cards-grid">
 
-    <!-- Total Projects -->
+    <!-- Total Projects — all roles -->
     <a class="home-stat-card" asp-controller="Project" asp-action="Index">
         <div class="hsc-top">
             <div class="hsc-icon blue"><i class="fas fa-project-diagram"></i></div>
@@ -137,7 +137,7 @@
         </div>
     </a>
 
-    <!-- Total Tasks -->
+    <!-- Total Tasks — all roles -->
     <a class="home-stat-card" asp-controller="Task" asp-action="Index">
         <div class="hsc-top">
             <div class="hsc-icon gold"><i class="fas fa-tasks"></i></div>
@@ -153,37 +153,43 @@
         </div>
     </a>
 
-    <!-- Invoices -->
-    <a class="home-stat-card" asp-controller="Invoice" asp-action="Index">
-        <div class="hsc-top">
-            <div class="hsc-icon green"><i class="fas fa-file-invoice-dollar"></i></div>
-            <span class="hsc-trend up">
-                <i class="fas fa-coins"></i>
-                <span data-lang="trend_invoices">الفواتير</span>
-            </span>
-        </div>
-        <span class="hsc-number">@invoiceCount</span>
-        <div class="hsc-bottom">
-            <span class="hsc-label" data-lang="card_invoices">الفواتير</span>
-            <span class="hsc-sub" data-lang="card_invoices_sub">إجمالي الفواتير المسجّلة</span>
-        </div>
-    </a>
+    <!-- Invoices — Admin & ProjectManager only -->
+    @if (isAdmin || isPM)
+    {
+        <a class="home-stat-card" asp-controller="Invoice" asp-action="Index">
+            <div class="hsc-top">
+                <div class="hsc-icon green"><i class="fas fa-file-invoice-dollar"></i></div>
+                <span class="hsc-trend up">
+                    <i class="fas fa-coins"></i>
+                    <span data-lang="trend_invoices">الفواتير</span>
+                </span>
+            </div>
+            <span class="hsc-number">@invoiceCount</span>
+            <div class="hsc-bottom">
+                <span class="hsc-label" data-lang="card_invoices">الفواتير</span>
+                <span class="hsc-sub" data-lang="card_invoices_sub">إجمالي الفواتير المسجّلة</span>
+            </div>
+        </a>
+    }
 
-    <!-- Engineers -->
-    <a class="home-stat-card" asp-controller="Employee" asp-action="Index">
-        <div class="hsc-top">
-            <div class="hsc-icon purple"><i class="fas fa-hard-hat"></i></div>
-            <span class="hsc-trend neu">
-                <i class="fas fa-users"></i>
-                <span data-lang="trend_engineers">الفريق</span>
-            </span>
-        </div>
-        <span class="hsc-number">@employeeCount</span>
-        <div class="hsc-bottom">
-            <span class="hsc-label" data-lang="card_engineers">المهندسون</span>
-            <span class="hsc-sub" data-lang="card_engineers_sub">أعضاء الفريق المسجّلون</span>
-        </div>
-    </a>
+    <!-- Engineers — Admin only -->
+    @if (isAdmin)
+    {
+        <a class="home-stat-card" asp-controller="Employee" asp-action="Index">
+            <div class="hsc-top">
+                <div class="hsc-icon purple"><i class="fas fa-hard-hat"></i></div>
+                <span class="hsc-trend neu">
+                    <i class="fas fa-users"></i>
+                    <span data-lang="trend_engineers">الفريق</span>
+                </span>
+            </div>
+            <span class="hsc-number">@employeeCount</span>
+            <div class="hsc-bottom">
+                <span class="hsc-label" data-lang="card_engineers">المهندسون</span>
+                <span class="hsc-sub" data-lang="card_engineers_sub">أعضاء الفريق المسجّلون</span>
+            </div>
+        </a>
+    }
 
 </div>
 

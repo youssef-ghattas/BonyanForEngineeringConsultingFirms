@@ -27,29 +27,35 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
             var role = HttpContext.Session.GetString("Role");
             var employeeId = HttpContext.Session.GetInt32("EmployeeId");
 
-            ViewBag.EmployeeCount = _context.Employees.Count();
-            ViewBag.TaskCount = _context.Tasks.Count();
-            ViewBag.InvoiceCount = _context.Invoices.Count();
-            ViewBag.DocumentCount = _context.Documents.Count();
-            ViewBag.MaterialCount = _context.Materials.Count();
-            ViewBag.SupplierCount = _context.Suppliers.Count();
-            ViewBag.SiteVisitCount = _context.SiteVisits.Count();
-
             if (role == "Admin")
             {
+                ViewBag.EmployeeCount = _context.Employees.Count();
+                ViewBag.TaskCount = _context.Tasks.Count();
+                ViewBag.InvoiceCount = _context.Invoices.Count();
+                ViewBag.DocumentCount = _context.Documents.Count();
+                ViewBag.MaterialCount = _context.Materials.Count();
+                ViewBag.SupplierCount = _context.Suppliers.Count();
+                ViewBag.SiteVisitCount = _context.SiteVisits.Count();
+
                 ViewBag.ProjectCount = _context.Projects.Count();
                 ViewBag.ProjectsInProgress = _context.Projects.Count(p => p.Status == ProjectStatus.InProgress);
                 ViewBag.ProjectsCompleted = _context.Projects.Count(p => p.Status == ProjectStatus.Completed);
                 ViewBag.ProjectsPlanning = _context.Projects.Count(p => p.Status == ProjectStatus.Planning);
                 ViewBag.ProjectsOnHold = _context.Projects.Count(p => p.Status == ProjectStatus.OnHold);
                 ViewBag.RecentProjects = _context.Projects.OrderByDescending(p => p.StartDate).Take(5).ToList();
+
+                ViewBag.RecentTasks = _context.Tasks.OrderByDescending(t => t.CreatedAt).Take(5).ToList();
+                ViewBag.RecentEmployees = _context.Employees.OrderByDescending(e => e.HireDate).Take(5).ToList();
             }
             else
             {
-                var myProjects = _context.EmployeeProjects
+                var myProjectIds = _context.EmployeeProjects
                     .Where(ep => ep.EmployeeId == employeeId)
-                    .Include(ep => ep.Project)
-                    .Select(ep => ep.Project)
+                    .Select(ep => ep.ProjectId)
+                    .ToList();
+
+                var myProjects = _context.Projects
+                    .Where(p => myProjectIds.Contains(p.ProjectId))
                     .ToList();
 
                 ViewBag.ProjectCount = myProjects.Count;
@@ -58,10 +64,22 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
                 ViewBag.ProjectsPlanning = myProjects.Count(p => p.Status == ProjectStatus.Planning);
                 ViewBag.ProjectsOnHold = myProjects.Count(p => p.Status == ProjectStatus.OnHold);
                 ViewBag.RecentProjects = myProjects.OrderByDescending(p => p.StartDate).Take(5).ToList();
+
+                ViewBag.TaskCount = _context.Tasks.Count(t => myProjectIds.Contains(t.ProjectId));
+                ViewBag.InvoiceCount = _context.Invoices.Count(i => myProjectIds.Contains(i.ProjectId));
+                ViewBag.DocumentCount = _context.Documents.Count(d => myProjectIds.Contains(d.ProjectId));
+                ViewBag.SiteVisitCount = _context.SiteVisits.Count(s => myProjectIds.Contains(s.ProjId));
+
+                ViewBag.EmployeeCount = 0;
+                ViewBag.MaterialCount = 0;
+                ViewBag.SupplierCount = 0;
+
+                ViewBag.RecentTasks = _context.Tasks
+                    .Where(t => myProjectIds.Contains(t.ProjectId))
+                    .OrderByDescending(t => t.CreatedAt).Take(5).ToList();
+                ViewBag.RecentEmployees = new List<Bonyan.DAL.Models.Employee>();
             }
 
-            ViewBag.RecentTasks = _context.Tasks.OrderByDescending(t => t.CreatedAt).Take(5).ToList();
-            ViewBag.RecentEmployees = _context.Employees.OrderByDescending(e => e.HireDate).Take(5).ToList();
             ViewBag.IsAdmin = role == "Admin";
 
             return View();
@@ -299,6 +317,14 @@ namespace BonyanForEngineeringConsultingFirms.Controllers
                 .ToList();
 
             return Json(all);
+        }
+
+        // ════════════════════════════════════════════════
+        //  ABOUT PAGE
+        // ════════════════════════════════════════════════
+        public IActionResult About()
+        {
+            return View();
         }
 
         // ── Landing & Error (unchanged) ───────────────────────────────
