@@ -1,0 +1,601 @@
+﻿/* ══════════════════════════════════════════════════════
+   profile.css  –  Employee / Admin Profile Page
+   ══════════════════════════════════════════════════════ */
+
+/* ── Page wrapper ─────────────────────────────────── */
+.profile-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+}
+
+/* ── Header card ──────────────────────────────────── */
+.profile-header-card {
+    background: var(--bonyan-card, #fff);
+    border-radius: 16px;
+    padding: 2rem 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+}
+
+.profile-avatar {
+    font-size: 5rem;
+    color: var(--bonyan-primary, #1e4db7);
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.profile-header-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 .5rem;
+    color: var(--bonyan-text, #111827);
+}
+
+.profile-role-badge {
+    display: inline-block;
+    padding: .3rem 1rem;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .4px;
+    margin-bottom: .8rem;
+}
+
+.role-admin {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.role-projectmanager {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.role-engineer {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.profile-contact-row {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: .9rem;
+    color: var(--bonyan-muted, #6b7280);
+}
+
+/* ── Section ──────────────────────────────────────── */
+.profile-section {
+    background: var(--bonyan-card, #fff);
+    border-radius: 14px;
+    padding: 1.8rem 2rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+}
+
+.profile-section-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--bonyan-primary, #1e4db7);
+    margin-bottom: 1.4rem;
+    padding-bottom: .6rem;
+    border-bottom: 2px solid var(--bonyan-primary, #1e4db7);
+    display: flex;
+    align-items: center;
+}
+
+/* ── Info grid ────────────────────────────────────── */
+.profile-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.info-card {
+    background: var(--bonyan-bg, #f9fafb);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+    transition: box-shadow .2s;
+}
+
+    .info-card:hover {
+        box-shadow: 0 4px 12px rgba(30, 77, 183, .12);
+    }
+
+.info-label {
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--bonyan-muted, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: .4rem;
+}
+
+.info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--bonyan-text, #111827);
+}
+
+/* ── Admin Card ───────────────────────────────────── */
+.admin-card {
+    background: var(--bonyan-card, #fff);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+}
+
+.admin-card-header {
+    background: linear-gradient(135deg, #1B3A6B, #2a5298);
+    padding: 28px 30px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+    .admin-card-header::after {
+        content: '';
+        position: absolute;
+        top: -40px;
+        left: -40px;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: rgba(200, 146, 42, 0.12);
+    }
+
+.admin-card-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    background: rgba(200, 146, 42, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--secondary, #C8922A);
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.admin-card-header-text {
+    position: relative;
+    z-index: 1;
+}
+
+    .admin-card-header-text h3 {
+        color: #fff;
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin: 0 0 4px;
+    }
+
+    .admin-card-header-text p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+.admin-card-body {
+    padding: 28px 30px;
+}
+
+.admin-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.admin-info-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bonyan-bg, #f9fafb);
+    border-radius: 12px;
+    padding: 16px 18px;
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+    .admin-info-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(30, 77, 183, 0.1);
+    }
+
+.admin-info-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.bg-email {
+    background: linear-gradient(135deg, #1e4db7, #3b82f6);
+}
+
+.bg-phone {
+    background: linear-gradient(135deg, #065f46, #10b981);
+}
+
+.bg-shield {
+    background: linear-gradient(135deg, #92400e, #f59e0b);
+}
+
+.bg-calendar {
+    background: linear-gradient(135deg, #4c1d95, #8b5cf6);
+}
+
+.admin-info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.admin-info-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--bonyan-muted, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.admin-info-value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--bonyan-text, #111827);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Dark mode: Admin Card ────────────────────────── */
+body.dark-mode .admin-card {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+body.dark-mode .admin-card-header {
+    background: linear-gradient(135deg, #0f1a2e, #152238);
+}
+
+body.dark-mode .admin-info-item {
+    background: #111827;
+    border-color: #374151;
+}
+
+    body.dark-mode .admin-info-item:hover {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+
+body.dark-mode .admin-info-label {
+    color: #9ca3af;
+}
+
+body.dark-mode .admin-info-value {
+    color: #f9fafb;
+}
+
+/* ── Task stat cards ──────────────────────────────── */
+.task-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.4rem;
+}
+
+.stat-card {
+    border-radius: 12px;
+    padding: 1.3rem 1.2rem;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+}
+
+.stat-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: .82rem;
+    margin-top: .3rem;
+    opacity: .9;
+}
+
+.stat-icon {
+    position: absolute;
+    bottom: .6rem;
+    right: 1rem;
+    font-size: 2.5rem;
+    opacity: .18;
+}
+
+.stat-total {
+    background: linear-gradient(135deg, #1e4db7, #3b82f6);
+}
+
+.stat-completed {
+    background: linear-gradient(135deg, #065f46, #10b981);
+}
+
+.stat-inprogress {
+    background: linear-gradient(135deg, #92400e, #f59e0b);
+}
+
+.stat-pending {
+    background: linear-gradient(135deg, #4c1d95, #8b5cf6);
+}
+
+/* ── Progress bar ─────────────────────────────────── */
+.task-progress-bar-wrap {
+    margin-top: .5rem;
+}
+
+.task-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--bonyan-text, #111827);
+    margin-bottom: .4rem;
+}
+
+.task-progress-bar {
+    height: 10px;
+    background: var(--bonyan-border, #e5e7eb);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.task-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1e4db7, #10b981);
+    border-radius: 999px;
+    transition: width .6s ease;
+}
+
+/* ── Projects table ───────────────────────────────── */
+.projects-table-wrap {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+}
+
+.profile-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .88rem;
+}
+
+    .profile-table thead {
+        background: var(--bonyan-primary, #1e4db7);
+        color: #fff;
+    }
+
+    .profile-table th {
+        padding: .85rem 1rem;
+        text-align: right;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .profile-table td {
+        padding: .75rem 1rem;
+        border-bottom: 1px solid var(--bonyan-border, #e5e7eb);
+        color: var(--bonyan-text, #111827);
+        vertical-align: middle;
+    }
+
+    .profile-table tbody tr:hover {
+        background: var(--bonyan-bg, #f9fafb);
+    }
+
+    .profile-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+/* ── Status badges ────────────────────────────────── */
+.project-status-badge {
+    display: inline-block;
+    padding: .25rem .75rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-inprogress {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-onhold {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-cancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.status-planning {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+/* ── No projects placeholder ──────────────────────── */
+.no-projects {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--bonyan-muted, #6b7280);
+}
+
+/* ── Action buttons row ───────────────────────────── */
+.profile-actions-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1.2rem 2rem;
+}
+
+.btn-profile-action {
+    display: inline-flex;
+    align-items: center;
+    padding: .65rem 1.6rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: .9rem;
+    text-decoration: none;
+    transition: opacity .2s, transform .15s;
+    background: var(--bonyan-primary, #1e4db7);
+    color: #fff;
+}
+
+    .btn-profile-action:hover {
+        opacity: .88;
+        transform: translateY(-1px);
+        color: #fff;
+    }
+
+.btn-secondary-action {
+    background: var(--bonyan-bg, #f3f4f6);
+    color: var(--bonyan-text, #374151);
+    border: 1px solid var(--bonyan-border, #e5e7eb);
+}
+
+    .btn-secondary-action:hover {
+        color: var(--bonyan-text, #374151);
+        background: #e5e7eb;
+    }
+
+/* ── Dark mode overrides ──────────────────────────── */
+body.dark-mode .profile-header-card,
+body.dark-mode .profile-section {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+body.dark-mode .info-card {
+    background: #111827;
+    border-color: #374151;
+}
+
+body.dark-mode .info-value,
+body.dark-mode .profile-name {
+    color: #f9fafb;
+}
+
+body.dark-mode .info-label,
+body.dark-mode .profile-contact-row {
+    color: #9ca3af;
+}
+
+body.dark-mode .profile-table td {
+    color: #f3f4f6;
+    border-color: #374151;
+}
+
+body.dark-mode .profile-table tbody tr:hover {
+    background: #111827;
+}
+
+body.dark-mode .task-progress-bar {
+    background: #374151;
+}
+
+body.dark-mode .btn-secondary-action {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+    body.dark-mode .btn-secondary-action:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+    }
+
+body.dark-mode .btn-profile-action {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+    body.dark-mode .btn-profile-action:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+    }
+
+/* ── RTL fixes ────────────────────────────────────── */
+[dir="rtl"] .stat-icon {
+    right: auto;
+    left: 1rem;
+}
+
+[dir="rtl"] .profile-table th,
+[dir="rtl"] .profile-table td {
+    text-align: right;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 768px) {
+    .admin-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .profile-header-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem 1rem;
+    }
+
+    .profile-contact-row {
+        justify-content: center;
+    }
+
+    .task-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .profile-actions-row {
+        padding: 1rem;
+    }
+
+    .admin-card-body {
+        padding: 18px;
+    }
+
+    .admin-card-header {
+        padding: 20px;
+    }
+}

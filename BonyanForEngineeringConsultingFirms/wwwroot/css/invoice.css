@@ -1,0 +1,864 @@
+﻿/* ══════════════════════════════════════════════
+   invoice.css — Invoice Details page
+══════════════════════════════════════════════ */
+
+.invoice-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 30px;
+}
+
+/* ── Header ─────────────────────────────────── */
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f2f7;
+    margin-bottom: 24px;
+}
+
+.invoice-num {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary, #2C3E6B);
+}
+
+.invoice-project {
+    font-size: 0.88rem;
+    color: #666;
+    margin-top: 4px;
+}
+
+    .invoice-project i {
+        color: var(--secondary, #8B5E3C);
+        margin-left: 5px;
+    }
+
+.invoice-status-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+/* ── Amounts table ───────────────────────────── */
+.invoice-amounts {
+    background: #f8f9fc;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+}
+
+.inv-amount-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 0.9rem;
+    color: #555;
+    border-bottom: 1px dashed #e8eaf0;
+}
+
+    .inv-amount-row:last-child {
+        border-bottom: none;
+    }
+
+.inv-total {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary, #2C3E6B);
+    padding-top: 14px;
+    margin-top: 6px;
+    border-top: 2px solid #d0d5e8 !important;
+    border-bottom: none !important;
+}
+
+/* ── Dates ───────────────────────────────────── */
+.invoice-dates {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.inv-date-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.88rem;
+    color: #444;
+}
+
+.inv-date-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #888;
+}
+
+    .inv-date-label i {
+        color: var(--secondary, #8B5E3C);
+        margin-left: 4px;
+    }
+
+/* ── Payments section ───────────────────────── */
+.invoice-payments {
+    margin-top: 20px;
+}
+
+.inv-section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary, #2C3E6B);
+    margin-bottom: 12px;
+}
+
+    .inv-section-title i {
+        color: var(--secondary, #8B5E3C);
+        margin-left: 6px;
+    }
+
+/* ── Page header actions ──────────────────────────── */
+.page-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ── Material Invoice Details ────────────────────── */
+.mi-link {
+    color: var(--primary, #1B3A6B);
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+    .mi-link:hover {
+        color: var(--secondary, #C8922A);
+        text-decoration: underline;
+    }
+
+.mi-breakdown-table {
+    width: 100%;
+    max-width: 500px;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+    .mi-breakdown-table tbody tr {
+        border-bottom: 1px dashed #eef1f8;
+    }
+
+        .mi-breakdown-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+    .mi-breakdown-table td {
+        padding: 12px 0;
+        vertical-align: middle;
+    }
+
+.mi-bd-label {
+    font-weight: 700;
+    color: #4a5270;
+    font-size: 0.85rem;
+}
+
+    .mi-bd-label i {
+        color: var(--secondary, #C8922A);
+        width: 18px;
+        margin-left: 6px;
+        text-align: center;
+    }
+
+.mi-bd-value {
+    text-align: left;
+    font-weight: 700;
+    color: var(--text, #1F2937);
+    direction: ltr;
+}
+
+[dir="rtl"] .mi-bd-value {
+    text-align: left;
+}
+
+.mi-tax-label i {
+    color: #d97706;
+}
+
+.mi-tax-value {
+    color: #b45309;
+}
+
+.mi-discount-label i {
+    color: #059669;
+}
+
+.mi-discount-value {
+    color: #059669;
+}
+
+.mi-bd-net-row {
+    background: #f0faf4;
+}
+
+    .mi-bd-net-row td {
+        padding-top: 16px;
+        padding-bottom: 16px;
+        border-top: 2px solid #2d6a4f;
+    }
+
+    .mi-bd-net-row .mi-bd-label {
+        font-size: 1.05rem;
+        color: #1a3a2a;
+    }
+
+    .mi-bd-net-row .mi-bd-value {
+        font-size: 1.15rem;
+        color: #2d6a4f;
+    }
+
+.mi-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid #f0f2f8;
+}
+
+/* ══════════════════════════════════════════
+   Material Invoice Page Styles
+══════════════════════════════════════════ */
+
+.mi-page {
+    direction: rtl;
+    font-family: inherit;
+}
+
+/* Header */
+.mi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+    .mi-header h2 {
+        font-size: 1.55rem;
+        font-weight: 800;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+    }
+
+        .mi-header h2 i {
+            color: var(--secondary);
+        }
+
+/* KPI Cards */
+.mi-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.mi-kpi {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-right: 5px solid transparent;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+    .mi-kpi:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.11);
+    }
+
+    .mi-kpi.blue {
+        border-color: #1976d2;
+    }
+
+    .mi-kpi.green {
+        border-color: #388e3c;
+    }
+
+    .mi-kpi.red {
+        border-color: #d32f2f;
+    }
+
+.mi-kpi-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.mi-kpi.blue .mi-kpi-icon {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.mi-kpi.green .mi-kpi-icon {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.mi-kpi.red .mi-kpi-icon {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.mi-kpi-label {
+    font-size: 0.78rem;
+    color: #888;
+    margin-bottom: 4px;
+}
+
+.mi-kpi-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #222;
+    line-height: 1;
+}
+
+/* Filter Bar */
+.mi-filter {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+    .mi-filter select,
+    .mi-filter .btn {
+        height: 40px;
+        border-radius: 8px;
+    }
+
+/* Table Card */
+.mi-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+    overflow: hidden;
+}
+
+.mi-card-head {
+    background: linear-gradient(135deg, var(--primary) 0%, #1565c0 100%);
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+    .mi-card-head .count-badge {
+        background: rgba(255,255,255,0.25);
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+/* Table */
+.mi-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .mi-table thead th {
+        background: #f5f7fa;
+        padding: 13px 16px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #555;
+        text-align: right;
+        border-bottom: 2px solid #e8ecf0;
+        white-space: nowrap;
+    }
+
+    .mi-table tbody tr {
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.15s;
+    }
+
+        .mi-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .mi-table tbody tr:hover {
+            background: #fafbff;
+        }
+
+    .mi-table td {
+        padding: 14px 16px;
+        font-size: 0.87rem;
+        color: #333;
+        vertical-align: middle;
+    }
+
+        .mi-table td.final-col {
+            font-weight: 800;
+            font-size: 1rem;
+            color: var(--secondary);
+        }
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.status-paid {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.status-unpaid {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+.status-partial {
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+}
+
+/* Action Buttons */
+.mi-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.mi-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: all 0.15s;
+    text-decoration: none;
+}
+
+.mi-btn-view {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.mi-btn-edit {
+    background: #fff8e1;
+    color: #f57f17;
+}
+
+.mi-btn-delete {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.mi-btn:hover {
+    opacity: 0.8;
+    transform: scale(1.1);
+}
+
+/* Empty State */
+.mi-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #bbb;
+}
+
+    .mi-empty i {
+        font-size: 4rem;
+        margin-bottom: 14px;
+        display: block;
+        color: #ddd;
+    }
+
+    .mi-empty p {
+        font-size: 1rem;
+        margin: 0;
+    }
+
+/* Alert */
+.mi-alert-success {
+    background: #e8f5e9;
+    border-right: 4px solid #388e3c;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 18px;
+    color: #1b5e20;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mi-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mi-filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+        .mi-filter select {
+            width: 100% !important;
+        }
+
+    .mi-table thead th,
+    .mi-table td {
+        padding: 10px 10px;
+        font-size: 0.78rem;
+    }
+}
+
+/* ══════════════════════════════════════════════
+   MaterialInvoice/Create — extra styles
+══════════════════════════════════════════════ */
+
+/* ── Info banner (locked fields warning) ── */
+.locked-fields-banner {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .locked-fields-banner i {
+        color: #856404;
+        font-size: 1.1rem;
+    }
+
+    .locked-fields-banner span {
+        color: #856404;
+        font-weight: 600;
+        font-size: 0.92rem;
+    }
+
+/* ── Readonly (locked) input fields ── */
+.input-locked {
+    background: #f0f0f0;
+    color: #666;
+    cursor: not-allowed;
+}
+
+/* ── Invoice summary box ── */
+.invoice-summary-box {
+    background: linear-gradient(135deg, #e8f5e9, #e3f2fd);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 16px 0;
+    border: 1px solid #c8e6c9;
+}
+
+.invoice-summary-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--primary);
+    margin-bottom: 14px;
+}
+
+.invoice-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    text-align: center;
+}
+
+.invoice-summary-item {
+    /* base cell */
+}
+
+.invoice-summary-label {
+    font-size: 0.76rem;
+    color: #888;
+    margin-bottom: 4px;
+}
+
+.invoice-summary-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #333;
+}
+
+    .invoice-summary-value.tax-value {
+        color: #f57c00;
+    }
+
+    .invoice-summary-value.disc-value {
+        color: #388e3c;
+    }
+
+.invoice-summary-final {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    border: 2px solid var(--secondary);
+}
+
+    .invoice-summary-final .invoice-summary-value {
+        font-size: 1.5rem;
+        color: var(--secondary);
+    }
+
+/* ── Action buttons row ── */
+.invoice-actions {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* ── Cancel (red) button ── */
+.btn-cancel-invoice {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    background: #c0392b;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.92rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+    .btn-cancel-invoice:hover {
+        background: #a93226;
+    }
+
+/* ── Warning modal overlay ── */
+.cancel-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+    .cancel-modal-overlay.active {
+        display: flex;
+    }
+
+/* ── Warning modal box ── */
+.cancel-modal-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px 28px;
+    max-width: 440px;
+    width: 92%;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
+    text-align: center;
+}
+
+.cancel-modal-icon {
+    font-size: 3rem;
+    color: #c0392b;
+    margin-bottom: 12px;
+}
+
+.cancel-modal-title {
+    color: #c0392b;
+    margin-bottom: 10px;
+    font-size: 1.15rem;
+}
+
+.cancel-modal-body {
+    color: #555;
+    font-size: 0.93rem;
+    margin-bottom: 22px;
+}
+
+.cancel-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn-modal-back {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    color: #444;
+    cursor: pointer;
+    font-size: 0.92rem;
+}
+
+    .btn-modal-back:hover {
+        background: #e8e8e8;
+    }
+
+.btn-modal-confirm-delete {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    background: #c0392b;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.92rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+
+    .btn-modal-confirm-delete:hover {
+        background: #a93226;
+    }
+/* ══════════════════════════════════════════════
+   invoice.css — Dark Mode
+══════════════════════════════════════════════ */
+body.dark-mode .invoice-card { background: #19283F !important; box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important; }
+body.dark-mode .invoice-header { border-color: #2A3B58 !important; }
+body.dark-mode .invoice-num { color: #E8EDF5 !important; }
+body.dark-mode .invoice-project { color: #8FA3BF !important; }
+body.dark-mode .invoice-amounts { background: #0F1E30 !important; border-color: #2A3B58 !important; }
+body.dark-mode .invoice-amounts td,
+body.dark-mode .invoice-amounts th { color: #C8D6E8 !important; border-color: #2A3B58 !important; }
+body.dark-mode .invoice-total-row { background: #162438 !important; }
+body.dark-mode .invoice-notes { background: #0F1E30 !important; border-color: #2A3B58 !important; color: #8FA3BF !important; }
+body.dark-mode .invoice-items-table thead tr { background: #0F1E30 !important; }
+body.dark-mode .invoice-items-table th { color: #8FA3BF !important; border-color: #2A3B58 !important; }
+body.dark-mode .invoice-items-table tbody tr { border-color: #2A3B58 !important; }
+body.dark-mode .invoice-items-table tbody tr:hover { background: #1E3050 !important; }
+body.dark-mode .invoice-items-table td { color: #C8D6E8 !important; }
+body.dark-mode .inv-section-title { color: #E8EDF5 !important; }
+body.dark-mode .inv-label { color: #8FA3BF !important; }
+body.dark-mode .inv-value { color: #E8EDF5 !important; }
+body.dark-mode .inv-divider { border-color: #2A3B58 !important; }
+
+/* Buttons (employee dark-mode pattern) */
+body.dark-mode .btn-cancel-invoice {
+    background: #c62828 !important;
+    color: #fff !important;
+    border: 1px solid #c62828 !important;
+}
+
+    body.dark-mode .btn-cancel-invoice:hover {
+        background: #a11d1d !important;
+    }
+
+body.dark-mode .btn-modal-back {
+    background: #1a2840 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #aab8d0 !important;
+}
+
+    body.dark-mode .btn-modal-back:hover {
+        background: rgba(255, 255, 255, 0.14) !important;
+        color: #fff !important;
+    }
+
+body.dark-mode .btn-modal-confirm-delete {
+    background: #c62828 !important;
+    color: #fff !important;
+    border: 1px solid #c62828 !important;
+}
+
+    body.dark-mode .btn-modal-confirm-delete:hover {
+        background: #a11d1d !important;
+    }
+
+/* ── Dark mode: Material Invoice Details ─────────── */
+body.dark-mode .mi-link {
+    color: #8ab4f8;
+}
+
+    body.dark-mode .mi-link:hover {
+        color: #fdd663;
+    }
+
+body.dark-mode .mi-breakdown-table tbody tr {
+    border-bottom-color: rgba(255,255,255,0.06);
+}
+
+body.dark-mode .mi-bd-label {
+    color: #8899b8;
+}
+
+    body.dark-mode .mi-bd-label i {
+        color: #d4a84b;
+    }
+
+body.dark-mode .mi-bd-value {
+    color: #dde6f8;
+}
+
+body.dark-mode .mi-tax-value {
+    color: #fbbf24;
+}
+
+body.dark-mode .mi-discount-value {
+    color: #34d399;
+}
+
+body.dark-mode .mi-bd-net-row {
+    background: rgba(45,106,79,0.12);
+}
+
+    body.dark-mode .mi-bd-net-row .mi-bd-label {
+        color: #a7f3d0;
+    }
+
+    body.dark-mode .mi-bd-net-row .mi-bd-value {
+        color: #6ee7b7;
+    }
+
+    body.dark-mode .mi-bd-net-row td {
+        border-top-color: #2d6a4f;
+    }
+
+body.dark-mode .mi-actions {
+    border-top-color: rgba(255,255,255,0.08);
+}

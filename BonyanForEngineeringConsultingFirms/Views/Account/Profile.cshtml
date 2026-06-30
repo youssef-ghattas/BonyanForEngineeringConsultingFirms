@@ -1,0 +1,260 @@
+﻿@model Bonyan.PL.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "الملف الشخصي";
+}
+
+<link rel="stylesheet" href="~/css/profile.css" />
+
+<div class="profile-page">
+
+    <!-- ── Header Card ─────────────────────────── -->
+    <div class="profile-header-card">
+        <div class="profile-avatar">
+            <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="profile-header-info">
+            <h1 class="profile-name">@Model.FullName</h1>
+            <span class="profile-role-badge role-@Model.Role.ToLower()">
+                <span data-en="@Model.Role" data-ar="@(Model.Role == "Admin" ? "مدير النظام" : Model.Role == "ProjectManager" ? "مدير مشروع" : "مهندس")">
+                @(Model.Role == "Admin" ? "مدير النظام" : Model.Role == "ProjectManager" ? "مدير مشروع" : "مهندس")
+            </span>
+            </span>
+            <div class="profile-contact-row">
+                <span><i class="fas fa-envelope me-1"></i> @Model.Email</span>
+                @if (!string.IsNullOrEmpty(Model.PhoneNum))
+                {
+                    <span><i class="fas fa-phone me-1"></i> @Model.PhoneNum</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Model.IsEmployee)
+    {
+        <!-- ── Info Grid ────────────────────────────── -->
+        <div class="profile-section">
+            <h2 class="profile-section-title">
+                <i class="fas fa-info-circle me-2"></i>
+                <span data-lang="personal_info">المعلومات الشخصية</span>
+            </h2>
+            <div class="profile-info-grid">
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-id-card me-2"></i><span data-lang="ssn">الرقم القومي</span></div>
+                    <div class="info-value">@Model.SSN</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-venus-mars me-2"></i><span data-lang="gender">الجنس</span></div>
+                    <div class="info-value"><span data-en="@Model.Gender" data-ar="@(Model.Gender?.ToString() == "Male" ? "ذكر" : "أنثى")">@(Model.Gender?.ToString() == "Male" ? "ذكر" : "أنثى")</span></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-hard-hat me-2"></i><span data-lang="specialization">التخصص</span></div>
+                    <div class="info-value">
+                        <span data-en="@(Model.Specialization?.ToString())" data-ar="@(Model.Specialization?.ToString() switch {
+                            "Civil"         => "هندسة مدنية",
+                            "Mechanical"    => "هندسة ميكانيكية",
+                            "Electrical"    => "هندسة كهربائية",
+                            "Architectural" => "هندسة معمارية",
+                            _               => (Model.Specialization?.ToString() ?? "")
+                        })">
+                            @(Model.Specialization?.ToString() switch {
+                                "Civil"         => "هندسة مدنية",
+                                "Mechanical"    => "هندسة ميكانيكية",
+                                "Electrical"    => "هندسة كهربائية",
+                                "Architectural" => "هندسة معمارية",
+                                _               => Model.Specialization?.ToString()
+                            })
+                        </span>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-calendar-alt me-2"></i><span data-lang="hiredate">تاريخ التعيين</span></div>
+                    <div class="info-value">@Model.HireDate?.ToString("dd/MM/yyyy")</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-briefcase me-2"></i><span data-lang="job_title">المسمى الوظيفي</span></div>
+                    <div class="info-value">
+                        <span data-en="@Model.Role" data-ar="@(Model.Role == "ProjectManager" ? "مدير مشروع" : "مهندس")">@(Model.Role == "ProjectManager" ? "مدير مشروع" : "مهندس")</span>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label"><i class="fas fa-project-diagram me-2"></i><span data-lang="project_count">عدد المشاريع</span></div>
+                    <div class="info-value">@Model.Projects.Count</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Task Stats ───────────────────────────── -->
+        <div class="profile-section">
+            <h2 class="profile-section-title">
+                <i class="fas fa-tasks me-2"></i>
+                <span data-lang="task_summary">ملخص المهام</span>
+            </h2>
+            <div class="task-stats-grid">
+                <div class="stat-card stat-total">
+                    <div class="stat-number">@Model.TotalTasks</div>
+                    <div class="stat-label" data-lang="total_tasks">إجمالي المهام</div>
+                    <i class="fas fa-list stat-icon"></i>
+                </div>
+                <div class="stat-card stat-completed">
+                    <div class="stat-number">@Model.CompletedTasks</div>
+                    <div class="stat-label" data-lang="completed_f">مكتملة</div>
+                    <i class="fas fa-check-circle stat-icon"></i>
+                </div>
+                <div class="stat-card stat-inprogress">
+                    <div class="stat-number">@Model.InProgressTasks</div>
+                    <div class="stat-label" data-lang="in_progress">قيد التنفيذ</div>
+                    <i class="fas fa-spinner stat-icon"></i>
+                </div>
+                <div class="stat-card stat-pending">
+                    <div class="stat-number">@Model.PendingTasks</div>
+                    <div class="stat-label" data-lang="pending_f">معلقة</div>
+                    <i class="fas fa-clock stat-icon"></i>
+                </div>
+            </div>
+
+            @if (Model.TotalTasks > 0)
+            {
+                <div class="task-progress-bar-wrap">
+                    <div class="task-progress-label">
+                        <span data-lang="completion_rate">نسبة الإنجاز</span>
+                        <span>@((int)((double)Model.CompletedTasks / Model.TotalTasks * 100))%</span>
+                    </div>
+                    <div class="task-progress-bar">
+                        <div class="task-progress-fill"
+                             style="width: @((int)((double)Model.CompletedTasks / Model.TotalTasks * 100))%">
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- ── Projects Table ──────────────────────── -->
+        <div class="profile-section">
+            <h2 class="profile-section-title">
+                <i class="fas fa-project-diagram me-2"></i>
+                <span data-lang="assigned_projects">المشاريع المُسندة</span>
+            </h2>
+            @if (Model.Projects.Any())
+            {
+                <div class="projects-table-wrap">
+                    <table class="profile-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th data-lang="project_name">اسم المشروع</th>
+                                <th data-lang="location">الموقع</th>
+                                <th data-lang="client">العميل</th>
+                                <th data-lang="start_date">تاريخ البدء</th>
+                                <th data-lang="end_date">تاريخ الانتهاء</th>
+                                <th data-lang="status">الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Projects.Count; i++)
+                            {
+                                var p = Model.Projects[i];
+                                <tr>
+                                    <td>@(i + 1)</td>
+                                    <td><strong>@p.ProjectName</strong></td>
+                                    <td>@(p.Location ?? "—")</td>
+                                    <td>@(p.ClientName ?? "—")</td>
+                                    <td>@(p.StartDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>@(p.EndDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>
+                                        @{
+                                            string pStatusAr = p.Status switch {
+                                                "Completed"  => "مكتمل",
+                                                "InProgress" => "قيد التنفيذ",
+                                                "OnHold"     => "معلق",
+                                                "Cancelled"  => "ملغي",
+                                                _            => "تخطيط"
+                                            };
+                                        }
+                                        <span class="project-status-badge @p.StatusClass" data-en="@p.Status" data-ar="@pStatusAr">
+                                            @pStatusAr
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="no-projects">
+                    <i class="fas fa-folder-open fa-3x mb-3"></i>
+                    <p data-lang="no_assigned_projects">لا توجد مشاريع مُسندة بعد</p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- ── Admin Info ───────────────────────────── -->
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <div class="admin-card-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="admin-card-header-text">
+                    <h3 data-lang="admin_info">معلومات المدير</h3>
+                    <p data-lang="full_admin_permission">مدير النظام الكامل — صلاحية غير محدودة</p>
+                </div>
+            </div>
+            <div class="admin-card-body">
+                <div class="admin-info-grid">
+                    <div class="admin-info-item">
+                        <div class="admin-info-icon bg-email">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="admin-info-content">
+                            <span class="admin-info-label" data-lang="email">البريد الإلكتروني</span>
+                            <span class="admin-info-value">@Model.Email</span>
+                        </div>
+                    </div>
+                    <div class="admin-info-item">
+                        <div class="admin-info-icon bg-phone">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="admin-info-content">
+                            <span class="admin-info-label" data-lang="phone_number">رقم الهاتف</span>
+                            <span class="admin-info-value">@(string.IsNullOrEmpty(Model.PhoneNum) ? "—" : Model.PhoneNum)</span>
+                        </div>
+                    </div>
+                    <div class="admin-info-item">
+                        <div class="admin-info-icon bg-shield">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="admin-info-content">
+                            <span class="admin-info-label" data-lang="permission">الصلاحية</span>
+                            <span class="admin-info-value" data-lang="full_admin_permission">مدير النظام الكامل</span>
+                        </div>
+                    </div>
+                    <div class="admin-info-item">
+                        <div class="admin-info-icon bg-calendar">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="admin-info-content">
+                            <span class="admin-info-label" data-lang="account_created">تاريخ الإنشاء</span>
+                            <span class="admin-info-value">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ── Quick Actions ────────────────────────── -->
+    <div class="profile-section profile-actions-row">
+        <a asp-controller="Account" asp-action="ChangePassword" class="btn-profile-action">
+            <i class="fas fa-lock me-2"></i>
+            <span data-lang="change_password">تغيير كلمة المرور</span>
+        </a>
+        <a asp-controller="Home" asp-action="Index" class="btn-profile-action btn-secondary-action">
+            <i class="fas fa-home me-2"></i>
+            <span data-lang="home">الرئيسية</span>
+        </a>
+    </div>
+
+</div>

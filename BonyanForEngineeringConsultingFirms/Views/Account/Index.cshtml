@@ -1,0 +1,342 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+@using Bonyan.DAL.Enums
+
+<link rel="stylesheet" href="~/css/dashboard.css" />
+
+<!-- Page Header -->
+<div class="page-header">
+    <h2>
+        <span data-lang="dashboard">لوحة التحكم</span>
+    </h2>
+    <p>
+        <span data-lang="welcome">مرحباً بك في بُنيَان</span> —
+        @(Context.Session.GetString("FullName") ?? "")
+    </p>
+</div>
+
+<!-- Stat Cards -->
+<div class="stats-grid">
+    <a class="stat-card" asp-controller="Employee" asp-action="Index">
+        <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <h3>@ViewBag.EmployeeCount</h3>
+            <p data-lang="employees">الموظفون</p>
+        </div>
+    </a>
+    <a class="stat-card" asp-controller="Project" asp-action="Index">
+        <div class="stat-icon gold"><i class="fas fa-project-diagram"></i></div>
+        <div class="stat-info">
+            <h3>@ViewBag.ProjectCount</h3>
+            <p data-lang="projects">المشاريع</p>
+        </div>
+    </a>
+    <a class="stat-card" asp-controller="Task" asp-action="Index">
+        <div class="stat-icon green"><i class="fas fa-tasks"></i></div>
+        <div class="stat-info">
+            <h3>@ViewBag.TaskCount</h3>
+            <p data-lang="tasks">المهام</p>
+        </div>
+    </a>
+    <a class="stat-card" asp-controller="Invoice" asp-action="Index">
+        <div class="stat-icon red"><i class="fas fa-file-invoice-dollar"></i></div>
+        <div class="stat-info">
+            <h3>@ViewBag.InvoiceCount</h3>
+            <p data-lang="invoices">الفواتير</p>
+        </div>
+    </a>
+    <a class="stat-card" asp-controller="Document" asp-action="Index">
+        <div class="stat-icon purple"><i class="fas fa-file-alt"></i></div>
+        <div class="stat-info">
+            <h3>@ViewBag.DocumentCount</h3>
+            <p data-lang="documents">المستندات</p>
+        </div>
+    </a>
+    <a class="stat-card" asp-controller="Material" asp-action="Index">
+        <div class="stat-icon teal"><i class="fas fa-boxes"></i></div>
+        <div class="stat-info">
+            <h3>@ViewBag.MaterialCount</h3>
+            <p data-lang="materials">المواد</p>
+        </div>
+    </a>
+    <a class="stat-card" asp-controller="Supplier" asp-action="Index">
+        <div class="stat-icon orange"><i class="fas fa-truck"></i></div>
+        <div class="stat-info">
+            <h3>@ViewBag.SupplierCount</h3>
+            <p data-lang="suppliers">الموردون</p>
+        </div>
+    </a>
+    <a class="stat-card" asp-controller="SiteVisit" asp-action="Index">
+        <div class="stat-icon dark"><i class="fas fa-hard-hat"></i></div>
+        <div class="stat-info">
+            <h3>@ViewBag.SiteVisitCount</h3>
+            <p data-lang="sitevisits">زيارات الموقع</p>
+        </div>
+    </a>
+</div>
+
+<!-- Row 1: Recent Projects + Quick Actions -->
+<div class="dashboard-grid">
+
+    <!-- Recent Projects -->
+    <div class="bonyan-card">
+        <div class="bonyan-card-header">
+            <h5>
+                <i class="fas fa-project-diagram"></i>
+                <span data-lang="recent_projects">أحدث المشاريع</span>
+            </h5>
+            <a asp-controller="Project" asp-action="Index" class="view-all-link"
+               data-lang="view_all">عرض الكل</a>
+        </div>
+        <table class="recent-table">
+            <thead>
+                <tr>
+                    <th data-lang="project_name">اسم المشروع</th>
+                    <th data-lang="client">العميل</th>
+                    <th data-lang="status">الحالة</th>
+                    <th data-lang="budget">الميزانية</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (ViewBag.RecentProjects != null)
+                {
+                    foreach (var p in ViewBag.RecentProjects)
+                    {
+                        string badgeClass = p.Status switch
+                        {
+                            ProjectStatus.Planning => "badge-planning",
+                            ProjectStatus.InProgress => "badge-inprogress",
+                            ProjectStatus.Completed => "badge-completed",
+                            ProjectStatus.OnHold => "badge-onhold",
+                            ProjectStatus.Cancelled => "badge-cancelled",
+                            _ => "badge-planning"
+                        };
+                        string statusAr = p.Status switch
+                        {
+                            ProjectStatus.Planning => "تخطيط",
+                            ProjectStatus.InProgress => "جاري",
+                            ProjectStatus.Completed => "مكتمل",
+                            ProjectStatus.OnHold => "موقوف",
+                            ProjectStatus.Cancelled => "ملغي",
+                            _ => p.Status.ToString()
+                        };
+                        <tr>
+                            <td><strong>@p.ProjectName</strong></td>
+                            <td>@(p.Client_Name ?? "—")</td>
+                            <td>
+                                <span class="badge-status @badgeClass"
+                                      data-en="@p.Status.ToString()"
+                                      data-ar="@statusAr">
+                                    @statusAr
+                                </span>
+                            </td>
+                            <td>@(p.Budget.HasValue? p.Budget.Value.ToString("N0") + " ج.م" : "—")</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" style="text-align:center; color:#aaa; padding:20px">
+                            <span data-lang="no_data">لا توجد بيانات</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bonyan-card">
+        <div class="bonyan-card-header">
+            <h5>
+                <i class="fas fa-bolt"></i>
+                <span data-lang="quick_actions">إجراءات سريعة</span>
+            </h5>
+        </div>
+        <div class="quick-actions">
+            <a asp-controller="Employee" asp-action="Create" class="quick-action-btn blue">
+                <i class="fas fa-user-plus"></i>
+                <span data-lang="add_employee">إضافة موظف</span>
+            </a>
+            <a asp-controller="Project" asp-action="Create" class="quick-action-btn gold">
+                <i class="fas fa-plus-circle"></i>
+                <span data-lang="add_project">إضافة مشروع</span>
+            </a>
+            <a asp-controller="Task" asp-action="Create" class="quick-action-btn green">
+                <i class="fas fa-clipboard-check"></i>
+                <span data-lang="add_task">إضافة مهمة</span>
+            </a>
+            <a asp-controller="Invoice" asp-action="Create" class="quick-action-btn purple">
+                <i class="fas fa-file-invoice"></i>
+                <span data-lang="add_invoice">إضافة فاتورة</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2: Recent Tasks + Project Status + Recent Employees -->
+<div class="dashboard-grid-3">
+
+    <!-- Recent Tasks -->
+    <div class="bonyan-card">
+        <div class="bonyan-card-header">
+            <h5>
+                <i class="fas fa-tasks"></i>
+                <span data-lang="recent_tasks">أحدث المهام</span>
+            </h5>
+            <a asp-controller="Task" asp-action="Index" class="view-all-link"
+               data-lang="view_all">عرض الكل</a>
+        </div>
+        <ul class="activity-list">
+            @if (ViewBag.RecentTasks != null)
+            {
+                foreach (var t in ViewBag.RecentTasks)
+                {
+                    string dotColor = t.Status switch
+                    {
+                        TasksStatus.Pending => "gold",
+                        TasksStatus.InProgress => "blue",
+                        TasksStatus.Completed => "green",
+                        TasksStatus.Cancelled => "red",
+                        _ => "blue"
+                    };
+                    string statusAr = t.Status switch
+                    {
+                        TasksStatus.Pending => "معلق",
+                        TasksStatus.InProgress => "جاري",
+                        TasksStatus.UnderReview => "قيد المراجعة",
+                        TasksStatus.Completed => "مكتمل",
+                        TasksStatus.Cancelled => "ملغي",
+                        _ => t.Status.ToString()
+                    };
+                    <li class="activity-item">
+                        <div class="activity-dot @dotColor">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="activity-text">
+                            <p>@t.Task_Name</p>
+                            <span>@statusAr</span>
+                        </div>
+                    </li>
+                }
+            }
+            else
+            {
+                <li style="text-align:center; color:#aaa; padding:20px; font-size:0.88rem">
+                    <span data-lang="no_data">لا توجد بيانات</span>
+                </li>
+            }
+        </ul>
+    </div>
+
+    <!-- Project Status Chart (Progress bars) -->
+    <div class="bonyan-card">
+        <div class="bonyan-card-header">
+            <h5>
+                <i class="fas fa-chart-pie"></i>
+                <span data-lang="project_status">حالة المشاريع</span>
+            </h5>
+        </div>
+        <div class="progress-item">
+            <div class="progress-label">
+                <span data-lang="status_inprogress">جاري التنفيذ</span>
+                <span>@ViewBag.ProjectsInProgress</span>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill"
+                     style="width:@(ViewBag.ProjectCount > 0
+                                                 ? (ViewBag.ProjectsInProgress * 100 / ViewBag.ProjectCount)
+                                                 : 0)%;
+                            background: linear-gradient(90deg,#C8922A,#e6a832)">
+                </div>
+            </div>
+        </div>
+        <div class="progress-item">
+            <div class="progress-label">
+                <span data-lang="status_completed">مكتمل</span>
+                <span>@ViewBag.ProjectsCompleted</span>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill"
+                     style="width:@(ViewBag.ProjectCount > 0
+                                                 ? (ViewBag.ProjectsCompleted * 100 / ViewBag.ProjectCount)
+                                                 : 0)%;
+                            background: linear-gradient(90deg,#28A745,#34ce57)">
+                </div>
+            </div>
+        </div>
+        <div class="progress-item">
+            <div class="progress-label">
+                <span data-lang="status_planning">تخطيط</span>
+                <span>@ViewBag.ProjectsPlanning</span>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill"
+                     style="width:@(ViewBag.ProjectCount > 0
+                                                 ? (ViewBag.ProjectsPlanning * 100 / ViewBag.ProjectCount)
+                                                 : 0)%;
+                            background: linear-gradient(90deg,#1B3A6B,#2a5298)">
+                </div>
+            </div>
+        </div>
+        <div class="progress-item">
+            <div class="progress-label">
+                <span data-lang="status_onhold">موقوف</span>
+                <span>@ViewBag.ProjectsOnHold</span>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill"
+                     style="width:@(ViewBag.ProjectCount > 0
+                                                 ? (ViewBag.ProjectsOnHold * 100 / ViewBag.ProjectCount)
+                                                 : 0)%;
+                            background: linear-gradient(90deg,#6f42c1,#8e5cf7)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Employees -->
+    <div class="bonyan-card">
+        <div class="bonyan-card-header">
+            <h5>
+                <i class="fas fa-users"></i>
+                <span data-lang="recent_employees">أحدث الموظفين</span>
+            </h5>
+            <a asp-controller="Employee" asp-action="Index" class="view-all-link"
+               data-lang="view_all">عرض الكل</a>
+        </div>
+        <ul class="activity-list">
+            @if (ViewBag.RecentEmployees != null)
+            {
+                foreach (var e in ViewBag.RecentEmployees)
+                {
+                    string specAr = e.Specialization switch
+                    {
+                        Specialization.Civil => "مدني",
+                        Specialization.Mechanical => "ميكانيكا",
+                        Specialization.Electrical => "كهرباء",
+                        Specialization.Architectural => "معماري",
+                        _ => e.Specialization.ToString()
+                    };
+                    <li class="activity-item">
+                        <div class="activity-dot blue">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="activity-text">
+                            <p>@e.FirstName @e.LastName</p>
+                            <span>@specAr</span>
+                        </div>
+                    </li>
+                }
+            }
+            else
+            {
+                <li style="text-align:center; color:#aaa; padding:20px; font-size:0.88rem">
+                    <span data-lang="no_data">لا توجد بيانات</span>
+                </li>
+            }
+        </ul>
+    </div>
+</div>

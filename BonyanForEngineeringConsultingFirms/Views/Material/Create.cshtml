@@ -1,0 +1,498 @@
+﻿@* Views/Material/Create.cshtml *@
+@model Bonyan.DAL.Models.Material
+@{
+    ViewData["Title"] = "إضافة مادة";
+    var allSuppliers = ViewBag.AllSuppliers as List<Bonyan.DAL.Models.Supplier> ?? new();
+    var inventories = ViewBag.Inventories as List<Bonyan.DAL.Models.Inventory> ?? new();
+}
+
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+<link rel="stylesheet" href="~/css/material.css" />
+
+@if (ViewBag.ShowSuccess == true)
+{
+    <div style="background:#d1e7dd; color:#146c43; border-radius:10px;
+                        padding:14px 18px; margin-bottom:16px; font-weight:600">
+        <i class="fas fa-check-circle"></i> تم الحفظ بنجاح
+    </div>
+}
+
+@if (ViewBag.DebugLog != null)
+{
+    <div style="background:#1e1e2e; color:#cdd6f4; border-radius:12px;
+                        padding:20px 24px; margin-bottom:22px; font-family:monospace;
+                        font-size:0.83rem; line-height:1.9; direction:ltr; text-align:left">
+        <div style="color:#89b4fa; font-weight:700; font-size:1rem; margin-bottom:12px">
+            🔍 Debug Log
+        </div>
+        @foreach (var log in ViewBag.DebugLog as List<string>)
+        {
+            string color = log.StartsWith("✅") ? "#a6e3a1"
+            : log.StartsWith("❌") ? "#f38ba8"
+            : log.StartsWith("⚠️") ? "#fab387"
+            : "#cdd6f4";
+            <div style="color:@color; padding:1px 0">@log</div>
+        }
+    </div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div style="background:#fde8e8; border:1px solid #f5c6cb; border-radius:10px;
+                        padding:14px 18px; margin-bottom:18px; color:#842029;">
+        <strong><i class="fas fa-exclamation-triangle"></i> يوجد أخطاء في النموذج:</strong>
+        <ul style="margin:8px 0 0 0; padding-right:20px">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li style="font-size:0.88rem">@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-plus-circle" style="color:var(--secondary)"></i>
+            <span data-lang="add_material_new">إضافة مادة جديدة</span>
+        </h2>
+    </div>
+    <a asp-action="Index" class="btn-bonyan-primary">
+        <i class="fas fa-arrow-right"></i> <span data-lang="back_to_materials">رجوع للمواد</span>
+    </a>
+</div>
+
+<div class="form-card">
+    <div class="form-card-header">
+        <i class="fas fa-cube"></i>
+        <h4 data-lang="material_data">بيانات المادة</h4>
+    </div>
+    <div class="form-card-body">
+        <form asp-action="Create" method="post" id="matForm">
+            @Html.AntiForgeryToken()
+
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="inventoryDecision" id="hdnDecision" value="ok" />
+            <input type="hidden" name="secondaryInventoryId" id="hdnSecondaryInv" value="" />
+            <input type="hidden" name="splitQtyPrimary" id="hdnSplitPrimary" value="" />
+            <input type="hidden" name="splitQtySecondary" id="hdnSplitSecondary" value="" />
+
+            <div class="form-section-title" data-lang="material_data">بيانات المادة</div>
+            <div class="form-grid-2">
+
+                <div class="form-group">
+                    <label data-lang="material_type">نوع المادة</label> <span style="color:red">*</span>
+                    <select name="MaterialName" id="matTypeSelect" class="form-control"
+                            required onchange="onMatTypeChange(this.value)">
+                        <option value="" data-lang="choose_material_type_option">-- اختر نوع المادة --</option>
+                        <option value="Steel">حديد تسليح (Steel)</option>
+                        <option value="Sand">رمل (Sand)</option>
+                        <option value="Cement">أسمنت (Cement)</option>
+                        <option value="Bricks">طوب (Bricks)</option>
+                        <option value="Others" data-lang="cat_other">أخرى</option>
+                    </select>
+                    <span class="text-danger" id="matNameError"></span>
+                </div>
+
+                <div class="form-group" id="customNameWrap" style="display:none">
+                    <label data-lang="custom_material_name">اسم المادة المخصص</label> <span style="color:red">*</span>
+                    <input type="text" id="customName" class="form-control"
+                           placeholder="مثال: رخام، زجاج..." />
+                </div>
+
+                <div class="form-group">
+                    <label data-lang="measurement_unit">وحدة القياس</label>
+                    <select asp-for="Unit" class="form-control">
+                        <option value="" data-lang="select">-- اختر --</option>
+                        <option value="Kg">كيلوجرام (Kg)</option>
+                        <option value="Ton">طن (Ton)</option>
+                        <option value="Meter">متر</option>
+                        <option value="SquareMeter">متر مربع</option>
+                        <option value="CubicMeter">متر مكعب</option>
+                        <option value="Piece">قطعة</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label data-lang="unit_price">سعر الوحدة (ج.م)</label>
+                    <input asp-for="UnitPrice" type="number" step="0.01" min="0"
+                           class="form-control" id="unitPrice" placeholder="0.00"
+                           oninput="calcTotal()" />
+                </div>
+
+                <div class="form-group">
+                    <label data-lang="quantity_required">الكمية المطلوبة</label>
+                    <input asp-for="Quantity" type="number" step="0.001" min="0"
+                           class="form-control" id="qty" placeholder="0.000"
+                           oninput="calcTotal()" />
+                </div>
+
+                <div class="form-group">
+                    <label data-lang="total_egp">الإجمالي (ج.م)</label>
+                    <input type="text" id="totalDisplay" readonly class="form-control"
+                           style="background:#f0f7ff; font-weight:700; color:var(--secondary)"
+                           value="0.00" />
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <span data-lang="volume_factor">معامل الحجم (م³/وحدة)</span>
+                        <span style="font-size:0.73rem; color:#888; font-weight:400" data-lang="volume_factor_hint">
+                            — لحساب سعة المخزن
+                        </span>
+                    </label>
+                    <input asp-for="VolumeFactorM3" type="number" step="0.0001" min="0"
+                           class="form-control" id="volFactor" placeholder="1.0000" />
+                    <div id="volHint" style="font-size:0.76rem; color:#888; margin-top:3px"></div>
+                </div>
+
+                <div class="form-group">
+                    <label data-lang="target_warehouse">المخزن المستهدف</label>
+                    <select asp-for="TargetInventoryID" class="form-control">
+                        <option value="" data-lang="choose_warehouse_option">-- اختر المخزن --</option>
+                        @foreach (var inv in inventories)
+                        {
+                            <option value="@inv.InventoryID">
+                                @inv.InventoryName
+                                @(!string.IsNullOrEmpty(inv.Location) ? $"({inv.Location})" : "")
+                                @(inv.Capacity.HasValue ? $"— {inv.Capacity.Value:N0} م³" : "")
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group" style="grid-column:1/-1">
+                    <label data-lang="description">الوصف</label>
+                    <textarea asp-for="Description" class="form-control" rows="2"
+                              placeholder="وصف مختصر..."></textarea>
+                </div>
+
+            </div>
+
+            <!-- Supplier section -->
+            <div style="margin:20px 0">
+                <label style="font-weight:700; color:var(--primary); font-size:1rem;
+                               display:block; margin-bottom:8px">
+                    <i class="fas fa-truck"></i> <span data-lang="choose_supplier">اختر المورد</span>
+                    <span style="font-size:0.78rem; color:#888; font-weight:400" data-lang="suppliers_filtered_hint">
+                        — يُعرض الموردون الذين يورّدون هذه المادة فقط
+                    </span>
+                </label>
+                <div id="supplierContainer">
+                    <div style="color:#aaa; font-size:0.88rem; padding:14px;
+                                background:#f9f9f9; border-radius:8px; border:1px dashed #ddd">
+                        <i class="fas fa-info-circle"></i> <span data-lang="select_material_type_first">اختر نوع المادة أولاً</span>
+                    </div>
+                </div>
+                <input type="hidden" asp-for="PreferredSupplierID" id="preferredSupplierID" />
+            </div>
+
+            <!-- Auto-invoice notice -->
+            <div id="invoiceNotice"
+                 style="display:none; background:linear-gradient(135deg,#e8f5e9,#e3f2fd);
+                        border-radius:10px; padding:18px; margin:16px 0;
+                        border:1px solid #c8e6c9">
+                <div style="font-weight:700; color:var(--primary); margin-bottom:10px; font-size:0.95rem">
+                    <i class="fas fa-file-invoice" style="color:var(--secondary)"></i>
+                    <span data-lang="auto_invoice_notice">✓ سيتم إنشاء فاتورة تلقائياً عند الحفظ</span>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(3,1fr);
+                            gap:10px; font-size:0.85rem">
+                    <div><span style="color:#888">المادة: </span><strong id="notMat">—</strong></div>
+                    <div><span style="color:#888">الحساب: </span><strong id="notCalc">—</strong></div>
+                    <div>
+                        <span style="color:#888">الإجمالي: </span>
+                        <strong id="notTotal" style="color:var(--secondary)">—</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a asp-action="Index" class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+                </a>
+                <button type="button" class="btn-bonyan-secondary" onclick="interceptSubmit(event)">
+                    <i class="fas fa-save"></i> <span data-lang="save_material_invoice">حفظ المادة وإنشاء الفاتورة</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <div id="capModal" style="display:none; position:fixed; inset:0;
+             background:rgba(0,0,0,.55); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:16px; padding:32px 28px;
+                        max-width:520px; width:94%; box-shadow:0 8px 40px rgba(0,0,0,.25);
+                        direction:rtl; text-align:right; position:relative;">
+            <div id="cmIcon" style="font-size:2.4rem; text-align:center; margin-bottom:8px;"></div>
+            <h4 id="cmTitle" style="margin:0 0 8px; color:#2C3E6B; font-size:1.1rem; text-align:center;"></h4>
+            <p id="cmBody" style="margin:0 0 18px; color:#555; font-size:0.9rem; line-height:1.7; text-align:center;"></p>
+
+            <div id="cmSecSection" style="display:none; margin-bottom:18px;">
+                <label style="font-weight:600; font-size:0.88rem; color:#444; margin-bottom:6px; display:block;">
+                    اختر المخزن البديل:
+                </label>
+                <select id="cmSecSelect" class="form-control" style="width:100%;"></select>
+                <div id="cmSecHint" style="font-size:0.8rem; color:#e53935; margin-top:5px;"></div>
+            </div>
+
+            <div id="cmActions" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════
+        //  Keep ALL original functions exactly as they were
+        // ═══════════════════════════════════════════════════
+        var allSuppliers = [
+            @foreach (var s in allSuppliers)
+            {
+                            @Html.Raw($"{{id:{s.SupplierID},name:'{s.SupplierName.Replace("'", "\\'")}',phone:'{s.Phone ?? ""}',types:'{s.SuppliedMaterialTypes ?? ""}'}},")
+            }
+        ];
+
+        var volFactors = { Steel: 0.55, Sand: 1.0, Cement: 0.85, Bricks: 1.25, Others: 1.0 };
+        var volHints = {
+            Steel:  'حديد: 1 طن ≈ 0.55 م³',
+            Sand:   'رمل: 1 م³ = 1.0 م³',
+            Cement: 'أسمنت: 1 طن ≈ 0.85 م³',
+            Bricks: 'طوب: 1000 قطعة ≈ 1.25 م³',
+            Others: 'أدخل المعامل المناسب'
+        };
+
+        function onMatTypeChange(val) {
+            document.getElementById('customNameWrap').style.display = val === 'Others' ? 'block' : 'none';
+            document.getElementById('volFactor').value = (volFactors[val] || 1.0).toFixed(4);
+            document.getElementById('volHint').textContent = volHints[val] || '';
+            renderSuppliers(val);
+            updateNotice();
+        }
+
+        function renderSuppliers(matType) {
+            var container = document.getElementById('supplierContainer');
+            document.getElementById('preferredSupplierID').value = '';
+
+            if (!matType) {
+                container.innerHTML = '<div style="color:#aaa;font-size:0.88rem;padding:14px;background:#f9f9f9;border-radius:8px;border:1px dashed #ddd"><i class="fas fa-info-circle"></i> اختر نوع المادة أولاً</div>';
+                return;
+            }
+
+            var matching = allSuppliers.filter(function (s) {
+                if (!s.types) return false;
+                return s.types.split(',').some(function (t) {
+                    t = t.trim();
+                    if (matType === 'Others') return t === 'Others' || t.startsWith('Others:');
+                    return t === matType;
+                });
+            });
+
+            if (matching.length === 0) {
+                container.innerHTML = '<div style="color:#c62828;font-size:0.88rem;padding:14px;background:#fff3f3;border-radius:8px;border:1px solid #ffcdd2"><i class="fas fa-exclamation-triangle"></i> لا يوجد موردون لهذه المادة. يرجى إضافة مورد من صفحة الموردين.</div>';
+                return;
+            }
+
+            var html = '<div style="display:flex;flex-direction:column;gap:8px">';
+            matching.forEach(function (s) {
+                html += '<label class="supplier-card" style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#fff;border:2px solid var(--secondary);border-radius:10px;cursor:pointer;transition:all 0.2s">'
+                    + '<input type="radio" name="_supRadio" value="' + s.id + '" onchange="selectSupplier(' + s.id + ',this)" style="width:18px;height:18px;accent-color:var(--primary)">'
+                    + '<div><div style="font-weight:700;color:var(--primary);font-size:0.95rem">' + s.name + '</div>'
+                    + (s.phone ? '<div style="font-size:0.78rem;color:#888"><i class="fas fa-phone"></i> ' + s.phone + '</div>' : '')
+                    + '</div></label>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function selectSupplier(id, radio) {
+            document.getElementById('preferredSupplierID').value = id;
+            document.querySelectorAll('.supplier-card').forEach(function (c) {
+                c.style.borderColor = '#e8e8e8';
+                c.style.background = '#fff';
+            });
+            radio.closest('.supplier-card').style.borderColor = 'var(--secondary)';
+            radio.closest('.supplier-card').style.background = '#e8f5e9';
+            updateNotice();
+        }
+
+        function calcTotal() {
+            var p = parseFloat(document.getElementById('unitPrice').value) || 0;
+            var q = parseFloat(document.getElementById('qty').value) || 0;
+            var t = p * q;
+            document.getElementById('totalDisplay').value = t.toFixed(2);
+            updateNotice();
+            return t;
+        }
+
+        function updateNotice() {
+            var suppId  = document.getElementById('preferredSupplierID').value;
+            var qty     = parseFloat(document.getElementById('qty').value) || 0;
+            var price   = parseFloat(document.getElementById('unitPrice').value) || 0;
+            var matType = document.getElementById('matTypeSelect').value;
+            var total   = qty * price;
+            var notice  = document.getElementById('invoiceNotice');
+            if (suppId && qty > 0 && price > 0 && matType) {
+                notice.style.display = 'block';
+                document.getElementById('notMat').textContent   = matType;
+                document.getElementById('notCalc').textContent  = qty.toFixed(3) + ' × ' + price.toFixed(2) + ' ج.م';
+                document.getElementById('notTotal').textContent = total.toFixed(2) + ' ج.م';
+            } else {
+                notice.style.display = 'none';
+            }
+        }
+
+        // ═══════════════════════════════════════════════════
+        //  NEW: intercept submit → capacity check first
+        // ═══════════════════════════════════════════════════
+        function interceptSubmit(e) {
+            // Run original name validation first
+            var matType = document.getElementById('matTypeSelect').value;
+            if (matType === 'Others') {
+                var custom = document.getElementById('customName').value.trim();
+                if (!custom) { alert('يرجى كتابة اسم المادة الأخرى'); return; }
+                document.getElementById('matTypeSelect').value = custom;
+            }
+
+            var invSel = document.querySelector('[name="TargetInventoryID"]');
+            var invId  = invSel ? invSel.value : '';
+            var qty    = parseFloat(document.getElementById('qty').value) || 0;
+            var vol    = parseFloat(document.getElementById('volFactor').value) || 1.0;
+
+            // No inventory selected or no quantity → submit normally
+            if (!invId || qty <= 0) {
+                document.getElementById('matForm').submit();
+                return;
+            }
+
+            // Call the capacity check API
+            fetch('/Material/CheckInventoryCapacity?inventoryId=' + invId + '&quantity=' + qty + '&volumeFactor=' + vol)
+                .then(function(r){ return r.json(); })
+                .then(function(result){
+                    if (result.status === 'ok') {
+                        document.getElementById('hdnDecision').value = 'ok';
+                        document.getElementById('matForm').submit();
+                    } else if (result.status === 'full') {
+                        showFullModal(result, invId, qty, vol);
+                    } else if (result.status === 'partial') {
+                        showPartialModal(result, invId, qty, vol);
+                    } else {
+                        document.getElementById('matForm').submit();
+                    }
+                })
+                .catch(function(){ document.getElementById('matForm').submit(); });
+        }
+
+        // ── FULL modal (zero capacity) ─────────────────────
+        function showFullModal(result, invId, qty, vol) {
+            document.getElementById('cmIcon').textContent  = '⛔';
+            document.getElementById('cmTitle').textContent = 'المخزن ممتلئ!';
+            document.getElementById('cmBody').innerHTML =
+                'لا توجد مساحة متاحة في مخزن <strong>' + result.inventoryName + '</strong>.<br>' +
+                'الحجم المطلوب: <strong>' + result.neededM3.toFixed(2) + ' م³</strong> — المتاح: <strong>0 م³</strong>.<br>' +
+                'يجب اختيار مخزن آخر لتخزين الكمية كاملة.';
+
+            document.getElementById('cmSecSection').style.display = 'block';
+            loadAltInventories(invId, qty, vol, true);
+
+            document.getElementById('cmActions').innerHTML =
+                '<button onclick="confirmMove()" class="btn-bonyan-secondary" style="width:100%">' +
+                '<i class="fas fa-warehouse"></i> تخزين الكمية في مخزن آخر</button>' +
+                '<button onclick="closeCapModal()" style="border:none;background:none;color:#888;' +
+                'cursor:pointer;font-size:0.9rem;text-align:center;padding:6px;">إلغاء / تعديل البيانات</button>';
+
+            openCapModal();
+        }
+
+        // ── PARTIAL modal (some capacity but not enough) ───
+        function showPartialModal(result, invId, qty, vol) {
+            document.getElementById('cmIcon').textContent  = '⚠️';
+            document.getElementById('cmTitle').textContent = 'المساحة غير كافية!';
+            document.getElementById('cmBody').innerHTML =
+                'مخزن <strong>' + result.inventoryName + '</strong> يتوفر فيه <strong>' +
+                result.availableM3.toFixed(2) + ' م³</strong> فقط، لكن المادة تحتاج <strong>' +
+                result.neededM3.toFixed(2) + ' م³</strong>.<br><br>' +
+                'يمكن تخزين <strong>' + result.availableQty + ' وحدة</strong> هنا، ' +
+                'والباقي <strong>' + result.remainingQty + ' وحدة</strong> في مخزن آخر.';
+
+            document.getElementById('cmSecSection').style.display = 'block';
+            loadAltInventories(invId, result.remainingQty, vol, false);
+
+            var aq = result.availableQty;
+            var rq = result.remainingQty;
+            document.getElementById('cmActions').innerHTML =
+                '<button onclick="confirmSplit(' + aq + ',' + rq + ')" class="btn-bonyan-secondary" style="width:100%;background:#2C3E6B">' +
+                '<i class="fas fa-compress-arrows-alt"></i> تخزين ' + aq + ' وحدة هنا + ' + rq + ' وحدة في مخزن آخر</button>' +
+                '<button onclick="confirmMove()" class="btn-bonyan-secondary" style="width:100%;background:#8B5E3C">' +
+                '<i class="fas fa-warehouse"></i> تخزين الكمية كاملة (' + qty + ' وحدة) في مخزن آخر فقط</button>' +
+                '<button onclick="closeCapModal()" style="border:none;background:none;color:#888;' +
+                'cursor:pointer;font-size:0.9rem;text-align:center;padding:6px;">إلغاء / تعديل البيانات</button>';
+
+            openCapModal();
+        }
+
+        // ── Load alternative inventories into picker ────────
+        function loadAltInventories(excludeId, qtyNeeded, vol, mustFitAll) {
+            var sel  = document.getElementById('cmSecSelect');
+            var hint = document.getElementById('cmSecHint');
+            sel.innerHTML = '<option value="">جاري التحميل...</option>';
+
+            fetch('/Material/GetInventoriesWithCapacity?volumeFactor=' + vol + '&quantity=' + qtyNeeded)
+                .then(function(r){ return r.json(); })
+                .then(function(list){
+                    sel.innerHTML = '<option value="">-- اختر مخزناً بديلاً --</option>';
+                    var count = 0;
+                    list.forEach(function(inv){
+                        if (inv.inventoryID == excludeId) return;
+                        if (mustFitAll && !inv.canFitAll)  return;
+                        var o = document.createElement('option');
+                        o.value = inv.inventoryID;
+                        var avail = inv.availableM3 != null
+                            ? 'متاح: ' + inv.availableM3.toFixed(1) + ' م³'
+                            : 'غير محدود';
+                        o.textContent = inv.inventoryName + ' — ' + avail + (inv.canFitAll ? ' ✅' : ' ⚠️');
+                        sel.appendChild(o);
+                        count++;
+                    });
+                    if (count === 0) {
+                        sel.innerHTML = '<option value="">⛔ لا توجد مخازن بديلة</option>';
+                        hint.textContent = 'لا يوجد مخزن لديه سعة كافية. يرجى تعديل الكمية أو إضافة مخزن.';
+                    } else {
+                        hint.textContent = '';
+                    }
+                })
+                .catch(function(){
+                    sel.innerHTML = '<option value="">-- خطأ في التحميل --</option>';
+                });
+        }
+
+        function confirmSplit(primaryQty, secondaryQty) {
+            var secId = document.getElementById('cmSecSelect').value;
+            if (!secId) { alert('يرجى اختيار مخزن بديل أولاً'); return; }
+            document.getElementById('hdnDecision').value       = 'split';
+            document.getElementById('hdnSecondaryInv').value   = secId;
+            document.getElementById('hdnSplitPrimary').value   = primaryQty;
+            document.getElementById('hdnSplitSecondary').value = secondaryQty;
+            closeCapModal();
+            document.getElementById('matForm').submit();
+        }
+
+        function confirmMove() {
+            var secId = document.getElementById('cmSecSelect').value;
+            if (!secId) { alert('يرجى اختيار مخزن بديل أولاً'); return; }
+            document.getElementById('hdnDecision').value       = 'move';
+            document.getElementById('hdnSecondaryInv').value   = secId;
+            document.getElementById('hdnSplitPrimary').value   = '';
+            document.getElementById('hdnSplitSecondary').value = '';
+            closeCapModal();
+            document.getElementById('matForm').submit();
+        }
+
+        function openCapModal()  { var m=document.getElementById('capModal'); m.style.display='flex'; }
+        function closeCapModal() { document.getElementById('capModal').style.display='none'; }
+
+        document.getElementById('capModal').addEventListener('click', function(e){
+            if (e.target === this) closeCapModal();
+        });
+    </script>
+}

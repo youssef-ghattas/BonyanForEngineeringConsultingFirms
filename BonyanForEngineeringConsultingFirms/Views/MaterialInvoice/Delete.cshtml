@@ -1,0 +1,61 @@
+@model Bonyan.DAL.Models.MaterialInvoice
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "حذف فاتورة مادة";
+    string statusAr = Model.Status switch
+    {
+        InvoiceStatus.Paid => "مدفوعة",
+        InvoiceStatus.Unpaid => "غير مدفوعة",
+        InvoiceStatus.PartiallyPaid => "مدفوعة جزئياً",
+        _ => Model.Status.ToString()
+    };
+    string statusEn = Model.Status switch
+    {
+        InvoiceStatus.Paid => "Paid",
+        InvoiceStatus.Unpaid => "Unpaid",
+        InvoiceStatus.PartiallyPaid => "Partially Paid",
+        _ => Model.Status.ToString()
+    };
+}
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="delete-card">
+    <div class="delete-card-header">
+        <i class="fas fa-trash-alt"></i>
+        <h4 data-lang="delete_material_invoice">حذف فاتورة مادة</h4>
+    </div>
+    <div class="delete-card-body">
+        <div class="delete-icon">
+            <i class="fas fa-file-invoice"></i>
+        </div>
+        <h5 data-lang="delete_confirm">هل أنت متأكد من الحذف؟</h5>
+        <p data-lang="delete_warning">لا يمكن التراجع عن هذا الإجراء بعد تأكيده</p>
+
+        <div class="delete-info-box">
+            <p>
+                <strong data-lang="material">المادة رقم: </strong>
+                @Model.MaterialID
+            </p>
+            <p>
+                <strong data-lang="quantity">الكمية: </strong>
+                @Model.Quantity.ToString("N3")
+            </p>
+            <p>
+                <strong data-lang="payment_status">حالة الدفع: </strong>
+                <span data-ar="@statusAr" data-en="@statusEn">@statusAr</span>
+            </p>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.MaterialInvoiceID" />
+            <a asp-action="Index" class="btn-bonyan-primary">
+                <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+            </a>
+            <button type="submit" class="btn-bonyan-danger">
+                <i class="fas fa-trash"></i> <span data-lang="delete_confirm_btn">نعم، احذف</span>
+            </button>
+        </form>
+    </div>
+</div>

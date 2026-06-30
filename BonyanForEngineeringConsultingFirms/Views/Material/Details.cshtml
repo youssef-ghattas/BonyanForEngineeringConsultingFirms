@@ -1,0 +1,281 @@
+﻿@model Bonyan.DAL.Models.Material
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تفاصيل المادة";
+    var role = Context.Session.GetString("Role");
+    var availableSuppliers = ViewBag.AvailableSuppliers as List<Bonyan.DAL.Models.Supplier> ?? new();
+}
+
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/material.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-cube" style="color:var(--secondary)"></i>
+            @Model.MaterialName
+        </h2>
+        <p>@(Model.Unit ?? "") — @(Model.UnitPrice.HasValue ? Model.UnitPrice.Value.ToString("N2") + " ج.م" : "")</p>
+    </div>
+    <div class="page-header-actions">
+        <a asp-action="Index" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i> <span data-lang="back_to_materials">رجوع للمواد</span>
+        </a>
+        @if (role == "Admin")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.MaterialID" class="btn-bonyan-secondary">
+                <i class="fas fa-edit"></i> <span data-lang="edit">تعديل</span>
+            </a>
+        }
+    </div>
+</div>
+
+@await Html.PartialAsync("_AlertMessages")
+
+<!-- Info Card -->
+<div class="details-card">
+    <div class="details-header">
+        <div class="details-proj-icon" style="width:54px;height:54px;font-size:1.3rem">
+            <i class="fas fa-cube"></i>
+        </div>
+        <div class="details-header-info">
+            <h3 data-lang="material_data">بيانات المادة</h3>
+            <span>@(Model.Unit ?? "") — @(Model.UnitPrice.HasValue ? Model.UnitPrice.Value.ToString("N2") + " ج.م" : "")</span>
+        </div>
+    </div>
+    <div class="details-body">
+        <div class="details-grid">
+            <div class="detail-item">
+                <label><i class="fas fa-tag"></i> <span data-lang="material_name_label">اسم المادة</span></label>
+                <p>@Model.MaterialName</p>
+            </div>
+            <div class="detail-item">
+                <label><i class="fas fa-ruler"></i> <span data-lang="measurement_unit">وحدة القياس</span></label>
+                <p><span class="unit-badge">@(Model.Unit ?? "—")</span></p>
+            </div>
+            <div class="detail-item">
+                <label><i class="fas fa-dollar-sign"></i> <span data-lang="unit_price">سعر الوحدة</span></label>
+                <p>@(Model.UnitPrice.HasValue ? Model.UnitPrice.Value.ToString("N2") + " ج.م" : "—")</p>
+            </div>
+            <div class="detail-item" style="grid-column:1/-1">
+                <label><i class="fas fa-align-left"></i> <span data-lang="description">الوصف</span></label>
+                <p>@(string.IsNullOrWhiteSpace(Model.Description) ? "—" : Model.Description)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Suppliers Card -->
+<div class="details-card" style="margin-top:20px">
+    <div class="details-header" style="background:linear-gradient(135deg,#1a3a2a,#2d6a4f)">
+        <div class="details-proj-icon" style="width:54px;height:54px;font-size:1.3rem;background:rgba(255,255,255,0.15)">
+            <i class="fas fa-truck"></i>
+        </div>
+        <div class="details-header-info">
+            <h3><span data-lang="suppliers">الموردون</span> <span class="badge-count">@Model.MaterialSuppliers.Count</span></h3>
+            <span data-lang="material_suppliers_sub"></span>
+        </div>
+    </div>
+    <div class="details-body" style="padding-bottom:4px">
+        @if (Model.MaterialSuppliers != null && Model.MaterialSuppliers.Any())
+        {
+            <div class="mat-table-wrap">
+            <table class="mat-table">
+                <thead>
+                    <tr>
+                        <th data-lang="supplier">المورد</th>
+                        <th data-lang="contact_person">شخص التواصل</th>
+                        <th data-lang="phone">الهاتف</th>
+                        <th data-lang="supply_price">سعر التوريد</th>
+                        <th data-lang="last_supply">آخر توريد</th>
+                        @if (role == "Admin")
+                        {
+                            <th data-lang="actions">إجراءات</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ms in Model.MaterialSuppliers)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Supplier" asp-action="Details"
+                                   asp-route-id="@ms.SupplierID" class="mat-link">
+                                    @ms.Supplier?.SupplierName
+                                </a>
+                            </td>
+                            <td>@(ms.Supplier?.ContactPerson ?? "—")</td>
+                            <td>@(ms.Supplier?.Phone ?? "—")</td>
+                            <td class="mat-price">@(ms.SupplyPrice.HasValue ? ms.SupplyPrice.Value.ToString("N2") + " ج.م" : "—")</td>
+                            <td>@(ms.LastSupplyDate.HasValue ? ms.LastSupplyDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                            @if (role == "Admin")
+                            {
+                                <td>
+                                    <form asp-action="RemoveSupplier" method="post" class="mat-inline-form"
+                                          onsubmit="return confirm('إزالة هذا المورد من المادة؟')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="materialId" value="@Model.MaterialID" />
+                                        <input type="hidden" name="supplierId" value="@ms.SupplierID" />
+                                        <button type="submit" class="mat-action-btn danger" title="إزالة">
+                                            <i class="fas fa-unlink"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            </div>
+        }
+        else
+        {
+            <div class="mat-empty" data-lang="no_linked_suppliers">لا يوجد موردون مرتبطون بهذه المادة</div>
+        }
+    </div>
+
+    @if (role == "Admin" && availableSuppliers.Any())
+    {
+        <div class="mat-add-section">
+            <div class="mat-add-title"><i class="fas fa-plus-circle"></i> <span data-lang="link_new_supplier">ربط مورد جديد</span></div>
+            <form asp-action="AddSupplier" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="materialId" value="@Model.MaterialID" />
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label data-lang="supplier">المورد <span style="color:red">*</span></label>
+                        <select name="supplierId" class="form-control" required>
+                            <option value="" data-lang="choose_supplier_option2">-- اختر مورداً --</option>
+                            @foreach (var s in availableSuppliers)
+                            {
+                                <option value="@s.SupplierID">@s.SupplierName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-lang="supply_price">سعر التوريد (ج.م)</label>
+                        <input type="number" name="supplyPrice" step="0.01" min="0" class="form-control" placeholder="0.00" />
+                    </div>
+                    <div class="form-group">
+                        <label data-lang="last_supply_date">تاريخ آخر توريد</label>
+                        <input type="date" name="lastSupplyDate" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn-bonyan-secondary" style="margin-top:6px">
+                    <i class="fas fa-link"></i> <span data-lang="link_supplier">ربط المورد</span>
+                </button>
+            </form>
+        </div>
+    }
+</div>
+
+<!-- Inventories Card -->
+<div class="details-card" style="margin-top:20px">
+    <div class="details-header" style="background:linear-gradient(135deg,#1e3a5f,#2a5298)">
+        <div class="details-proj-icon" style="width:54px;height:54px;font-size:1.3rem;background:rgba(255,255,255,0.15)">
+            <i class="fas fa-warehouse"></i>
+        </div>
+        <div class="details-header-info">
+            <h3><span data-lang="warehouses">المخازن</span> <span class="badge-count">@Model.MaterialInventories.Count</span></h3>
+            <span data-lang="material_warehouses_sub"></span>
+        </div>
+    </div>
+    <div class="details-body">
+        @if (Model.MaterialInventories != null && Model.MaterialInventories.Any())
+        {
+            <div class="mat-table-wrap">
+            <table class="mat-table">
+                <thead>
+                    <tr>
+                        <th data-lang="warehouse">المخزن</th>
+                        <th data-lang="location">الموقع</th>
+                        <th data-lang="available_qty">الكمية المتاحة</th>
+                        <th data-lang="storage_location">مكان التخزين</th>
+                        <th data-lang="last_updated">آخر تحديث</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mi in Model.MaterialInventories)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Inventory" asp-action="Details"
+                                   asp-route-id="@mi.InventoryID" class="mat-link">
+                                    @(mi.Inventory?.InventoryName ?? "—")
+                                </a>
+                            </td>
+                            <td>@(mi.Inventory?.Location ?? "—")</td>
+                            <td><strong class="mat-qty">@mi.QuantityAvailable.ToString("N2")</strong></td>
+                            <td>@(mi.StorageLocation ?? "—")</td>
+                            <td>@mi.TransactionDate.ToString("yyyy-MM-dd")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            </div>
+        }
+        else
+        {
+            <div class="mat-empty" data-lang="material_not_in_warehouse">المادة غير موجودة في أي مخزن</div>
+        }
+    </div>
+</div>
+
+<!-- Material Tasks Card -->
+@if (Model.MaterialTasks != null && Model.MaterialTasks.Any())
+{
+    <div class="details-card" style="margin-top:20px">
+        <div class="details-header" style="background:linear-gradient(135deg,#4a1a5f,#7b2d8e)">
+            <div class="details-proj-icon" style="width:54px;height:54px;font-size:1.3rem;background:rgba(255,255,255,0.15)">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="details-header-info">
+                <h3><span data-lang="material_requests">طلبات المادة</span> <span class="badge-count">@Model.MaterialTasks.Count</span></h3>
+                <span data-lang="material_tasks_sub">طلبات المادة في المشاريع</span>
+            </div>
+        </div>
+        <div class="details-body">
+            <div class="mat-table-wrap">
+            <table class="mat-table">
+                <thead>
+                    <tr>
+                        <th data-lang="task_name_label">المهمة</th>
+                        <th data-lang="project">المشروع</th>
+                        <th data-lang="quantity_required">الكمية المطلوبة</th>
+                        <th data-lang="quantity_used">الكمية المستخدمة</th>
+                        <th data-lang="status">الحالة</th>
+                        <th data-lang="request_date">تاريخ الطلب</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mt in Model.MaterialTasks)
+                    {
+                        string statusLabel = mt.Status switch
+                        {
+                            MaterialTaskStatus.Requested => "مطلوب",
+                            MaterialTaskStatus.Approved => "معتمد",
+                            MaterialTaskStatus.Delivered => "تم التسليم",
+                            _ => mt.Status.ToString()
+                        };
+                        string statusClass = mt.Status switch
+                        {
+                            MaterialTaskStatus.Requested => "badge-pending",
+                            MaterialTaskStatus.Approved => "badge-inprogress",
+                            MaterialTaskStatus.Delivered => "badge-completed",
+                            _ => ""
+                        };
+                        <tr>
+                            <td>@(mt.Task?.Task_Name ?? "—")</td>
+                            <td>@(mt.Task?.Project?.ProjectName ?? "—")</td>
+                            <td class="mat-qty">@mt.QuantityRequired.ToString("N2")</td>
+                            <td class="mat-qty">@(mt.QuantityUsed.HasValue ? mt.QuantityUsed.Value.ToString("N2") : "—")</td>
+                            <td><span class="task-status-badge @statusClass" data-en="@mt.Status.ToString()" data-ar="@statusLabel">@statusLabel</span></td>
+                            <td>@mt.RequestDate.ToString("yyyy-MM-dd")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+}

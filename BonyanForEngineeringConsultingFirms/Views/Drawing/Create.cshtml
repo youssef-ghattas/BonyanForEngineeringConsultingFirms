@@ -1,0 +1,135 @@
+﻿@model Bonyan.DAL.Models.Drawing
+@{
+    ViewData["Title"] = "رفع صورة";
+    int projectId = ViewBag.ProjectId ?? 0;
+    string projectName = ViewBag.ProjectName ?? "—";
+}
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+<link rel="stylesheet" href="~/css/document.css" />
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-camera" style="color:var(--secondary)"></i>
+            <span data-lang="upload_project_photo">رفع صورة للمشروع</span>
+        </h2>
+        <p data-lang="photo_create_sub">رفع صورة للمشروع مع البيانات الوصفية</p>
+    </div>
+    <a asp-controller="Project" asp-action="Details"
+       asp-route-id="@projectId" class="btn-bonyan-primary">
+        <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
+    </a>
+</div>
+<div class="form-card">
+    <div class="form-card-header">
+        <i class="fas fa-images"></i>
+        <h4 data-lang="photo_data">بيانات الصورة</h4>
+    </div>
+    <div class="form-card-body">
+        <div class="project-badge">
+            <i class="fas fa-project-diagram"></i>
+            @projectName
+        </div>
+        <form asp-action="Create" method="post"
+              enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ProjectId" value="@projectId" />
+            <div class="form-section-title" data-lang="photo">الصورة</div>
+            <div class="form-group">
+                <label data-lang="photo">الصورة</label> <span class="required">*</span>
+                <div class="file-drop-zone" id="dropZone"
+                     style="min-height:160px">
+                    <div id="dropContent">
+                        <i class="fas fa-image"></i>
+                        <p data-lang="drag_drop_photo">اسحب الصورة هنا أو انقر للاختيار</p>
+                        <span>JPG, PNG, GIF, WEBP, SVG</span>
+                    </div>
+                    <img id="imgPreview"
+                         style="display:none; max-height:180px;
+                                border-radius:8px; margin-top:10px"
+                         alt="معاينة" />
+                    <input type="file" name="uploadedFile" id="fileInput"
+                           accept="image/*"
+                           onchange="previewImage(this)" />
+                </div>
+                <span class="text-danger">
+                    @Html.ValidationMessage("uploadedFile")
+                </span>
+            </div>
+            <div class="form-section-title" data-lang="data">البيانات</div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label data-lang="photo_title">عنوان الصورة</label> <span class="required">*</span>
+                    <input asp-for="DrawingTitle" class="form-control"
+                           data-lang-placeholder="photo_title_placeholder" placeholder="وصف مختصر للصورة" required />
+                    <span asp-validation-for="DrawingTitle" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label data-lang="version">الإصدار</label>
+                    <input asp-for="Version" class="form-control"
+                           data-lang-placeholder="version_placeholder" placeholder="مثال: 1.0" />
+                </div>
+                <div class="form-group">
+                    <label data-lang="category">التصنيف</label>
+                    <select asp-for="Category" class="form-select">
+                        <option value="" data-lang="choose_category_option">-- اختر التصنيف --</option>
+                        <option value="موقع" data-lang="cat_site_photos">صور الموقع</option>
+                        <option value="تقدم" data-lang="cat_progress">تقدم الأعمال</option>
+                        <option value="مشاكل" data-lang="cat_issues">مشاكل وعيوب</option>
+                        <option value="اكتمال" data-lang="cat_completion">صور اكتمال</option>
+                        <option value="أخرى" data-lang="cat_other">أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label data-lang="notes">ملاحظات</label>
+                    <textarea asp-for="Notes" class="form-control"
+                              rows="2"
+                              data-lang-placeholder="notes_placeholder" placeholder="أي ملاحظات..."></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a asp-controller="Project" asp-action="Details"
+                   asp-route-id="@projectId"
+                   class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+                </a>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-upload"></i> <span data-lang="upload_photo">رفع الصورة</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('imgPreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('dropContent').style.display = 'none';
+                    document.getElementById('dropZone').style.borderColor =
+                        'var(--secondary)';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        const zone = document.getElementById('dropZone');
+        zone.addEventListener('dragover',  e => {
+            e.preventDefault();
+            zone.classList.add('dragover');
+        });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop',      e => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            const dt = e.dataTransfer;
+            if (dt.files.length) {
+                document.getElementById('fileInput').files = dt.files;
+                previewImage(document.getElementById('fileInput'));
+            }
+        });
+    </script>
+}

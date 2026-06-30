@@ -1,0 +1,106 @@
+﻿@model Bonyan.DAL.Models.Employee
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تفاصيل الموظف";
+    string initials = Model.FirstName[0].ToString().ToUpper()
+                    + Model.LastName[0].ToString().ToUpper();
+    string specAr = Model.Specialization switch
+    {
+        Specialization.Civil => "مدني",
+        Specialization.Mechanical => "ميكانيكا",
+        Specialization.Electrical => "كهرباء",
+        Specialization.Architectural => "معماري",
+        _ => Model.Specialization.ToString()
+    };
+    string specEn = Model.Specialization switch
+    {
+        Specialization.Civil => "Civil",
+        Specialization.Mechanical => "Mechanical",
+        Specialization.Electrical => "Electrical",
+        Specialization.Architectural => "Architectural",
+        _ => Model.Specialization.ToString()
+    };
+    string genderAr = Model.Gender == Gender.Male ? "ذكر" : "أنثى";
+    string genderEn = Model.Gender == Gender.Male ? "Male" : "Female";
+}
+
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-user"></i>
+            <span data-lang="employee_details">تفاصيل الموظف</span>
+        </h2>
+        <p>@Model.FirstName @Model.LastName</p>
+    </div>
+    <div class="page-header-actions">
+        <a asp-action="Edit" asp-route-id="@Model.EmployeeId" class="btn-bonyan-secondary">
+            <i class="fas fa-edit"></i> <span data-lang="edit">تعديل</span>
+        </a>
+        <a asp-action="Index" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i> <span data-lang="back">رجوع</span>
+        </a>
+    </div>
+</div>
+
+<div class="details-card">
+    <div class="details-header" style="background:linear-gradient(135deg,#1B3A6B,#2a5298)">
+        <div class="details-avatar">@initials</div>
+        <div class="details-header-info">
+            <h3>@Model.FirstName @Model.LastName</h3>
+            <span><span data-ar="@specAr" data-en="@specEn">@specAr</span> — <span data-ar="@genderAr" data-en="@genderEn">@genderAr</span></span>
+        </div>
+    </div>
+
+    <div class="details-body">
+        <div class="details-section">
+            <div class="details-section-title" data-lang="personal_info">المعلومات الشخصية</div>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <label data-lang="first_name">الاسم الأول</label>
+                    <p>@Model.FirstName</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="last_name">الاسم الأخير</label>
+                    <p>@Model.LastName</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="gender">الجنس</label>
+                    <p><span data-ar="@genderAr" data-en="@genderEn">@genderAr</span></p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="email">البريد الإلكتروني</label>
+                    <p>@Model.Email</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="phone">رقم الهاتف</label>
+                    <p>@(Model.PhoneNum ?? "—")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="ssn">الرقم القومي</label>
+                    <p>@Model.SSN</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="details-section">
+            <div class="details-section-title" data-lang="professional_info">المعلومات المهنية</div>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <label data-lang="specialization">التخصص</label>
+                    <p><span data-ar="@specAr" data-en="@specEn">@specAr</span></p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="salary">الراتب</label>
+                    <p>@Model.Salary.ToString("N2") <span data-lang="currency_egp">ج.م</span></p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="hiredate">تاريخ التعيين</label>
+                    <p>@Model.HireDate.ToString("yyyy-MM-dd")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

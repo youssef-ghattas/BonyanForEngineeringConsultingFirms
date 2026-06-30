@@ -1,0 +1,1003 @@
+﻿/* ══════════════════════════════════════════════════════════
+   navbar.css  —  Premium Bonyan Navbar
+   RTL/LTR · Light/Dark · Fluid responsive
+══════════════════════════════════════════════════════════ */
+
+/* ── Layout clusters ───────────────────────────────────── */
+.navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex-shrink: 0;
+}
+
+/* ── Sidebar Toggle ─────────────────────────────────────── */
+.sidebar-toggle {
+    background: rgba(255,255,255,0.09);
+    border: none;
+    color: rgba(255,255,255,0.85);
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.22s, color 0.22s;
+}
+
+    .sidebar-toggle:hover {
+        background: rgba(255,255,255,0.17);
+        color: #fff;
+    }
+
+/* ── Logo ───────────────────────────────────────────────── */
+.navbar-logo {
+    color: var(--white);
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.navbar-logo-mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--secondary), #e7b65c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1rem;
+    box-shadow: 0 3px 10px rgba(200,146,42,0.35);
+    flex-shrink: 0;
+}
+
+.navbar-logo-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+/* ── Divider ────────────────────────────────────────────── */
+.navbar-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255,255,255,0.15);
+    flex-shrink: 0;
+}
+
+/* ── Primary Nav Links ──────────────────────────────────── */
+.navbar-main-links {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 11px;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+.navbar-nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    color: rgba(255,255,255,0.72);
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.22s, color 0.22s;
+}
+
+    .navbar-nav-link i {
+        font-size: 0.82rem;
+        color: rgba(255,255,255,0.5);
+        transition: color 0.22s;
+    }
+
+    .navbar-nav-link:hover {
+        background: rgba(255,255,255,0.11);
+        color: #fff;
+    }
+
+        .navbar-nav-link:hover i {
+            color: var(--secondary);
+        }
+
+    .navbar-nav-link.active {
+        background: var(--secondary);
+        color: var(--primary);
+        font-weight: 700;
+    }
+
+        .navbar-nav-link.active i {
+            color: var(--primary);
+        }
+
+@media (max-width: 1100px) {
+    .navbar-nav-link span {
+        display: none;
+    }
+
+    .navbar-nav-link {
+        padding: 7px 11px;
+    }
+}
+
+/* ── Right cluster ──────────────────────────────────────── */
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* ── Live Clock ─────────────────────────────────────────── */
+.navbar-clock {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: rgba(255,255,255,0.82);
+    font-size: 0.76rem;
+}
+
+    .navbar-clock i {
+        color: var(--secondary);
+    }
+
+.navbar-clock-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+    .navbar-clock-text span:first-child {
+        font-weight: 700;
+        font-size: 0.83rem;
+    }
+
+    .navbar-clock-text span:last-child {
+        opacity: 0.7;
+        font-size: 0.67rem;
+    }
+
+/* ── Generic icon button ────────────────────────────────── */
+.navbar-icon-btn {
+    position: relative;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: rgba(255,255,255,0.85);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.96rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.22s, color 0.22s, transform 0.18s;
+}
+
+    .navbar-icon-btn:hover {
+        background: rgba(255,255,255,0.17);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .navbar-icon-btn:active {
+        transform: translateY(0);
+    }
+
+/* ── Notification badge ─────────────────────────────────── */
+.navbar-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--danger, #EF4444);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--primary);
+    line-height: 1;
+}
+
+[dir="ltr"] .navbar-badge {
+    right: auto;
+    left: -4px;
+}
+
+/* ── Language button ────────────────────────────────────── */
+.lang-btn {
+    background: rgba(200,146,42,0.85);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.82rem;
+    transition: background 0.22s, transform 0.18s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+    .lang-btn:hover {
+        background: var(--secondary);
+        transform: translateY(-1px);
+    }
+
+/* ── Quick Actions dropdown ─────────────────────────────── */
+.navbar-quick-menu {
+    min-width: 230px;
+}
+
+/* ── Notification dropdown ──────────────────────────────── */
+.navbar-notif-menu {
+    width: 340px;
+    max-width: 90vw;
+    padding: 0;
+    overflow: hidden;
+}
+
+.navbar-notif-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    background: linear-gradient(135deg, var(--primary), #1e4480);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.navbar-notif-clear {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--secondary);
+    text-decoration: none;
+}
+
+    .navbar-notif-clear:hover {
+        text-decoration: underline;
+    }
+
+.navbar-notif-list {
+    max-height: 310px;
+    overflow-y: auto;
+}
+
+.navbar-notif-item {
+    display: flex;
+    gap: 11px;
+    padding: 11px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    text-decoration: none;
+    color: var(--text, #1F2937);
+    transition: background 0.18s;
+}
+
+    .navbar-notif-item:hover {
+        background: #f8faff;
+    }
+
+    .navbar-notif-item.unread {
+        background: #f0f4ff;
+    }
+
+.navbar-notif-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    color: #fff;
+}
+
+    .navbar-notif-icon.warning {
+        background: #f59e0b;
+    }
+
+    .navbar-notif-icon.danger {
+        background: var(--danger, #EF4444);
+    }
+
+    .navbar-notif-icon.info {
+        background: #0ea5e9;
+    }
+
+    .navbar-notif-icon.success {
+        background: var(--success, #22C55E);
+    }
+
+.navbar-notif-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.navbar-notif-title {
+    font-size: 0.84rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.navbar-notif-sub {
+    font-size: 0.74rem;
+    color: #777;
+}
+
+.navbar-notif-time {
+    font-size: 0.67rem;
+    color: #aaa;
+    margin-top: 3px;
+}
+
+.navbar-notif-empty {
+    padding: 26px 16px;
+    text-align: center;
+    color: #999;
+    font-size: 0.84rem;
+}
+
+.navbar-notif-footer {
+    text-align: center;
+    padding: 10px;
+    border-top: 1px solid #eee;
+}
+
+    .navbar-notif-footer a {
+        color: var(--primary);
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+/* ── System Status ──────────────────────────────────────── */
+.navbar-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.73rem;
+    color: rgba(255,255,255,0.78);
+}
+
+.navbar-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success, #22C55E);
+    animation: navbarPulse 2s infinite;
+}
+
+@keyframes navbarPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34,197,94,0.55);
+    }
+
+    70% {
+        box-shadow: 0 0 0 6px rgba(34,197,94,0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(34,197,94,0);
+    }
+}
+
+/* ── Chatbot button ─────────────────────────────────────── */
+.navbar-chatbot-btn {
+    background: rgba(200,146,42,0.85);
+}
+
+    .navbar-chatbot-btn:hover {
+        background: var(--secondary);
+        opacity: 1;
+    }
+
+.navbar-chatbot-pulse {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #22C55E;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+}
+
+[dir="ltr"] .navbar-chatbot-pulse {
+    right: auto;
+    left: -2px;
+}
+
+/* ── Avatar ─────────────────────────────────────────────── */
+.navbar-avatar {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--secondary), #e7b65c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.22), 0 3px 10px rgba(0,0,0,0.22);
+    transition: transform 0.22s, box-shadow 0.22s;
+}
+
+.user-info-btn:hover .navbar-avatar {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.38), 0 4px 14px rgba(0,0,0,0.28);
+}
+
+.navbar-avatar-status {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #22C55E;
+    border: 2px solid var(--primary);
+    animation: navbarPulse 2.5s infinite;
+}
+
+[dir="ltr"] .navbar-avatar-status {
+    right: auto;
+    left: -1px;
+}
+
+.navbar-chevron {
+    transition: transform 0.22s;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.72rem;
+}
+
+.user-info-btn[aria-expanded="true"] .navbar-chevron {
+    transform: rotate(180deg);
+    color: var(--white);
+}
+
+.user-info-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    padding: 4px 9px;
+    border-radius: 9px;
+    transition: background 0.22s;
+}
+
+    .user-info-btn:hover {
+        background: rgba(255,255,255,0.1);
+    }
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.user-name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--white);
+}
+
+.user-role {
+    font-size: 0.72rem;
+    color: var(--secondary);
+}
+
+/* ── Profile Dropdown ───────────────────────────────────── */
+.bonyan-profile-dropdown {
+    width: 276px;
+    max-width: 90vw;
+    padding: 0;
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+}
+
+/* ── Ensure dropdowns always render above sidebar ─── */
+.navbar-user .dropdown-menu,
+.bonyan-profile-dropdown,
+.navbar-notifications .dropdown-menu,
+.navbar-quick-actions .dropdown-menu {
+    z-index: 1100 !important;
+    position: absolute;
+}
+
+/* Fix Bootstrap dropdown stacking context */
+.bonyan-navbar .dropdown {
+    position: static; /* remove so dropdown positions relative to navbar, not this element */
+}
+
+.bonyan-navbar .navbar-user {
+    position: relative; /* re-add only on the user cluster so dropdown anchors correctly */
+}
+
+.bonyan-navbar .navbar-notifications {
+    position: relative;
+}
+
+.bonyan-navbar .navbar-quick-actions {
+    position: relative;
+}
+
+.profile-dropdown-header {
+    background: linear-gradient(135deg, var(--primary), #1e4480);
+    padding: 18px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-dropdown-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--secondary), #e7b65c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 1.02rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.22);
+}
+
+.profile-dropdown-info {
+    min-width: 0;
+}
+
+.profile-dropdown-name {
+    color: var(--white);
+    font-weight: 700;
+    font-size: 0.93rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-dropdown-email {
+    color: rgba(255,255,255,0.62);
+    font-size: 0.7rem;
+    margin: 2px 0 7px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(4px);
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: var(--white);
+}
+
+    .profile-chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ced4da;
+    }
+
+.chip-admin .dot {
+    background: #ff6b6b;
+}
+
+.chip-pm .dot {
+    background: #4dabf7;
+}
+
+.chip-engineer .dot {
+    background: #51cf66;
+}
+
+.profile-dropdown-body {
+    background: var(--white);
+    padding: 7px;
+}
+
+.profile-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 10px;
+    border-radius: 9px;
+    text-decoration: none;
+    color: var(--text, #1F2937);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background 0.18s, color 0.18s;
+}
+
+    .profile-dropdown-item:hover {
+        background: #F0F4FF;
+        color: var(--primary);
+    }
+
+    .profile-dropdown-item.item-danger:hover {
+        background: #fff0f0;
+        color: var(--danger, #EF4444);
+    }
+
+.item-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+}
+
+.icon-blue {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.icon-gold {
+    background: #FFF8E1;
+    color: #C8922A;
+}
+
+.icon-red {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.profile-dropdown-divider {
+    height: 1px;
+    background: #f0f0f0;
+    margin: 5px 4px;
+}
+
+/* ── Dropdown animation ─────────────────────────────────── */
+.bonyan-dropdown.show,
+.bonyan-profile-dropdown.show {
+    animation: navbarDropdownPop 0.17s ease;
+}
+
+@keyframes navbarDropdownPop {
+    from {
+        opacity: 0;
+        transform: translateY(-7px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ── Bonyan generic dropdown card ───────────────────────── */
+.bonyan-dropdown {
+    border: none;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.15);
+    border-radius: 12px;
+    min-width: 200px;
+}
+
+    .bonyan-dropdown .dropdown-item:hover {
+        background: #F0F4FF;
+    }
+
+    .bonyan-dropdown .dropdown-item.text-danger:hover {
+        background: #fff0f0;
+    }
+
+    .bonyan-dropdown .dropdown-header {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 10px 14px 6px;
+    }
+
+/* ── Chatbot panel ──────────────────────────────────────── */
+.chatbot-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 340px;
+    max-width: calc(100vw - 32px);
+    height: 460px;
+    max-height: calc(100vh - 100px);
+    background: var(--white, #fff);
+    border-radius: 16px;
+    box-shadow: 0 14px 50px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    z-index: 1200;
+    transform: translateY(20px) scale(0.96);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.24s ease;
+}
+
+[dir="ltr"] .chatbot-panel {
+    right: auto;
+    left: 20px;
+}
+
+.chatbot-panel.open {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.chatbot-panel-header {
+    background: linear-gradient(135deg, var(--primary), #1e4480);
+    color: var(--white);
+    padding: 13px 15px;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chatbot-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 700;
+    font-size: 0.93rem;
+}
+
+    .chatbot-panel-title i {
+        color: var(--secondary);
+    }
+
+#chatbotCloseBtn {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: color 0.18s;
+}
+
+    #chatbotCloseBtn:hover {
+        color: #fff;
+    }
+
+.chatbot-panel-body {
+    flex: 1;
+    padding: 13px;
+    overflow-y: auto;
+    background: var(--bg, #F0F2F7);
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.chatbot-msg {
+    max-width: 85%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 0.84rem;
+    line-height: 1.4;
+}
+
+.chatbot-msg-bot {
+    background: var(--white, #fff);
+    border: 1px solid rgba(0,0,0,0.06);
+    align-self: flex-start;
+    border-bottom-left-radius: 3px;
+}
+
+[dir="rtl"] .chatbot-msg-bot {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 3px;
+}
+
+.chatbot-msg-user {
+    background: var(--primary);
+    color: var(--white);
+    align-self: flex-end;
+    border-bottom-right-radius: 3px;
+}
+
+[dir="rtl"] .chatbot-msg-user {
+    border-bottom-right-radius: 12px;
+    border-bottom-left-radius: 3px;
+}
+
+.chatbot-panel-footer {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+    .chatbot-panel-footer input {
+        flex: 1;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        padding: 7px 13px;
+        outline: none;
+        font-size: 0.84rem;
+        background: var(--bg, #F0F2F7);
+        color: var(--text);
+        transition: border-color 0.2s;
+    }
+
+        .chatbot-panel-footer input:focus {
+            border-color: var(--primary);
+        }
+
+#chatbotSendBtn {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    width: 33px;
+    height: 33px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.18s;
+}
+
+    #chatbotSendBtn:hover {
+        background: #142d55;
+        transform: scale(1.05);
+    }
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE — Navbar & Chatbot overrides
+══════════════════════════════════════════════════════════ */
+body.dark-mode .navbar-notif-item {
+    color: #e2e8f0;
+    border-bottom-color: rgba(255,255,255,0.06);
+}
+
+    body.dark-mode .navbar-notif-item:hover,
+    body.dark-mode .navbar-notif-item.unread {
+        background: rgba(255,255,255,0.055);
+    }
+
+body.dark-mode .navbar-notif-footer {
+    border-top-color: rgba(255,255,255,0.07);
+}
+
+body.dark-mode .profile-dropdown-body {
+    background: #19283F;
+}
+
+body.dark-mode .profile-dropdown-item {
+    color: #d8e4f2;
+}
+
+    body.dark-mode .profile-dropdown-item:hover {
+        background: rgba(255,255,255,0.07);
+        color: #fff;
+    }
+
+body.dark-mode .profile-dropdown-divider {
+    background: rgba(255,255,255,0.07);
+}
+
+body.dark-mode .bonyan-dropdown {
+    background: #19283F;
+    color: #d8e4f2;
+}
+
+    body.dark-mode .bonyan-dropdown .dropdown-item {
+        color: #d8e4f2;
+    }
+
+        body.dark-mode .bonyan-dropdown .dropdown-item:hover {
+            background: rgba(255,255,255,0.07);
+            color: #fff;
+        }
+
+body.dark-mode .chatbot-panel {
+    background: #19283F;
+}
+
+body.dark-mode .chatbot-panel-body {
+    background: #111F33;
+}
+
+body.dark-mode .chatbot-msg-bot {
+    background: #1e3252;
+    border-color: rgba(255,255,255,0.07);
+    color: #e2e8f0;
+}
+
+body.dark-mode .chatbot-panel-footer {
+    border-top-color: rgba(255,255,255,0.07);
+}
+
+    body.dark-mode .chatbot-panel-footer input {
+        background: #111F33;
+        border-color: rgba(255,255,255,0.1);
+        color: #e2e8f0;
+    }
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .bonyan-navbar {
+        padding: 0 10px;
+        gap: 6px;
+    }
+
+    .navbar-logo-text {
+        display: none;
+    }
+
+    .navbar-right {
+        gap: 5px;
+    }
+
+    .user-details {
+        display: none !important;
+    }
+
+    .chatbot-panel {
+        right: 8px;
+        left: 8px;
+        width: auto;
+        bottom: 8px;
+    }
+
+    [dir="ltr"] .chatbot-panel {
+        right: 8px;
+        left: 8px;
+    }
+}
+
+@media (max-width: 420px) {
+    .lang-btn span {
+        display: none;
+    }
+
+    .lang-btn {
+        padding: 6px 9px;
+    }
+}
+

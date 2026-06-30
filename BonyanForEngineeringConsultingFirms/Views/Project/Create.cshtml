@@ -1,0 +1,218 @@
+﻿@model Bonyan.DAL.Models.Project
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "إضافة مشروع جديد";
+}
+
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-plus-circle" style="color:var(--secondary)"></i>
+            <span data-lang="add_project_new">إضافة مشروع جديد</span>
+        </h2>
+        <p data-lang="project_create_sub">إنشاء مشروع جديد مع تعيين المهندسين وتحديد الميزانية</p>
+    </div>
+    <a asp-action="Index" class="btn-bonyan-primary">
+        <i class="fas fa-arrow-right"></i>
+        <span data-lang="back">رجوع</span>
+    </a>
+</div>
+
+<div class="form-card">
+    <div class="form-card-header">
+        <i class="fas fa-project-diagram"></i>
+        <h4 data-lang="project_data">بيانات المشروع</h4>
+    </div>
+
+    <div class="form-card-body">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="form-section-title" data-lang="basic_info">المعلومات الأساسية</div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>
+                        <span data-lang="project_name">اسم المشروع</span>
+                        <span class="required">*</span>
+                    </label>
+                    <input asp-for="ProjectName" class="form-control" required />
+                    <span asp-validation-for="ProjectName" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label data-lang="client">اسم العميل</label>
+                    <input asp-for="Client_Name" class="form-control" />
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label data-lang="location">الموقع</label>
+                    <input asp-for="Location" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label>
+                        <span data-lang="status">الحالة</span>
+                        <span class="required">*</span>
+                    </label>
+                    <select asp-for="Status" class="form-select">
+                        @foreach (var s in Enum.GetValues(typeof(ProjectStatus)))
+                        {
+                            string statusAr = s.ToString() switch
+                            {
+                                "Planning" => "تخطيط",
+                                "InProgress" => "جاري التنفيذ",
+                                "Completed" => "مكتمل",
+                                "OnHold" => "موقوف",
+                                "Cancelled" => "ملغي",
+                                _ => s.ToString()
+                            };
+                            <option value="@s" data-en="@s" data-ar="@statusAr">@statusAr</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section-title" data-lang="dates_budget">التواريخ والميزانية</div>
+
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label data-lang="start_date">تاريخ البدء</label>
+                    <input asp-for="StartDate" class="form-control" type="date" />
+                </div>
+                <div class="form-group">
+                    <label data-lang="end_date">تاريخ الانتهاء</label>
+                    <input asp-for="EndDate" class="form-control" type="date" />
+                </div>
+                <div class="form-group">
+                    <label><span data-lang="budget">الميزانية</span> (<span data-lang="currency_egp">ج.م</span>)</label>
+                    <input asp-for="Budget" class="form-control" type="number" step="any" min="0" />
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════
+                 ENGINEER ASSIGNMENT CHECKBOX DROPDOWN
+            ══════════════════════════════════════════ -->
+            <div class="form-section-title" data-lang="assign_engineers_title">تعيين المهندسين للمشروع</div>
+
+            <div class="form-group" style="position:relative; margin-bottom:24px">
+                <label data-lang="select_assigned_engineers">اختر المهندسين المعينين</label>
+
+                <!-- Trigger button -->
+                <button type="button" id="empDropdownBtn"
+                        onclick="toggleEmpDropdown()"
+                        style="width:100%; text-align:right; padding:9px 14px;
+                               border:1px solid #ced4da; border-radius:6px;
+                               background:#fff; cursor:pointer; display:flex;
+                               justify-content:space-between; align-items:center;
+                               margin-top:6px">
+                    <span id="empDropdownLabel" data-lang="select_engineers_placeholder">-- اختر المهندسين --</span>
+                    <i class="fas fa-chevron-down" id="empChevron"
+                       style="transition:transform 0.2s"></i>
+                </button>
+
+                <!-- Dropdown panel -->
+                <div id="empDropdownPanel"
+                     style="display:none; position:absolute; z-index:999;
+                            width:100%; background:#fff;
+                            border:1px solid #ced4da; border-top:none;
+                            border-radius:0 0 6px 6px;
+                            max-height:260px; overflow-y:auto;
+                            box-shadow:0 4px 12px rgba(0,0,0,0.1)">
+
+                    @if (ViewBag.Employees != null)
+                    {
+                        foreach (var emp in ViewBag.Employees)
+                        {
+                            bool isPM = emp.UserAccount != null
+                            && emp.UserAccount.Role == UserRole.ProjectManager;
+
+                            <label style="display:flex; align-items:center; gap:10px;
+                                                                  padding:10px 14px; cursor:pointer;
+                                                                  border-bottom:1px solid #f0f0f0;
+                                                                  background:#fff; margin:0"
+                                   onmouseover="this.style.background='#f8f9fa'"
+                                   onmouseout="this.style.background='#fff'">
+                                <input type="checkbox"
+                                       name="selectedEmployees"
+                                       value="@emp.EmployeeId"
+                                       data-name="@emp.FirstName @emp.LastName"
+                                       onchange="updateEmpLabel()"
+                                       style="width:16px; height:16px; cursor:pointer; flex-shrink:0" />
+                                <span style="font-size:0.9rem">
+                                    @emp.FirstName @emp.LastName
+                                    @if (isPM)
+                                    {
+                                        <span style="color:#8B5E3C; font-weight:700;
+                                                                                         font-size:0.78rem; margin-right:4px" data-lang="dash_project_manager">
+                                            — مدير مشروع
+                                        </span>
+                                    }
+                                </span>
+                            </label>
+                        }
+                    }
+                    else
+                    {
+                        <p style="padding:12px; color:#aaa; margin:0" data-lang="no_registered_engineers">
+                            لا يوجد مهندسون مسجلون
+                        </p>
+                    }
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a asp-action="Index" class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i>
+                    <span data-lang="cancel">إلغاء</span>
+                </a>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-save"></i>
+                    <span data-lang="save_project">حفظ المشروع</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleEmpDropdown() {
+            const panel   = document.getElementById('empDropdownPanel');
+            const chevron = document.getElementById('empChevron');
+            const isOpen  = panel.style.display === 'block';
+            panel.style.display        = isOpen ? 'none' : 'block';
+            chevron.style.transform    = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        function updateEmpLabel() {
+            const checked = document.querySelectorAll(
+                'input[name="selectedEmployees"]:checked');
+            const label = document.getElementById('empDropdownLabel');
+            if (checked.length === 0) {
+                var lang = localStorage.getItem('lang') || 'ar';
+                label.textContent = (TRANSLATIONS[lang] && TRANSLATIONS[lang]['select_engineers_placeholder']) || '-- اختر المهندسين --';
+            } else {
+                label.textContent = Array.from(checked)
+                    .map(cb => cb.getAttribute('data-name'))
+                    .join('، ');
+            }
+        }
+
+        // Close when clicking outside
+        document.addEventListener('click', function (e) {
+            const btn   = document.getElementById('empDropdownBtn');
+            const panel = document.getElementById('empDropdownPanel');
+            if (btn && panel &&
+                !btn.contains(e.target) &&
+                !panel.contains(e.target)) {
+                panel.style.display = 'none';
+                document.getElementById('empChevron')
+                         .style.transform = 'rotate(0deg)';
+            }
+        });
+    </script>
+}

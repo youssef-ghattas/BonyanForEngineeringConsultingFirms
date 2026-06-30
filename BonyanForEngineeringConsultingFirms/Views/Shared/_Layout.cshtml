@@ -1,0 +1,547 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] ?? "Bonyan") - بُنيَان</title>
+
+    <script>
+        (function () {
+            const savedLang = localStorage.getItem("lang") || "ar";
+            document.documentElement.setAttribute("lang", savedLang);
+            document.documentElement.setAttribute("dir", savedLang === "ar" ? "rtl" : "ltr");
+        })();
+    </script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/home.css" />
+    <link rel="stylesheet" href="~/css/navbar.css" />
+    <link rel="stylesheet" href="~/css/theme-pro.css" />
+</head>
+<body>
+    <script>
+        // ── Restore dark/light preference BEFORE first paint of content ──
+        // Runs as the very first thing inside <body> (document.body already
+        // exists at this point even though later elements haven't been
+        // parsed yet), so there is no flash of the wrong theme.
+        (function () {
+            const saved = localStorage.getItem('bonyan-dark');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const on = saved === '1' || (saved === null && prefersDark);
+            if (on) document.body.classList.add('dark-mode');
+        })();
+    </script>
+
+    <div class="bonyan-bg-tools" aria-hidden="true">
+        <i class="fas fa-wrench bg-tool tool-1"></i>
+        <i class="fas fa-gear bg-tool tool-2"></i>
+        <i class="fas fa-compass-drafting bg-tool tool-3"></i>
+        <i class="fas fa-ruler-combined bg-tool tool-4"></i>
+        <i class="fas fa-hammer bg-tool tool-5"></i>
+        <i class="fas fa-screwdriver-wrench bg-tool tool-6"></i>
+        <i class="fas fa-helmet-safety bg-tool tool-7"></i>
+        <i class="fas fa-trowel bg-tool tool-8"></i>
+        <i class="fas fa-gear bg-tool tool-9"></i>
+        <i class="fas fa-ruler bg-tool tool-10"></i>
+    </div>
+    <nav class="bonyan-navbar">
+
+        <!-- ── Left Cluster: Sidebar Toggle + Logo + Breadcrumb ── -->
+        <div class="navbar-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Menu" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="navbar-logo">
+                <span class="navbar-logo-mark"><i class="fas fa-building-columns"></i></span>
+                <span data-lang="Landing_Badge" class="navbar-logo-text">Bonyan</span>
+            </div>
+        </div>
+
+        <!-- ── Center: Primary Nav Links (replaces global search) ── -->
+        <div class="navbar-main-links d-none d-md-flex">
+            <a asp-controller="Home" asp-action="Dashboard"
+               class="navbar-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")">
+                <i class="fas fa-gauge-high"></i>
+                <span data-lang="dashboard">لوحة التحكم</span>
+            </a>
+            <a asp-controller="SiteVisit" asp-action="Index"
+               class="navbar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "SiteVisit" ? "active" : "")">
+                <i class="fas fa-hard-hat"></i>
+                <span data-lang="sitevisits">زيارات الموقع</span>
+            </a>
+            <a asp-controller="Home" asp-action="About" class="navbar-nav-link">
+                <i class="fas fa-circle-info"></i>
+                <span data-lang="about">من نحن</span>
+            </a>
+        </div>
+
+        <!-- ── Right Cluster: Actions ── -->
+        <div class="navbar-right">
+
+            <!-- Live Date / Time -->
+            <div class="navbar-clock d-none d-lg-flex" id="navbarClock" title="System time">
+                <i class="fas fa-clock"></i>
+                <div class="navbar-clock-text">
+                    <span id="navbarTime">--:--</span>
+                    <span id="navbarDate">----</span>
+                </div>
+            </div>
+
+            <span class="navbar-divider d-none d-sm-block"></span>
+
+            <!-- Quick Actions (role-aware shortcut menu) -->
+            <div class="navbar-quick-actions dropdown d-none d-sm-flex">
+                <button class="navbar-icon-btn" data-bs-toggle="dropdown" title="Quick Actions" aria-label="Quick actions">
+                    <i class="fas fa-bolt"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end bonyan-dropdown navbar-quick-menu">
+                    <li class="dropdown-header" data-lang="quick_actions">إجراءات سريعة</li>
+                    @{
+                        var qaRole = Context.Session.GetString("Role");
+                    }
+
+                    @if (qaRole == "Admin")
+                    {
+                        <li>
+                            <a class="dropdown-item" asp-controller="Project" asp-action="Create">
+                                <i class="fas fa-project-diagram text-primary me-2"></i>
+                                <span data-lang="qa_new_project">مشروع جديد</span>
+                            </a>
+                        </li>
+                    }
+
+                    @if (qaRole == "ProjectManager")
+                    {
+                        <li>
+                            <a class="dropdown-item" asp-controller="Task" asp-action="Index">
+                                <i class="fas fa-plus-circle text-success me-2"></i>
+                                <span data-lang="qa_new_task">جميع المهام</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="SiteVisit" asp-action="Index">
+                                <i class="fas fa-hard-hat text-warning me-2"></i>
+                                <span data-lang="qa_new_visit">زيارات الموقع</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="Document" asp-action="Index">
+                                <i class="fas fa-file-upload text-secondary me-2"></i>
+                                <span data-lang="qa_upload_doc"> جميع المستندات</span>
+                            </a>
+                        </li>
+                    }
+
+                    @if (qaRole == "Engineer")
+                    {
+                        <li>
+                            <a class="dropdown-item" asp-controller="Drawing" asp-action="Index">
+                                <i class="fas fa-camera text-info me-2"></i>
+                                <span data-lang="qa_upload_photos">جميع الصور</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-controller="Document" asp-action="Index">
+                                <i class="fas fa-file-upload text-secondary me-2"></i>
+                                <span data-lang="qa_upload_doc">جميع المستندات</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            <!-- Notification Center — driven by real system data (GetNotifications) -->
+            <div class="navbar-notifications dropdown">
+                <button class="navbar-icon-btn" id="notifBtn" data-bs-toggle="dropdown" title="Notifications" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="navbar-badge" id="notifBadge" style="display:none">0</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end bonyan-dropdown navbar-notif-menu">
+                    <div class="navbar-notif-header">
+                        <span data-lang="notifications">الإشعارات</span>
+                        <a href="#" class="navbar-notif-clear" id="notifClearBtn" data-lang="mark_all_read">تعليم الكل كمقروء</a>
+                    </div>
+                    <div class="navbar-notif-list" id="notifList">
+                        <div class="navbar-notif-empty" data-lang="loading_notifications">
+                            جاري تحميل الإشعارات...
+                        </div>
+                    </div>
+                    <div class="navbar-notif-footer">
+                        <a asp-controller="Home" asp-action="Dashboard" data-lang="view_all">عرض الكل</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status Indicator -->
+            <span class="navbar-status d-none d-md-flex" title="All systems operational">
+                <span class="navbar-status-dot"></span>
+                <span data-lang="status_online">متصل</span>
+            </span>
+
+            <span class="navbar-divider d-none d-sm-block"></span>
+
+            <!-- Chatbot Toggle -->
+            <button class="navbar-icon-btn navbar-chatbot-btn" id="chatbotToggleBtn" title="Bonyan Assistant" aria-label="Open assistant">
+                <i class="fas fa-robot"></i>
+                <span class="navbar-chatbot-pulse"></span>
+            </button>
+
+            <!-- Dark / Light Mode -->
+            <button class="navbar-icon-btn" id="darkModeBtn" onclick="toggleDarkMode()" title="Dark / Light" aria-label="Toggle theme">
+                <i class="fas fa-moon" id="darkModeIcon"></i>
+            </button>
+
+            <!-- Language Switcher -->
+            <button id="langBtn" class="lang-btn" onclick="toggleLanguage()">
+                <i class="fas fa-globe me-1"></i>
+                <span id="langBtnText">English</span>
+            </button>
+
+            <span class="navbar-divider d-none d-sm-block"></span>
+
+            <!-- User Profile -->
+            @{
+                var fullName = Context.Session.GetString("FullName") ?? "المستخدم";
+                var initials = string.Concat(fullName.Split(' ').Where(w => w.Length > 0).Take(2).Select(w => w[0]));
+                var roleRaw = Context.Session.GetString("Role") ?? "";
+                var roleClass = roleRaw switch
+                {
+                    "Admin" => "chip-admin",
+                    "ProjectManager" => "chip-pm",
+                    "Engineer" => "chip-engineer",
+                    _ => "chip-default"
+                };
+            }
+            <div class="navbar-user dropdown">
+                <div class="user-info-btn" data-bs-toggle="dropdown" aria-label="User menu">
+                    <div class="navbar-avatar">
+                        <span>@(initials.Length > 0 ? initials.ToUpper() : "U")</span>
+                        <span class="navbar-avatar-status"></span>
+                    </div>
+                    <div class="user-details d-none d-md-flex">
+                        <span class="user-name">@fullName</span>
+                        <span class="user-role">@roleRaw</span>
+                    </div>
+                    <i class="fas fa-chevron-down navbar-chevron d-none d-md-inline"></i>
+                </div>
+
+                <div class="dropdown-menu dropdown-menu-end bonyan-profile-dropdown">
+                    <div class="profile-dropdown-header">
+                        <div class="profile-dropdown-avatar">
+                            <span>@(initials.Length > 0 ? initials.ToUpper() : "U")</span>
+                        </div>
+                        <div class="profile-dropdown-info">
+                            <div class="profile-dropdown-name">@fullName</div>
+                            <div class="profile-dropdown-email">@(Context.Session.GetString("Email") ?? "")</div>
+                            <span class="profile-chip @roleClass"><span class="dot"></span>@roleRaw</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-dropdown-body">
+                        <a class="profile-dropdown-item" asp-controller="Account" asp-action="Profile">
+                            <span class="item-icon icon-blue"><i class="fas fa-id-card"></i></span>
+                            <span data-lang="my_profile">ملف شخصي</span>
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <a class="profile-dropdown-item item-danger" asp-controller="Account" asp-action="Logout">
+                            <span class="item-icon icon-red"><i class="fas fa-sign-out-alt"></i></span>
+                            <span data-lang="logout">تسجيل الخروج</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile search overlay (shown only when mobileSearchBtn is tapped) -->
+    <div class="navbar-mobile-search d-md-none" id="mobileSearchBar">
+        <i class="fas fa-search"></i>
+        <input type="text" id="mobileSearchInput" data-lang-placeholder="search_placeholder" placeholder="بحث..." autocomplete="off" />
+        <button id="mobileSearchClose"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="bonyan-wrapper">
+
+        <aside class="bonyan-sidebar" id="sidebar">
+            <ul class="sidebar-menu">
+
+                <li>
+                    <a asp-controller="Home" asp-action="Index"
+                       class="sidebar-home-btn @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                        <i class="fas fa-home"></i>
+                        <span data-lang="home">الرئيسية</span>
+                    </a>
+                </li>
+
+                @{
+                    var role = Context.Session.GetString("Role");
+                }
+
+                @if (role == "Admin")
+                {
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="management">الإدارة</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Employee" asp-action="Index">
+                            <i class="fas fa-users"></i>
+                            <span data-lang="employees">الموظفون</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Project" asp-action="Index">
+                            <i class="fas fa-project-diagram"></i>
+                            <span data-lang="projects">المشاريع</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="operations">العمليات</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Task" asp-action="Index">
+                            <i class="fas fa-tasks"></i>
+                            <span data-lang="tasks">المهام</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Document" asp-action="Index">
+                            <i class="fas fa-file-alt"></i>
+                            <span data-lang="documents">المستندات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Drawing" asp-action="Index">
+                            <i class="fas fa-drafting-compass"></i>
+                            <span data-lang="drawings">الرسومات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="SiteVisit" asp-action="Index">
+                            <i class="fas fa-hard-hat"></i>
+                            <span data-lang="sitevisits">زيارات الموقع</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="finance">المالية</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Invoice" asp-action="Index">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span data-lang="invoices">الفواتير</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="MaterialInvoice" asp-action="Index">
+                            <i class="fas fa-file-invoice"></i>
+                            <span data-lang="material_invoices">فواتير المواد</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="inventory_section">المخزون والورودن</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Material" asp-action="Index">
+                            <i class="fas fa-boxes"></i>
+                            <span data-lang="materials">المواد</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Supplier" asp-action="Index">
+                            <i class="fas fa-truck"></i>
+                            <span data-lang="suppliers">الموردون</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Inventory" asp-action="Index">
+                            <i class="fas fa-warehouse"></i>
+                            <span data-lang="inventory">المخزون</span>
+                        </a>
+                    </li>
+                }
+
+                @if (role == "ProjectManager")
+                {
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="my_projects">مشاريعي</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Project" asp-action="Index">
+                            <i class="fas fa-project-diagram"></i>
+                            <span data-lang="projects">المشاريع</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="operations">العمليات</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Task" asp-action="Index">
+                            <i class="fas fa-tasks"></i>
+                            <span data-lang="tasks">المهام</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Document" asp-action="Index">
+                            <i class="fas fa-file-alt"></i>
+                            <span data-lang="documents">المستندات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Drawing" asp-action="Index">
+                            <i class="fas fa-drafting-compass"></i>
+                            <span data-lang="drawings">الرسومات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="SiteVisit" asp-action="Index">
+                            <i class="fas fa-hard-hat"></i>
+                            <span data-lang="sitevisits">زيارات الموقع</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Invoice" asp-action="Index">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span data-lang="invoices">الفواتير</span>
+                        </a>
+                    </li>
+                }
+
+                @if (role == "Engineer")
+                {
+                    <li>
+                        <a asp-controller="Home" asp-action="Dashboard">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-lang="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="my_projects">مشاريعي</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Project" asp-action="Index">
+                            <i class="fas fa-project-diagram"></i>
+                            <span data-lang="projects">المشاريع</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-section-title">
+                        <span data-lang="my_work">عملي</span>
+                    </li>
+                    <li>
+                        <a asp-controller="Task" asp-action="Index">
+                            <i class="fas fa-tasks"></i>
+                            <span data-lang="tasks">المهام</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Document" asp-action="Index">
+                            <i class="fas fa-file-alt"></i>
+                            <span data-lang="documents">المستندات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Drawing" asp-action="Index">
+                            <i class="fas fa-drafting-compass"></i>
+                            <span data-lang="drawings">الرسومات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="SiteVisit" asp-action="Index">
+                            <i class="fas fa-hard-hat"></i>
+                            <span data-lang="sitevisits">زيارات الموقع</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Invoice" asp-action="Index">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span data-lang="invoices">الفواتير</span>
+                        </a>
+                    </li>
+                }
+
+            </ul>
+        </aside>
+
+        <main class="bonyan-content" id="mainContent">
+            <partial name="_AlertMessages" />
+            @RenderBody()
+        </main>
+    </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/js/translations.js"></script>
+    <script src="~/js/lang-switch.js"></script>
+
+    <script>
+        // ── Sidebar toggle ─────────────────────────
+        // ── Sidebar toggle ─────────────────────────
+        // ── Sidebar toggle ─────────────────────────
+         function toggleSidebar() {
+             document.getElementById('sidebar').classList.toggle('collapsed');
+             // Force a reflow so the CSS [dir] + .collapsed sibling selector updates instantly
+             document.getElementById('mainContent') && void document.getElementById('mainContent').offsetHeight;
+         }
+        // ── Dark Mode ──────────────────────────────
+        const darkBtn  = document.getElementById('darkModeBtn');
+        const darkIcon = document.getElementById('darkModeIcon');
+
+        function applyDarkMode(on) {
+            document.body.classList.toggle('dark-mode', on);
+            darkIcon.className = on ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('bonyan-dark', on ? '1' : '0');
+        }
+
+        function toggleDarkMode() {
+            applyDarkMode(!document.body.classList.contains('dark-mode'));
+        }
+
+        // Theme class was already applied pre-paint (see the inline script
+        // right after <body>); just sync the toggle icon to match it.
+        darkIcon.className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
+    </script>
+
+    @RenderSection("Scripts", required: false)
+
+    <!-- ════════════════════════════════════════════════════════
+         CHATBOT WIDGET — minimal shell, wire your real bot into
+         navbar.js -> openChatbot() / the #chatbotPanel below
+    ════════════════════════════════════════════════════════ -->
+    <div class="chatbot-panel" id="chatbotPanel">
+        <div class="chatbot-panel-header">
+            <div class="chatbot-panel-title">
+                <i class="fas fa-robot"></i>
+                <span data-lang="assistant_name">مساعد بُنيَان</span>
+            </div>
+            <button id="chatbotCloseBtn" aria-label="Close assistant"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="chatbot-panel-body" id="chatbotBody">
+            <div class="chatbot-msg chatbot-msg-bot">
+                <span data-lang="assistant_greeting">مرحبًا! كيف يمكنني مساعدتك اليوم؟</span>
+            </div>
+        </div>
+        <div class="chatbot-panel-footer">
+            <input type="text" id="chatbotInput" data-lang-placeholder="type_message" placeholder="اكتب رسالتك..." autocomplete="off" />
+            <button id="chatbotSendBtn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script src="~/js/navbar.js"></script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+﻿@model Bonyan.DAL.Models.SiteVisit
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "إضافة زيارة موقع";
+    int projectId = ViewBag.ProjectId ?? 0;
+    string projectName = ViewBag.ProjectName as string ?? "—";
+}
+
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+<link rel="stylesheet" href="~/css/sitevisit.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-hard-hat" style="color:var(--secondary)"></i>
+            <span data-lang="add_sitevisit">إضافة زيارة موقع</span>
+        </h2>
+        <p data-lang="sitevisit_create_sub">تسجيل زيارة موقع جديدة مع التقرير والصور</p>
+    </div>
+    <a asp-controller="Project" asp-action="Details"
+       asp-route-id="@projectId" class="btn-bonyan-primary">
+        <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
+    </a>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger" style="background:#fde8e8; border:1px solid #f5c6cb; border-radius:10px; padding:14px 18px; margin-bottom:18px; color:#842029; font-weight:600">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span data-lang="fix_errors_below">يرجى تصحيح الأخطاء أدناه</span>
+    </div>
+}
+
+<div class="form-card">
+    <div class="form-card-header">
+        <i class="fas fa-map-marker-alt"></i>
+        <h4 data-lang="sitevisit_data">بيانات زيارة الموقع</h4>
+    </div>
+
+    <div class="form-card-body">
+        <div class="project-badge">
+            <i class="fas fa-project-diagram"></i>
+            @projectName
+        </div>
+
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ProjId" value="@projectId" />
+
+            <div class="form-section-title">
+                <i class="fas fa-file-alt"></i>
+                <span data-lang="visit_report_section">تقرير الزيارة</span>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-pen" style="color:var(--secondary);margin-left:4px"></i>
+                    <span data-lang="visit_report">تقرير الزيارة</span>
+                    <span style="color:var(--danger,#e53935)">*</span>
+                </label>
+                <textarea asp-for="Report" class="form-control" rows="5"
+                          data-lang-placeholder="visit_report_placeholder"
+                          placeholder="اكتب تقرير تفصيلي عن الزيارة..." required></textarea>
+                <span asp-validation-for="Report" class="text-danger"></span>
+            </div>
+
+            <div class="form-section-title" style="margin-top:28px">
+                <i class="fas fa-shield-alt"></i>
+                <span data-lang="safety_photo_section">السلامة والصورة</span>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-shield" style="color:var(--secondary);margin-left:4px"></i>
+                        <span data-lang="safety_status">حالة السلامة</span>
+                        <span style="color:var(--danger,#e53935)">*</span>
+                    </label>
+                    <select asp-for="SafetyStatus" class="form-select"
+                            onchange="updateSafetyBadge(this)" required>
+                        <option value="0" data-lang="safety_safe">آمن</option>
+                        <option value="1" data-lang="safety_attention">يحتاج انتباه</option>
+                        <option value="2" data-lang="safety_critical">حرج</option>
+                    </select>
+                    <div id="safetyPreview" class="badge-safe" style="margin-top:8px;display:none">
+                        <i class="fas fa-check-circle"></i>
+                        <span data-lang="safety_safe">آمن</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-camera" style="color:var(--secondary);margin-left:4px"></i>
+                        <span data-lang="site_photo_optional">صورة الموقع (اختياري)</span>
+                    </label>
+                    <div class="file-drop-zone" id="photoDropZone" style="min-height:120px">
+                        <div id="photoDropContent">
+                            <i class="fas fa-image"></i>
+                            <p data-lang="drag_drop_photo_site">اسحب الصورة هنا أو انقر للاختيار</p>
+                            <span data-lang="allowed_formats_img">JPG, PNG, GIF, WEBP</span>
+                        </div>
+                        <img id="sitePhotoPreview" style="display:none; max-height:120px; border-radius:8px; margin-top:6px" alt="معاينة" />
+                        <input type="file" name="visitPhoto" id="photoInput"
+                               accept=".jpg,.jpeg,.png,.gif,.webp"
+                               onchange="previewSitePhoto(this)" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions" style="margin-top:32px">
+                <a asp-controller="Project" asp-action="Details"
+                   asp-route-id="@projectId" class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+                </a>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-save"></i> <span data-lang="save_visit">حفظ الزيارة</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var safetyMap = {
+            0: { cls: 'badge-safe',     icon: 'fa-check-circle', label: 'آمن' },
+            1: { cls: 'badge-attention', icon: 'fa-exclamation-triangle', label: 'يحتاج انتباه' },
+            2: { cls: 'badge-critical',  icon: 'fa-times-circle', label: 'حرج' }
+        };
+        function updateSafetyBadge(sel) {
+            var preview = document.getElementById('safetyPreview');
+            var val = sel.value;
+            if (val === '') { preview.style.display = 'none'; return; }
+            var m = safetyMap[val];
+            if (!m) return;
+            preview.className = m.cls;
+            preview.style.display = 'inline-flex';
+            preview.style.alignItems = 'center';
+            preview.style.gap = '6px';
+            preview.querySelector('i').className = 'fas ' + m.icon;
+            preview.querySelector('span').textContent = m.label;
+        }
+        function previewSitePhoto(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var img = document.getElementById('sitePhotoPreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('photoDropContent').style.display = 'none';
+                    document.getElementById('photoDropZone').style.borderColor = 'var(--secondary)';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        var zone = document.getElementById('photoDropZone');
+        zone.addEventListener('dragover', function (e) { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', function () { zone.classList.remove('dragover'); });
+        zone.addEventListener('drop', function (e) {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            var dt = e.dataTransfer;
+            if (dt.files.length) {
+                document.getElementById('photoInput').files = dt.files;
+                previewSitePhoto(document.getElementById('photoInput'));
+            }
+        });
+    </script>
+}

@@ -1,0 +1,169 @@
+﻿@model IEnumerable<Bonyan.DAL.Models.Inventory>
+@{
+    ViewData["Title"] = "المخازن";
+    var role = Context.Session.GetString("Role");
+
+    var inventoriesList = Model?.ToList() ?? new List<Bonyan.DAL.Models.Inventory>();
+    int totalCount = inventoriesList.Count;
+    int withLocation = inventoriesList.Count(i => !string.IsNullOrWhiteSpace(i.Location));
+    decimal totalCapacity = inventoriesList.Sum(i => i.Capacity ?? 0);
+    int totalMaterialItems = inventoriesList.Sum(i => i.MaterialInventories.Count);
+}
+
+<link rel="stylesheet" href="~/css/material.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<style>
+    [dir="ltr"] .emp-table thead th { text-align: left; }
+    [dir="ltr"] .emp-table thead th i { margin-left: 0; margin-right: 5px; }
+</style>
+
+<div class="emp-page">
+
+    <!-- ── Header ─────────────────────────────────── -->
+    <div class="emp-header">
+        <div class="emp-header-title">
+            <h2><i class="fas fa-warehouse"></i> <span data-lang="warehouses">المخازن</span></h2>
+            <p data-lang="warehouses_sub">إدارة المخازن والمواد المخزّنة</p>
+        </div>
+        @if (role == "Admin")
+        {
+            <div class="emp-header-actions">
+                <a asp-action="Create" class="btn-emp btn-emp-primary">
+                    <i class="fas fa-plus"></i> <span data-lang="add_warehouse">إضافة مخزن</span>
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- ── Alerts ─────────────────────────────────── -->
+    <partial name="_AlertMessages" />
+
+    <!-- ── KPI Strip ──────────────────────────────── -->
+    <div class="emp-kpi-grid">
+        <div class="emp-kpi navy">
+            <div class="emp-kpi-icon"><i class="fas fa-warehouse"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="inv_stat_total">إجمالي المخازن</div>
+                <div class="emp-kpi-value">@totalCount</div>
+            </div>
+        </div>
+        <div class="emp-kpi blue">
+            <div class="emp-kpi-icon"><i class="fas fa-map-marker-alt"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="inv_stat_located">محدد الموقع</div>
+                <div class="emp-kpi-value">@withLocation</div>
+            </div>
+        </div>
+        <div class="emp-kpi gold">
+            <div class="emp-kpi-icon"><i class="fas fa-weight-hanging"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="inv_stat_capacity">السعة الإجمالية</div>
+                <div class="emp-kpi-value">@totalCapacity.ToString("N0")</div>
+            </div>
+        </div>
+        <div class="emp-kpi green">
+            <div class="emp-kpi-icon"><i class="fas fa-boxes"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="inv_stat_materials">المواد المخزّنة</div>
+                <div class="emp-kpi-value">@totalMaterialItems</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Warehouses Table ───────────────────────── -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h5><i class="fas fa-warehouse"></i> <span data-lang="warehouses">المخازن</span></h5>
+            <span class="count-badge">@totalCount</span>
+        </div>
+
+        @if (inventoriesList.Any())
+        {
+            <div class="table-responsive">
+                <table class="emp-table mat-table" style="min-width:800px">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-warehouse"></i> <span data-lang="warehouse_name_label">اسم المخزن</span></th>
+                            <th><i class="fas fa-map-marker-alt"></i> <span data-lang="location">الموقع</span></th>
+                            <th><i class="fas fa-weight-hanging"></i> <span data-lang="capacity">السعة</span></th>
+                            <th><i class="fas fa-boxes"></i> <span data-lang="material_count">عدد المواد</span></th>
+                            <th><i class="fas fa-calendar-alt"></i> <span data-lang="last_updated">آخر تحديث</span></th>
+                            @if (role == "Admin")
+                            {
+                                <th><i class="fas fa-cog"></i> <span data-lang="actions">إجراءات</span></th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var inv in inventoriesList)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="emp-name-cell">
+                                        <div class="emp-avatar" style="background:linear-gradient(135deg,#2e7d32,#43a047); font-size:0.7rem">
+                                            <i class="fas fa-warehouse"></i>
+                                        </div>
+                                        <div class="emp-info">
+                                            <a asp-action="Details" asp-route-id="@inv.InventoryID"
+                                               style="color:var(--primary); font-weight:700; text-decoration:none">
+                                                @inv.InventoryName
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@(inv.Location ?? "—")</td>
+                                <td style="font-weight:700">@(inv.Capacity.HasValue ? inv.Capacity.Value.ToString("N0") : "—")</td>
+                                <td>
+                                    <span class="badge-spec spec-architectural">
+                                        <i class="fas fa-boxes"></i> @inv.MaterialInventories.Count
+                                    </span>
+                                </td>
+                                <td style="white-space:nowrap">@inv.LastUpdatedDate.ToString("yyyy-MM-dd")</td>
+                                @if (role == "Admin")
+                                {
+                                    <td>
+                                        <div class="action-btns">
+                                            <a asp-action="Details" asp-route-id="@inv.InventoryID"
+                                               class="btn-action view" data-tip-ar="عرض" data-tip-en="View" data-tip="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@inv.InventoryID"
+                                               class="btn-action edit" data-tip-ar="تعديل" data-tip-en="Edit" data-tip="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@inv.InventoryID"
+                                               class="btn-action delete"
+                                               data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-warehouse"></i>
+                <p data-lang="no_warehouses">لا توجد مخازن حتى الآن</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('languageChanged', function (e) {
+            var lang = e.detail.lang;
+            document.querySelectorAll('[data-tip-ar]').forEach(function (el) {
+                el.setAttribute('data-tip', lang === 'ar' ? el.dataset.tipAr : el.dataset.tipEn);
+            });
+        });
+    </script>
+}

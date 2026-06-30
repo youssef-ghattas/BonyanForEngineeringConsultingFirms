@@ -1,0 +1,184 @@
+﻿@model Bonyan.DAL.Models.Invoice
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تعديل الفاتورة";
+    string projectName = ViewBag.ProjectName ?? "—";
+}
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/invoice.css" />
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-edit" style="color:var(--secondary)"></i>
+            <span data-lang="edit_invoice_hash">تعديل فاتورة #</span>@Model.Invoice_ID
+        </h2>
+    </div>
+    <a asp-controller="Project" asp-action="Details"
+       asp-route-id="@Model.ProjectId" class="btn-bonyan-primary">
+        <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
+    </a>
+</div>
+<div class="form-card">
+    <div class="form-card-header">
+        <i class="fas fa-file-invoice-dollar"></i>
+        <h4 data-lang="edit_invoice_data">تعديل بيانات الفاتورة</h4>
+    </div>
+    <div class="form-card-body">
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Invoice_ID" />
+            <input type="hidden" asp-for="ProjectId" />
+            <input type="hidden" asp-for="Invoice_Date" />
+            <div class="form-section-title" data-lang="invoice_data">بيانات الفاتورة</div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label data-lang="total_amount">إجمالي المبلغ</label>
+                    <input asp-for="Total_Amount" type="number" step="0.01" min="0"
+                           class="form-control" id="totalAmount" oninput="calcFinal()" />
+                    <span asp-validation-for="Total_Amount" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label data-lang="status">الحالة</label> <span class="required">*</span>
+                    <select asp-for="Invoice_Status" class="form-select" id="statusSelect" onchange="onStatusChange()">
+                        <option value="1" data-lang="invoice_unpaid">غير مدفوعة</option>
+                        <option value="0" data-lang="invoice_paid">مدفوعة</option>
+                        <option value="2" data-lang="invoice_partial">مدفوعة جزئياً</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label data-lang="due_date">تاريخ الاستحقاق</label>
+                    <input asp-for="Due_Date" type="date" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label data-lang="tax_percent">الضريبة (%)</label>
+                    <input asp-for="Tax" type="number" step="0.01" min="0" max="100"
+                           class="form-control" id="taxPercent" oninput="calcFinal()" />
+                </div>
+                <div class="form-group">
+                    <label data-lang="discount_percent">الخصم (%)</label>
+                    <input asp-for="Discount" type="number" step="0.01" min="0" max="100"
+                           class="form-control" id="discountPercent" oninput="calcFinal()" />
+                </div>
+
+                @* ── AMOUNT PAID (shown only when PartiallyPaid) ── *@
+                <div class="form-group" id="amountPaidRow" style="display:@(Model.Invoice_Status == InvoiceStatus.PartiallyPaid ? "block" : "none")">
+                    <label data-lang="amount_paid">المبلغ المدفوع (ج.م)</label> <span style="color:red">*</span>
+                    <input asp-for="Paid_Amount" type="number" step="0.01" min="0"
+                           class="form-control" id="amountPaidInput"
+                           placeholder="0.00" oninput="calcRemaining()" />
+                    <span asp-validation-for="Paid_Amount" class="text-danger"></span>
+                </div>
+            </div>
+
+            @* ── SUMMARY BOX ── *@
+            <div class="invoice-summary-box">
+                <div class="invoice-summary-title">
+                    <i class="fas fa-calculator"></i> <span data-lang="invoice_summary">ملخص الفاتورة</span>
+                </div>
+                <div class="invoice-summary-grid">
+                    <div class="invoice-summary-item">
+                        <div class="invoice-summary-label" data-lang="total_before_tax">المجموع قبل الضريبة</div>
+                        <div class="invoice-summary-value" id="dispTotal">0.00 ج.م</div>
+                    </div>
+                    <div class="invoice-summary-item">
+                        <div class="invoice-summary-label" data-lang="tax">الضريبة</div>
+                        <div class="invoice-summary-value tax-value" id="dispTax">0.00 ج.م</div>
+                    </div>
+                    <div class="invoice-summary-item">
+                        <div class="invoice-summary-label" data-lang="discount">الخصم</div>
+                        <div class="invoice-summary-value disc-value" id="dispDisc">0.00 ج.م</div>
+                    </div>
+                    <div class="invoice-summary-item invoice-summary-final">
+                        <div class="invoice-summary-label" data-lang="net_final">الصافي النهائي</div>
+                        <div class="invoice-summary-value" id="dispFinal">0.00 ج.م</div>
+                    </div>
+                    <div class="invoice-summary-item invoice-summary-final" id="rowRemaining" style="display:@(Model.Invoice_Status == InvoiceStatus.PartiallyPaid ? "flex" : "none")">
+                        <div class="invoice-summary-label" style="color:#c62828;" data-lang="remaining_amount">المبلغ المتبقي</div>
+                        <div class="invoice-summary-value" id="dispRemaining" style="color:#c62828;">0.00 ج.م</div>
+                    </div>
+                    <div class="invoice-summary-item" id="rowPaid" style="display:@(Model.Invoice_Status == InvoiceStatus.PartiallyPaid ? "flex" : "none")">
+                        <div class="invoice-summary-label" style="color:#2e7d32;" data-lang="amount_paid">المبلغ المدفوع</div>
+                        <div class="invoice-summary-value" id="dispPaid" style="color:#2e7d32;">0.00 ج.م</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a asp-controller="Project" asp-action="Details"
+                   asp-route-id="@Model.ProjectId" class="btn-bonyan-primary">
+                    <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+                </a>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-save"></i> <span data-lang="save_changes">حفظ التعديلات</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function calcFinal() {
+            var total    = parseFloat(document.getElementById('totalAmount')?.value)    || 0;
+            var taxPct   = parseFloat(document.getElementById('taxPercent')?.value)     || 0;
+            var discPct  = parseFloat(document.getElementById('discountPercent')?.value) || 0;
+
+            var discAmt = total * discPct / 100;
+            var afterDisc = total - discAmt;
+            var taxAmt  = afterDisc * taxPct / 100;
+            var final   = afterDisc + taxAmt;
+
+            var setEl = function (id, val) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = val.toFixed(2) + ' ج.م';
+            };
+            setEl('dispTotal', total);
+            setEl('dispDisc',  discAmt);
+            setEl('dispTax',   taxAmt);
+            setEl('dispFinal', final);
+
+            calcRemaining();
+        }
+
+        function onStatusChange() {
+            var status = document.getElementById('statusSelect').value;
+            var row    = document.getElementById('amountPaidRow');
+            var rowR   = document.getElementById('rowRemaining');
+            var rowP   = document.getElementById('rowPaid');
+
+            if (status === '2') {
+                row.style.display  = 'block';
+                rowR.style.display = 'flex';
+                rowP.style.display = 'flex';
+            } else {
+                row.style.display  = 'none';
+                rowR.style.display = 'none';
+                rowP.style.display = 'none';
+                document.getElementById('amountPaidInput').value = '';
+            }
+            calcRemaining();
+        }
+
+        function calcRemaining() {
+            var finalEl   = document.getElementById('dispFinal');
+            var finalText = finalEl ? finalEl.textContent.replace(' ج.م', '').trim() : '0';
+            var final     = parseFloat(finalText) || 0;
+            var paid      = parseFloat(document.getElementById('amountPaidInput')?.value) || 0;
+
+            if (paid > final) {
+                paid = final;
+                document.getElementById('amountPaidInput').value = final.toFixed(2);
+            }
+
+            var remaining = final - paid;
+            var setEl = function(id, val) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = val.toFixed(2) + ' ج.م';
+            };
+            setEl('dispPaid',      paid);
+            setEl('dispRemaining', remaining);
+        }
+
+        document.addEventListener('DOMContentLoaded', calcFinal);
+    </script>
+}

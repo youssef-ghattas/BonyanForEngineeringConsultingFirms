@@ -1,0 +1,71 @@
+﻿@model Bonyan.DAL.Models.Project
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "حذف مشروع";
+    string statusAr = Model.Status switch
+    {
+        ProjectStatus.Planning => "تخطيط",
+        ProjectStatus.InProgress => "جاري التنفيذ",
+        ProjectStatus.Completed => "مكتمل",
+        ProjectStatus.OnHold => "موقوف",
+        ProjectStatus.Cancelled => "ملغي",
+        _ => Model.Status.ToString()
+    };
+    string statusEn = Model.Status switch
+    {
+        ProjectStatus.Planning => "Planning",
+        ProjectStatus.InProgress => "In Progress",
+        ProjectStatus.Completed => "Completed",
+        ProjectStatus.OnHold => "On Hold",
+        ProjectStatus.Cancelled => "Cancelled",
+        _ => Model.Status.ToString()
+    };
+}
+
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="delete-card">
+    <div class="delete-card-header">
+        <i class="fas fa-trash-alt"></i>
+        <h4 data-lang="delete_project">حذف مشروع</h4>
+    </div>
+    <div class="delete-card-body">
+        <div class="delete-icon">
+            <i class="fas fa-folder-minus"></i>
+        </div>
+        <h5 data-lang="delete_confirm">هل أنت متأكد من الحذف؟</h5>
+        <p data-lang="delete_warning">
+            لا يمكن التراجع عن هذا الإجراء بعد تأكيده
+        </p>
+
+        <div class="delete-info-box">
+            <p>
+                <strong data-lang="project_name">المشروع: </strong>
+                @Model.ProjectName
+            </p>
+            <p>
+                <strong data-lang="client">العميل: </strong>
+                @(Model.Client_Name ?? "—")
+            </p>
+            <p>
+                <strong data-lang="status">الحالة: </strong>
+                <span data-ar="@statusAr" data-en="@statusEn">@statusAr</span>
+            </p>
+        </div>
+
+        <form asp-action="DeleteConfirmed" method="post"
+              style="display:flex; gap:12px; justify-content:center">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.ProjectId" />
+            <a asp-action="Index" class="btn-bonyan-primary">
+                <i class="fas fa-times"></i>
+                <span data-lang="cancel">إلغاء</span>
+            </a>
+            <button type="submit" class="btn-bonyan-danger">
+                <i class="fas fa-trash"></i>
+                <span data-lang="delete_confirm_btn">نعم، احذف</span>
+            </button>
+        </form>
+    </div>
+</div>

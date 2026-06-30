@@ -1,0 +1,260 @@
+﻿@model Bonyan.DAL.Models.Supplier
+@{
+    ViewData["Title"] = "إضافة مورد";
+}
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+<link rel="stylesheet" href="~/css/material.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2><i class="fas fa-plus-circle" style="color:var(--secondary)"></i> <span data-lang="add_supplier_new">إضافة مورد جديد</span></h2>
+        <p data-lang="add_supplier_new_sub"></p>
+    </div>
+    <a asp-action="Index" class="btn-bonyan-primary"><i class="fas fa-arrow-right"></i> <span data-lang="back_to_suppliers">رجوع للموردين</span></a>
+</div>
+
+<div class="form-card">
+    <div class="form-card-header"><i class="fas fa-industry"></i> <h4 data-lang="supplier_data">بيانات المورد</h4></div>
+    <div class="form-card-body">
+        <form asp-action="Create" method="post" id="supplierForm">
+            @Html.AntiForgeryToken()
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div style="background:#fde8e8; border:1px solid #f5c6cb; border-radius:10px;
+                        padding:14px 18px; margin-bottom:18px; color:#842029;">
+                    <strong><i class="fas fa-exclamation-triangle"></i> يوجد أخطاء في النموذج:</strong>
+                    <ul style="margin:8px 0 0 0; padding-right:20px">
+                        @foreach (var error in ViewData.ModelState.Values
+                                            .SelectMany(v => v.Errors))
+                        {
+                            <li style="font-size:0.88rem">@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (ViewBag.ValidationErrors != null)
+            {
+                <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:10px;
+                        padding:14px 18px; margin-bottom:18px; color:#664d03;">
+                    <strong><i class="fas fa-bug"></i> تفاصيل الخطأ:</strong>
+                    <ul style="margin:8px 0 0 0; padding-right:20px">
+                        @foreach (var err in ViewBag.ValidationErrors as List<string>)
+                        {
+                            <li style="font-size:0.88rem; font-family:monospace">@err</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <div class="form-section-title" data-lang="supplier_data">بيانات المورد</div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label><span data-lang="supplier_name_label">اسم المورد</span> <span class="required">*</span></label>
+                    <input asp-for="SupplierName" class="form-control" data-lang-placeholder="supplier_name_placeholder" placeholder="اسم الشركة أو المورد" required />
+                    <span asp-validation-for="SupplierName" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label data-lang="contact_person">شخص التواصل</label>
+                    <input asp-for="ContactPerson" class="form-control" data-lang-placeholder="contact_person_placeholder" placeholder="اسم المسؤول" />
+                </div>
+                <div class="form-group">
+                    <label data-lang="email">البريد الإلكتروني</label>
+                    <input asp-for="Email" type="email" class="form-control" placeholder="supplier@example.com" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label data-lang="phone">الهاتف</label>
+                    <input asp-for="Phone" class="form-control" placeholder="01xxxxxxxxx" />
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label data-lang="address">العنوان</label>
+                    <textarea asp-for="Address" class="form-control" rows="2" data-lang-placeholder="address_placeholder" placeholder="عنوان المورد التفصيلي"></textarea>
+                </div>
+            </div>
+
+            <hr style="margin:24px 0;" />
+
+            <div class="form-group">
+                <label style="font-weight:700;color:var(--primary);font-size:1rem">
+                    <i class="fas fa-boxes"></i> <span data-lang="materials_supplied_by">المواد التي يورّدها هذا المورد</span>
+                </label>
+
+                <div style="position:relative;max-width:420px;margin-top:8px">
+                    <button type="button" id="dropdownToggle" onclick="toggleDropdown()"
+                            style="width:100%;background:#fff;border:2px solid #e0e0e0;border-radius:10px;
+                                   padding:12px 16px;text-align:right;cursor:pointer;font-size:0.92rem;
+                                   display:flex;justify-content:space-between;align-items:center;
+                                   transition:border-color 0.2s">
+                        <span id="dropdownLabel" style="color:#aaa" data-lang="choose_supplied_materials">— اختر المواد التي يورّدها —</span>
+                        <i class="fas fa-chevron-down" id="dropdownArrow"
+                           style="color:#aaa;transition:transform 0.25s"></i>
+                    </button>
+
+                    <div id="materialDropdown"
+                         style="display:none;position:absolute;top:calc(100% + 6px);right:0;left:0;
+                                background:#fff;border:2px solid #e0e0e0;border-radius:10px;
+                                box-shadow:0 8px 24px rgba(0,0,0,0.13);z-index:200;
+                                max-height:250px;overflow-y:auto">
+
+                        @foreach (var item in new[] {
+                                                new { Val="Steel",  Icon="fas fa-hard-hat",  Color="#546e7a", Label="حديد تسليح (Steel)" },
+                                                new { Val="Sand",   Icon="fas fa-mountain",  Color="#fb8c00", Label="رمل (Sand)" },
+                                                new { Val="Cement", Icon="fas fa-box",       Color="#78909c", Label="أسمنت (Cement)" },
+                                                new { Val="Bricks", Icon="fas fa-th-large",  Color="#e53935", Label="طوب (Bricks)" },
+                                                new { Val="Others", Icon="fas fa-ellipsis-h",Color="#8e24aa", Label="أخرى (Others)" }
+                                                })
+                        {
+                            <label id="lbl_@item.Val" onclick="onTypeChange('@item.Val')"
+                                   style="display:flex;align-items:center;gap:14px;padding:13px 18px;
+                                                  cursor:pointer;border-bottom:1px solid #f5f5f5;margin:0;
+                                                  transition:background 0.15s;user-select:none">
+                                <input type="checkbox" name="selectedMaterialTypes" value="@item.Val"
+                                       id="chk_@item.Val" class="mat-type-cb"
+                                       style="width:18px;height:18px;cursor:pointer;accent-color:@item.Color"
+                                       onclick="event.stopPropagation()" onchange="onTypeChange('@item.Val')" />
+                                <i class="@item.Icon" style="color:@item.Color;width:18px;text-align:center"></i>
+                                <span style="font-size:0.92rem;font-weight:500">@item.Label</span>
+                            </label>
+                        }
+                    </div>
+                </div>
+
+                <div id="othersBox" style="display:none;margin-top:10px;max-width:420px">
+                    <input type="text" name="othersText" id="othersText" class="form-control"
+                           data-lang-placeholder="other_material_placeholder" placeholder="اكتب نوع المادة الأخرى (مثال: رخام، زجاج، خشب...)" />
+                </div>
+
+                <div id="selectedChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
+            </div>
+
+            <div class="form-actions" style="margin-top:28px">
+                <a asp-action="Index" class="btn-bonyan-primary"><i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span></a>
+                <button type="submit" class="btn-bonyan-secondary">
+                    <i class="fas fa-save"></i> <span data-lang="save_supplier">حفظ المورد</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .form-card { overflow: visible !important; }
+    .mat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #fff
+    }
+
+    .chip-Steel {
+        background: #546e7a
+    }
+
+    .chip-Sand {
+        background: #fb8c00
+    }
+
+    .chip-Cement {
+        background: #78909c;
+        color: #222
+    }
+
+    .chip-Bricks {
+        background: #e53935
+    }
+
+    .chip-Others {
+        background: #8e24aa
+    }
+
+    #dropdownToggle:hover {
+        border-color: var(--primary)
+    }
+</style>
+
+@section Scripts {
+    <script>
+        var chipLabels={Steel:'حديد (Steel)',Sand:'رمل (Sand)',Cement:'أسمنت (Cement)',Bricks:'طوب (Bricks)',Others:'أخرى'};
+
+        function toggleDropdown(){
+            var d=document.getElementById('materialDropdown');
+            var a=document.getElementById('dropdownArrow');
+            var open=d.style.display==='block';
+            d.style.display=open?'none':'block';
+            a.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+            document.getElementById('dropdownToggle').style.borderColor=open?'#e0e0e0':'var(--primary)';
+        }
+
+        document.addEventListener('click',function(e){
+            var btn=document.getElementById('dropdownToggle');
+            var dd=document.getElementById('materialDropdown');
+            if(btn&&dd&&!btn.contains(e.target)&&!dd.contains(e.target)){
+                dd.style.display='none';
+                document.getElementById('dropdownArrow').style.transform='rotate(0deg)';
+                document.getElementById('dropdownToggle').style.borderColor='#e0e0e0';
+            }
+        });
+
+        function onTypeChange(type){
+            var cb=document.getElementById('chk_'+type);
+            var lbl=document.getElementById('lbl_'+type);
+            lbl.style.background=cb.checked?'#f0f7ff':'#fff';
+            if(type==='Others'){
+                document.getElementById('othersBox').style.display=cb.checked?'block':'none';
+                if(!cb.checked) document.getElementById('othersText').value='';
+            }
+            updateChips();
+            updateLabel();
+        }
+
+        function removeChip(type){
+            var cb=document.getElementById('chk_'+type);
+            if(cb){ cb.checked=false; }
+            if(type==='Others'){
+                document.getElementById('othersBox').style.display='none';
+                document.getElementById('othersText').value='';
+            }
+            var lbl=document.getElementById('lbl_'+type);
+            if(lbl){ lbl.style.background='#fff'; }
+            updateChips();
+            updateLabel();
+        }
+
+        function updateChips(){
+            var c=document.getElementById('selectedChips');
+            c.innerHTML='';
+            document.querySelectorAll('.mat-type-cb:checked').forEach(function(cb){
+                var t=cb.value;
+                var text=t==='Others'?'أخرى: '+(document.getElementById('othersText').value||'...')
+                                      :chipLabels[t];
+                var span=document.createElement('span');
+                span.className='mat-chip chip-'+t;
+                span.style.cursor='default';
+                span.innerHTML='<i class="fas fa-check-circle"></i> '+text
+                    +' <i class="fas fa-times" style="cursor:pointer;margin-right:4px;font-size:0.75rem;opacity:0.7" onclick="removeChip(\''+t+'\')"></i>';
+                c.appendChild(span);
+            });
+        }
+
+        function updateLabel(){
+            var checked=document.querySelectorAll('.mat-type-cb:checked');
+            var lbl=document.getElementById('dropdownLabel');
+            if(checked.length===0){
+                lbl.textContent='— اختر المواد التي يورّدها —';
+                lbl.style.color='#aaa';
+            }else{
+                lbl.textContent=checked.length+' '+(checked.length===1?'مادة':'مواد')+' محددة';
+                lbl.style.color='var(--primary)';
+            }
+        }
+
+        document.getElementById('othersText').addEventListener('input',updateChips);
+    </script>
+}

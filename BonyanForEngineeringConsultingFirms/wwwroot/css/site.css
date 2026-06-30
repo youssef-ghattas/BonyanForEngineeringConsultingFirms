@@ -1,0 +1,932 @@
+﻿/* ── Variables ────────────────────────────────────── */
+:root {
+    --primary: #1B3A6B;
+    --secondary: #C8922A;
+    --bg: #F0F2F7;
+    --sidebar: #162844; /* soft navy — not pure black */
+    --sidebar-hover: #1e3459;
+    --sidebar-active-bg: rgba(200,146,42,0.15);
+    --sidebar-active-border: #C8922A;
+    --text: #1F2937;
+    --white: #FFFFFF;
+    --surface: #FFFFFF;
+    --success: #22C55E;
+    --danger: #EF4444;
+    --muted: #6B7280;
+    --card-border: rgba(0,0,0,0.07);
+    --font-ar: 'Cairo', sans-serif;
+    --font-en: 'Poppins', sans-serif;
+    --sidebar-w: 256px;
+    --navbar-h: 62px;
+    --sidebar-collapsed-w: 0px;
+    --transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Reset ────────────────────────────────────────── */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ar);
+}
+
+[lang="en"] body {
+    font-family: var(--font-en);
+}
+
+/* ── Navbar ───────────────────────────────────────── */
+.bonyan-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--navbar-h);
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1050;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.navbar-logo {
+    color: var(--white);
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .navbar-logo i {
+        color: var(--secondary);
+    }
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.navbar-user {
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+/* ── Language Button ──────────────────────────────── */
+.lang-btn {
+    background: var(--secondary);
+    color: var(--white);
+    border: none;
+    padding: 6px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.3s;
+}
+
+    .lang-btn:hover {
+        opacity: 0.85;
+    }
+
+/* ── Sidebar Toggle Button ────────────────────────── */
+.sidebar-toggle {
+    background: transparent;
+    border: none;
+    color: var(--white);
+    font-size: 1.3rem;
+    cursor: pointer;
+}
+
+/* ── Wrapper ──────────────────────────────────────── */
+.bonyan-wrapper {
+    display: flex;
+    margin-top: var(--navbar-h);
+    min-height: calc(100vh - var(--navbar-h));
+}
+
+/* ── Sidebar ──────────────────────────────────────── */
+/* ── Sidebar ──────────────────────────────────────── */
+.bonyan-sidebar {
+    width: var(--sidebar-w);
+    background: var(--sidebar);
+    position: fixed;
+    top: var(--navbar-h);
+    right: 0;
+    bottom: 0;
+    transition: width var(--transition), transform var(--transition);
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 900;
+    /* Subtle inner border for depth */
+    border-left: 1px solid rgba(255,255,255,0.05);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+
+    .bonyan-sidebar::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .bonyan-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .bonyan-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.12);
+        border-radius: 999px;
+    }
+
+/* LTR — sidebar sits on left, border flips */
+[dir="ltr"] .bonyan-sidebar {
+    right: auto;
+    left: 0;
+    border-left: none;
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+.bonyan-sidebar.collapsed {
+    width: 0;
+    border: none;
+}
+
+/* ── Sidebar Menu ── */
+.sidebar-menu {
+    list-style: none;
+    padding: 12px 0 24px;
+}
+
+    .sidebar-menu li a {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 11px 20px;
+        color: rgba(185, 205, 235, 0.78);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: background var(--transition), color var(--transition), border-color var(--transition);
+        border-right: 3px solid transparent;
+        border-radius: 0;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+[dir="ltr"] .sidebar-menu li a {
+    border-right: none;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-menu li a:hover {
+    background: rgba(255,255,255,0.07);
+    color: #fff;
+    border-right-color: rgba(200,146,42,0.5);
+}
+
+[dir="ltr"] .sidebar-menu li a:hover {
+    border-left-color: rgba(200,146,42,0.5);
+    border-right-color: transparent;
+}
+
+.sidebar-menu li a.active,
+.sidebar-home-btn.active {
+    background: var(--sidebar-active-bg);
+    color: #fff;
+    border-right-color: var(--sidebar-active-border) !important;
+    font-weight: 600;
+}
+
+[dir="ltr"] .sidebar-menu li a.active,
+[dir="ltr"] .sidebar-home-btn.active {
+    border-left-color: var(--sidebar-active-border) !important;
+    border-right-color: transparent !important;
+}
+
+.sidebar-menu li a i {
+    width: 20px;
+    min-width: 20px;
+    color: var(--secondary);
+    font-size: 0.95rem;
+    text-align: center;
+    flex-shrink: 0;
+    transition: color var(--transition), transform var(--transition);
+}
+
+.sidebar-menu li a:hover i {
+    color: #e0a83a;
+    transform: translateX(-2px);
+}
+
+[dir="ltr"] .sidebar-menu li a:hover i {
+    transform: translateX(2px);
+}
+
+/* ── Main Content ─────────────────────────────────── */
+/* ── Main Content ─────────────────────────────────────── */
+.bonyan-content {
+    margin-right: var(--sidebar-w);
+    margin-left: 0;
+    padding: 30px;
+    width: 100%;
+    transition: margin var(--transition, 0.28s ease);
+}
+
+[dir="ltr"] .bonyan-content {
+    margin-right: 0;
+    margin-left: var(--sidebar-w);
+}
+
+.bonyan-sidebar.collapsed ~ .bonyan-content,
+[dir="rtl"] .bonyan-sidebar.collapsed ~ .bonyan-content,
+[dir="ltr"] .bonyan-sidebar.collapsed ~ .bonyan-content {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
+/* ── Cards ────────────────────────────────────────── */
+.bonyan-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.07);
+    margin-bottom: 25px;
+}
+
+.bonyan-card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--bg);
+}
+
+/* ── Stat Cards (Dashboard) ───────────────────────── */
+.stat-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.07);
+    transition: transform 0.3s;
+}
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+    }
+
+.stat-icon {
+    width: 55px;
+    height: 55px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: var(--white);
+}
+
+    .stat-icon.blue {
+        background: var(--primary);
+    }
+
+    .stat-icon.gold {
+        background: var(--secondary);
+    }
+
+    .stat-icon.green {
+        background: var(--success);
+    }
+
+    .stat-icon.red {
+        background: var(--danger);
+    }
+
+.stat-info h3 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stat-info p {
+    font-size: 0.85rem;
+    color: #888;
+    margin: 0;
+}
+
+/* ── Tables ───────────────────────────────────────── */
+.bonyan-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+    .bonyan-table thead th {
+        background: var(--primary);
+        color: var(--white);
+        padding: 12px 15px;
+        text-align: right;
+        font-weight: 600;
+    }
+
+[dir="ltr"] .bonyan-table thead th {
+    text-align: left;
+}
+
+.bonyan-table tbody tr {
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+    .bonyan-table tbody tr:hover {
+        background: #F0F4FF;
+    }
+
+.bonyan-table tbody td {
+    padding: 12px 15px;
+}
+
+/* ── Buttons ──────────────────────────────────────── */
+.btn-bonyan-primary {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.3s;
+}
+
+    .btn-bonyan-primary:hover {
+        background: #142d55;
+        color: var(--white);
+    }
+
+.btn-bonyan-secondary {
+    background: var(--secondary);
+    color: var(--white);
+    border: none;
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.3s;
+}
+
+    .btn-bonyan-secondary:hover {
+        background: #a87520;
+        color: var(--white);
+    }
+
+.btn-bonyan-danger {
+    background: var(--danger);
+    color: var(--white);
+    border: none;
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.3s;
+}
+
+    .btn-bonyan-danger:hover {
+        background: #b02a37;
+        color: var(--white);
+    }
+
+/* ── Forms ────────────────────────────────────────── */
+.bonyan-form .form-label {
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 5px;
+}
+
+.bonyan-form .form-control,
+.bonyan-form .form-select {
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.92rem;
+    transition: border 0.3s;
+}
+
+    .bonyan-form .form-control:focus,
+    .bonyan-form .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(27,58,107,0.1);
+    }
+
+/* ── Badges ───────────────────────────────────────── */
+.badge-bonyan {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #D4EDDA;
+    color: #155724;
+}
+
+.badge-warning {
+    background: #FFF3CD;
+    color: #856404;
+}
+
+.badge-danger {
+    background: #F8D7DA;
+    color: #721C24;
+}
+
+.badge-info {
+    background: #D1ECF1;
+    color: #0C5460;
+}
+
+.badge-primary {
+    background: #CCE5FF;
+    color: #004085;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 768px) {
+    .bonyan-sidebar {
+        width: 0;
+        overflow: hidden;
+    }
+
+    .bonyan-content {
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    .bonyan-sidebar.open {
+        width: var(--sidebar-w);
+    }
+    /* ── User Dropdown ────────────────────────────────── */
+    .user-info-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--white);
+        padding: 5px 10px;
+        border-radius: 8px;
+        transition: background 0.3s;
+    }
+
+        .user-info-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+    .user-details {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+    .user-name {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--white);
+    }
+
+    .user-role {
+        font-size: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .bonyan-dropdown {
+        border: none;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        border-radius: 10px;
+        min-width: 200px;
+    }
+
+        .bonyan-dropdown .dropdown-item:hover {
+            background: #F0F4FF;
+        }
+
+        .bonyan-dropdown .dropdown-item.text-danger:hover {
+            background: #FFF0F0;
+        }
+}
+/* ── Sidebar Section Title ───────────────────────── */
+/* ── Sidebar Section Title ───────────────────────── */
+.sidebar-section-title {
+    padding: 18px 20px 5px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.28);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* ── Main content area fix ── */
+/* ── Main content area fix ── */
+.bonyan-content {
+    flex: 1;
+    padding: 28px;
+    min-width: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    transition: margin var(--transition);
+}
+
+.bonyan-wrapper {
+    display: flex;
+    min-height: calc(100vh - var(--navbar-h));
+    margin-top: var(--navbar-h);
+}
+
+/* When sidebar collapses, remove margin */
+.bonyan-sidebar.collapsed + .bonyan-content {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+/* ════════════════════════════════════════════════════════
+   GLOBAL DARK MODE — covers every shared component so it
+   works consistently across ALL pages, not just dashboard/home
+════════════════════════════════════════════════════════ */
+body.dark-mode {
+    --bg: #0E1826; /* very deep navy, not pure black */
+    --surface: #19283F; /* soft slate for cards */
+    --text: #E8EDF5;
+    --sidebar: #111F33; /* premium dark slate sidebar */
+    --sidebar-hover: #1a2e48;
+    --sidebar-active-bg: rgba(200,146,42,0.14);
+    --muted: #C0CEDF;
+    --card-border: rgba(255,255,255,0.08);
+    background: var(--bg);
+    color: var(--text);
+}
+
+    body.dark-mode .bonyan-card,
+    body.dark-mode .stat-card {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: 0 2px 15px rgba(0,0,0,0.35);
+    }
+
+    body.dark-mode .bonyan-card-title {
+        color: #E9B949;
+        border-bottom-color: rgba(255,255,255,0.08);
+    }
+
+    body.dark-mode .stat-info h3 {
+        color: #E9B949;
+    }
+
+    body.dark-mode .stat-info p {
+        color: #9AA7BD;
+    }
+
+    body.dark-mode .bonyan-sidebar {
+        background: var(--sidebar);
+        border-color: rgba(255,255,255,0.04);
+    }
+
+    body.dark-mode .sidebar-menu li a {
+        color: rgba(160, 190, 225, 0.75);
+    }
+
+        body.dark-mode .sidebar-menu li a:hover {
+            background: rgba(255,255,255,0.055);
+            color: #e8edf5;
+        }
+
+        body.dark-mode .sidebar-menu li a.active,
+        body.dark-mode .sidebar-home-btn.active {
+            background: rgba(200,146,42,0.12);
+            color: #fff;
+        }
+
+    body.dark-mode .sidebar-section-title {
+        color: rgba(255,255,255,0.25);
+    }
+
+    body.dark-mode .bonyan-table thead th {
+        background: #16263F;
+        color: #E4E9F2;
+    }
+
+    body.dark-mode .bonyan-table tbody tr {
+        border-bottom-color: rgba(255,255,255,0.07);
+    }
+
+        body.dark-mode .bonyan-table tbody tr:hover {
+            background: rgba(255,255,255,0.04);
+        }
+
+    body.dark-mode .bonyan-form .form-label {
+        color: #E9B949;
+    }
+
+    body.dark-mode .bonyan-form .form-control,
+    body.dark-mode .bonyan-form .form-select {
+        background: #16263F;
+        border-color: #2A3B58;
+        color: var(--text);
+    }
+
+        body.dark-mode .bonyan-form .form-control::placeholder {
+            color: #6E7C95;
+        }
+
+        body.dark-mode .bonyan-form .form-control:focus,
+        body.dark-mode .bonyan-form .form-select:focus {
+            border-color: #E9B949;
+            box-shadow: 0 0 0 3px rgba(233,185,73,0.15);
+        }
+
+    body.dark-mode .badge-success {
+        background: #14361F;
+        color: #6FCF8E;
+    }
+
+    body.dark-mode .badge-warning {
+        background: #3A2E0E;
+        color: #E9B949;
+    }
+
+    body.dark-mode .badge-danger {
+        background: #3A1418;
+        color: #F18A93;
+    }
+
+    body.dark-mode .badge-info {
+        background: #0E2E37;
+        color: #6FD4E9;
+    }
+
+    body.dark-mode .badge-primary {
+        background: #16263F;
+        color: #8FB3F5;
+    }
+
+/* ── RTL/LTR sidebar margin — language-switch safe ── */
+html[dir="rtl"] .bonyan-content {
+    margin-right: var(--sidebar-w);
+    margin-left: 0;
+}
+
+html[dir="ltr"] .bonyan-content {
+    margin-right: 0;
+    margin-left: var(--sidebar-w);
+}
+
+html[dir="rtl"] .bonyan-sidebar.collapsed ~ .bonyan-content,
+html[dir="ltr"] .bonyan-sidebar.collapsed ~ .bonyan-content {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
+/* Mobile: always full width */
+@media (max-width: 768px) {
+    html[dir="rtl"] .bonyan-content,
+    html[dir="ltr"] .bonyan-content {
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+}
+/* ── Dark-mode button overrides (global, matches employee pattern) ── */
+body.dark-mode .btn-bonyan-primary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+    body.dark-mode .btn-bonyan-primary:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+    }
+
+body.dark-mode .btn-bonyan-secondary {
+    background: var(--secondary, #C8922A);
+    color: #fff;
+    border: 1px solid var(--secondary, #C8922A);
+}
+
+    body.dark-mode .btn-bonyan-secondary:hover {
+        background: #a87520;
+        color: #fff;
+        border-color: #a87520;
+    }
+
+body.dark-mode .btn-bonyan-danger {
+    background: #c62828;
+    color: #fff;
+    border: 1px solid #c62828;
+}
+
+    body.dark-mode .btn-bonyan-danger:hover {
+        background: #a11d1d;
+        color: #fff;
+        border-color: #a11d1d;
+    }
+
+body.dark-mode .btn-outline-bonyan {
+    background: transparent;
+    color: var(--secondary, #C8922A);
+    border: 1.5px solid var(--secondary, #C8922A);
+}
+
+    body.dark-mode .btn-outline-bonyan:hover {
+        background: var(--secondary, #C8922A);
+        color: #fff;
+    }
+
+/* ════════════════════════════════════════════════════════
+   ENGINEERING TOOLS BACKGROUND WATERMARK
+════════════════════════════════════════════════════════ */
+.bonyan-bg-tools {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.bg-tool {
+    position: absolute;
+    color: var(--primary);
+    opacity: 0.08;
+    filter: blur(0.5px);
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+}
+
+body.dark-mode .bg-tool {
+    color: #E9B949;
+    opacity: 0.06;
+}
+
+/* Individual placement / size / animation per icon */
+.tool-1 {
+    top: 8%;
+    left: 6%;
+    font-size: 4rem;
+    animation: floatDriftA 26s;
+}
+
+.tool-2 {
+    top: 70%;
+    left: 12%;
+    font-size: 3rem;
+    animation: spinSlow 40s;
+}
+
+.tool-3 {
+    top: 20%;
+    left: 85%;
+    font-size: 4.5rem;
+    animation: floatDriftB 32s;
+}
+
+.tool-4 {
+    top: 55%;
+    left: 92%;
+    font-size: 3.2rem;
+    animation: floatDriftA 28s;
+    animation-delay: -6s;
+}
+
+.tool-5 {
+    top: 85%;
+    left: 45%;
+    font-size: 3.6rem;
+    animation: floatDriftB 30s;
+    animation-delay: -10s;
+}
+
+.tool-6 {
+    top: 35%;
+    left: 50%;
+    font-size: 2.6rem;
+    animation: spinSlow 45s;
+    animation-delay: -15s;
+}
+
+.tool-7 {
+    top: 5%;
+    left: 45%;
+    font-size: 3rem;
+    animation: floatDriftA 34s;
+    animation-delay: -4s;
+}
+
+.tool-8 {
+    top: 65%;
+    left: 70%;
+    font-size: 2.8rem;
+    animation: floatDriftB 24s;
+    animation-delay: -8s;
+}
+
+.tool-9 {
+    top: 90%;
+    left: 8%;
+    font-size: 2.4rem;
+    animation: spinSlow 50s;
+    animation-delay: -20s;
+}
+
+.tool-10 {
+    top: 45%;
+    left: 25%;
+    font-size: 3.4rem;
+    animation: floatDriftA 38s;
+    animation-delay: -12s;
+}
+
+@keyframes floatDriftA {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    50% {
+        transform: translate(20px, -30px) rotate(8deg);
+    }
+
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+}
+
+@keyframes floatDriftB {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    50% {
+        transform: translate(-25px, -20px) rotate(-10deg);
+    }
+
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+}
+
+@keyframes spinSlow {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Keep real content above the watermark layer */
+.navbar-mobile-search,
+.chatbot-panel,
+.landing-navbar,
+.hero-section,
+.features-section,
+.pricing-section,
+.cta-banner,
+.chatbot-panel {
+    position: relative;
+    z-index: 1;
+}
+
+/* .bonyan-navbar and .bonyan-wrapper intentionally excluded above:
+   they must keep their original position/z-index (fixed navbar,
+   z-index 1050) so the navbar stays pinned on scroll and its
+   dropdown renders above the welcome banner card. */
+
+@media (max-width: 768px) {
+    .bg-tool {
+        display: none;
+    }
+}

@@ -1,0 +1,46 @@
+@model Bonyan.DAL.Models.Material
+@{
+    ViewData["Title"] = "حذف مادة";
+}
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="delete-card">
+    <div class="delete-card-header">
+        <i class="fas fa-trash-alt"></i>
+        <h4 data-lang="delete_material">حذف مادة</h4>
+    </div>
+    <div class="delete-card-body">
+        <div class="delete-icon">
+            <i class="fas fa-cube"></i>
+        </div>
+        <h5 data-lang="delete_confirm">هل أنت متأكد من الحذف؟</h5>
+        <p data-lang="delete_warning">لا يمكن التراجع عن هذا الإجراء بعد تأكيده</p>
+
+        <div class="delete-info-box">
+            <p>
+                <strong data-lang="material_name">اسم المادة: </strong>
+                @Model.MaterialName
+            </p>
+            <p>
+                <strong data-lang="measurement_unit">الوحدة: </strong>
+                @(Model.Unit ?? "—")
+            </p>
+            <p>
+                <strong data-lang="quantity">الكمية: </strong>
+                @(Model.Quantity.HasValue ? Model.Quantity.Value.ToString("N3") : "—")
+            </p>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.MaterialID" />
+            <a asp-action="Index" class="btn-bonyan-primary">
+                <i class="fas fa-times"></i> <span data-lang="cancel">إلغاء</span>
+            </a>
+            <button type="submit" class="btn-bonyan-danger">
+                <i class="fas fa-trash"></i> <span data-lang="delete_confirm_btn">نعم، احذف</span>
+            </button>
+        </form>
+    </div>
+</div>

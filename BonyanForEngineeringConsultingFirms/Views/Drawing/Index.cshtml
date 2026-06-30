@@ -1,0 +1,466 @@
+﻿@model IEnumerable<Bonyan.DAL.Models.Drawing>
+@{
+    ViewData["Title"] = "الرسومات";
+    var role = Context.Session.GetString("Role");
+    var projects = ViewBag.Projects as List<Bonyan.DAL.Models.Project> ?? new();
+    int? selectedProjectId = ViewBag.SelectedProjectId as int?;
+
+    var drawingsList = Model?.ToList() ?? new List<Bonyan.DAL.Models.Drawing>();
+    var categories = drawingsList
+        .Select(d => d.Category)
+        .Where(c => !string.IsNullOrWhiteSpace(c))
+        .Distinct()
+        .OrderBy(c => c)
+        .ToList();
+    int projectsCovered = drawingsList.Select(d => d.ProjectId).Distinct().Count();
+    var latestDrawing = drawingsList.OrderByDescending(d => d.UploadDate).FirstOrDefault();
+}
+
+<link rel="stylesheet" href="~/css/DocumentAndDrawing.css" />
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="emp-page">
+
+    <!-- ── Header ─────────────────────────────────── -->
+    <div class="emp-header">
+        <div class="emp-header-title">
+            <h2><i class="fas fa-images"></i> <span data-lang="dr_page_title">معرض رسومات المشاريع</span></h2>
+            <p data-lang="dr_page_sub">تصفّح وابحث في كل الرسومات والصور الهندسية لمشاريعك في مكان واحد</p>
+        </div>
+        @if (selectedProjectId.HasValue && role != "Admin")
+        {
+            <div class="emp-header-actions">
+                <a asp-action="Create" asp-route-projectId="@selectedProjectId" class="btn-emp btn-emp-primary">
+                    <i class="fas fa-plus"></i> <span data-lang="dr_add_btn">إضافة رسم</span>
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- ── Alerts ─────────────────────────────────── -->
+    <partial name="_AlertMessages" />
+
+    <!-- ── KPI Strip ──────────────────────────────── -->
+    <div class="emp-kpi-grid">
+        <div class="emp-kpi navy">
+            <div class="emp-kpi-icon"><i class="fas fa-layer-group"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="dr_stat_total">إجمالي الصور</div>
+                <div class="emp-kpi-value">@drawingsList.Count</div>
+            </div>
+        </div>
+        <div class="emp-kpi blue">
+            <div class="emp-kpi-icon"><i class="fas fa-diagram-project"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="dr_stat_projects">المشاريع المغطّاة</div>
+                <div class="emp-kpi-value">@projectsCovered</div>
+            </div>
+        </div>
+        <div class="emp-kpi gold">
+            <div class="emp-kpi-icon"><i class="fas fa-tags"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="dr_stat_categories">التصنيفات</div>
+                <div class="emp-kpi-value">@categories.Count</div>
+            </div>
+        </div>
+        <div class="emp-kpi green">
+            <div class="emp-kpi-icon"><i class="fas fa-clock-rotate-left"></i></div>
+            <div>
+                <div class="emp-kpi-label" data-lang="dr_stat_latest">آخر رفع</div>
+                <div class="emp-kpi-value">@(latestDrawing?.UploadDate.ToString("yyyy-MM-dd") ?? "—")</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Toolbar: project filter · search · view toggle ──────────────── -->
+    <div class="filter-bar dr-toolbar">
+        @if (projects.Any())
+        {
+            <form method="get" asp-action="Index" class="dr-toolbar-form">
+                <label class="dr-toolbar-label">
+                    <i class="fas fa-filter" style="color:var(--secondary)"></i>
+                    <span data-lang="dr_filter_label">تصفية حسب المشروع</span>
+                </label>
+                <select name="projectId" class="form-select filter-select" onchange="this.form.submit()">
+                    <option value="" data-lang="dr_all_projects">-- جميع المشاريع --</option>
+                    @foreach (var p in projects)
+                    {
+                        if (selectedProjectId == p.ProjectId)
+                        {
+                            <option value="@p.ProjectId" selected>@p.ProjectName</option>
+                        }
+                        else
+                        {
+                            <option value="@p.ProjectId">@p.ProjectName</option>
+                        }
+                    }
+                </select>
+                @if (selectedProjectId.HasValue)
+                {
+                    <a asp-action="Index" class="btn-emp btn-emp-outline dr-clear-btn">
+                        <i class="fas fa-times"></i> <span data-lang="dr_clear_filter">إلغاء التصفية</span>
+                    </a>
+                }
+            </form>
+        }
+
+        <div class="filter-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="drSearchInput"
+                   data-lang-placeholder="dr_search_placeholder"
+                   placeholder="ابحث بعنوان الصورة..." autocomplete="off" />
+        </div>
+
+        <div class="dr-view-toggle" role="group">
+            <button type="button" id="drViewGridBtn" class="dr-view-btn active" onclick="drSetView('grid')" title="Grid">
+                <i class="fas fa-grip"></i> <span data-lang="dr_view_grid">عرض شبكي</span>
+            </button>
+            <button type="button" id="drViewListBtn" class="dr-view-btn" onclick="drSetView('list')" title="List">
+                <i class="fas fa-list"></i> <span data-lang="dr_view_list">عرض قائمة</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Category chips ─────────────────────────── -->
+    @if (categories.Any())
+    {
+        <div class="dr-chip-row" id="drChipRow">
+            <button type="button" class="dr-chip active" data-cat="" onclick="drFilterCategory('', this)">
+                <span data-lang="dr_category_all">الكل</span>
+            </button>
+            @foreach (var cat in categories)
+            {
+                <button type="button" class="dr-chip" data-cat="@cat" onclick="drFilterCategory('@cat', this)">@cat</button>
+            }
+        </div>
+    }
+
+    <!-- ── Content Card ───────────────────────────── -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h5><i class="fas fa-images"></i> <span data-lang="dr_page_title">معرض رسومات المشاريع</span></h5>
+            <span class="count-badge" id="visibleCount">@drawingsList.Count</span>
+        </div>
+
+        @if (drawingsList.Any())
+        {
+            <!-- ── Grid view ─────────────────────────── -->
+            <div class="dr-grid" id="drGridView">
+                @foreach (var dr in drawingsList)
+                {
+                    string uploader = dr.Employee != null ? $"{dr.Employee.FirstName} {dr.Employee.LastName}" : "—";
+                    <div class="dr-card"
+                         data-title="@dr.DrawingTitle.ToLower()"
+                         data-category="@dr.Category"
+                         data-img="@dr.FilePath"
+                         data-name="@dr.DrawingTitle"
+                         data-project="@(dr.Project?.ProjectName ?? "—")"
+                         data-version="@dr.Version"
+                         data-date="@dr.UploadDate.ToString("yyyy-MM-dd")"
+                         data-uploader="@uploader"
+                         data-notes="@dr.Notes">
+                        <div class="dr-card-img" onclick="drOpenLightbox(this.closest('.dr-card'))">
+                            <img src="@dr.FilePath" alt="@dr.DrawingTitle" loading="lazy"
+                                 onerror="this.src='/images/placeholder.png'" />
+                            <span class="dr-card-zoom"><i class="fas fa-expand"></i></span>
+                            @if (!string.IsNullOrWhiteSpace(dr.Version))
+                            {
+                                <span class="dr-version-badge">v@(dr.Version)</span>
+                            }
+                        </div>
+                        <div class="dr-card-info">
+                            <p class="dr-card-title" title="@dr.DrawingTitle">@dr.DrawingTitle</p>
+                            <span class="dr-card-project"><i class="fas fa-diagram-project"></i> @(dr.Project?.ProjectName ?? "—")</span>
+                            <div class="dr-card-meta">
+                                @if (!string.IsNullOrWhiteSpace(dr.Category))
+                                {
+                                    <span class="dr-cat-badge">@dr.Category</span>
+                                }
+                                <span class="dr-card-date">@dr.UploadDate.ToString("yyyy-MM-dd")</span>
+                            </div>
+                        </div>
+                        <div class="dr-card-actions">
+                            <a href="@dr.FilePath" target="_blank" class="btn-action view" data-tip-ar="عرض" data-tip-en="View" data-tip="عرض">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="@dr.FilePath" download class="btn-action view" data-tip-ar="تحميل" data-tip-en="Download" data-tip="تحميل">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            @if (role == "ProjectManager" || role == "Engineer")
+                            {
+                                <a asp-action="Delete" asp-route-id="@dr.DrawingId"
+                                   class="btn-action delete" data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- ── List view ─────────────────────────── -->
+            <div class="dr-table-wrap" id="drListView" style="display:none">
+                <table class="emp-table dr-table">
+                    <thead>
+                        <tr>
+                            <th data-lang="dr_col_preview">معاينة</th>
+                            <th data-lang="dr_col_title">العنوان</th>
+                            <th data-lang="dr_col_project">المشروع</th>
+                            <th data-lang="dr_col_category">التصنيف</th>
+                            <th data-lang="dr_col_version">الإصدار</th>
+                            <th data-lang="dr_col_uploader">بواسطة</th>
+                            <th data-lang="dr_col_date">التاريخ</th>
+                            <th data-lang="dr_col_actions">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var dr in drawingsList)
+                        {
+                            string uploader = dr.Employee != null ? $"{dr.Employee.FirstName} {dr.Employee.LastName}" : "—";
+                            <tr class="dr-row"
+                                data-title="@dr.DrawingTitle.ToLower()"
+                                data-category="@dr.Category"
+                                data-img="@dr.FilePath"
+                                data-name="@dr.DrawingTitle"
+                                data-project="@(dr.Project?.ProjectName ?? "—")"
+                                data-version="@dr.Version"
+                                data-date="@dr.UploadDate.ToString("yyyy-MM-dd")"
+                                data-uploader="@uploader"
+                                data-notes="@dr.Notes">
+                                <td>
+                                    <img src="@dr.FilePath" alt="@dr.DrawingTitle" class="dr-thumb"
+                                         onclick="drOpenLightbox(this.closest('.dr-row'))"
+                                         onerror="this.src='/images/placeholder.png'" />
+                                </td>
+                                <td class="dr-row-title">@dr.DrawingTitle</td>
+                                <td>@(dr.Project?.ProjectName ?? "—")</td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(dr.Category))
+                                    {
+                                        <span class="dr-cat-badge">@dr.Category</span>
+                                    }
+                                    else
+                                    {
+                                        @:—
+                                    }
+                                </td>
+                                <td>v@(dr.Version)</td>
+                                <td>@uploader</td>
+                                <td>@dr.UploadDate.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <div class="action-btns">
+                                        <a href="@dr.FilePath" target="_blank" class="btn-action view"
+                                           data-tip-ar="عرض" data-tip-en="View" data-tip="عرض">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        @if (role == "ProjectManager" || role == "Engineer")
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@dr.DrawingId"
+                                               class="btn-action delete"
+                                               data-tip-ar="حذف" data-tip-en="Delete" data-tip="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="dr-no-results" id="drNoResults" style="display:none">
+                <i class="fas fa-magnifying-glass"></i>
+                <span data-lang="dr_no_results">لا توجد نتائج مطابقة للبحث</span>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-images"></i>
+                <p data-lang="dr_empty_title">لا توجد صور مرفوعة حتى الآن</p>
+                <span class="dr-empty-sub" data-lang="dr_empty_sub">ستظهر هنا الرسومات وصور المواقع بمجرد رفعها</span>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ── Lightbox viewer ──────────────────────────────────────────── -->
+<div class="dr-lightbox" id="drLightbox" onclick="if(event.target===this) drCloseLightbox()">
+    <button type="button" class="dr-lightbox-close" onclick="drCloseLightbox()" data-lang-aria="dr_lightbox_close">
+        <i class="fas fa-xmark"></i>
+    </button>
+    <button type="button" class="dr-lightbox-nav dr-nav-prev" onclick="drNavigate(-1)">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+    <div class="dr-lightbox-body">
+        <div class="dr-lightbox-img-wrap">
+            <img id="drLightboxImg" src="" alt="" />
+        </div>
+        <div class="dr-lightbox-info">
+            <h4 id="drLightboxTitle"></h4>
+            <div class="dr-lightbox-meta">
+                <span><i class="fas fa-diagram-project"></i> <span id="drLightboxProject"></span></span>
+                <span><i class="fas fa-code-branch"></i> v<span id="drLightboxVersion"></span></span>
+                <span><i class="fas fa-calendar-day"></i> <span id="drLightboxDate"></span></span>
+                <span><i class="fas fa-user"></i> <span id="drLightboxUploader"></span></span>
+            </div>
+            <div class="dr-lightbox-notes" id="drLightboxNotesWrap">
+                <strong data-lang="dr_lightbox_notes">ملاحظات</strong>
+                <p id="drLightboxNotes"></p>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="dr-lightbox-nav dr-nav-next" onclick="drNavigate(1)">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+</div>
+
+@section Scripts {
+    <script>
+        // ── View toggle (grid / list) ─────────────────────────────
+        function drSetView(mode) {
+            var grid = document.getElementById('drGridView');
+            var list = document.getElementById('drListView');
+            var gridBtn = document.getElementById('drViewGridBtn');
+            var listBtn = document.getElementById('drViewListBtn');
+            if (!grid || !list) return;
+
+            if (mode === 'list') {
+                grid.style.display = 'none';
+                list.style.display = 'block';
+                gridBtn.classList.remove('active');
+                listBtn.classList.add('active');
+            } else {
+                grid.style.display = 'grid';
+                list.style.display = 'none';
+                listBtn.classList.remove('active');
+                gridBtn.classList.add('active');
+            }
+            localStorage.setItem('drViewMode', mode);
+        }
+
+        (function initView() {
+            var saved = localStorage.getItem('drViewMode') || 'grid';
+            document.addEventListener('DOMContentLoaded', function () { drSetView(saved); });
+        })();
+
+        // ── Category filter chips ─────────────────────────────────
+        var drActiveCategory = '';
+        function drFilterCategory(cat, btn) {
+            drActiveCategory = cat;
+            document.querySelectorAll('#drChipRow .dr-chip').forEach(function (c) { c.classList.remove('active'); });
+            btn.classList.add('active');
+            drApplyFilters();
+        }
+
+        // ── Live search ────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function () {
+            var input = document.getElementById('drSearchInput');
+            if (input) input.addEventListener('input', drApplyFilters);
+        });
+
+        function drApplyFilters() {
+            var inputEl = document.getElementById('drSearchInput');
+            var term = (inputEl && inputEl.value ? inputEl.value : '').trim().toLowerCase();
+            var visibleCount = 0;
+
+            document.querySelectorAll('.dr-card, .dr-row').forEach(function (el) {
+                var matchesText = !term || (el.dataset.title || '').indexOf(term) !== -1;
+                var matchesCat = !drActiveCategory || el.dataset.category === drActiveCategory;
+                var show = matchesText && matchesCat;
+                el.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+
+            var visibleCountEl = document.getElementById('visibleCount');
+            if (visibleCountEl) visibleCountEl.textContent = visibleCount;
+
+            var noResults = document.getElementById('drNoResults');
+            if (noResults) noResults.style.display = visibleCount === 0 ? 'flex' : 'none';
+        }
+
+        // ── Lightbox ───────────────────────────────────────────────
+        var drItems = [];
+        var drCurrentIndex = -1;
+
+        function drCollectItems() {
+            drItems = Array.from(document.querySelectorAll('.dr-card, .dr-row')).map(function (el) {
+                return {
+                    img: el.dataset.img,
+                    title: el.dataset.name,
+                    project: el.dataset.project,
+                    version: el.dataset.version,
+                    date: el.dataset.date,
+                    uploader: el.dataset.uploader,
+                    notes: el.dataset.notes
+                };
+            });
+        }
+
+        function drOpenLightbox(el) {
+            drCollectItems();
+            var visibleEls = Array.from(document.querySelectorAll('.dr-card, .dr-row'));
+            drCurrentIndex = visibleEls.indexOf(el);
+            drRenderLightbox();
+            document.getElementById('drLightbox').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function drCloseLightbox() {
+            document.getElementById('drLightbox').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function drNavigate(step) {
+            if (!drItems.length) return;
+            drCurrentIndex = (drCurrentIndex + step + drItems.length) % drItems.length;
+            drRenderLightbox();
+        }
+
+        function drRenderLightbox() {
+            var item = drItems[drCurrentIndex];
+            if (!item) return;
+            document.getElementById('drLightboxImg').src = item.img;
+            document.getElementById('drLightboxTitle').textContent = item.title || '';
+            document.getElementById('drLightboxProject').textContent = item.project || '—';
+            document.getElementById('drLightboxVersion').textContent = item.version || '1.0';
+            document.getElementById('drLightboxDate').textContent = item.date || '';
+            document.getElementById('drLightboxUploader').textContent = item.uploader || '—';
+
+            var notesWrap = document.getElementById('drLightboxNotesWrap');
+            if (item.notes && item.notes.trim() !== '') {
+                document.getElementById('drLightboxNotes').textContent = item.notes;
+                notesWrap.style.display = 'block';
+            } else {
+                notesWrap.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('keydown', function (e) {
+            var lb = document.getElementById('drLightbox');
+            if (!lb.classList.contains('open')) return;
+            if (e.key === 'Escape') drCloseLightbox();
+            if (e.key === 'ArrowLeft') drNavigate(document.documentElement.getAttribute('dir') === 'rtl' ? 1 : -1);
+            if (e.key === 'ArrowRight') drNavigate(document.documentElement.getAttribute('dir') === 'rtl' ? -1 : 1);
+        });
+
+        // ── Bilingual delete confirmation ─────────────────────────
+        function drConfirmDelete() {
+            var lang = localStorage.getItem('lang') || 'ar';
+            var msg = lang === 'ar'
+                ? 'هل أنت متأكد من حذف هذه الصورة؟'
+                : 'Are you sure you want to delete this drawing?';
+            return confirm(msg);
+        }
+
+        // ── Update tooltips on language change ───────────────────
+        document.addEventListener('languageChanged', function (e) {
+            var lang = e.detail.lang;
+            document.querySelectorAll('[data-tip-ar]').forEach(function (el) {
+                el.setAttribute('data-tip', lang === 'ar' ? el.dataset.tipAr : el.dataset.tipEn);
+            });
+        });
+    </script>
+}

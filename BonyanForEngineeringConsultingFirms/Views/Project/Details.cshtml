@@ -1,0 +1,737 @@
+﻿@model Bonyan.DAL.Models.Project
+@using Bonyan.DAL.Enums
+@using Bonyan.DAL.Models
+@{
+    ViewData["Title"] = "تفاصيل المشروع";
+    var role = Context.Session.GetString("Role");
+
+    string statusAr = Model.Status switch
+    {
+        ProjectStatus.Planning => "تخطيط",
+        ProjectStatus.InProgress => "جاري التنفيذ",
+        ProjectStatus.Completed => "مكتمل",
+        ProjectStatus.OnHold => "موقوف",
+        ProjectStatus.Cancelled => "ملغي",
+        _ => Model.Status.ToString()
+    };
+
+    string badgeClass = Model.Status switch
+    {
+        ProjectStatus.Planning => "badge-planning",
+        ProjectStatus.InProgress => "badge-inprogress",
+        ProjectStatus.Completed => "badge-completed",
+        ProjectStatus.OnHold => "badge-onhold",
+        ProjectStatus.Cancelled => "badge-cancelled",
+        _ => "badge-planning"
+    };
+
+    // Pull invoices from ViewBag (loaded by controller)
+    var projectInvoices = ViewBag.ProjectInvoices as List<Invoice>
+                          ?? new List<Invoice>();
+}
+
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/project.css" />
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-project-diagram" style="color:var(--secondary)"></i>
+            <span data-lang="project_details">تفاصيل المشروع</span>
+        </h2>
+        <p data-lang="project_details_sub">
+            @Model.ProjectName — @(Model.Client_Name ?? "")
+        </p>
+    </div>
+    <div class="page-header-actions">
+        @if (role == "Admin")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.ProjectId"
+               class="btn-bonyan-secondary">
+                <i class="fas fa-edit"></i>
+                <span data-lang="edit">تعديل</span>
+            </a>
+        }
+        <a asp-action="Index" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i>
+            <span data-lang="back">رجوع</span>
+        </a>
+    </div>
+</div>
+
+<div class="details-layout">
+
+    <!-- ════════════════════════════════════
+         LEFT: Project Info Card
+    ════════════════════════════════════ -->
+    <div>
+        <div class="details-card" style="margin-bottom:22px">
+            <div class="details-header">
+                <div class="details-proj-icon">
+                    <i class="fas fa-hard-hat"></i>
+                </div>
+                <div class="details-header-info">
+                    <h3>@Model.ProjectName</h3>
+                    <span>
+                        <span class="badge-status @badgeClass">@statusAr</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="details-body">
+                <div class="details-section">
+                    <div class="details-section-title" data-lang="basic_info">
+                        المعلومات الأساسية
+                    </div>
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <label data-lang="project_name">اسم المشروع</label>
+                            <p>@Model.ProjectName</p>
+                        </div>
+                        <div class="detail-item">
+                            <label data-lang="client">العميل</label>
+                            <p>@(Model.Client_Name ?? "—")</p>
+                        </div>
+                        <div class="detail-item">
+                            <label data-lang="location">الموقع</label>
+                            <p>@(Model.Location ?? "—")</p>
+                        </div>
+                        <div class="detail-item">
+                            <label data-lang="start_date">تاريخ البدء</label>
+                            <p>@(Model.StartDate.HasValue? Model.StartDate.Value.ToString("yyyy-MM-dd") : "—")</p>
+                        </div>
+                        <div class="detail-item">
+                            <label data-lang="end_date">تاريخ الانتهاء</label>
+                            <p>@(Model.EndDate.HasValue? Model.EndDate.Value.ToString("yyyy-MM-dd") : "—")</p>
+                        </div>
+                        <div class="detail-item">
+                            <label data-lang="budget">الميزانية</label>
+                            <p>@(Model.Budget.HasValue? Model.Budget.Value.ToString("N0") + " " : "")<span data-lang="currency_egp">ج.م</span>@(Model.Budget.HasValue ? "" : "—")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         RIGHT: Assign / Team Card
+    ════════════════════════════════════ -->
+    @if (role == "Admin")
+    {
+        <div class="assign-card">
+            <div class="assign-card-header gradient">
+                <i class="fas fa-users"></i>
+                <h5 data-lang="assign_employees">تعيين الموظفين</h5>
+            </div>
+            <div class="assign-card-body">
+
+                @if (Model.EmployeeProjects != null && Model.EmployeeProjects.Any())
+                {
+                    <ul class="assigned-list">
+                        @foreach (var ep in Model.EmployeeProjects)
+                        {
+                            string ini = ep.Employee.FirstName[0].ToString().ToUpper()
+                            + ep.Employee.LastName[0].ToString().ToUpper();
+                            bool isPM = ep.Employee.UserAccount != null
+                            && ep.Employee.UserAccount.Role == UserRole.ProjectManager;
+                            <li class="assigned-item">
+                                <div class="assigned-emp">
+                                    <div class="assigned-avatar">@ini</div>
+                                    <div class="assigned-emp-info">
+                                        <p>
+                                            @ep.Employee.FirstName @ep.Employee.LastName
+                                            @if (isPM)
+                                            {
+                                                <span style="color:#8B5E3C; font-size:0.75rem;
+                                                                                             font-weight:700; margin-right:4px"
+                                                      data-lang="dash_project_manager">
+                                                    مدير مشروع
+                                                </span>
+                                            }
+                                        </p>
+                                        <span>@(ep.RoleInProject ?? "—")</span>
+                                    </div>
+                                </div>
+                                <form asp-action="RemoveEmployee" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                                    <input type="hidden" name="employeeId" value="@ep.EmployeeId" />
+                                    <button type="submit" class="btn-remove" title="Remove">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p style="color:#aaa; font-size:0.83rem; margin-bottom:16px"
+                       data-lang="no_assigned">
+                        لم يتم تعيين موظفين بعد
+                    </p>
+                }
+
+                <!-- Assign Form -->
+                <form asp-action="AssignEmployee" method="post" class="assign-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
+
+                    <div class="form-group">
+                        <label data-lang="select_employee">اختر موظف</label>
+                        <select name="employeeId" class="form-select" required>
+                            <option value="">-- اختر موظف --</option>
+                            @if (ViewBag.Employees != null)
+                            {
+                                foreach (var emp in ViewBag.Employees)
+                                {
+                                    bool isPM = emp.UserAccount != null
+                                    && emp.UserAccount.Role == UserRole.ProjectManager;
+                                    string label = emp.FirstName + " " + emp.LastName
+                                    + (isPM ? " — مدير مشروع" : "");
+                                    <option value="@emp.EmployeeId">@label</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-lang="role_in_project">الدور في المشروع</label>
+                        <input type="text" name="roleInProject" class="form-control"
+                               placeholder="مثال: مهندس مدني" />
+                    </div>
+
+                    <button type="submit" class="btn-bonyan-secondary" style="width:100%">
+                        <i class="fas fa-user-plus"></i>
+                        <span data-lang="assign">تعيين</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Engineer: read-only team view -->
+        <div class="assign-card">
+            <div class="assign-card-header">
+                <i class="fas fa-users"></i>
+                <h5 data-lang="project_team">فريق المشروع</h5>
+            </div>
+            <div class="assign-card-body">
+                @if (Model.EmployeeProjects != null && Model.EmployeeProjects.Any())
+                {
+                    <ul class="assigned-list">
+                        @foreach (var ep in Model.EmployeeProjects)
+                        {
+                            string ini = ep.Employee.FirstName[0].ToString().ToUpper()
+                            + ep.Employee.LastName[0].ToString().ToUpper();
+                            bool isPM = ep.Employee.UserAccount != null
+                            && ep.Employee.UserAccount.Role == UserRole.ProjectManager;
+                            <li class="assigned-item">
+                                <div class="assigned-emp">
+                                    <div class="assigned-avatar">@ini</div>
+                                    <div class="assigned-emp-info">
+                                        <p>
+                                            @ep.Employee.FirstName @ep.Employee.LastName
+                                            @if (isPM)
+                                            {
+                                                <span style="color:#8B5E3C; font-size:0.75rem;
+                                                                                             font-weight:700; margin-right:4px"
+                                                      data-lang="dash_project_manager">
+                                                    مدير مشروع
+                                                </span>
+                                            }
+                                        </p>
+                                        <span>@(ep.RoleInProject ?? "—")</span>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p style="color:#aaa; font-size:0.85rem">لا يوجد أعضاء في الفريق بعد</p>
+                }
+            </div>
+        </div>
+    }
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     FULL-WIDTH TABS: Tasks | Documents | Photos | Invoices
+════════════════════════════════════════════════════════ -->
+<div style="margin-top:28px">
+
+    <!-- Tab Buttons -->
+    <div class="details-tab-bar">
+        <button onclick="showTab('tab-tasks')" id="btn-tab-tasks"
+                class="details-tab-btn active">
+            <i class="fas fa-tasks"></i>
+            <span data-lang="tasks">المهام</span>
+            <span class="details-tab-count">@Model.Tasks.Count</span>
+        </button>
+        <button onclick="showTab('tab-docs')" id="btn-tab-docs"
+                class="details-tab-btn">
+            <i class="fas fa-file-alt"></i>
+            <span data-lang="documents">المستندات</span>
+            <span class="details-tab-count">@Model.Documents.Count</span>
+        </button>
+        <button onclick="showTab('tab-photos')" id="btn-tab-photos"
+                class="details-tab-btn">
+            <i class="fas fa-images"></i>
+            <span data-lang="images">الصور</span>
+            <span class="details-tab-count">@Model.Drawings.Count</span>
+        </button>
+        <button onclick="showTab('tab-invoices')" id="btn-tab-invoices"
+                class="details-tab-btn">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span data-lang="invoices">الفواتير</span>
+            <span class="details-tab-count">@projectInvoices.Count</span>
+        </button>
+        <button onclick="showTab('tab-sitevisits')" id="btn-tab-sitevisits"
+                class="details-tab-btn">
+            <i class="fas fa-hard-hat"></i>
+            <span data-lang="sitevisits">زيارات الموقع</span>
+            <span class="details-tab-count">@Model.SiteVisits.Count</span>
+        </button>
+    </div>
+
+    <!-- ── TASKS TAB ────────────────────────────── -->
+    <div id="tab-tasks" class="tab-panel">
+        <div class="details-card">
+            <div class="section-header">
+                <div class="details-section-title" style="margin-bottom:0" data-lang="tasks">مهام المشروع</div>
+                @if (role == "ProjectManager")
+                {
+                    <a asp-controller="Task" asp-action="Create"
+                       asp-route-projectId="@Model.ProjectId"
+                       class="btn-bonyan-secondary btn-sm">
+                        <i class="fas fa-plus"></i> <span data-lang="add_task">إضافة مهمة</span>
+                    </a>
+                }
+            </div>
+            @if (Model.Tasks != null && Model.Tasks.Any())
+            {
+                <div class="details-table-wrap">
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th><span data-lang="task_name">المهمة</span></th>
+                            <th><span data-lang="status">الحالة</span></th>
+                            <th><span data-lang="due_date">الموعد النهائي</span></th>
+                            @if (role == "ProjectManager")
+                            {
+                                <th><span data-lang="actions">إجراءات</span></th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model.Tasks)
+                        {
+                            string ts = t.Status switch
+                            {
+                                TasksStatus.Pending => "معلق",
+                                TasksStatus.InProgress => "جاري",
+                                TasksStatus.UnderReview => "قيد المراجعة",
+                                TasksStatus.Completed => "مكتمل",
+                                TasksStatus.Cancelled => "ملغي",
+                                _ => t.Status.ToString()
+                            };
+                            string tsEn = t.Status switch
+                            {
+                                TasksStatus.Pending => "Pending",
+                                TasksStatus.InProgress => "In Progress",
+                                TasksStatus.UnderReview => "Under Review",
+                                TasksStatus.Completed => "Completed",
+                                TasksStatus.Cancelled => "Cancelled",
+                                _ => t.Status.ToString()
+                            };
+                            string tsBadge = t.Status switch
+                            {
+                                TasksStatus.Pending => "task-badge-pending",
+                                TasksStatus.InProgress => "task-badge-inprogress",
+                                TasksStatus.UnderReview => "task-badge-review",
+                                TasksStatus.Completed => "task-badge-completed",
+                                TasksStatus.Cancelled => "task-badge-cancelled",
+                                _ => ""
+                            };
+                            <tr>
+                                <td>
+                                    <a asp-controller="Task" asp-action="Details"
+                                       asp-route-id="@t.TaskId"
+                                       class="task-link">
+                                        @t.Task_Name
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="task-badge @tsBadge"
+                                          data-en="@tsEn" data-ar="@ts">@ts</span>
+                                </td>
+                                <td>
+                                    @(t.DueDate.HasValue? t.DueDate.Value.ToString("yyyy-MM-dd") : "—")
+                                </td>
+                                @if (role == "ProjectManager")
+                                {
+                                    <td>
+                                        <a asp-controller="Task" asp-action="Edit"
+                                           asp-route-id="@t.TaskId"
+                                           class="details-action edit" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a asp-controller="Task" asp-action="Delete"
+                                           asp-route-id="@t.TaskId" class="details-action delete" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                </div>
+            }
+            else
+            {
+                <div class="details-table-empty">
+                    <i class="fas fa-tasks"></i>
+                    <p data-lang="no_tasks">لا توجد مهام لهذا المشروع</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ── DOCUMENTS TAB ────────────────────────── -->
+    <div id="tab-docs" class="tab-panel" style="display:none">
+        <div class="details-card">
+            <div class="section-header">
+                <div class="details-section-title" style="margin-bottom:0" data-lang="documents">مستندات المشروع</div>
+                @if (role == "Engineer" || role == "ProjectManager")
+                {
+                    <a asp-controller="Document" asp-action="Create"
+                       asp-route-projectId="@Model.ProjectId"
+                       class="btn-bonyan-secondary btn-sm">
+                        <i class="fas fa-upload"></i> <span data-lang="upload_document">رفع مستند</span>
+                    </a>
+                }
+            </div>
+            @if (Model.Documents != null && Model.Documents.Any())
+            {
+                <div class="details-table-wrap">
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th><span data-lang="doc_title">العنوان</span></th>
+                            <th><span data-lang="file_type">النوع</span></th>
+                            <th><span data-lang="upload_date">تاريخ الرفع</span></th>
+                            <th><span data-lang="uploaded_by">رُفع بواسطة</span></th>
+                            <th><span data-lang="download_photo">تحميل</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.Documents)
+                        {
+                            <tr>
+                                <td>@d.DocTitle</td>
+                                <td>@(d.FileType ?? "—")</td>
+                                <td>@d.UploadDate.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    @(d.Employee != null ? d.Employee.FirstName + " " + d.Employee.LastName : "—")
+                                </td>
+                                <td>
+                                    <a href="@d.FilePath" target="_blank"
+                                       class="details-action view" title="تحميل">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                </div>
+            }
+            else
+            {
+                <div class="details-table-empty">
+                    <i class="fas fa-file-alt"></i>
+                    <p data-lang="no_documents">لا توجد مستندات لهذا المشروع</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ── PHOTOS TAB ────────────────────────────── -->
+    <div id="tab-photos" class="tab-panel" style="display:none">
+        <div class="details-card">
+            <div class="section-header">
+                <div class="details-section-title" style="margin-bottom:0" data-lang="images">صور المشروع</div>
+                @if (role == "Engineer" || role == "ProjectManager")
+                {
+                    <a asp-controller="Drawing" asp-action="Create"
+                       asp-route-projectId="@Model.ProjectId"
+                       class="btn-bonyan-secondary btn-sm">
+                        <i class="fas fa-camera"></i> <span data-lang="upload_photo">رفع صورة</span>
+                    </a>
+                }
+            </div>
+            @if (Model.Drawings != null && Model.Drawings.Any())
+            {
+                <div class="photo-grid">
+                    @foreach (var dr in Model.Drawings)
+                    {
+                        <div class="photo-card">
+                            <img src="@dr.FilePath"
+                                 alt="@dr.DrawingTitle"
+                                 onerror="this.src='/images/placeholder.png'" />
+                            <div class="photo-card-body">
+                                <p class="photo-card-title">@dr.DrawingTitle</p>
+                                <p class="photo-card-meta">
+                                    <i class="fas fa-user"></i>
+                                    @(dr.Employee != null ? dr.Employee.FirstName + " " + dr.Employee.LastName : "—")
+                                    &nbsp;·&nbsp; @dr.UploadDate.ToString("yyyy-MM-dd")
+                                </p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="details-table-empty">
+                    <i class="fas fa-images"></i>
+                    <p data-lang="no_photos">لا توجد صور لهذا المشروع</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ── INVOICES TAB ──────────────────────────── -->
+    <div id="tab-invoices" class="tab-panel" style="display:none">
+        <div class="details-card">
+            <div class="section-header">
+                <div class="details-section-title" style="margin-bottom:0" data-lang="invoices">فواتير المشروع</div>
+                @if (role == "Engineer" || role == "ProjectManager")
+                {
+                    <a asp-controller="Invoice" asp-action="Create"
+                       asp-route-projectId="@Model.ProjectId"
+                       class="btn-bonyan-secondary btn-sm">
+                        <i class="fas fa-plus"></i> <span data-lang="add_invoice">إضافة فاتورة</span>
+                    </a>
+                }
+            </div>
+            @if (projectInvoices.Any())
+            {
+                <div class="details-table-wrap">
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th><span data-lang="invoice_number">رقم الفاتورة</span></th>
+                            <th><span data-lang="amount">المبلغ</span></th>
+                            <th><span data-lang="status">الحالة</span></th>
+                            <th><span data-lang="issue_date">تاريخ الإصدار</span></th>
+                            <th><span data-lang="due_date">تاريخ الاستحقاق</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var inv in projectInvoices)
+                        {
+                            string invStatus = inv.Invoice_Status switch
+                            {
+                                InvoiceStatus.Paid => "مدفوعة",
+                                InvoiceStatus.Unpaid => "غير مدفوعة",
+                                InvoiceStatus.PartiallyPaid => "مدفوعة جزئياً",
+                                _ => inv.Invoice_Status.ToString()
+                            };
+                            string invStatusEn = inv.Invoice_Status switch
+                            {
+                                InvoiceStatus.Paid => "Paid",
+                                InvoiceStatus.Unpaid => "Unpaid",
+                                InvoiceStatus.PartiallyPaid => "Partially Paid",
+                                _ => inv.Invoice_Status.ToString()
+                            };
+                            string statusClass = inv.Invoice_Status switch
+                            {
+                                InvoiceStatus.Paid => "invoice-status-paid",
+                                InvoiceStatus.Unpaid => "invoice-status-unpaid",
+                                InvoiceStatus.PartiallyPaid => "invoice-status-partial",
+                                _ => ""
+                            };
+                            <tr>
+                                <td><strong>#@inv.Invoice_ID</strong></td>
+                                <td>
+                                    @(inv.Total_Amount.HasValue
+                                        ? inv.Total_Amount.Value.ToString("N0") + " ج.م"
+                                        : "—")
+                                </td>
+                                <td>
+                                    <span class="invoice-status @statusClass"
+                                           data-en="@invStatusEn" data-ar="@invStatus">
+                                        @invStatus
+                                    </span>
+                                </td>
+                                <td>
+                                    @inv.Invoice_Date.ToString("yyyy-MM-dd")
+                                </td>
+                                <td>
+                                    @(inv.Due_Date.HasValue
+                                        ? inv.Due_Date.Value.ToString("yyyy-MM-dd")
+                                        : "—")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                </div>
+            }
+            else
+            {
+                <div class="details-table-empty">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <p data-lang="no_invoices">لا توجد فواتير لهذا المشروع</p>
+                </div>
+            }
+        </div>
+    </div>
+
+</div>
+
+<!-- ── SITE VISITS TAB ──────────────────────────── -->
+<div id="tab-sitevisits" class="tab-panel" style="display:none">
+    <div class="details-card">
+        <div class="section-header">
+            <div class="details-section-title" style="margin-bottom:0" data-lang="sitevisits">زيارات الموقع</div>
+            @if (role == "Engineer" || role == "ProjectManager")
+            {
+                <a asp-controller="SiteVisit" asp-action="Create"
+                   asp-route-projectId="@Model.ProjectId"
+                   class="btn-bonyan-secondary btn-sm">
+                    <i class="fas fa-plus"></i> <span data-lang="add_sitevisit">إضافة زيارة موقع</span>
+                </a>
+            }
+        </div>
+
+        @if (Model.SiteVisits != null && Model.SiteVisits.Any())
+        {
+            <div class="details-table-wrap">
+            <table class="details-table">
+                <thead>
+                    <tr>
+                        <th><span data-lang="visit_date">تاريخ الزيارة</span></th>
+                        <th><span data-lang="performed_by">أُجريت بواسطة</span></th>
+                        <th><span data-lang="role">الدور</span></th>
+                        <th><span data-lang="safety_status">حالة السلامة</span></th>
+                        <th><span data-lang="report_summary">التقرير</span></th>
+                        <th><span data-lang="photo">الصورة</span></th>
+                        @if (role == "Admin")
+                        {
+                            <th><span data-lang="delete">حذف</span></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sv in Model.SiteVisits.OrderByDescending(x => x.VisitDate))
+                    {
+                        string safetyAr = sv.SafetyStatus switch
+                        {
+                            SafetyStatus.Safe => "آمن",
+                            SafetyStatus.NeedAttention => "يحتاج انتباه",
+                            SafetyStatus.Critical => "حرج",
+                            _ => sv.SafetyStatus.ToString()
+                        };
+                        string safetyEn = sv.SafetyStatus switch
+                        {
+                            SafetyStatus.Safe => "Safe",
+                            SafetyStatus.NeedAttention => "Needs Attention",
+                            SafetyStatus.Critical => "Critical",
+                            _ => sv.SafetyStatus.ToString()
+                        };
+                        string safetyColor = sv.SafetyStatus switch
+                        {
+                            SafetyStatus.Safe => "#146c43",
+                            SafetyStatus.NeedAttention => "#7c4a00",
+                            SafetyStatus.Critical => "#842029",
+                            _ => "#666"
+                        };
+                        string safetyBg = sv.SafetyStatus switch
+                        {
+                            SafetyStatus.Safe => "#d1e7dd",
+                            SafetyStatus.NeedAttention => "#fff3cd",
+                            SafetyStatus.Critical => "#f8d7da",
+                            _ => "#eee"
+                        };
+                        bool empIsPM = sv.Employee?.UserAccount?.Role == UserRole.ProjectManager;
+                        string empRoleAr = empIsPM ? "مدير مشروع" : "مهندس";
+                        string empRoleEn = empIsPM ? "Project Manager" : "Engineer";
+
+                        <tr>
+                            <td>@sv.VisitDate.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td><strong>@(sv.Employee != null ? sv.Employee.FirstName + " " + sv.Employee.LastName : "—")</strong></td>
+                            <td>
+                                <span class="role-badge"
+                                      data-en="@empRoleEn" data-ar="@empRoleAr">
+                                    @empRoleAr
+                                </span>
+                            </td>
+                            <td>
+                                <span class="safety-badge" style="background:@safetyBg; color:@safetyColor"
+                                      data-en="@safetyEn" data-ar="@safetyAr">
+                                    @safetyAr
+                                </span>
+                            </td>
+                            <td class="report-cell" title="@sv.Report">
+                                @(sv.Report?.Length > 60 ? sv.Report.Substring(0, 60) + "..." : sv.Report ?? "—")
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(sv.VisitPhotos))
+                                {
+                                    <a href="@sv.VisitPhotos" target="_blank">
+                                        <img src="@sv.VisitPhotos" alt="صورة الزيارة"
+                                             class="visit-thumb"
+                                             onerror="this.style.display='none'" />
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="no-data-text" data-lang="no_data">لا توجد</span>
+                                }
+                            </td>
+                            @if (role == "Admin")
+                            {
+                                <td>
+                                    <a asp-controller="SiteVisit" asp-action="Delete"
+                                       asp-route-id="@sv.VisitId" class="details-action delete" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            </div>
+        }
+        else
+        {
+            <div class="details-table-empty">
+                <i class="fas fa-hard-hat"></i>
+                <p data-lang="no_sitevisits">لا توجد زيارات موقع لهذا المشروع حتى الآن</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-panel')
+                    .forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.details-tab-btn')
+                    .forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block';
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+    </script>
+}

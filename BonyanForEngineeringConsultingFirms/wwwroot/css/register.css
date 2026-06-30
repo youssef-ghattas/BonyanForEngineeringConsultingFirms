@@ -1,0 +1,67 @@
+﻿/* ── Register Page Extra Styles ─────────────────── */
+.register-wrapper {
+    display: flex;
+    width: 960px;
+    min-height: 600px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+.register-right {
+    overflow-y: auto;
+    max-height: 100vh;
+    padding: 35px 40px !important;
+}
+
+    .register-right h2 {
+        margin-bottom: 5px !important;
+    }
+
+    .register-right p {
+        margin-bottom: 18px !important;
+    }
+
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 0;
+}
+
+    .form-row-2 .input-group {
+        margin-bottom: 16px;
+    }
+
+@media (max-width: 768px) {
+    .register-wrapper {
+        flex-direction: column;
+        width: 95%;
+    }
+
+    .form-row-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Dark Mode — Register ─────────────────── */
+body.dark-mode .register-wrapper {
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .register-right {
+    background: #19283F !important;
+}
+
+    body.dark-mode .register-right h2 { color: #E8EDF5 !important; }
+    body.dark-mode .register-right p  { color: #8FA3BF !important; }
+
+body.dark-mode .auth-form-label    { color: #8FA3BF !important; }
+body.dark-mode .auth-input,
+body.dark-mode .input-group .form-control { background: #0F1E30 !important; border-color: #2A3B58 !important; color: #E8EDF5 !important; }
+body.dark-mode .auth-input::placeholder,
+body.dark-mode .input-group .form-control::placeholder { color: #5A7A9A !important; }
+body.dark-mode .input-group-text { background: #0F1E30 !important; border-color: #2A3B58 !important; color: #8FA3BF !important; }
+body.dark-mode .text-muted        { color: #5A7A9A !important; }
+body.dark-mode .text-danger       { color: #EF9A9A !important; }
+body.dark-mode .register-link     { color: #E9B949 !important; }

@@ -1,0 +1,119 @@
+﻿@model Bonyan.DAL.Models.SiteVisit
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "تفاصيل زيارة الموقع";
+    var role = Context.Session.GetString("Role");
+    string safetyLabel = Model.SafetyStatus switch
+    {
+        SafetyStatus.Safe => "آمن",
+        SafetyStatus.NeedAttention => "يحتاج انتباه",
+        SafetyStatus.Critical => "حرج",
+        _ => Model.SafetyStatus.ToString()
+    };
+    string safetyClass = Model.SafetyStatus switch
+    {
+        SafetyStatus.Safe => "badge-safe",
+        SafetyStatus.NeedAttention => "badge-attention",
+        SafetyStatus.Critical => "badge-critical",
+        _ => ""
+    };
+    string safetyEn = Model.SafetyStatus.ToString();
+}
+
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>
+            <i class="fas fa-hard-hat"></i>
+            <span data-lang="sitevisit_details">تفاصيل زيارة الموقع</span>
+        </h2>
+        <p>@(Model.Project?.ProjectName ?? "—")</p>
+    </div>
+    <div class="page-header-actions">
+        <a asp-controller="Project" asp-action="Details" asp-route-id="@Model.ProjId" class="btn-bonyan-primary">
+            <i class="fas fa-arrow-right"></i> <span data-lang="back_to_project">رجوع للمشروع</span>
+        </a>
+        @if (role == "Admin")
+        {
+            <a asp-action="Edit" asp-route-id="@Model.VisitId" class="btn-bonyan-secondary">
+                <i class="fas fa-edit"></i> <span data-lang="edit">تعديل</span>
+            </a>
+        }
+    </div>
+</div>
+
+<div class="details-card">
+    <div class="details-header" style="background:linear-gradient(135deg,#1B3A6B,#2a5298)">
+        <div class="details-avatar" style="background:rgba(200,146,42,0.3);color:#C8922A">
+            <i class="fas fa-hard-hat"></i>
+        </div>
+        <div class="details-header-info">
+            <h3><span data-lang="sitevisit_details">تفاصيل زيارة الموقع</span></h3>
+            <span>@Model.VisitDate.ToString("yyyy-MM-dd")</span>
+        </div>
+    </div>
+    <div class="details-body">
+        <div class="details-section">
+            <div class="details-section-title" data-lang="sitevisit_info">معلومات الزيارة</div>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <label data-lang="project">المشروع</label>
+                    <p><i class="fas fa-project-diagram" style="color:#4a90d9;margin-left:6px;width:16px"></i> @(Model.Project?.ProjectName ?? "—")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="engineer">المهندس</label>
+                    <p><i class="fas fa-user-tie" style="color:var(--secondary);margin-left:6px;width:16px"></i> @(Model.Employee != null ? Model.Employee.FirstName + " " + Model.Employee.LastName : "—")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="visit_date">تاريخ الزيارة</label>
+                    <p><i class="fas fa-calendar-day" style="color:#27ae60;margin-left:6px;width:16px"></i> @Model.VisitDate.ToString("yyyy-MM-dd")</p>
+                </div>
+                <div class="detail-item">
+                    <label data-lang="safety_status">حالة السلامة</label>
+                    <p><span class="@safetyClass" data-en="@safetyEn" data-ar="@safetyLabel">@safetyLabel</span></p>
+                </div>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(Model.Report))
+        {
+            <div class="details-section">
+                <div class="details-section-title" data-lang="visit_report">تقرير الزيارة</div>
+                <div class="detail-item" style="grid-column:1/-1;margin-top:8px">
+                    <p style="margin:0;color:#555;font-size:0.9rem;line-height:1.7;white-space:pre-wrap">@Model.Report</p>
+                </div>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.VisitPhotos))
+        {
+            <div class="details-section">
+                <div class="details-section-title" data-lang="site_photo">صورة الموقع</div>
+                <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-top:8px">
+                    <img src="@Model.VisitPhotos" style="width:120px;height:120px;cursor:pointer;border-radius:8px;object-fit:cover" onclick="openLightbox('@Model.VisitPhotos')" onerror="this.style.display='none'" alt="صورة الزيارة" />
+                    <a href="@Model.VisitPhotos" target="_blank" class="btn-bonyan-primary" style="font-size:0.82rem;padding:6px 12px">
+                        <i class="fas fa-download"></i> <span data-lang="download_photo">تحميل الصورة</span>
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div id="lightbox-overlay" onclick="closeLightbox()">
+    <button id="lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+    <img id="lightbox-img" src="" alt="صورة الزيارة" />
+</div>
+
+@section Scripts {
+    <script>
+        function openLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox-overlay').classList.add('active');
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox-overlay').classList.remove('active');
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+    </script>
+}

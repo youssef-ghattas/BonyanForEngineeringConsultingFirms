@@ -1,0 +1,814 @@
+﻿/* ═══════════════════════════════════════════════════════
+   employee-dark.css
+   Dark Mode overrides for Employee pages — Bonyan System
+   Add <link rel="stylesheet" href="~/css/employee-dark.css" />
+   in Views/Employee/Index.cshtml (after employee.css)
+═══════════════════════════════════════════════════════ */
+
+body.dark-mode .emp-page {
+    color: #fff;
+}
+
+/* ── Page Header ────────────────────────────────── */
+body.dark-mode .page-header h2 {
+    color: #f0f4ff;
+}
+
+body.dark-mode .page-header h2 i {
+    color: var(--secondary, #C8922A);
+}
+
+body.dark-mode .page-header p {
+    color: #aab8d0;
+}
+
+/* ── Header ───────────────────────────────────────── */
+body.dark-mode .emp-header-title h2 {
+    color: #f0f4ff;
+}
+
+body.dark-mode .emp-header-title p {
+    color: #6a7d9a;
+}
+
+/* ── Buttons ──────────────────────────────────────── */
+body.dark-mode .btn-emp-outline {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+    body.dark-mode .btn-emp-outline:hover {
+        background: rgba(255, 255, 255, 0.09);
+        border-color: rgba(255, 255, 255, 0.22);
+        color: #fff;
+    }
+
+body.dark-mode .btn-bonyan-primary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+    body.dark-mode .btn-bonyan-primary:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+    }
+
+body.dark-mode .btn-bonyan-secondary {
+    background: var(--secondary, #C8922A);
+    color: #fff;
+}
+
+body.dark-mode .btn-bonyan-danger {
+    background: #c62828;
+    color: #fff;
+}
+
+/* ── KPI Cards ────────────────────────────────────── */
+body.dark-mode .emp-kpi.navy {
+    background: linear-gradient(135deg, #152038, #101828);
+}
+
+body.dark-mode .emp-kpi.blue {
+    background: linear-gradient(135deg, #0e1d35, #0b1728);
+}
+
+body.dark-mode .emp-kpi.gold {
+    background: linear-gradient(135deg, #231808, #2e2008);
+}
+
+body.dark-mode .emp-kpi.green {
+    background: linear-gradient(135deg, #0a2010, #081a0c);
+}
+
+body.dark-mode .emp-kpi-label {
+    color: #aab8d0;
+}
+
+body.dark-mode .emp-kpi-value {
+    color: #fff;
+}
+
+body.dark-mode .emp-kpi-icon {
+    color: #fff;
+}
+
+/* ── Filter Bar ───────────────────────────────────── */
+body.dark-mode .filter-bar {
+    background: #131f30;
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-mode .filter-search input {
+    background: #0d1724;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+    body.dark-mode .filter-search input::placeholder {
+        color: #3d5070;
+    }
+
+    body.dark-mode .filter-search input:focus {
+        background: #0f1e30;
+        border-color: var(--secondary, #C8922A);
+        box-shadow: 0 0 0 3px rgba(200, 146, 42, 0.15);
+    }
+
+body.dark-mode .filter-search i {
+    color: #3d5070;
+}
+
+body.dark-mode .filter-select {
+    background: #0d1724;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+    body.dark-mode .filter-select:focus {
+        background: #0f1e30;
+        border-color: var(--secondary, #C8922A);
+    }
+
+body.dark-mode .filter-reset {
+    background: #1a2840;
+    color: #aab8d0;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+    body.dark-mode .filter-reset:hover {
+        background: #1f3050;
+        color: #fff;
+    }
+
+/* ── Table Card ───────────────────────────────────── */
+body.dark-mode .table-card {
+    background: #131f30;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .table-card-header {
+    background: linear-gradient(135deg, #162035, #101828);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+    body.dark-mode .table-card-header h5 {
+        color: #fff;
+    }
+
+/* ── Table ────────────────────────────────────────── */
+body.dark-mode .emp-table thead th {
+    background: #0f1c2c;
+    color: #8aa0c0;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .emp-table tbody td {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .emp-table tbody tr:hover td {
+    background: #1a2840;
+}
+
+/* ── Employee Identity ────────────────────────────── */
+body.dark-mode .emp-info p {
+    color: #fff;
+}
+
+body.dark-mode .emp-info span {
+    color: #5a7090;
+}
+
+/* ── Contact Cell ─────────────────────────────────── */
+body.dark-mode .emp-contact-cell span {
+    color: #aab8d0;
+}
+
+/* ── Salary ───────────────────────────────────────── */
+body.dark-mode .emp-salary {
+    color: #fff;
+}
+
+body.dark-mode .emp-salary-currency {
+    color: #5a7090;
+}
+
+/* ── Specialization Badges ────────────────────────── */
+body.dark-mode .spec-civil {
+    background: rgba(94, 53, 177, 0.18);
+    color: #fff;
+}
+
+body.dark-mode .spec-mechanical {
+    background: rgba(230, 81, 0, 0.15);
+    color: #fff;
+}
+
+body.dark-mode .spec-electrical {
+    background: rgba(200, 146, 42, 0.15);
+    color: #fff;
+}
+
+body.dark-mode .spec-architectural {
+    background: rgba(0, 105, 92, 0.18);
+    color: #fff;
+}
+
+/* ── Gender Badges ────────────────────────────────── */
+body.dark-mode .badge-male {
+    background: rgba(21, 101, 192, 0.18);
+    color: #fff;
+}
+
+body.dark-mode .badge-female {
+    background: rgba(173, 20, 87, 0.15);
+    color: #fff;
+}
+
+/* ── Role Pill ────────────────────────────────────── */
+body.dark-mode .role-pill {
+    background: rgba(100, 140, 200, 0.12);
+    color: #fff;
+}
+
+    body.dark-mode .role-pill.pm {
+        background: rgba(200, 146, 42, 0.15);
+        color: #fff;
+    }
+
+/* ── Action Buttons ───────────────────────────────── */
+body.dark-mode .btn-action {
+    background: #1a2840;
+    color: #aab8d0;
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+    body.dark-mode .btn-action.view:hover {
+        background: #1a73e8;
+        color: #fff;
+        border-color: transparent;
+    }
+
+    body.dark-mode .btn-action.edit:hover {
+        background: var(--secondary, #C8922A);
+        color: #fff;
+        border-color: transparent;
+    }
+
+    body.dark-mode .btn-action.delete:hover {
+        background: #d93025;
+        color: #fff;
+        border-color: transparent;
+    }
+
+/* ── Alerts ───────────────────────────────────────── */
+body.dark-mode .emp-alert-success {
+    background: linear-gradient(90deg, #0d2010, #0f2814);
+    border-color: #1e5028;
+    color: #fff;
+}
+
+body.dark-mode .emp-alert-error {
+    background: linear-gradient(90deg, #200d0d, #280f0f);
+    border-color: #501818;
+    color: #fff;
+}
+
+/* ── Empty State ──────────────────────────────────── */
+body.dark-mode .empty-state {
+    color: #5a7090;
+}
+
+    body.dark-mode .empty-state h6 {
+        color: #8aa0c0;
+    }
+
+    body.dark-mode .empty-state p {
+        color: #5a7090;
+    }
+
+/* ── Hire date cell ───────────────────────────────── */
+body.dark-mode .emp-table tbody td:nth-child(6) {
+    color: #8aa0c0;
+}
+
+/* ── Form Card ───────────────────────────────────── */
+body.dark-mode .form-card {
+    background: #131f30;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .form-card-body {
+    background: transparent;
+}
+
+body.dark-mode .form-section-title {
+    color: var(--secondary, #C8922A);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .form-group label {
+    color: #fff;
+}
+
+body.dark-mode .form-group .form-control,
+body.dark-mode .form-group .form-select {
+    background: #0d1724;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+    body.dark-mode .form-group .form-control:focus,
+    body.dark-mode .form-group .form-select:focus {
+        background: #0f1e30;
+        border-color: var(--secondary, #C8922A);
+        box-shadow: 0 0 0 3px rgba(200, 146, 42, 0.15);
+    }
+
+    body.dark-mode .form-group .form-control::placeholder,
+    body.dark-mode .form-group .form-select::placeholder {
+        color: #3d5070;
+    }
+
+body.dark-mode .form-group .text-danger {
+    color: #ef5350;
+}
+
+body.dark-mode .form-actions {
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .input-locked {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: #8aa0c0 !important;
+}
+
+/* ── Details Card ────────────────────────────────── */
+body.dark-mode .details-card {
+    background: #131f30;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .details-body {
+    background: transparent;
+}
+
+body.dark-mode .details-section-title {
+    color: var(--secondary, #C8922A);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .detail-item label {
+    color: #8aa0c0;
+}
+
+body.dark-mode .detail-item p {
+    color: #fff;
+}
+
+/* ── Delete Card ─────────────────────────────────── */
+body.dark-mode .delete-card {
+    background: #131f30;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .delete-card-body {
+    background: transparent;
+}
+
+body.dark-mode .delete-card-body h5 {
+    color: #fff;
+}
+
+body.dark-mode .delete-card-body p {
+    color: #8aa0c0;
+}
+
+body.dark-mode .delete-icon {
+    background: rgba(220, 53, 69, 0.15);
+    color: #ef5350;
+}
+
+body.dark-mode .delete-info-box {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .delete-info-box p {
+    color: #fff;
+}
+
+body.dark-mode .delete-info-box strong {
+    color: #8aa0c0;
+}
+
+/* ── Project Badge ───────────────────────────────── */
+body.dark-mode .project-badge {
+    background: rgba(255, 255, 255, 0.06);
+    color: #8aa0c0;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ── File Drop Zone ──────────────────────────────── */
+body.dark-mode .file-drop-zone {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #8aa0c0;
+}
+
+body.dark-mode .file-drop-zone.dragover {
+    background: rgba(200, 146, 42, 0.1);
+    border-color: var(--secondary, #C8922A);
+}
+
+body.dark-mode .file-preview {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+/* ── Locked Fields Banner ────────────────────────── */
+body.dark-mode .locked-fields-banner {
+    background: rgba(200, 146, 42, 0.12);
+    border-color: rgba(200, 146, 42, 0.25);
+    color: #fff;
+}
+
+/* ── Invoice Summary Box ─────────────────────────── */
+body.dark-mode .invoice-summary-box {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .invoice-summary-title {
+    color: #fff;
+}
+
+body.dark-mode .invoice-summary-label {
+    color: #8aa0c0;
+}
+
+body.dark-mode .invoice-summary-value {
+    color: #fff;
+}
+
+body.dark-mode .invoice-summary-final {
+    background: rgba(200, 146, 42, 0.1);
+    border-color: var(--secondary, #C8922A);
+}
+
+/* ── Material Info Grid (supplier/material pages) ── */
+body.dark-mode .mat-info-label {
+    color: #8aa0c0;
+}
+
+body.dark-mode .mat-info-value {
+    color: #fff;
+}
+
+body.dark-mode .mat-info-value a {
+    color: var(--secondary, #C8922A);
+}
+
+/* ── Material Tables ─────────────────────────────── */
+body.dark-mode .mat-table thead th {
+    background: #0f1c2c;
+    color: #8aa0c0;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .mat-table tbody td {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .mat-table tbody tr:hover td {
+    background: #1a2840;
+}
+
+body.dark-mode .mat-table tbody a {
+    color: var(--secondary, #C8922A);
+}
+
+/* ── Unit Badge ──────────────────────────────────── */
+body.dark-mode .unit-badge {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+/* ── Supplier Card (radio selector) ──────────────── */
+body.dark-mode .supplier-card {
+    background: #0d1724 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #fff;
+}
+
+    body.dark-mode .supplier-card:hover {
+        background: #1a2840 !important;
+    }
+
+/* ── Mat Add Form ────────────────────────────────── */
+body.dark-mode .mat-add-form {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .mat-add-title {
+    color: #fff;
+}
+
+/* ── Dropdown (supplier material type picker) ────── */
+body.dark-mode #materialDropdown,
+body.dark-mode #empDropdownPanel {
+    background: #131f30 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+    body.dark-mode #materialDropdown label,
+    body.dark-mode #empDropdownPanel label {
+        background: transparent !important;
+        color: #fff !important;
+        border-bottom-color: rgba(255, 255, 255, 0.04) !important;
+    }
+
+        body.dark-mode #materialDropdown label:hover,
+        body.dark-mode #empDropdownPanel label:hover {
+            background: #1a2840 !important;
+        }
+
+body.dark-mode #dropdownToggle {
+    background: #0d1724 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+}
+
+/* ── Tab Buttons (Project Details) ───────────────── */
+body.dark-mode .tab-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #8aa0c0;
+}
+
+    body.dark-mode .tab-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+
+body.dark-mode .tab-panel .details-card {
+    background: #131f30;
+}
+
+/* ── Inline Alert Messages ───────────────────────── */
+body.dark-mode .alert-success-msg {
+    background: rgba(46, 125, 50, 0.15);
+    color: #fff;
+}
+
+body.dark-mode .alert-error-msg {
+    background: rgba(198, 40, 40, 0.15);
+    color: #fff;
+}
+
+/* ── Invoice Card (Invoice/Details) ──────────────── */
+body.dark-mode .invoice-card {
+    background: #131f30;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .invoice-header {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .invoice-num {
+    color: #fff;
+}
+
+body.dark-mode .invoice-project {
+    color: #8aa0c0;
+}
+
+body.dark-mode .inv-amount-row {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .inv-amount-row.inv-total {
+    color: #fff;
+}
+
+body.dark-mode .inv-date-item {
+    color: #fff;
+}
+
+body.dark-mode .inv-date-label {
+    color: #8aa0c0;
+}
+
+body.dark-mode .inv-section-title {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .doc-table thead th {
+    background: #0f1c2c;
+    color: #8aa0c0;
+}
+
+body.dark-mode .doc-table tbody td {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Invoice Payments Table ──────────────────────── */
+body.dark-mode .invoice-payments {
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Visit Detail (SiteVisit/Details) ────────────── */
+body.dark-mode .visit-detail-header {
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .visit-detail-header h3 {
+    color: #fff;
+}
+
+body.dark-mode .visit-detail-body {
+    background: transparent;
+}
+
+body.dark-mode .visit-detail-row {
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+    color: #fff;
+}
+
+body.dark-mode .visit-detail-label {
+    color: #8aa0c0;
+}
+
+/* ── Task Detail ─────────────────────────────────── */
+body.dark-mode .task-detail-header {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .task-detail-header h3 {
+    color: #fff;
+}
+
+body.dark-mode .task-detail-body {
+    background: transparent;
+}
+
+body.dark-mode .task-detail-row {
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+    color: #fff;
+}
+
+body.dark-mode .task-detail-label {
+    color: #8aa0c0;
+}
+
+/* ── Assign Card (Project/Details sidebar) ───────── */
+body.dark-mode .assign-card {
+    background: #131f30;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .assign-card-header {
+    background: linear-gradient(135deg, #162035, #101828);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+    body.dark-mode .assign-card-header h5 {
+        color: #fff;
+    }
+
+body.dark-mode .assign-card-body {
+    background: transparent;
+}
+
+body.dark-mode .assigned-item {
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .assigned-emp-info p {
+    color: #fff;
+}
+
+body.dark-mode .assigned-emp-info span {
+    color: #8aa0c0;
+}
+
+body.dark-mode .btn-remove {
+    background: rgba(220, 53, 69, 0.15);
+    color: #ef5350;
+}
+
+    body.dark-mode .btn-remove:hover {
+        background: #c62828;
+        color: #fff;
+    }
+
+body.dark-mode .assign-form .form-group label {
+    color: #fff;
+}
+
+body.dark-mode .assign-form .form-select {
+    background: #0d1724;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* ── Capacity Modal ──────────────────────────────── */
+body.dark-mode #capModal > div {
+    background: #131f30 !important;
+    color: #fff;
+}
+
+body.dark-mode #capModal h4 {
+    color: #fff;
+}
+
+body.dark-mode #capModal p {
+    color: #aab8d0;
+}
+
+body.dark-mode #capModal select {
+    background: #0d1724;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* ── Cancel Modal (MaterialInvoice) ──────────────── */
+body.dark-mode .cancel-modal-overlay.active .cancel-modal-box {
+    background: #131f30;
+    color: #fff;
+}
+
+body.dark-mode .cancel-modal-title {
+    color: #fff;
+}
+
+body.dark-mode .cancel-modal-body {
+    color: #aab8d0;
+}
+
+/* ── Update Stock Modal ──────────────────────────── */
+body.dark-mode #updateStockOverlay > div {
+    background: #131f30 !important;
+}
+
+body.dark-mode #updateStockOverlay h4 {
+    color: #fff;
+}
+
+/* ── Invoice Notice (Material/Create) ────────────── */
+body.dark-mode #invoiceNotice {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.12), rgba(21, 101, 192, 0.1)) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #fff;
+}
+
+/* ── Project Details Sidebar Layout ──────────────── */
+body.dark-mode .details-layout .details-card {
+    background: #131f30;
+}
+
+body.dark-mode .details-proj-icon {
+    background: rgba(200, 146, 42, 0.15);
+    color: var(--secondary, #C8922A);
+}
+
+/* ── General text color override ─────────────────── */
+body.dark-mode .page-header h2,
+body.dark-mode .page-header h2 span,
+body.dark-mode .page-header p {
+    color: #f0f4ff;
+}
+
+body.dark-mode .project-badge i {
+    color: var(--secondary, #C8922A);
+}
+
+/* ── Scrollbar ────────────────────────────────────── */
+body.dark-mode .table-responsive::-webkit-scrollbar {
+    height: 5px;
+}
+
+body.dark-mode .table-responsive::-webkit-scrollbar-track {
+    background: #0d1724;
+}
+
+body.dark-mode .table-responsive::-webkit-scrollbar-thumb {
+    background: #2a3f5a;
+    border-radius: 999px;
+}

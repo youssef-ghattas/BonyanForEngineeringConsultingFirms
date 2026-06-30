@@ -1,0 +1,70 @@
+﻿@model Bonyan.DAL.Models.Employee
+@using Bonyan.DAL.Enums
+@{
+    ViewData["Title"] = "حذف موظف";
+    string specAr = Model.Specialization switch
+    {
+        Specialization.Civil => "مدني",
+        Specialization.Mechanical => "ميكانيكا",
+        Specialization.Electrical => "كهرباء",
+        Specialization.Architectural => "معماري",
+        _ => Model.Specialization.ToString()
+    };
+    string specEn = Model.Specialization switch
+    {
+        Specialization.Civil => "Civil",
+        Specialization.Mechanical => "Mechanical",
+        Specialization.Electrical => "Electrical",
+        Specialization.Architectural => "Architectural",
+        _ => Model.Specialization.ToString()
+    };
+}
+
+<link rel="stylesheet" href="~/css/employee.css" />
+<link rel="stylesheet" href="~/css/employee-dark.css" />
+
+<div class="delete-card">
+    <div class="delete-card-header">
+        <i class="fas fa-trash-alt"></i>
+        <h4 data-lang="delete_employee">حذف موظف</h4>
+    </div>
+
+    <div class="delete-card-body">
+        <div class="delete-icon">
+            <i class="fas fa-user-times"></i>
+        </div>
+        <h5 data-lang="delete_confirm">هل أنت متأكد من الحذف؟</h5>
+        <p data-lang="delete_warning">
+            لا يمكن التراجع عن هذا الإجراء بعد تأكيده
+        </p>
+
+        <div class="delete-info-box">
+            <p>
+                <strong data-lang="name">الاسم: </strong>
+                @Model.FirstName @Model.LastName
+            </p>
+            <p>
+                <strong data-lang="email">البريد: </strong>
+                @Model.Email
+            </p>
+            <p>
+                <strong data-lang="specialization">التخصص: </strong>
+                <span data-ar="@specAr" data-en="@specEn">@specAr</span>
+            </p>
+        </div>
+
+        <form asp-action="Delete" method="post"
+               style="display:flex; gap:12px; justify-content:center">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.EmployeeId" />
+            <a asp-action="Index" class="btn-bonyan-primary">
+                <i class="fas fa-times"></i>
+                <span data-lang="cancel">إلغاء</span>
+            </a>
+            <button type="submit" class="btn-bonyan-danger">
+                <i class="fas fa-trash"></i>
+                <span data-lang="delete_confirm_btn">نعم، احذف</span>
+            </button>
+        </form>
+    </div>
+</div>
