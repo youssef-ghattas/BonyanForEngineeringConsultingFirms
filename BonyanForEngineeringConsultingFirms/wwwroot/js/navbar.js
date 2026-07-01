@@ -117,34 +117,55 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     chatbotCloseBtn?.addEventListener("click", closeChatbot);
 
-    function appendChatMessage(text, sender) {
-        if (!chatbotBody) return;
-        const msg = document.createElement("div");
-        msg.className = `chatbot-msg chatbot-msg-${sender}`;
+   function appendChatMessage(text, sender) {
+    if (!chatbotBody) return;
+    const msg = document.createElement("div");
+    msg.className = `chatbot-msg chatbot-msg-${sender}`;
+    if (sender === "bot") {
+        // Convert bold and newlines to HTML for prettier display
+        const formatted = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+        msg.innerHTML = formatted;
+    } else {
         msg.textContent = text;
-        chatbotBody.appendChild(msg);
-        chatbotBody.scrollTop = chatbotBody.scrollHeight;
     }
 
+    chatbotBody.appendChild(msg);
+    chatbotBody.scrollTop = chatbotBody.scrollHeight;
+}
+
+    
     function sendChatMessage() {
         const text = chatbotInput.value.trim();
         if (!text) return;
         appendChatMessage(text, "user"); applyLanguage
         chatbotInput.value = "";
 
-        // ── TODO: replace with real fetch() call to your bot ──
-        // fetch("/Chatbot/Ask", {
-        //     method: "POST",
-        //     headers: { "Content-Type": "application/json" },
-        //     body: JSON.stringify({ message: text })
-        // })
-        //     .then(r => r.json())
-        //     .then(data => appendChatMessage(data.reply, "bot"));
+        fetch("/Ai/SendMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                appendChatMessage(data.message, "bot");
+            } else {
+                appendChatMessage("Error: " + data.message, "bot");
+            }
+        })
+        .catch(() => {
+            appendChatMessage("Something went wrong. Please try again.", "bot");
+        });
 
+       
+
+       
         setTimeout(() => {
             appendChatMessage("هذه استجابة تجريبية — اربط هذا الجزء بخدمة الشات بوت الفعلية.", "bot");
         }, 500);
     }
+
+    
 
     chatbotSendBtn?.addEventListener("click", sendChatMessage);
     chatbotInput?.addEventListener("keypress", function (e) {

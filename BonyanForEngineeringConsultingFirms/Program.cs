@@ -6,6 +6,7 @@ using Bonyan.DAL.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Task = Bonyan.DAL.Models.Task;
+using BonyanForEngineeringConsultingFirms.Services;
 
 public class Program
     {
@@ -68,6 +69,12 @@ public class Program
 
 		builder.Services.AddScoped<BonyanForEngineeringConsultingFirms.Services.EmailService>();
 
+
+        // Chatbot support services — ChatDataService fetches role-filtered
+        // DB data, GroqService sends it to the LLM API.
+        builder.Services.AddScoped<ChatDataService>();
+        builder.Services.AddScoped<GroqService>();
+        builder.Services.AddHttpClient<GroqService>();
 
 		// Add services to the container.
 		builder.Services.AddControllersWithViews();
