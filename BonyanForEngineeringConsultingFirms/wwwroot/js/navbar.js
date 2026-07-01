@@ -156,13 +156,6 @@ document.addEventListener("DOMContentLoaded", function () {
         .catch(() => {
             appendChatMessage("Something went wrong. Please try again.", "bot");
         });
-
-       
-
-       
-        setTimeout(() => {
-            appendChatMessage("هذه استجابة تجريبية — اربط هذا الجزء بخدمة الشات بوت الفعلية.", "bot");
-        }, 500);
     }
 
     
